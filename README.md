@@ -634,3 +634,9 @@ The Dashboard weather widget resolves your location either from an explicit **ci
 approximate location via a request to `ipapi.co`, falling back to the browser's geolocation
 prompt. Weather data comes from Open-Meteo. No API keys are required and results are cached
 locally.
+
+---
+
+## License
+
+[MIT](LICENSE) © Saifun
