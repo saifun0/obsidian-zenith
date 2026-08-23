@@ -17,6 +17,7 @@ import { JournalModule } from './modules/journal/JournalModule';
 import { PrayerModule } from './modules/prayer/PrayerModule';
 import { MediaModule } from './modules/media/MediaModule';
 import { SyncModule } from './modules/sync/SyncModule';
+import { CanvasModule } from './modules/canvas/CanvasModule';
 import { useZenithStore, resetZenithStore } from './store';
 import type { ZenithSettings } from './store';
 import type { SettingsSyncService } from './modules/sync/services/settingsSync';
@@ -128,6 +129,7 @@ export default class ZenithPlugin extends Plugin {
         this.moduleManager.register(new PrayerModule(this));
         this.moduleManager.register(new MediaModule(this));
         this.moduleManager.register(new SyncModule(this));
+        this.moduleManager.register(new CanvasModule(this));
 
         // Only run code the user has already approved, and decide that without
         // asking anything: this runs during `onload`, where a dialog would

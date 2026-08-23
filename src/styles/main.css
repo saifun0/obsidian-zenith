@@ -15,5 +15,6 @@
 @import './journal.css';
 @import './media.css';
 @import './sync.css';
+@import './canvas.css';
 @import '../settings/components/SettingsApp.css';
 @import '../components/ui/CheckboxCard.css';

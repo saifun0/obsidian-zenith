@@ -9,6 +9,7 @@ import {
 } from '../fileSyncTypes';
 import { buildSyncPlan, toPrevRecord } from './syncPlan';
 import { mergeMarkdown, type MergeNote } from './conflictResolve';
+import { mergeCanvas } from './canvasMerge';
 import { PrevSyncStore } from './prevSyncStore';
 import type { SyncRemote } from './remotes/types';
 
@@ -235,11 +236,18 @@ export class SyncEngine {
             return keepBoth('not decodable as text');
         }
 
-        const outcome = mergeMarkdown(localText, remoteText, {
+        const options = {
             // The same rule the other conflict actions use, so switching to
             // `smart` does not silently change who wins a tie.
-            prefer: pickNewer(item) === 'remote' ? 'remote' : 'local',
-        });
+            prefer: (pickNewer(item) === 'remote' ? 'remote' : 'local') as 'local' | 'remote',
+        };
+        // A canvas is JSON, and the line-oriented merger sees JSON as prose: it
+        // would refuse the moment both sides were touched, however unrelated
+        // the two edits were. Nodes and edges carry ids, so they can be matched
+        // up properly instead.
+        const outcome = item.key.toLowerCase().endsWith('.canvas')
+            ? mergeCanvas(localText, remoteText, options)
+            : mergeMarkdown(localText, remoteText, options);
 
         if (outcome.kind === 'unmergeable') return keepBoth(outcome.reason);
         if (outcome.kind === 'identical') {
