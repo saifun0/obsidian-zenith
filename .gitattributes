@@ -1,0 +1,25 @@
+# Line endings: LF in the repository and LF in the working tree on every OS.
+# Keeps diffs clean across machines and silences Git's CRLF warnings on Windows.
+* text=auto eol=lf
+
+# Windows-native scripts must keep CRLF to stay executable.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets: never convert line endings, never diff as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.mp4 binary
+*.zip binary
+
+# Generated: collapse in GitHub diffs, exclude from language stats.
+package-lock.json linguist-generated=true
