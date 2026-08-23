@@ -49,6 +49,7 @@ export type UiDensity = 'compact' | 'comfortable' | 'spacious';
 
 /** How the navigation launcher lays its buttons out. */
 export type NavigatorLayout = 'grid' | 'list';
+export type CanvasTreeDirection = 'down' | 'right';
 
 /** A module the installer put on disk, and where it came from. */
 export interface InstalledModuleRecord {
@@ -181,6 +182,13 @@ export interface ZenithSettings {
      * of waiting to be found in settings.
      */
     navigatorHiddenActions: string[];
+
+    /** Canvas: space left between nodes when a layout is applied. */
+    canvasLayoutGap: number;
+    /** Canvas: columns for the grid layout. 0 picks a roughly square grid. */
+    canvasLayoutColumns: number;
+    /** Canvas: which way a tree layout grows. */
+    canvasTreeDirection: CanvasTreeDirection;
 
     /** How much breathing room the interface uses. */
     uiDensity: UiDensity;
@@ -535,6 +543,9 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     navigatorLayout: 'grid',
     navigatorShowLabels: true,
     navigatorHiddenActions: [],
+    canvasLayoutGap: 64,
+    canvasLayoutColumns: 0,
+    canvasTreeDirection: 'down',
     uiDensity: 'comfortable',
     uiAnimations: true,
     activeModuleIds: [

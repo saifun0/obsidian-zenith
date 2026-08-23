@@ -28,10 +28,12 @@ export type UnmergeableReason =
     /** The text outside frontmatter and task lines differs on both sides. */
     | 'prose_diverged'
     /** Not a note this merger understands. */
-    | 'not_markdown';
+    | 'not_markdown'
+    /** A `.canvas` file that would not parse on one of the two sides. */
+    | 'not_canvas';
 
 export interface MergeNote {
-    kind: 'frontmatter' | 'task' | 'status';
+    kind: 'frontmatter' | 'task' | 'status' | 'node' | 'edge';
     key: string;
     detail: string;
 }

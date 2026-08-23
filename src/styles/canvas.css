@@ -1,0 +1,27 @@
+/* Canvas — the Zenith button on the canvas rail, and the node search dialog. */
+
+/*
+ * The button is a `canvas-control-item` inside a `canvas-control-group`, so
+ * Obsidian's own rail styling already sizes, rounds and hovers it. Nothing is
+ * restated here on purpose: matching those rules by hand would drift the moment
+ * the theme or Obsidian changed one of them. Only the cursor is missing,
+ * because the native items are buttons and this one is a div.
+ */
+.zenith-canvas-control-group .canvas-control-item {
+    cursor: var(--cursor, pointer);
+}
+
+.zenith-canvas-search__title {
+    /* Matches the weight Obsidian gives a suggestion's primary line. */
+    color: var(--text-normal);
+}
+
+.zenith-canvas-search__context {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    margin-top: var(--size-2-1);
+    /* One line only: a matched paragraph must not push the next result off screen. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
