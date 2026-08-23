@@ -1,0 +1,944 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Tasks Module Styles (Redesign)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ── Tasks Container ────────────────────────────── */
+.zenith-tasks {
+    padding: var(--zenith-space-md) var(--zenith-space-lg);
+    max-width: 900px;
+    margin: 0 auto;
+    animation: zenith-fade-in var(--zenith-transition-slow);
+    position: relative;
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* ── Sticky Header & Tabs ───────────────────────── */
+.zenith-tasks-header-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--background-primary);
+    padding-top: var(--zenith-space-sm);
+    padding-bottom: var(--zenith-space-sm);
+    margin-bottom: var(--zenith-space-md);
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.zenith-tasks-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--zenith-space-sm);
+}
+
+.zenith-tasks-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-tasks-title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.zenith-tasks-header-actions {
+    display: flex;
+    gap: var(--zenith-space-xs);
+    align-items: center;
+}
+
+/* ── Filter Popover ─────────────────────────────── */
+.zenith-task-filters-popover {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    padding: 16px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 250px;
+    animation: zenith-fade-in var(--zenith-transition-fast) ease-out;
+}
+
+.zenith-task-filters-popover .zenith-task-filters__select,
+.zenith-task-filters-popover .zenith-task-filters__input {
+    width: 100%;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.zenith-task-filters-popover .zenith-task-filters__select:focus,
+.zenith-task-filters-popover .zenith-task-filters__input:focus {
+    border-color: var(--interactive-accent);
+}
+
+/* ── Group Headers ──────────────────────────────── */
+.zenith-task-group-header {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 24px 0 8px 0;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zenith-task-group-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--background-modifier-border);
+    opacity: 0.5;
+}
+
+.zenith-task-group-header:first-child {
+    margin-top: 8px;
+}
+
+/* ── Task List ──────────────────────────────────── */
+.zenith-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 40px;
+    /* Rows adapt to the pane, not to the screen: this list is just as likely to
+       be in a narrow sidebar on a desktop as on a phone, and a viewport query
+       would call that sidebar "wide". */
+    container-type: inline-size;
+    container-name: zenith-tasks;
+}
+
+.zenith-tasks-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-muted);
+    padding: 40px 0;
+}
+
+/* ── Task Item (Modern) ─────────────────────────── */
+.zenith-task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    /* `background-color`, never the shorthand: the priority wash is a background
+       image layered over this, and a shorthand anywhere would erase it. */
+    background-color: color-mix(in srgb, var(--background-secondary) 50%, transparent);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    animation: zenith-slide-up var(--zenith-transition-fast) ease-out both;
+    position: relative;
+    overflow: hidden;
+}
+
+.zenith-task-item:hover {
+    background-color: var(--background-secondary);
+    border-color: var(--background-modifier-border);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.zenith-task-item--completed {
+    opacity: 0.5;
+    background-color: transparent;
+}
+.zenith-task-item--completed:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* ── Custom Animated Checkbox ───────────────────── */
+.zenith-task-checkbox {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+    margin-top: 2px;
+}
+
+.zenith-task-item:hover .zenith-task-checkbox {
+    border-color: var(--interactive-accent);
+}
+
+.zenith-task-checkbox.is-checked {
+    background: var(--interactive-accent);
+    border-color: var(--interactive-accent);
+}
+
+.zenith-task-checkbox svg {
+    color: white;
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    transition: stroke-dashoffset 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.zenith-task-checkbox.is-checked svg {
+    stroke-dashoffset: 0;
+}
+
+/* ── Priority ───────────────────────────────────── */
+/* A wash under the whole row instead of a stripe down its edge: it says the
+   same thing without a second column of marks, and it fades out before the
+   dates and pills on the right so nothing is read through colour. The strength
+   is what separates the four levels — hue alone is too fine a distinction at
+   this opacity. */
+.zenith-task-item--priority-urgent { --zenith-prio: var(--zenith-priority-urgent, #ef4444); --zenith-prio-strength: 17%; }
+.zenith-task-item--priority-high { --zenith-prio: var(--zenith-priority-high, #f59e0b); --zenith-prio-strength: 14%; }
+.zenith-task-item--priority-medium { --zenith-prio: var(--zenith-priority-medium, #3b82f6); --zenith-prio-strength: 11%; }
+.zenith-task-item--priority-low { --zenith-prio: var(--zenith-priority-low, #6b7280); --zenith-prio-strength: 8%; }
+
+.zenith-task-item--priority-urgent,
+.zenith-task-item--priority-high,
+.zenith-task-item--priority-medium,
+.zenith-task-item--priority-low {
+    background-image: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--zenith-prio) var(--zenith-prio-strength), transparent) 0%,
+        color-mix(in srgb, var(--zenith-prio) 4%, transparent) 58%,
+        transparent 100%
+    );
+}
+
+/* A finished task keeps its place, not its urgency. */
+.zenith-task-item--completed { background-image: none; }
+
+/* ── Task Content ───────────────────────────────── */
+.zenith-task-item__content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.zenith-task-item__title {
+    font-size: 0.95rem;
+    color: var(--text-normal);
+    line-height: 1.4;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zenith-task-item--completed .zenith-task-item__title {
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+/* ── Metadata Area ──────────────────────────────── */
+.zenith-task-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Pill design for due date and tags */
+.zenith-task-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--background-modifier-form-field);
+    color: var(--text-muted);
+}
+
+.zenith-task-pill--date.is-overdue {
+    background: color-mix(in srgb, var(--color-red) 15%, transparent);
+    color: var(--color-red);
+    font-weight: 500;
+}
+
+.zenith-task-pill--date.is-today {
+    background: color-mix(in srgb, var(--color-orange) 15%, transparent);
+    color: var(--color-orange);
+    font-weight: 500;
+}
+
+.zenith-task-pill--tag {
+    background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+    color: var(--interactive-accent);
+}
+
+/* ── Task Form ──────────────────────────────────── */
+/* ── Search bar ─────────────────────────────────── */
+.zenith-tasks-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 0 10px;
+    height: 34px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+    transition: border-color 0.2s ease;
+}
+
+.zenith-tasks-search:focus-within {
+    border-color: var(--interactive-accent);
+}
+
+.zenith-tasks-search__icon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.zenith-tasks-search__input {
+    flex: 1;
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-normal);
+    font-size: 0.9rem;
+    outline: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+.zenith-tasks-search__clear {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0 4px;
+}
+
+.zenith-tasks-search__clear:hover {
+    color: var(--text-normal);
+}
+
+/* ── Task item hover actions ────────────────────── */
+.zenith-task-item__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    /* Top, not centre: a task with an open subtask tree is tall, and a centred
+       cluster ends up floating in the middle of the tree it doesn't belong to. */
+    align-self: flex-start;
+}
+
+.zenith-task-item:hover .zenith-task-item__actions,
+.zenith-task-item:focus-within .zenith-task-item__actions {
+    opacity: 1;
+}
+
+.zenith-task-item__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.zenith-task-item__action:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.zenith-task-item__action--danger:hover {
+    color: var(--text-error, #e5534b);
+    background: color-mix(in srgb, var(--text-error, #e5534b) 12%, transparent);
+}
+
+.zenith-task-item__title[role="button"] {
+    cursor: pointer;
+}
+
+.zenith-task-item__title[role="button"]:hover {
+    color: var(--zenith-accent);
+}
+
+
+/* ── Drag to reorder ─────────────────────────────────
+   The handle sits inside each row's existing action cluster on the right, so
+   it inherits that cluster's reveal-on-hover behaviour. It deliberately does
+   NOT live in the left gutter: that column is where the tree connectors meet
+   each row's checkbox, and a handle in front of the checkbox shifted every row
+   out from under its own connector. It is a <button>, so it needs parent + tag
+   scoping to shed Obsidian's default button box. */
+.zenith-task-item button.zenith-drag-handle,
+.zenith-subtask button.zenith-drag-handle {
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    cursor: grab;
+    /* The gesture is ours: stop the browser scrolling or selecting instead. */
+    touch-action: none;
+}
+
+.zenith-task-item button.zenith-drag-handle:active,
+.zenith-subtask button.zenith-drag-handle:active {
+    cursor: grabbing;
+}
+
+.zenith-task-item button.zenith-drag-handle:disabled {
+    cursor: default;
+    opacity: 0.4;
+}
+
+.zenith-task-item button.zenith-drag-handle:disabled:hover {
+    background: transparent;
+    color: var(--text-muted);
+}
+
+.zenith-task-item.is-dragging,
+.zenith-subtask.is-dragging {
+    opacity: 0.4;
+}
+
+/* The pointer leaves the row as soon as the drag starts, which drops :hover and
+   would collapse the action cluster the handle lives in. Pointer capture keeps
+   the gesture working either way, but a handle that vanishes under the cursor
+   looks broken — so pin the cluster open for the row being dragged. */
+.zenith-task-item.is-dragging .zenith-task-item__actions {
+    opacity: 1;
+}
+.zenith-subtask.is-dragging .zenith-subtask__actions {
+    opacity: 1;
+    max-width: 120px;
+}
+
+/* Drop indicator. Drawn as an inset shadow rather than a pseudo-element
+   because `.zenith-task-item` sets `overflow: hidden`, which would clip a line
+   positioned at its edge. Declared after the :hover rule so it wins the tie. */
+.zenith-task-item.is-drop-before { box-shadow: inset 0 3px 0 0 var(--zenith-accent); }
+.zenith-task-item.is-drop-after { box-shadow: inset 0 -3px 0 0 var(--zenith-accent); }
+.zenith-subtask.is-drop-before { box-shadow: inset 0 2px 0 0 var(--zenith-accent); }
+.zenith-subtask.is-drop-after { box-shadow: inset 0 -2px 0 0 var(--zenith-accent); }
+
+/* ── Group drop zones ────────────────────────────────
+   A whole group is a drop target, not just its rows: that's what lets a drop
+   land on the header or in the gaps, and what makes an *empty* bucket
+   reachable at all — with only row targets you could never drop into "Today"
+   when nothing was due today. */
+.zenith-task-group {
+    border-radius: 10px;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.zenith-task-group.is-drop-zone {
+    background: color-mix(in srgb, var(--zenith-accent) 8%, transparent);
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--zenith-accent) 45%, transparent);
+}
+
+/* Stand-in for an empty bucket, rendered only while a drag it would accept is
+   in flight — so the resting list still hides buckets with nothing in them. */
+.zenith-task-group__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0 8px;
+    padding: 14px;
+    border: 1.5px dashed var(--background-modifier-border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.zenith-task-group.is-drop-zone .zenith-task-group__placeholder {
+    border-color: var(--zenith-accent);
+    color: var(--text-normal);
+}
+
+/* Subtask roll-up on the task row. The tree below already lists them, but a
+   collapsed row gave no hint that any existed, let alone how many were left. */
+.zenith-task-pill--subs {
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-task-pill--subs.is-complete {
+    color: var(--zenith-success);
+    border-color: color-mix(in srgb, var(--zenith-success) 40%, transparent);
+}
+
+
+/* ── Notes under a task ─────────────────────────── */
+/* Quieter than the title and narrower than the row: a description is context
+   you read when you have stopped to look, not while scanning the list. */
+.zenith-task-notes {
+    margin: 0;
+    max-width: 70ch;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* ── Attachments under a task ───────────────────── */
+.zenith-attachments {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.zenith-attachments__images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.zenith-root button.zenith-attachments__image {
+    /* Set per task list from the setting; the fallback is the default. */
+    width: var(--zenith-thumb, 56px);
+    height: var(--zenith-thumb, 56px);
+    padding: 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--background-primary);
+    box-shadow: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.1s ease;
+}
+.zenith-root button.zenith-attachments__image:hover {
+    border-color: var(--interactive-accent);
+    transform: translateY(-1px);
+}
+
+/* Fitted, not cropped: a thumbnail of a wide picture with its sides cut off can
+   be unrecognisable, and recognising it is the entire job of a thumbnail. The
+   letterboxing that leaves is the tile's own background. */
+.zenith-attachments__thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* A picture that will not load says so, rather than leaving a blank square
+   that reads as a bug. */
+.zenith-attachments__missing {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--text-faint);
+}
+
+.zenith-attachments__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.zenith-root button.zenith-attachments__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 240px;
+    padding: 3px 9px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+.zenith-root button.zenith-attachments__link:hover {
+    color: var(--text-normal);
+    border-color: var(--interactive-accent);
+}
+.zenith-root button.zenith-attachments__link.is-task { color: var(--zenith-success, #3fb950); }
+
+.zenith-attachments__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The hour, riding along inside the due-date pill. */
+.zenith-task-pill__time {
+    margin-left: 4px;
+    padding-left: 5px;
+    border-left: 1px solid currentColor;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.85;
+}
+
+.zenith-task-pill--spent {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Timer button ───────────────────────────────── */
+/* Idle it is one more icon in the cluster; running it becomes the clock, and
+   stays visible when the rest of the cluster has faded out. */
+.zenith-root button.zenith-timer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 28px;
+    min-width: 28px;
+    padding: 0 6px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+.zenith-root button.zenith-timer:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+.zenith-root button.zenith-timer.is-running {
+    background: color-mix(in srgb, var(--zenith-success, #3fb950) 16%, transparent);
+    color: var(--zenith-success, #3fb950);
+}
+/* Past zero the countdown keeps going, and says so. */
+.zenith-root button.zenith-timer.is-running.is-over {
+    background: color-mix(in srgb, var(--zenith-danger, #e5534b) 16%, transparent);
+    color: var(--zenith-danger, #e5534b);
+}
+.zenith-timer__clock {
+    font-family: var(--zenith-font-mono);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+
+/* A running row keeps its cluster open — the clock has to stay readable when
+   the pointer moves away. */
+.zenith-task-item__actions:has(.zenith-timer.is-running) {
+    opacity: 1;
+}
+
+/* The timer sits between a subtask's title and its hover cluster, and stays
+   put: idle it is a 22px icon, running it widens to fit the clock. */
+.zenith-root button.zenith-timer {
+    flex-shrink: 0;
+}
+.zenith-subtask .zenith-timer {
+    height: 22px;
+    min-width: 22px;
+    padding: 0 4px;
+}
+.zenith-subtask .zenith-timer__clock {
+    font-size: 0.72rem;
+}
+/* Idle it only shows on hover — one play button per subtask, permanently on,
+   would out-shout the titles. Running, it is always visible. */
+.zenith-subtask .zenith-timer:not(.is-running) {
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+.zenith-subtask:hover .zenith-timer:not(.is-running),
+.zenith-subtask:focus-within .zenith-timer:not(.is-running) {
+    opacity: 1;
+}
+
+/* ── Image lightbox ─────────────────────────────── */
+/* Portalled to <body>, so it is styled off Obsidian's own variables rather than
+   the --zenith-* ones, which are scoped to .zenith-root. */
+.zenith-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(3px);
+    animation: zenith-fade-in 0.12s ease;
+}
+
+.zenith-lightbox__img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+    /* The picture is the subject; nothing frames it but the dark. */
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* One bar, top-right, holding the name and the two ways out. */
+.zenith-lightbox__bar {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.zenith-lightbox__name {
+    flex: 0 1 auto;
+    min-width: 0;
+    margin-right: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.zenith-lightbox__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.zenith-lightbox__btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+/* Phones and tablets: the picture takes the screen, and the controls grow to
+   something a thumb can hit. */
+@media (max-width: 700px), (pointer: coarse) {
+    .zenith-lightbox {
+        padding: 12px;
+    }
+    .zenith-lightbox__bar {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    .zenith-lightbox__btn {
+        width: 44px;
+        height: 44px;
+    }
+    /* The name would eat the row on a narrow screen, and the two buttons are
+       what the bar is for. */
+    .zenith-lightbox__name {
+        display: none;
+    }
+}
+
+/* ── Image alignment in a task row ──────────────── */
+.zenith-attachments__images.is-left { justify-content: flex-start; }
+.zenith-attachments__images.is-center { justify-content: center; }
+.zenith-attachments__images.is-right { justify-content: flex-end; }
+
+/* The thumbnail is the click target now, so it says so. */
+.zenith-attachments__thumb {
+    cursor: zoom-in;
+}
+
+/* The hour and the time spent, on a subtask row. Mono and faint: they are data
+   riding along beside the title, not part of it. */
+.zenith-subtask__time {
+    flex: 0 0 auto;
+    font-family: var(--zenith-font-mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.zenith-subtask__time.is-spent {
+    color: var(--text-faint);
+}
+
+/* ── Subtask detail block ───────────────────────── */
+/* Indented to the subtask's own text, so a description reads as belonging to
+   that row rather than to the task above it. */
+.zenith-subtask__detail {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 2px 0 6px 26px;
+}
+.zenith-subtask__detail .zenith-task-notes {
+    font-size: 0.82rem;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Narrow panes and touch
+
+   The action cluster is the whole problem here. Four 28px buttons plus gaps
+   reserve ~115px down the right-hand side of every row — on a 300px pane that
+   is a third of the width, taken from the column the titles live in, which is
+   why subtask titles arrived as "Д." and "К.". Below the breakpoint the cluster
+   stops being a column beside the task and becomes a row underneath it, and the
+   whole width goes back to the text.
+   ══════════════════════════════════════════════════════════ */
+@container zenith-tasks (max-width: 560px) {
+    .zenith-task-item {
+        flex-wrap: wrap;
+        padding: 10px 12px;
+        gap: 10px;
+    }
+
+    /* The checkbox and the text share the first line; `width: 100%` is what
+       pushes the cluster onto its own. */
+    .zenith-task-item__actions {
+        order: 3;
+        width: 100%;
+        justify-content: flex-end;
+        gap: 2px;
+        margin-top: 2px;
+        padding-top: 8px;
+        border-top: 1px solid var(--background-modifier-border);
+        /* Nothing hovers on a phone: hiding these would hide them for good. */
+        opacity: 1;
+    }
+
+    .zenith-task-item__action {
+        width: 34px;
+        height: 34px;
+    }
+
+    /* Subtask rows keep their actions inline — a second stacked cluster per
+       subtask would cost more height than the tree itself — but they are
+       revealed rather than hidden behind a hover that cannot happen. */
+    .zenith-subtask__actions {
+        opacity: 1;
+        max-width: 120px;
+    }
+    .zenith-subtask__action {
+        width: 26px;
+        height: 26px;
+    }
+    .zenith-subtask--add {
+        display: flex;
+    }
+    /* The play buttons stay out of the way until a row is tapped. One per
+       subtask, all showing at once, turned the tree into a column of
+       triangles; a running timer is the exception and never hides. */
+    .zenith-subtask .zenith-timer:not(.is-running) {
+        opacity: 0;
+        pointer-events: none;
+    }
+    .zenith-subtask:focus-within .zenith-timer:not(.is-running) {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Titles wrap instead of ending in an ellipsis. On a phone the whole task
+       is two or three words wide, and "Скопировать все …" is not a task you
+       can recognise. */
+    /* Qualified by an ancestor on purpose. tasks-ui.css is imported after this
+       file and sets `white-space: nowrap` on the same single-class selector —
+       and `@container` adds no specificity of its own, so an equally specific
+       rule here would simply lose to the later file. */
+    .zenith-task-item .zenith-subtask {
+        align-items: flex-start;
+    }
+    .zenith-task-item .zenith-subtask__title,
+    .zenith-task-item__content .zenith-task-item__title {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: anywhere;
+    }
+    .zenith-task-item__content .zenith-task-item__title {
+        display: block;
+    }
+    /* The checkbox keeps to the first line of a title that now has several. */
+    .zenith-subtask .zenith-status__btn {
+        margin-top: 1px;
+    }
+
+    /* Shallower indents: four levels of 18px is most of a phone's width. */
+    .zenith-subtask-group {
+        padding-left: 12px;
+    }
+    .zenith-subtask-group::after {
+        width: 8px;
+    }
+
+    .zenith-task-meta {
+        gap: 4px;
+    }
+
+    /* Attachments and notes get the width the action cluster gave back. */
+    .zenith-task-notes {
+        font-size: 0.82rem;
+    }
+    /* A cap, not a size: a thumbnail set smaller than this stays smaller. */
+    .zenith-root button.zenith-attachments__image {
+        width: min(var(--zenith-thumb, 56px), 48px);
+        height: min(var(--zenith-thumb, 56px), 48px);
+    }
+    .zenith-root button.zenith-attachments__link {
+        max-width: 100%;
+    }
+    /* Four "add attachment" buttons do not fit one line on a phone. */
+    .zenith-attach__add {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+    .zenith-attach__btn {
+        justify-content: center;
+    }
+}
+
+/* Touch without the narrow pane — a tablet, or a phone held sideways. The
+   cluster can stay where it is; it just has to be visible and hittable. */
+@media (pointer: coarse) {
+    .zenith-task-item__actions,
+    .zenith-subtask__actions {
+        opacity: 1;
+    }
+    .zenith-subtask__actions {
+        max-width: 120px;
+    }
+    .zenith-task-item__action {
+        width: 34px;
+        height: 34px;
+    }
+    .zenith-subtask__action {
+        width: 26px;
+        height: 26px;
+    }
+    .zenith-subtask--add {
+        display: flex;
+    }
+}

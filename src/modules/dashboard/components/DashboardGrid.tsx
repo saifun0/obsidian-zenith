@@ -1,0 +1,749 @@
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FC } from 'react';
+import { AlertTriangle, Layers } from 'lucide-react';
+import { useApp } from '../../../context/AppContext';
+import { useZenithStore } from '../../../store';
+import { useTranslation } from '../../../core/i18n';
+import {
+    prettifyWidgetId,
+    useDashboardWidgets,
+    widgetSizes,
+    type DashboardWidgetContext,
+} from '../widgets';
+import {
+    addItem,
+    bottomOf,
+    compact,
+    layoutsEqual,
+    moveItem,
+    reconcileLayout,
+    removeItem,
+    repack,
+    setHeight,
+    setWidth,
+    resizeItem,
+    sortItems,
+    stackOrder,
+    type WidgetSizeInfo,
+} from '../grid/gridEngine';
+import { useGridDrag } from '../grid/useGridDrag';
+import {
+    MAX_ROWS,
+    SIZE_LABEL,
+    dimsOf,
+    normalizeGridConfig,
+    shouldStack,
+    pxHeight,
+    type GridConfig,
+    type WidgetLayoutItem,
+} from '../grid/gridTypes';
+import {
+    BUNDLE_MAX_MEMBERS,
+    addMember,
+    bundleSizes,
+    bundledWidgetIds,
+    isBundleId,
+    newBundleId,
+    normalizeBundles,
+    removeMember,
+    renameBundle,
+    reorderMembers,
+    setActive,
+    supportsSize,
+    type WidgetBundle,
+} from '../grid/bundleTypes';
+import { GridWidget } from './GridWidget';
+import { BundleCard } from './BundleCard';
+import { BundleInspector } from './BundleInspector';
+import { useBundleExpansion } from '../grid/useBundleExpansion';
+import { AddWidgetSheet, type AddableWidget } from './AddWidgetSheet';
+import { GridSettingsBar } from './GridSettingsBar';
+import { LayoutPresetsBar } from './LayoutPresetsBar';
+
+/**
+ * Arrow keys nudge the focused widget one cell — the keyboard equivalent of
+ * dragging, so arranging doesn't require a pointer at all.
+ */
+const ARROW_DELTA: Record<string, [number, number]> = {
+    ArrowLeft: [-1, 0],
+    ArrowRight: [1, 0],
+    ArrowUp: [0, -1],
+    ArrowDown: [0, 1],
+};
+
+/** Track an element's content width (0 until first measure). */
+function useElementWidth<T extends HTMLElement>(ref: React.RefObject<T>): number {
+    const [width, setWidth] = useState(0);
+
+    useLayoutEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        setWidth(el.getBoundingClientRect().width);
+        const ro = new ResizeObserver((entries) => {
+            const w = entries[0]?.contentRect.width ?? 0;
+            setWidth((prev) => (Math.abs(prev - w) < 0.5 ? prev : w));
+        });
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [ref]);
+
+    return width;
+}
+
+/** Running pixel tops for a one-column stack of the given items. */
+function stackGeometry(
+    items: WidgetLayoutItem[],
+    cfg: GridConfig
+): { tops: number[]; heights: number[]; total: number } {
+    const heights = items.map((i) => pxHeight(dimsOf(i, cfg.columns).h, cfg.rowHeight, cfg.gap));
+    const tops: number[] = [];
+    let y = 0;
+    for (const h of heights) {
+        tops.push(y);
+        y += h + cfg.gap;
+    }
+    return { tops, heights, total: Math.max(0, y - cfg.gap) };
+}
+
+interface DashboardGridProps {
+    editing: boolean;
+    onEditingChange: (editing: boolean) => void;
+}
+
+/**
+ * DashboardGrid — renders the widget grid from the saved layout.
+ *
+ * The saved layout is reconciled against what's actually registered on every
+ * render (see `reconcileLayout`): newly registered widgets get auto-placed,
+ * widgets from unloaded modules drop out, and the repaired result is written
+ * back so the two never drift apart.
+ *
+ * Below `GRID_STACK_BREAKPOINT` the grid becomes a single column. That view has
+ * its own order (`dashboardStackOrder`) so rearranging on a phone doesn't
+ * rewrite the grid arranged on a desktop. Both views position their cards
+ * absolutely, which lets the same drag code serve each of them.
+ */
+export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange }) => {
+    const { app, plugin } = useApp();
+    const ctx = useMemo<DashboardWidgetContext>(() => ({ app, plugin }), [app, plugin]);
+
+    const t = useTranslation();
+    const registered = useDashboardWidgets();
+    const savedLayout = useZenithStore((s) => s.settings.dashboardLayout);
+    const savedBundles = useZenithStore((s) => s.settings.dashboardBundles);
+    const savedStackOrder = useZenithStore((s) => s.settings.dashboardStackOrder);
+    const hiddenWidgetIds = useZenithStore((s) => s.settings.hiddenWidgetIds);
+    const widgetOrder = useZenithStore((s) => s.settings.widgetOrder);
+    const savedGrid = useZenithStore((s) => s.settings.dashboardGrid);
+    const updateSettings = useZenithStore((s) => s.updateSettings);
+
+    // Normalised on read as well as on load: settings can be replaced by any
+    // code path, and every measurement below divides by `columns`.
+    const cfg = useMemo(() => normalizeGridConfig(savedGrid), [savedGrid]);
+
+    const containerRef = useRef<HTMLDivElement>(null);
+    const width = useElementWidth(containerRef);
+    const stacked = shouldStack(width, cfg.columns, cfg.gap);
+
+    const defsById = useMemo(() => new Map(registered.map((def) => [def.id, def])), [registered]);
+    /** Presets per placeable item — widgets by their own, bundles by the
+     *  intersection of their members'. */
+    const sizesById = useMemo(() => {
+        const map = new Map(registered.map((def) => [def.id, widgetSizes(def)]));
+        return map;
+    }, [registered]);
+
+    /**
+     * Bundles, repaired against the registry: members whose module was disabled
+     * drop out, and a bundle left with one member stops being a bundle. Those
+     * freed widgets are handed back to the grid below rather than vanishing.
+     */
+    const { bundles, released } = useMemo(
+        () => normalizeBundles(savedBundles, new Set(registered.map((d) => d.id))),
+        [savedBundles, registered]
+    );
+
+    const inBundles = useMemo(() => bundledWidgetIds(bundles), [bundles]);
+
+    /**
+     * Widgets available for placement, in the user's preferred order. Widgets
+     * listed in `widgetOrder` come first; the rest keep registration order
+     * (which the registry already sorts by each widget's `order`).
+     *
+     * A bundle joins this list as a single entry — to the grid engine it's an
+     * item like any other — and its members drop out, because they're rendered
+     * inside it rather than beside it.
+     */
+    const available = useMemo<WidgetSizeInfo[]>(() => {
+        const rank = new Map(widgetOrder.map((id, i) => [id, i]));
+        const ordered = [...registered].sort((a, b) => {
+            const ra = rank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+            const rb = rank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+            return ra - rb;
+        });
+        const sizes = new Map(registered.map((def) => [def.id, widgetSizes(def)]));
+        return [
+            ...bundles.map((b) => ({ id: b.id, ...bundleSizes(b.members, sizes) })),
+            ...ordered
+                .filter((def) => !inBundles.has(def.id))
+                .map((def) => ({ id: def.id, ...widgetSizes(def) })),
+        ];
+    }, [registered, widgetOrder, bundles, inBundles]);
+
+    const layout = useMemo(
+        () => reconcileLayout(savedLayout, available, hiddenWidgetIds, cfg.columns),
+        [savedLayout, available, hiddenWidgetIds, cfg.columns]
+    );
+
+    // Bundles that lost members below the minimum released their leftovers —
+    // put them back on the grid instead of leaving them nowhere.
+    useEffect(() => {
+        if (released.length === 0) return;
+        updateSettings({
+            dashboardBundles: bundles,
+            hiddenWidgetIds: hiddenWidgetIds.filter((id) => !released.includes(id)),
+        });
+    }, [released, bundles, hiddenWidgetIds, updateSettings]);
+
+    // Persist the repaired layout so settings and reality stay in sync. Guarded
+    // by an equality check so this can't loop.
+    useEffect(() => {
+        if (!layoutsEqual(layout, savedLayout)) {
+            updateSettings({ dashboardLayout: layout });
+        }
+    }, [layout, savedLayout, updateSettings]);
+
+    /** Presets for anything the grid can place, bundles included. */
+    const presetsFor = useCallback(
+        (id: string) =>
+            isBundleId(id)
+                ? bundleSizes(bundles.find((b) => b.id === id)?.members ?? [], sizesById)
+                : sizesById.get(id),
+        [bundles, sizesById]
+    );
+
+    const colWidth = width > 0 ? (width - (cfg.columns - 1) * cfg.gap) / cfg.columns : 0;
+
+    const commitBundles = useCallback(
+        (next: WidgetBundle[]) => updateSettings({ dashboardBundles: next }),
+        [updateSettings]
+    );
+
+    const commitLayout = useCallback(
+        (next: WidgetLayoutItem[]) => updateSettings({ dashboardLayout: next }),
+        [updateSettings]
+    );
+    const commitStackOrder = useCallback(
+        (ids: string[]) => updateSettings({ dashboardStackOrder: ids }),
+        [updateSettings]
+    );
+    const enterEditing = useCallback(() => onEditingChange(true), [onEditingChange]);
+
+    /**
+     * Removal has to record the widget in `hiddenWidgetIds` as well — otherwise
+     * `reconcileLayout` would treat it as newly registered and put it straight
+     * back on the next render.
+     */
+    const removeWidget = useCallback(
+        (id: string) => {
+            // Taking a bundle off the dashboard dissolves it rather than hiding
+            // it: a hidden bundle would keep owning its members, and they'd be
+            // gone from both the grid and the add panel with no way back.
+            if (isBundleId(id)) {
+                updateSettings({
+                    dashboardBundles: bundles.filter((b) => b.id !== id),
+                    dashboardLayout: removeItem(layout, id, cfg.columns),
+                    hiddenWidgetIds: [
+                        ...hiddenWidgetIds,
+                        ...(bundles.find((b) => b.id === id)?.members ?? []),
+                    ],
+                });
+                return;
+            }
+            updateSettings({
+                hiddenWidgetIds: hiddenWidgetIds.includes(id)
+                    ? hiddenWidgetIds
+                    : [...hiddenWidgetIds, id],
+                dashboardLayout: removeItem(layout, id, cfg.columns),
+            });
+        },
+        [bundles, hiddenWidgetIds, layout, updateSettings, cfg.columns]
+    );
+
+    const addWidget = useCallback(
+        (id: string) => {
+            const size = presetsFor(id)?.defaultSize ?? 'sm';
+            updateSettings({
+                hiddenWidgetIds: hiddenWidgetIds.filter((h) => h !== id),
+                dashboardLayout: addItem(layout, id, size, cfg.columns),
+            });
+        },
+        [hiddenWidgetIds, layout, presetsFor, updateSettings, cfg.columns]
+    );
+
+    // ── Bundle operations ────────────────────────────
+
+    /** Take a widget out of its bundle and give it its own cell again. */
+    const extractMember = useCallback(
+        (bundleId: string, widgetId: string) => {
+            if (!bundles.some((b) => b.id === bundleId)) return;
+            const result = removeMember(bundles, bundleId, widgetId);
+            const size = sizesById.get(widgetId)?.defaultSize ?? 'sm';
+
+            // Once one member is left the bundle dissolves, and the survivor
+            // takes over the cell — so nothing appears to move. The extracted
+            // widget goes to the first free spot.
+            const survivor = result.dissolvedInto;
+            const withSurvivor = survivor
+                ? layout.map((i) => (i.id === bundleId ? { ...i, id: survivor } : i))
+                : layout;
+            const nextLayout = addItem(withSurvivor, widgetId, size, cfg.columns);
+
+            updateSettings({
+                dashboardBundles: result.bundles,
+                dashboardLayout: nextLayout,
+                hiddenWidgetIds: hiddenWidgetIds.filter((h) => h !== widgetId),
+            });
+        },
+        [bundles, layout, sizesById, cfg.columns, hiddenWidgetIds, updateSettings]
+    );
+
+    const handleItemKey = useCallback(
+        (e: React.KeyboardEvent, item: WidgetLayoutItem) => {
+            const delta = ARROW_DELTA[e.key];
+            if (!delta) return;
+            e.preventDefault();
+            commitLayout(moveItem(layout, item.id, item.x + delta[0], item.y + delta[1], cfg.columns));
+        },
+        [commitLayout, layout, cfg.columns]
+    );
+
+    const describe = useCallback(
+        (def: (typeof registered)[number]): AddableWidget => ({
+            id: def.id,
+            label: def.title ?? prettifyWidgetId(def.id),
+            icon: def.icon,
+            description: def.description,
+            defaultSize: widgetSizes(def).defaultSize,
+        }),
+        []
+    );
+
+    /** Registered widgets that aren't currently on the grid. */
+    const addable = useMemo<AddableWidget[]>(() => {
+        const placed = new Set(layout.map((i) => i.id));
+        return registered.filter((def) => !placed.has(def.id)).map(describe);
+    }, [registered, layout, describe]);
+
+    /** Widgets already on the grid — listed as "added" so the sheet shows the
+        whole catalogue rather than looking empty once everything is placed. */
+    const placedWidgets = useMemo<AddableWidget[]>(() => {
+        const placed = new Set(layout.map((i) => i.id));
+        return registered.filter((def) => placed.has(def.id)).map(describe);
+    }, [registered, layout, describe]);
+
+    // Committed one-column order and its geometry (what a drag measures against).
+    const stackItems = useMemo(() => stackOrder(layout, savedStackOrder), [layout, savedStackOrder]);
+    const committedStack = useMemo(() => stackGeometry(stackItems, cfg), [stackItems, cfg]);
+
+    /**
+     * Two widgets merge; a widget joins a bundle. Two bundles don't merge —
+     * the members would have to be concatenated and one of the two names
+     * silently thrown away, and there's no reading of that a user could predict.
+     */
+    const canMerge = useCallback(
+        (sourceId: string, targetId: string) => {
+            if (isBundleId(sourceId)) return false;
+            const target = bundles.find((b) => b.id === targetId);
+            if (target) return target.members.length < BUNDLE_MAX_MEMBERS;
+            return !isBundleId(targetId);
+        },
+        [bundles]
+    );
+
+    /** Drop a widget onto another card: join its bundle, or start a new one. */
+    const mergeInto = useCallback(
+        (sourceId: string, targetId: string) => {
+            const existing = bundles.find((b) => b.id === targetId);
+            if (existing) {
+                updateSettings({
+                    dashboardBundles: addMember(bundles, existing.id, sourceId),
+                    dashboardLayout: removeItem(layout, sourceId, cfg.columns),
+                });
+                return;
+            }
+            // A new bundle takes over the target's cell — the receiving card
+            // keeps its place and size, the dragged one gives up its own.
+            const id = newBundleId(bundles);
+            const bundle: WidgetBundle = {
+                id,
+                members: [targetId, sourceId],
+                activeId: sourceId,
+            };
+            const withoutSource = removeItem(layout, sourceId, cfg.columns);
+            updateSettings({
+                dashboardBundles: [...bundles, bundle],
+                dashboardLayout: withoutSource.map((i) => (i.id === targetId ? { ...i, id } : i)),
+            });
+        },
+        [bundles, layout, cfg.columns, updateSettings]
+    );
+
+    const drag = useGridDrag({
+        layout,
+        stackItems,
+        stackTops: committedStack.tops,
+        stackHeights: committedStack.heights,
+        colWidth,
+        cols: cfg.columns,
+        rowHeight: cfg.rowHeight,
+        gap: cfg.gap,
+        editing,
+        stacked,
+        containerRef,
+        canMerge,
+        onMerge: mergeInto,
+        onCommitLayout: commitLayout,
+        onCommitStackOrder: commitStackOrder,
+        onLongPress: enterEditing,
+    });
+
+    const expansion = useBundleExpansion({ containerRef });
+
+    // An expansion for a bundle that no longer exists would keep growing a cell
+    // that isn't there.
+    useEffect(() => {
+        expansion.prune(new Set(bundles.map((b) => b.id)));
+    }, [bundles, expansion]);
+
+    // While dragging, everyone re-flows around the dragged widget live. Expanded
+    // bundles are taller before that reflow runs, so the neighbours below them
+    // land in the right place.
+    const withExpansion = useMemo(
+        () => expansion.apply(layout, bundles, cfg.rowHeight, cfg.gap, cfg.columns),
+        [expansion, layout, bundles, cfg.rowHeight, cfg.gap, cfg.columns]
+    );
+    const effective = drag.preview ?? (withExpansion === layout ? layout : compact(withExpansion, cfg.columns));
+    const effectiveStack = useMemo(() => {
+        if (!drag.stackPreview) return stackItems;
+        const byId = new Map(stackItems.map((i) => [i.id, i]));
+        return drag.stackPreview
+            .map((id) => byId.get(id))
+            .filter((i): i is WidgetLayoutItem => !!i);
+    }, [drag.stackPreview, stackItems]);
+    const liveStack = useMemo(() => stackGeometry(effectiveStack, cfg), [effectiveStack, cfg]);
+    const stackIndexById = useMemo(
+        () => new Map(effectiveStack.map((i, idx) => [i.id, idx])),
+        [effectiveStack]
+    );
+
+    // Nothing placed and not arranging: nudge the user rather than show a void.
+    // While arranging, fall through so the add panel below is reachable.
+    if (layout.length === 0 && !editing) {
+        return (
+            <div className="zenith-dashboard__empty">
+                {t(addable.length > 0 ? 'dashboard.empty' : 'dashboard.noWidgets')}
+            </div>
+        );
+    }
+
+    const cellStyle = (item: WidgetLayoutItem): CSSProperties => {
+        const { w, h } = dimsOf(item, cfg.columns);
+        if (stacked) {
+            const idx = stackIndexById.get(item.id) ?? 0;
+            return {
+                transform: `translate3d(0, ${liveStack.tops[idx] ?? 0}px, 0)`,
+                width: '100%',
+                height: pxHeight(h, cfg.rowHeight, cfg.gap),
+            };
+        }
+        return {
+            transform: `translate3d(${item.x * (colWidth + cfg.gap)}px, ${
+                item.y * (cfg.rowHeight + cfg.gap)
+            }px, 0)`,
+            width: w * colWidth + (w - 1) * cfg.gap,
+            height: pxHeight(h, cfg.rowHeight, cfg.gap),
+        };
+    };
+
+    /** The dragged widget follows the pointer from where it actually sits. */
+    const dragStyle = (item: WidgetLayoutItem): CSSProperties => {
+        const committed = layout.find((i) => i.id === item.id) ?? item;
+        const { w, h } = dimsOf(committed, cfg.columns);
+        if (stacked) {
+            const idx = stackItems.findIndex((i) => i.id === item.id);
+            const top = (committedStack.tops[idx] ?? 0) + drag.offset.dy;
+            return {
+                transform: `translate3d(0, ${top}px, 0)`,
+                width: '100%',
+                height: pxHeight(h, cfg.rowHeight, cfg.gap),
+            };
+        }
+        return {
+            transform: `translate3d(${
+                committed.x * (colWidth + cfg.gap) + drag.offset.dx
+            }px, ${committed.y * (cfg.rowHeight + cfg.gap) + drag.offset.dy}px, 0)`,
+            width: w * colWidth + (w - 1) * cfg.gap,
+            height: pxHeight(h, cfg.rowHeight, cfg.gap),
+        };
+    };
+
+    // While a merge is armed the landing-spot highlight is suppressed: the card
+    // isn't going to land in a cell, and showing both signals at once would ask
+    // the user to guess which one wins.
+    const dropTarget =
+        drag.dragId && !drag.mergeTargetId
+            ? (stacked ? effectiveStack : effective).find((i) => i.id === drag.dragId)
+            : undefined;
+
+    const mergeRect = drag.mergeTargetId
+        ? layout.find((i) => i.id === drag.mergeTargetId)
+        : undefined;
+    const mergeLabel = drag.mergeTargetId
+        ? (() => {
+              const source = drag.dragId ?? '';
+              const size = layout.find((i) => i.id === drag.mergeTargetId)?.size ?? 'md';
+              return supportsSize(source, size, sizesById)
+                  ? { text: t('dashboard.bundle.mergeHint'), warn: false }
+                  : {
+                        text: t('dashboard.bundle.mergeSizeHint', {
+                            name: defsById.get(source)?.title ?? prettifyWidgetId(source),
+                            size: SIZE_LABEL[size],
+                        }),
+                        warn: true,
+                    };
+          })()
+        : null;
+
+    const rendered = stacked ? effectiveStack : sortItems(effective);
+
+    return (
+        <>
+            <div
+                ref={containerRef}
+                className={`zenith-grid ${stacked ? 'is-stacked' : ''} ${
+                    editing ? 'is-editing' : ''
+                } ${drag.dragId ? 'is-dragging-any' : ''} ${
+                    drag.mergeTargetId ? 'is-merging' : ''
+                }`}
+                style={{
+                    height: stacked
+                        ? liveStack.total
+                        : pxHeight(bottomOf(effective, cfg.columns), cfg.rowHeight, cfg.gap),
+                }}
+            >
+                {/* Where the dragged widget will land. */}
+                {dropTarget && <div className="zenith-grid__placeholder" style={cellStyle(dropTarget)} />}
+
+                {/* Held long enough over another card: this is what release does. */}
+                {mergeRect && mergeLabel && (
+                    <div
+                        className={`zenith-grid__merge ${mergeLabel.warn ? 'is-warning' : ''}`}
+                        style={cellStyle(mergeRect)}
+                    >
+                        <span className="zenith-grid__merge-badge">
+                            {mergeLabel.warn ? <AlertTriangle size={13} /> : <Layers size={13} />}
+                            {mergeLabel.text}
+                        </span>
+                    </div>
+                )}
+
+                {/* Wait for the first measure so widgets don't flash at x=0. */}
+                {width > 0 &&
+                    rendered.map((item) => {
+                        const isDragging = drag.dragId === item.id;
+                        const presets = presetsFor(item.id);
+                        const bundle = bundles.find((b) => b.id === item.id);
+
+                        // A bundle is a grid item like any other — same cell
+                        // chrome, same drag handles, same size panel — but its
+                        // body is the bundle rather than one widget's component.
+                        if (bundle) {
+                            return (
+                                <GridWidget
+                                    key={item.id}
+                                    def={{
+                                        id: bundle.id,
+                                        bare: true,
+                                        title: bundle.name,
+                                        icon: 'layers',
+                                    }}
+                                    ctx={ctx}
+                                    style={isDragging ? dragStyle(item) : cellStyle(item)}
+                                    editing={editing}
+                                    dragging={isDragging}
+                                    dragProps={{
+                                        ...drag.getItemProps(item.id),
+                                        tabIndex: editing && !stacked ? 0 : undefined,
+                                        onKeyDown:
+                                            editing && !stacked
+                                                ? (e: React.KeyboardEvent) => handleItemKey(e, item)
+                                                : undefined,
+                                        ...(drag.mergeTargetId === item.id
+                                            ? { 'data-merge-target': '' }
+                                            : {}),
+                                    }}
+                                    panelExtra={
+                                        <BundleInspector
+                                            bundle={bundle}
+                                            members={bundle.members.map((id) => ({
+                                                id,
+                                                label:
+                                                    defsById.get(id)?.title ?? prettifyWidgetId(id),
+                                                sizes: sizesById.get(id)?.sizes ?? [],
+                                            }))}
+                                            onRename={(name) =>
+                                                commitBundles(
+                                                    renameBundle(bundles, bundle.id, name)
+                                                )
+                                            }
+                                            onExtract={(widgetId) =>
+                                                extractMember(bundle.id, widgetId)
+                                            }
+                                        />
+                                    }
+                                    size={item.size}
+                                    sizes={presets?.sizes ?? [item.size]}
+                                    width={dimsOf(item, cfg.columns).w}
+                                    columns={cfg.columns}
+                                    height={dimsOf(item, cfg.columns).h}
+                                    maxRows={MAX_ROWS}
+                                    customWidth={item.w != null || item.h != null}
+                                    onSetWidth={(w) =>
+                                        commitLayout(setWidth(layout, item.id, w, cfg.columns))
+                                    }
+                                    onSetHeight={(h) =>
+                                        commitLayout(setHeight(layout, item.id, h, cfg.columns))
+                                    }
+                                    onResize={(next) =>
+                                        commitLayout(resizeItem(layout, item.id, next, cfg.columns))
+                                    }
+                                    onRemove={() => removeWidget(item.id)}
+                                >
+                                    <BundleCard
+                                        bundle={bundle}
+                                        defsById={defsById}
+                                        ctx={ctx}
+                                        size={item.size}
+                                        unsupported={
+                                            new Set(
+                                                bundle.members.filter(
+                                                    (m) => !supportsSize(m, item.size, sizesById)
+                                                )
+                                            )
+                                        }
+                                        expanded={expansion.isExpanded(bundle.id)}
+                                        editing={editing}
+                                        baseHeight={pxHeight(
+                                            dimsOf(
+                                                layout.find((i) => i.id === bundle.id) ?? item,
+                                                cfg.columns
+                                            ).h,
+                                            cfg.rowHeight,
+                                            cfg.gap
+                                        )}
+                                        onSetActive={(widgetId) =>
+                                            commitBundles(setActive(bundles, bundle.id, widgetId))
+                                        }
+                                        onToggleExpanded={() => expansion.toggle(bundle.id)}
+                                        onExtract={
+                                            editing
+                                                ? (widgetId) => extractMember(bundle.id, widgetId)
+                                                : undefined
+                                        }
+                                        onReorder={
+                                            editing
+                                                ? (widgetId, index) =>
+                                                      commitBundles(
+                                                          reorderMembers(
+                                                              bundles,
+                                                              bundle.id,
+                                                              widgetId,
+                                                              index
+                                                          )
+                                                      )
+                                                : undefined
+                                        }
+                                    />
+                                </GridWidget>
+                            );
+                        }
+
+                        const def = defsById.get(item.id);
+                        if (!def) return null;
+                        return (
+                            <GridWidget
+                                key={item.id}
+                                def={def}
+                                ctx={ctx}
+                                style={isDragging ? dragStyle(item) : cellStyle(item)}
+                                editing={editing}
+                                dragging={isDragging}
+                                dragProps={{
+                                    ...drag.getItemProps(item.id),
+                                    // Focusable only while arranging, so tab order
+                                    // stays clean during normal use.
+                                    tabIndex: editing && !stacked ? 0 : undefined,
+                                    onKeyDown:
+                                        editing && !stacked
+                                            ? (e: React.KeyboardEvent) => handleItemKey(e, item)
+                                            : undefined,
+                                    'aria-label':
+                                        editing && !stacked
+                                            ? t('dashboard.widget.arrangeHint', {
+                                                  name: def.title ?? prettifyWidgetId(def.id),
+                                              })
+                                            : undefined,
+                                }}
+                                size={item.size}
+                                sizes={presets?.sizes ?? [item.size]}
+                                width={dimsOf(item, cfg.columns).w}
+                                columns={cfg.columns}
+                                height={dimsOf(item, cfg.columns).h}
+                                maxRows={MAX_ROWS}
+                                customWidth={item.w != null || item.h != null}
+                                onSetWidth={(w) =>
+                                    commitLayout(setWidth(layout, item.id, w, cfg.columns))
+                                }
+                                onSetHeight={(h) =>
+                                    commitLayout(setHeight(layout, item.id, h, cfg.columns))
+                                }
+                                onResize={(next) =>
+                                    commitLayout(resizeItem(layout, item.id, next, cfg.columns))
+                                }
+                                onRemove={() => removeWidget(item.id)}
+                            />
+                        );
+                    })}
+            </div>
+
+            {editing && (
+                <GridSettingsBar
+                    config={cfg}
+                    stacked={stacked}
+                    onChange={(next) =>
+                        updateSettings(
+                            // A new column count invalidates every saved x, so
+                            // re-lay the grid in reading order rather than
+                            // letting compaction push widgets downwards.
+                            next.columns === cfg.columns
+                                ? { dashboardGrid: next }
+                                : { dashboardGrid: next, dashboardLayout: repack(layout, next.columns) }
+                        )
+                    }
+                />
+            )}
+
+            {editing && <LayoutPresetsBar />}
+
+            {editing && (
+                <AddWidgetSheet
+                    widgets={addable}
+                    placed={placedWidgets}
+                    columns={cfg.columns}
+                    onAdd={addWidget}
+                    onRemove={removeWidget}
+                />
+            )}
+        </>
+    );
+};

@@ -1,0 +1,402 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Base Styles, Typography, Utilities
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ── Root Container ─────────────────────────────── */
+.zenith-root {
+    font-family: var(--zenith-font);
+    color: var(--zenith-text-normal);
+    background: var(--zenith-bg-primary);
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Lucide icon sizing guard ───────────────────────
+   Obsidian's app stylesheet sets a global `svg` width, which collapses our
+   lucide icons to half-width (e.g. a 16×16 refresh icon renders 8×16). Lucide
+   icons carry their intended square size in their width/height attributes, so
+   we revert width/height to `auto` (the intrinsic attribute size) and stop any
+   flex container from shrinking them. Scoped to `svg.lucide` so it never
+   touches our hand-authored SVGs (pie chart, etc.). */
+.zenith-root svg.lucide,
+.zenith-settings svg.lucide,
+.zenith-quick-add svg.lucide,
+.zenith-status__menu svg.lucide {
+    width: auto !important;
+    height: auto !important;
+    flex-shrink: 0;
+}
+
+/* ── Select affordance ──────────────────────────────
+   Native selects render inconsistently (and their value text can be clipped on
+   some platforms), so we strip the native chrome and draw our own up/down
+   chevron on the right, keeping the value legible. */
+.zenith-root select,
+.zenith-settings select,
+.zenith-quick-add select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%238a8f98'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m7%2015%205%205%205-5'/%3E%3Cpath%20d='m7%209%205-5%205%205'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 9px center !important;
+    background-size: 13px !important;
+    padding-right: 30px !important;
+    /* Give the value room so it isn't vertically clipped by tight padding. */
+    min-height: 36px;
+    font-size: 0.86rem;
+    line-height: 1.3;
+    cursor: pointer;
+}
+/* Options render in a native popup — keep them at a comfortable, readable size. */
+.zenith-root select option,
+.zenith-settings select option {
+    font-size: 0.9rem;
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+
+/* ── Scrollbar ──────────────────────────────────── */
+.zenith-root::-webkit-scrollbar {
+    width: 6px;
+}
+
+.zenith-root::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.zenith-root::-webkit-scrollbar-thumb {
+    background: var(--zenith-border);
+    border-radius: 3px;
+}
+
+.zenith-root::-webkit-scrollbar-thumb:hover {
+    background: var(--zenith-text-faint);
+}
+
+/* ── Typography ─────────────────────────────────── */
+.zenith-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--zenith-text-normal);
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.zenith-serif {
+    font-family: var(--zenith-font-serif);
+}
+
+.zenith-text {
+    font-size: 0.875rem;
+    color: var(--zenith-text-normal);
+    line-height: 1.5;
+}
+
+.zenith-text--muted {
+    font-size: 0.8rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-text--faint {
+    font-size: 0.75rem;
+    color: var(--zenith-text-faint);
+}
+
+/* ── Empty State ────────────────────────────────── */
+.zenith-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--zenith-space-2xl) var(--zenith-space-lg);
+    text-align: center;
+    animation: zenith-fade-in var(--zenith-transition-slow) ease;
+}
+
+.zenith-empty-state__icon {
+    font-size: 3rem;
+    margin-bottom: var(--zenith-space-md);
+    opacity: 0.6;
+}
+
+.zenith-empty-state__text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--zenith-text-muted);
+    margin: 0 0 var(--zenith-space-xs);
+}
+
+/* ── Loading Spinner ────────────────────────────── */
+.zenith-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--zenith-space-md);
+    padding: var(--zenith-space-2xl);
+    color: var(--zenith-text-muted);
+    font-size: 0.875rem;
+}
+
+.zenith-loading__spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--zenith-border);
+    border-top-color: var(--zenith-accent);
+    border-radius: 50%;
+    animation: zenith-spin 0.7s linear infinite;
+}
+
+/* ── Utility: spinning icon ─────────────────────── */
+.zenith-spin {
+    animation: zenith-spin 0.7s linear infinite;
+}
+
+/* ── Keyframe Animations ────────────────────────── */
+@keyframes zenith-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes zenith-slide-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes zenith-slide-down {
+    from { opacity: 0; transform: translateY(-8px); max-height: 0; }
+    to { opacity: 1; transform: translateY(0); max-height: 500px; }
+}
+
+@keyframes zenith-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes zenith-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes zenith-scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes zenith-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ── File-explorer folder/file icons ────────────────── */
+.zenith-nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* The explorer row aligns children to the text baseline, which pushes a
+       small inline-flex icon upward. Force this item to center vertically. */
+    align-self: center;
+    vertical-align: middle;
+    line-height: 0;
+    margin-right: 5px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+.zenith-nav-icon svg {
+    display: block;
+    width: 16px !important;
+    height: 16px !important;
+}
+.nav-folder-title.zenith-has-icon .nav-folder-collapse-indicator {
+    margin-right: 0;
+}
+.zenith-obsidian-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-normal);
+}
+
+/* ── Icon picker modal ──────────────────────────────── */
+.zenith-icon-picker__search {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 12px;
+    padding: 8px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    outline: none;
+}
+.zenith-icon-picker__search:focus {
+    border-color: var(--interactive-accent);
+}
+/* The picker is sectioned now (packs, then built-ins), so the scroll belongs to
+   the wrapper — a per-section scroller would give every pack its own tiny
+   scrollbar and hide the built-in set below the fold. */
+.zenith-icon-picker__grid-wrap {
+    max-height: 340px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+.zenith-icon-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 6px;
+}
+.zenith-icon-picker__section {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 14px 0 7px;
+}
+.zenith-icon-picker__grid-wrap > .zenith-icon-picker__section:first-child {
+    margin-top: 0;
+}
+.zenith-icon-picker__section-title {
+    font-size: 0.68rem;
+    font-weight: 650;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.zenith-icon-picker__section-sub {
+    font-size: 0.72rem;
+    color: var(--text-faint);
+}
+.zenith-icon-picker__item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+.zenith-icon-picker__item svg {
+    width: 20px !important;
+    height: 20px !important;
+}
+.zenith-icon-picker__item:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--interactive-accent);
+}
+.zenith-icon-picker__item.is-current {
+    border-color: var(--interactive-accent);
+    background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+}
+.zenith-icon-picker__empty {
+    padding: 24px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* ── Custom icons (packs and modules) ───────────────── */
+/* Mirrors .zenith-obsidian-icon: the host span must not add a line box, or an
+   icon inside a flex row sits a couple of pixels below its label. */
+.zenith-custom-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.zenith-custom-icon svg {
+    display: block;
+}
+
+/* ── Vault scaffold modal ───────────────────────────── */
+.zenith-scaffold__folders {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0 16px;
+}
+.zenith-scaffold__folder {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    font-size: 0.82rem;
+}
+/* The chips preview the icon each folder will get, so the button's promise is
+   visible before it is taken. */
+.zenith-scaffold__folder-icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-muted);
+}
+.zenith-scaffold__folder-icon svg {
+    display: block;
+}
+.zenith-scaffold__warn {
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--color-orange, #e0a030) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-orange, #e0a030) 40%, transparent);
+    margin-bottom: 16px;
+}
+.zenith-scaffold__warn-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+.zenith-scaffold__preview {
+    font-size: 0.8rem;
+    color: var(--text-faint);
+    margin-top: 8px;
+    word-break: break-word;
+}
+.zenith-scaffold__note {
+    color: var(--text-muted);
+}
+.zenith-scaffold__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+/* ── Prompt modal ────────────────────────────────────
+   Obsidian has no prompt of its own and the browser's is blocked in the app,
+   so anything asking for a name brings this. Styled off Obsidian's own vars
+   rather than the --zenith-* ones: a Modal is portalled to <body>, outside
+   .zenith-root, where those tokens aren't defined. */
+.zenith-prompt__input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 0.92rem;
+}
+.zenith-prompt__input:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+}
+.zenith-prompt__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+/* ── While a drag is in progress ─────────────────────
+   Set on <body> for the duration of a pointer drag: without it the pointer
+   sweeps a text selection across every row it crosses, and the caret cursor
+   flickers over the whole list. */
+body.zenith-is-dragging {
+    cursor: grabbing;
+    user-select: none;
+    -webkit-user-select: none;
+}

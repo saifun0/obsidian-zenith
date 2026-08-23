@@ -1,0 +1,425 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Shared dialog shell, form controls, star rating
+
+   The dialog portals to <body>, i.e. outside `.zenith-root`'s subtree, so its
+   own root re-declares that class to pull in the design tokens and the lucide
+   icon-size guard. Buttons are scoped parent + tag so Obsidian's global
+   `button` box (background + inset shadow) loses on specificity.
+
+   NAMING: this shell is `zenith-dialog`, *not* `zenith-modal`. The tasks editor
+   (`tasks-ui.css`) already owns `.zenith-modal` + `.zenith-modal__header/
+   __body/__footer/__close` — and there `.zenith-modal` is the *panel*, not the
+   scrim. Because `tasks-ui.css` is imported after this file, that collision
+   silently pinned the scrim to `max-width: 520px` with a background, border and
+   16px radius: the dialog rendered as a small card in the top-left corner that
+   looked like a second window. Anything generic added here (`.zenith-btn`,
+   `.zenith-field*`) must be scoped under `.zenith-dialog` for the same reason.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ── Scrim ──────────────────────────────────────── */
+.zenith-dialog {
+    position: fixed;
+    inset: 0;
+    /* Explicit viewport size as well as `inset: 0`, matching
+       `.zenith-weather-modal`: a transformed/filtered ancestor would otherwise
+       become the containing block and size the scrim to that box instead of the
+       window. border-box keeps the padding inside 100vw. */
+    box-sizing: border-box;
+    width: 100vw;
+    height: 100vh;
+    /* Dynamic viewport height where it exists. On iOS `100vh` is the height with
+       the browser chrome retracted, so a bottom sheet's lower edge ends up under
+       the home indicator; `100dvh` tracks the visible box instead. */
+    height: 100dvh;
+    /* `.zenith-root` scrolls view roots; the scrim must not. */
+    overflow: hidden;
+    z-index: var(--layer-modal, 100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--zenith-space-lg);
+    background: rgba(0, 0, 0, 0.55);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    animation: zenith-fade-in 0.15s ease;
+}
+
+/* A full-viewport backdrop-filter that is ALSO fading in makes the compositor
+   re-blur everything behind it every frame. Invisible on desktop; in Obsidian's
+   iOS WebView it is the single biggest source of jank when a dialog opens.
+   Touch devices get a heavier plain scrim, which reads the same and costs
+   nothing. */
+@media (pointer: coarse), (max-width: 640px) {
+    .zenith-dialog {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: rgba(0, 0, 0, 0.72);
+    }
+}
+
+.zenith-dialog * {
+    box-sizing: border-box;
+}
+
+/* ── Panel ──────────────────────────────────────── */
+.zenith-dialog__panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: min(88vh, 900px);
+    background: var(--zenith-bg-primary);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-lg);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    animation: zenith-scale-in var(--zenith-transition-slow);
+}
+
+.zenith-dialog__panel--sm { max-width: 420px; }
+.zenith-dialog__panel--md { max-width: 560px; }
+.zenith-dialog__panel--lg { max-width: 760px; }
+
+.zenith-dialog__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--zenith-space-md);
+    flex-shrink: 0;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--zenith-border);
+}
+
+.zenith-dialog__title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-dialog .zenith-dialog__close,
+.zenith-dialog button.zenith-dialog__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast);
+}
+
+.zenith-dialog button.zenith-dialog__close:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-dialog button.zenith-dialog__close--floating {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+}
+
+.zenith-dialog button.zenith-dialog__close--floating:hover {
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+}
+
+.zenith-dialog__body {
+    flex: 1;
+    min-height: 0;
+    padding: 18px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.zenith-dialog__body--bare {
+    padding: 0;
+    display: flex;
+    overflow: hidden;
+}
+
+.zenith-dialog__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--zenith-space-sm);
+    flex-shrink: 0;
+    padding: 12px 18px;
+    border-top: 1px solid var(--zenith-border);
+    background: var(--zenith-bg-secondary);
+}
+
+/* ── Buttons (scoped to beat Obsidian's default button box) ── */
+.zenith-dialog button.zenith-btn,
+.zenith-dialog a.zenith-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: var(--zenith-radius-sm);
+    box-shadow: none;
+    font-size: 0.86rem;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast),
+        border-color var(--zenith-transition-fast), opacity var(--zenith-transition-fast);
+}
+
+.zenith-dialog button.zenith-btn--primary{
+    background: var(--zenith-accent);
+    color: var(--text-on-accent, #fff);
+}
+
+.zenith-dialog button.zenith-btn--primary:hover:not(:disabled){
+    background: var(--zenith-accent-hover);
+}
+
+.zenith-dialog button.zenith-btn--primary:disabled{
+    opacity: 0.5;
+    cursor: default;
+}
+
+.zenith-dialog button.zenith-btn--ghost,
+.zenith-dialog a.zenith-btn--ghost {
+    background: var(--zenith-bg-tertiary);
+    border-color: var(--zenith-border);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-dialog button.zenith-btn--ghost:hover,
+.zenith-dialog a.zenith-btn--ghost:hover {
+    background: var(--zenith-bg-hover);
+}
+
+/* ── Form primitives ──────────────────────────────
+   All scoped under `.zenith-dialog`: `tasks-ui.css` defines its own
+   `.zenith-field`, `.zenith-field__label` and `.zenith-btn` and is imported
+   later, so unscoped rules here would lose to it (and leak into the tasks
+   editor). See the naming note at the top of this file. */
+.zenith-dialog .zenith-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.zenith-dialog .zenith-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    /* tasks-ui.css gives `.zenith-field` flex: 1 — harmless in its row layout,
+       wrong in this column form. */
+    flex: 0 0 auto;
+}
+
+.zenith-dialog .zenith-field__label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-dialog .zenith-field__input{
+    width: 100%;
+    padding: 9px 11px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--zenith-text-normal);
+    background: var(--zenith-bg-tertiary);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    outline: none;
+    transition: border-color var(--zenith-transition-fast), box-shadow var(--zenith-transition-fast);
+}
+
+.zenith-dialog .zenith-field__input:focus{
+    border-color: var(--zenith-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--zenith-accent) 22%, transparent);
+}
+
+.zenith-dialog .zenith-field__select {
+    cursor: pointer;
+}
+
+.zenith-dialog .zenith-field__textarea {
+    resize: vertical;
+    min-height: 84px;
+    line-height: 1.5;
+}
+
+/* Two/three-up field rows that fold to one column on narrow panels. */
+.zenith-dialog .zenith-form__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+/* ── Star rating ────────────────────────────────── */
+.zenith-stars {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zenith-stars__row {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    outline: none;
+    border-radius: var(--zenith-radius-xs);
+}
+
+.zenith-stars.is-interactive .zenith-stars__row:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--zenith-accent) 45%, transparent);
+}
+
+.zenith-stars__star {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Gold star clipped to a fraction of its width = a half star. */
+.zenith-stars__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.zenith-stars__hit {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 50%;
+    cursor: pointer;
+}
+.zenith-stars__hit--left { left: 0; }
+.zenith-stars__hit--right { right: 0; }
+
+.zenith-stars.is-interactive .zenith-stars__star:hover {
+    transform: scale(1.12);
+    transition: transform var(--zenith-transition-fast);
+}
+
+.zenith-stars__value {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 3.2em;
+}
+
+.zenith-stars button.zenith-stars__clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--zenith-transition-fast), color var(--zenith-transition-fast);
+}
+
+.zenith-stars:hover button.zenith-stars__clear,
+.zenith-stars button.zenith-stars__clear:focus-visible {
+    opacity: 1;
+}
+
+.zenith-stars button.zenith-stars__clear:hover {
+    color: var(--zenith-danger);
+}
+
+/* ── Mobile: the panel becomes a bottom sheet ───── */
+@media (max-width: 640px) {
+    .zenith-dialog {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .zenith-dialog__panel {
+        max-width: none;
+        max-height: 94vh;
+        max-height: 94dvh;
+        height: auto;
+        border-radius: var(--zenith-radius-lg) var(--zenith-radius-lg) 0 0;
+        border-bottom: none;
+        animation: zenith-sheet-up var(--zenith-transition-slow);
+    }
+
+    .zenith-dialog__body {
+        padding: 16px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .zenith-dialog__footer {
+        padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .zenith-dialog__footer .zenith-btn {
+        flex: 1;
+    }
+}
+
+@keyframes zenith-sheet-up {
+    from { transform: translateY(14px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-dialog,
+    .zenith-dialog__panel {
+        animation: none;
+    }
+}
+
+/* Touch targets need room even when the pointer is coarse. */
+@media (pointer: coarse) {
+    .zenith-dialog .zenith-field__input {
+        padding: 11px 12px;
+        font-size: 16px; /* stops iOS/Android from zooming on focus */
+    }
+}
+
+/* Destructive action inside a dialog. Muted until hovered — a delete button
+   that shouts from the resting state makes every dialog feel dangerous. */
+.zenith-dialog button.zenith-btn--danger {
+    background: transparent;
+    border-color: var(--zenith-border);
+    color: var(--zenith-text-muted);
+}
+
+.zenith-dialog button.zenith-btn--danger:hover:not(:disabled) {
+    background: var(--zenith-danger-bg);
+    border-color: var(--zenith-danger);
+    color: var(--zenith-danger);
+}
+
+.zenith-dialog button.zenith-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}

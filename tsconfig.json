@@ -1,0 +1,35 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "rootDir": "src",
+        "outDir": "./dist",
+        "target": "ES2018",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "types": ["node", "react", "react-dom"],
+        "lib": ["DOM", "DOM.Iterable", "ES2018"],
+        "jsx": "react-jsx",
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "resolveJsonModule": true,
+        "inlineSourceMap": true,
+        "inlineSources": true,
+        "importHelpers": true
+    },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.tsx"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

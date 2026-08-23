@@ -1,0 +1,191 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Navigation launcher (dashboard widget)
+
+   Class names are `zenith-launcher__*` throughout: Zenith ships ONE global
+   stylesheet, so a generic name like `.zenith-btn` would collide with the
+   dialog styles that load after this file.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.zenith-launcher {
+    display: grid;
+    gap: var(--zenith-space-sm);
+    padding: var(--zenith-space-sm) var(--zenith-space-md) var(--zenith-space-md);
+    align-content: start;
+}
+
+/* Auto-fit rather than a fixed column count: the same widget is a quarter of a
+   6-column grid on desktop and the full width of a phone, and the buttons have
+   to stay legible in both without a media query per size preset. */
+.zenith-launcher--grid {
+    grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+}
+
+.zenith-launcher--grid.is-icons-only {
+    grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
+}
+
+.zenith-launcher--list {
+    grid-template-columns: 1fr;
+    gap: var(--zenith-space-xs);
+}
+
+/* ── Button ──────────────────────────────────────────
+   Scoped as parent + tag (specificity 0,2,1) on purpose: Obsidian styles bare
+   `button:not(.clickable-icon)` at 0,1,1 with its own background and
+   `--input-shadow`, which a plain class selector loses to — leaving the default
+   box drawn over ours in the resting and focused states. Every state below
+   repeats the scoping for the same reason. */
+.zenith-launcher button.zenith-launcher__btn {
+    /* `position` anchors the "already open" dot; `overflow` is the backstop
+       that keeps a long label inside the card even if a future layout forgets
+       to constrain it. */
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    min-width: 0;
+    padding: var(--zenith-space-sm) var(--zenith-space-md);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-tertiary);
+    color: var(--zenith-text-normal);
+    font-family: var(--zenith-font);
+    font-size: 0.82rem;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background var(--zenith-transition-fast),
+        border-color var(--zenith-transition-fast), transform var(--zenith-transition-fast);
+}
+
+.zenith-launcher--grid button.zenith-launcher__btn {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--zenith-space-xs);
+    text-align: center;
+    padding: var(--zenith-space-sm);
+    /* Two lines of label plus the icon, so a wrapped caption doesn't make one
+       button taller than the rest of its row. */
+    min-height: 76px;
+}
+
+.zenith-launcher--grid.is-icons-only button.zenith-launcher__btn {
+    min-height: 46px;
+}
+
+.zenith-launcher button.zenith-launcher__btn:hover {
+    background: var(--zenith-bg-hover);
+    border-color: color-mix(in srgb, var(--zenith-accent) 45%, transparent);
+    box-shadow: none;
+}
+
+.zenith-launcher button.zenith-launcher__btn:active {
+    transform: scale(0.97);
+    box-shadow: none;
+}
+
+.zenith-launcher button.zenith-launcher__btn:focus,
+.zenith-launcher button.zenith-launcher__btn:focus-visible {
+    box-shadow: none;
+    outline: none;
+}
+
+.zenith-launcher button.zenith-launcher__btn:focus-visible {
+    outline: 2px solid var(--zenith-accent);
+    outline-offset: 2px;
+}
+
+/* A view that already has a leaf: clicking jumps to it rather than opening
+   another copy. Said with a corner dot and the faintest tint — an accent
+   border here as well meant a dashboard with five open views was a wall of
+   outlines, which reads as five selected buttons rather than five open tabs. */
+.zenith-launcher button.zenith-launcher__btn.is-open {
+    background: color-mix(in srgb, var(--zenith-accent) 8%, var(--zenith-bg-tertiary));
+}
+
+.zenith-launcher__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--zenith-accent);
+}
+
+/* Anchored to the button, not to the icon: on the icon it sat exactly on the
+   top border and looked like a notch in the card. */
+.zenith-launcher__dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--zenith-accent);
+}
+
+/* `width: 100%` is load-bearing. The button is a column flex with centred
+   items, so this box would otherwise take its max-content width, spill past
+   the card and leave `text-overflow` with nothing to clip against. */
+.zenith-launcher__text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    width: 100%;
+    min-width: 0;
+}
+
+.zenith-launcher__label {
+    font-weight: 500;
+    line-height: 1.25;
+    min-width: 0;
+}
+
+/* Two lines rather than an ellipsis: a launcher's captions are short enough
+   that "Выбор изображе…" loses the word that identifies the button. */
+.zenith-launcher--grid .zenith-launcher__label {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.75rem;
+    overflow-wrap: anywhere;
+}
+
+.zenith-launcher--list .zenith-launcher__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zenith-launcher__desc {
+    font-size: 0.72rem;
+    color: var(--zenith-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Empty state ─────────────────────────────────── */
+.zenith-launcher__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--zenith-space-xs);
+    height: 100%;
+    padding: var(--zenith-space-lg) var(--zenith-space-md);
+    text-align: center;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-launcher__empty-title {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.zenith-launcher__empty-hint {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--zenith-text-faint);
+}

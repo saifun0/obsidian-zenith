@@ -1,0 +1,40 @@
+{
+    "name": "zenith-work",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Zenith — Obsidian life organizer plugin",
+    "main": "src/main.ts",
+    "scripts": {
+        "dev": "node esbuild.config.mjs",
+        "typecheck": "tsc --noEmit",
+        "build": "tsc --noEmit && node esbuild.config.mjs production",
+        "clean": "rimraf ../zenith/main.js ../zenith/styles.css",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "eslint \"src/**/*.{ts,tsx}\"",
+        "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
+        "version-bump": "node scripts/version-bump.mjs"
+    },
+    "dependencies": {
+        "lucide-react": "^0.511.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "zustand": "^5.0.5"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.39.4",
+        "@types/node": "^20.19.43",
+        "@types/react": "^18.3.18",
+        "@types/react-dom": "^18.3.5",
+        "builtin-modules": "^4.0.0",
+        "esbuild": "^0.25.0",
+        "eslint": "^9.39.4",
+        "eslint-plugin-obsidianmd": "^0.4.1",
+        "obsidian": "^1.8.7",
+        "prettier": "^3.9.4",
+        "typescript": "^5.7.3",
+        "typescript-eslint": "^8.63.0",
+        "vitest": "^2.1.9"
+    },
+    "allowScripts": {}
+}

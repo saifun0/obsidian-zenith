@@ -1,0 +1,171 @@
+/* ── Module tiles ──
+   Two or three per row instead of one full-width row each: seven built-in
+   modules as a list is a screen of mostly empty space, and the names are short
+   enough to scan in a grid. `auto-fill` rather than a fixed column count, so a
+   narrow settings pane on a phone degrades to a single column on its own. */
+.zenith-settings__module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+/* A tile plus whatever has to be said about it (a module that cannot run, and
+   why). Stacked in one cell so the warning stays attached to its module. */
+.zenith-settings__module-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.zenith-settings__module-cell .zenith-settings__hint {
+    margin-bottom: 0;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.76rem;
+}
+
+.zenith-checkbox-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    /* Fills its grid cell, so tiles in a row line up regardless of how long
+       their descriptions are. */
+    height: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid var(--background-modifier-border);
+    background: transparent;
+    cursor: pointer;
+    user-select: none;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.zenith-checkbox-card:hover {
+    background: color-mix(in srgb, var(--background-modifier-hover) 50%, transparent);
+}
+
+.zenith-checkbox-card.is-checked {
+    border-color: var(--interactive-accent);
+    background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+}
+
+.zenith-checkbox-card__input {
+    display: none !important;
+}
+
+/* Icon on the left, state on the right, gear between them. */
+.zenith-checkbox-card__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+/* A tinted square gives the icon somewhere to belong. Loose in the row it read
+   as decoration attached to neither the checkbox nor the title. */
+.zenith-checkbox-card__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
+}
+
+.zenith-checkbox-card.is-checked .zenith-checkbox-card__icon {
+    background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
+    color: var(--interactive-accent);
+}
+
+.zenith-checkbox-card__indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 1px solid var(--text-muted);
+    color: transparent;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.zenith-checkbox-card.is-checked .zenith-checkbox-card__indicator {
+    background: var(--interactive-accent);
+    border-color: var(--interactive-accent);
+    color: var(--background-primary);
+}
+
+/* `margin-left: auto` pushes the pair to the right edge; the gear keeps its
+   place in the row whether or not it is visible, so revealing it never nudges
+   the checkbox sideways. */
+.zenith-checkbox-card__settings {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0 !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--background-modifier-border) !important;
+    background: var(--background-primary) !important;
+    box-shadow: none !important;
+    color: var(--text-muted) !important;
+    cursor: pointer;
+    transition:
+        opacity 0.15s ease,
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.zenith-checkbox-card__settings:hover {
+    background: var(--background-modifier-hover) !important;
+    color: var(--text-normal) !important;
+    border-color: var(--interactive-accent) !important;
+}
+
+/* Hidden until the tile is hovered — but ONLY where hovering exists. On a
+   touch screen there is no hover to reveal it with, so it stays visible; a
+   control you cannot reach is worse than a slightly busier tile. Focus keeps it
+   visible too, so it is reachable from the keyboard. */
+@media (hover: hover) {
+    .zenith-checkbox-card__settings {
+        opacity: 0;
+    }
+
+    .zenith-checkbox-card:hover .zenith-checkbox-card__settings,
+    .zenith-checkbox-card__settings:focus-visible {
+        opacity: 1;
+    }
+}
+
+.zenith-checkbox-card__title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--text-normal);
+    transition: color 0.2s ease;
+}
+
+.zenith-checkbox-card.is-checked .zenith-checkbox-card__title {
+    color: var(--interactive-accent);
+}
+
+.zenith-checkbox-card__desc {
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+}

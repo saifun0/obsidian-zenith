@@ -1,0 +1,1899 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Dashboard (mobile-first, widget grid)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ── Container ───────────────────────────────────── */
+.zenith-dashboard {
+    padding: var(--zenith-space-lg) var(--zenith-space-md) var(--zenith-space-2xl);
+    max-width: 920px;
+    margin: 0 auto;
+    animation: zenith-fade-in var(--zenith-transition-slow);
+}
+
+@media (min-width: 720px) {
+    .zenith-dashboard {
+        padding: var(--zenith-space-xl) var(--zenith-space-xl) var(--zenith-space-2xl);
+    }
+}
+
+/* ── Header ──────────────────────────────────────── */
+.zenith-dashboard__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--zenith-space-md);
+    margin-bottom: var(--zenith-space-lg);
+}
+
+.zenith-dashboard__title {
+    font-size: 1.9rem;
+    font-weight: 500;
+    color: var(--zenith-text-normal);
+    margin: 0 0 2px;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+}
+
+@media (min-width: 720px) {
+    .zenith-dashboard__title {
+        font-size: 2.4rem;
+    }
+}
+
+.zenith-dashboard__date {
+    font-size: 0.85rem;
+    color: var(--zenith-text-muted);
+    margin: 0;
+}
+
+.zenith-dashboard__refresh {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--zenith-radius-md);
+    border: 1px solid var(--zenith-border);
+    background: var(--zenith-bg-secondary);
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    transition: all var(--zenith-transition-fast);
+}
+
+.zenith-dashboard__refresh:hover:not(:disabled) {
+    color: var(--zenith-text-normal);
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-dashboard__refresh:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.zenith-dashboard__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    flex-shrink: 0;
+}
+
+/* Edit-layout toggle, while active. */
+.zenith-dashboard__actions .zenith-dashboard__refresh.is-active {
+    color: var(--zenith-accent);
+    border-color: var(--zenith-accent);
+    background: color-mix(in srgb, var(--zenith-accent) 14%, transparent);
+}
+
+.zenith-dashboard__empty {
+    padding: var(--zenith-space-2xl) var(--zenith-space-md);
+    text-align: center;
+    color: var(--zenith-text-muted);
+    font-size: 0.9rem;
+}
+
+/* ── Widget Grid ─────────────────────────────────── */
+.zenith-dashboard__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--zenith-space-md);
+    align-items: start;
+}
+
+@media (min-width: 720px) {
+    .zenith-dashboard__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--zenith-space-lg);
+    }
+}
+
+.zenith-widget--full {
+    grid-column: 1 / -1;
+}
+
+/* ── Widget Card ─────────────────────────────────── */
+.zenith-widget-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--zenith-bg-secondary);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-lg);
+    box-shadow: var(--zenith-shadow-xs);
+    overflow: hidden;
+    animation: zenith-slide-up var(--zenith-transition-slow) ease both;
+    min-width: 0;
+}
+
+.zenith-widget-card__header {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    padding: var(--zenith-space-md) var(--zenith-space-md) 0;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-widget-card__title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.zenith-widget-card__body {
+    padding: var(--zenith-space-md);
+    min-width: 0;
+}
+
+.zenith-widget__dom {
+    min-height: 40px;
+}
+
+/* ── Clock Widget ────────────────────────────────── */
+/* Centred in its cell: the card is sized by the grid, so the stack sits in the
+   middle rather than hugging the top with dead space beneath it. */
+/* Two panes: the clock on the left, a month calendar on the right. */
+.zenith-clock {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--zenith-space-md);
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+    padding: var(--zenith-space-xs) 0;
+}
+
+/* ── Compact (narrow card): one pane at a time + floating toggle ──── */
+.zenith-clock.is-compact {
+    padding-right: 34px; /* reserve the strip the toggle floats in */
+}
+
+.zenith-clock.is-compact .zenith-clock__main {
+    flex: 1 1 auto;
+    align-items: center;
+    text-align: center;
+}
+
+.zenith-clock.is-compact .zenith-clock__time {
+    font-size: 3.2rem;
+}
+
+.zenith-clock.is-compact .zenith-cal {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+}
+
+/* Floating toggle — right edge, vertically centered. */
+.zenith-clock button.zenith-clock__toggle {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--zenith-border);
+    border-radius: 50%;
+    background: var(--zenith-bg-tertiary);
+    box-shadow: var(--zenith-shadow-sm);
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    z-index: 2;
+    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast),
+        transform var(--zenith-transition-fast);
+}
+
+.zenith-clock button.zenith-clock__toggle:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-accent);
+    box-shadow: var(--zenith-shadow-sm);
+    transform: translateY(-50%) scale(1.06);
+}
+
+.zenith-clock button.zenith-clock__toggle:active {
+    transform: translateY(-50%) scale(0.96);
+}
+
+/* ── Left pane: clock + date + day strip ──────────── */
+.zenith-clock__main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 3px;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.zenith-clock__time {
+    display: flex;
+    align-items: baseline;
+    font-size: 2.8rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-clock--md .zenith-clock__time,
+.zenith-clock--lg .zenith-clock__time {
+    font-size: 3.4rem;
+}
+
+/* Seconds ride small and faint, superscript-style, so the hero stays HH:MM. */
+.zenith-clock__seconds {
+    align-self: flex-start;
+    margin-left: 4px;
+    font-size: 0.95rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-clock--md .zenith-clock__seconds,
+.zenith-clock--lg .zenith-clock__seconds {
+    font-size: 1.15rem;
+}
+
+.zenith-clock__colon {
+    margin: 0 2px;
+    color: var(--zenith-text-muted);
+    animation: zenith-pulse 1.1s ease-in-out infinite;
+}
+
+.zenith-clock__weekday {
+    margin-top: 5px;
+    max-width: 100%;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    color: var(--zenith-text-normal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.zenith-clock__date {
+    font-size: 0.8rem;
+    color: var(--zenith-text-muted);
+}
+
+/* ── Day strip ───────────────────────────────────── */
+.zenith-clock__day {
+    width: 100%;
+    margin-top: var(--zenith-space-sm);
+}
+
+/* One tick per hour, so the strip reads as a clock face unrolled — you can see
+   which hour you're in, not just how full a bar is. */
+.zenith-clock__hours {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 14px;
+}
+
+.zenith-clock__tick {
+    flex: 1;
+    height: 8px;
+    border-radius: 1.5px;
+    background: var(--zenith-bg-tertiary);
+    transition: background var(--zenith-transition), height var(--zenith-transition);
+}
+
+.zenith-clock__tick.is-past {
+    background: color-mix(in srgb, var(--zenith-accent) 38%, transparent);
+}
+
+/* The hour you're actually in — the one piece of emphasis on the card. */
+.zenith-clock__tick.is-now {
+    height: 14px;
+    background: var(--zenith-accent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--zenith-accent) 45%, transparent);
+}
+
+.zenith-clock__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--zenith-space-sm);
+    margin-top: 6px;
+    font-size: 0.68rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Right pane: month calendar ──────────────────── */
+.zenith-cal {
+    flex: 0 0 auto;
+    width: 46%;
+    min-width: 150px;
+    max-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-cal__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+/* Scoped with parent + tag to out-specify Obsidian's default button box. */
+.zenith-cal button.zenith-cal__title {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 2px 4px;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    border-radius: var(--zenith-radius-xs);
+}
+
+.zenith-cal button.zenith-cal__nav {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    border-radius: var(--zenith-radius-xs);
+}
+
+.zenith-cal button.zenith-cal__title:hover,
+.zenith-cal button.zenith-cal__nav:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+    box-shadow: none;
+}
+
+.zenith-cal button:focus,
+.zenith-cal button:focus-visible,
+.zenith-cal button:active {
+    box-shadow: none;
+    outline: none;
+}
+
+.zenith-cal__weekdays,
+.zenith-cal__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.zenith-cal__wd {
+    text-align: center;
+    font-size: 0.58rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-cal__wd.is-weekend {
+    color: color-mix(in srgb, var(--zenith-accent) 55%, var(--zenith-text-faint));
+}
+
+.zenith-cal button.zenith-cal__day {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    aspect-ratio: 1 / 1;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.72rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: var(--zenith-radius-sm);
+    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast);
+}
+
+.zenith-cal__num {
+    line-height: 1;
+}
+
+/* Reserved dot row so days with and without markers share the same baseline. */
+.zenith-cal__dots {
+    display: flex;
+    gap: 2px;
+    height: 3px;
+    align-items: center;
+}
+
+.zenith-cal__dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+}
+
+.zenith-cal__dot.is-task {
+    background: var(--zenith-accent);
+}
+
+.zenith-cal__dot.is-note {
+    background: var(--zenith-text-faint);
+}
+
+/* On the accent-filled "today" cell, dots need a light colour to stay visible. */
+.zenith-cal__day.is-today .zenith-cal__dot {
+    background: var(--text-on-accent, #fff);
+}
+
+.zenith-cal button.zenith-cal__day:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+    box-shadow: none;
+}
+
+.zenith-cal__day.is-out {
+    color: var(--zenith-text-faint);
+    opacity: 0.45;
+}
+
+.zenith-cal__day.is-weekend {
+    color: color-mix(in srgb, var(--zenith-accent) 45%, var(--zenith-text-muted));
+}
+
+/* Today is the calendar's one strong accent, mirroring the tick strip's "now". */
+.zenith-cal button.zenith-cal__day.is-today {
+    background: var(--zenith-accent);
+    color: var(--text-on-accent, #fff);
+    font-weight: 700;
+}
+
+.zenith-cal button.zenith-cal__day.is-today:hover {
+    background: var(--zenith-accent-hover);
+    color: var(--text-on-accent, #fff);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-clock__colon {
+        animation: none;
+    }
+    .zenith-clock__tick,
+    .zenith-cal__day {
+        transition: none;
+    }
+}
+
+/* ── Weather Widget ──────────────────────────────── */
+.zenith-weather {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    /* No top padding — the card body already pads. Keeping the dense md/lg
+       content off the cell's bottom edge matters more than a little air here. */
+    padding: 0;
+    /* Fill the card so the compact variant can centre itself vertically.
+       border-box, or the padding would push it past the cell. */
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+}
+
+.zenith-weather--empty {
+    align-items: center;
+    justify-content: center;
+    gap: var(--zenith-space-sm);
+    min-height: 120px;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-weather__msg {
+    font-size: 0.85rem;
+}
+
+.zenith-weather__retry {
+    margin-top: 4px;
+    padding: 4px 12px;
+    border-radius: var(--zenith-radius-sm);
+    border: 1px solid var(--zenith-border);
+    background: transparent;
+    color: var(--zenith-text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.zenith-weather__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-weather__main {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-md);
+    min-width: 0;
+}
+
+.zenith-weather__icon {
+    color: var(--zenith-accent);
+    flex-shrink: 0;
+}
+
+.zenith-weather__temp-group {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+    min-width: 0;
+}
+
+.zenith-weather__temp {
+    font-size: 2.2rem;
+    color: var(--zenith-text-normal);
+    line-height: 1;
+}
+
+.zenith-weather__condition {
+    font-size: 0.85rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-weather__location {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    color: var(--zenith-text-faint);
+    min-width: 0;
+}
+
+.zenith-weather__location span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Scoped with parent + tag so we out-specify Obsidian's default
+   `button:not(.clickable-icon)` box (background + input-shadow) in every
+   state, not just on hover. */
+.zenith-weather__location button.zenith-weather__refresh {
+    margin-left: auto;
+    flex-shrink: 0;
+    display: inline-flex;
+    padding: 3px;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+    border-radius: var(--zenith-radius-xs);
+}
+
+.zenith-weather__location button.zenith-weather__refresh:hover {
+    color: var(--zenith-text-normal);
+    background: transparent;
+    box-shadow: none;
+}
+
+.zenith-weather__location button.zenith-weather__refresh:focus,
+.zenith-weather__location button.zenith-weather__refresh:focus-visible,
+.zenith-weather__location button.zenith-weather__refresh:active {
+    background: transparent;
+    box-shadow: none;
+    border: none;
+    outline: none;
+}
+
+.zenith-weather__details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-md);
+    padding-top: var(--zenith-space-xs);
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-weather__detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    color: var(--zenith-text-muted);
+}
+
+/* ── Forecast sections (collapsible) ─────────────── */
+.zenith-weather__section {
+    display: flex;
+    flex-direction: column;
+    padding-top: var(--zenith-space-xs);
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-weather__section-title {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--zenith-text-faint);
+    padding: 0 0 4px;
+}
+
+/* ── Size variants ───────────────────────────────── */
+/* sm shows only the essentials, so it can afford to breathe: bigger type,
+   centred in the card. Details and forecasts start at md. */
+.zenith-weather--sm {
+    justify-content: center;
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-weather--sm .zenith-weather__temp {
+    font-size: 2.8rem;
+}
+
+.zenith-weather--sm .zenith-weather__condition {
+    font-size: 0.92rem;
+}
+
+.zenith-weather--sm .zenith-weather__main {
+    gap: var(--zenith-space-lg);
+}
+
+/* Compact stat strip that fills the sm card (high/low, feels, humidity). */
+.zenith-weather__sm-stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--zenith-space-xs) var(--zenith-space-md);
+    padding-top: var(--zenith-space-sm);
+    margin-top: 2px;
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-weather__sm-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.8rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__sm-stat svg {
+    color: var(--zenith-text-faint);
+}
+
+/* Coming-hours temperature sparkline (sm card).
+   The value labels are HTML positioned over the svg, not <text> inside it: the
+   chart scales to the card's width, and scaled text would drift out of step
+   with the rest of the card's type. */
+.zenith-weather__spark {
+    margin-top: 2px;
+}
+
+.zenith-weather__spark-plot {
+    position: relative;
+}
+
+/* Child combinator on purpose — the plot's own chart, not the lucide icon that
+   sits inside the peak-rain label. */
+.zenith-weather__spark-plot > svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+/* Daylight band. The stops carry the colour so one gradient can ramp through
+   twilight; the rect just fills with it. */
+.zenith-weather__sky-day {
+    stop-color: var(--zenith-sky-day);
+}
+
+.zenith-weather__sky-night {
+    stop-color: var(--zenith-sky-night);
+}
+
+.zenith-weather__spark-sky {
+    stroke: none;
+}
+
+/* The crossing itself. The band's edge is deliberately soft, so this hairline
+   is what says exactly where sunrise or sunset falls. */
+.zenith-weather__spark-sunline {
+    stroke: var(--zenith-text-faint);
+    stroke-width: 1;
+    stroke-dasharray: 2 2;
+    opacity: 0.5;
+    vector-effect: non-scaling-stroke;
+}
+
+/* Sun / moon glyph sitting above the band at its crossing. */
+.zenith-weather__spark-mark {
+    position: absolute;
+    top: 0;
+    display: inline-flex;
+    transform: translate(-50%, -15%);
+    color: var(--zenith-text-faint);
+    pointer-events: none;
+}
+
+.zenith-weather__spark-mark.is-sunrise {
+    color: var(--zenith-warning);
+}
+
+.zenith-weather__spark-mark.is-sunset {
+    color: var(--zenith-priority-medium);
+}
+
+/* Exact sunrise / sunset, spelled out under the chart — the glyphs say where,
+   this says when, so the time is never read off a position. */
+.zenith-weather__sunline {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-md);
+    margin-top: 2px;
+    font-size: 0.68rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__sunline-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.zenith-weather__sunline-len {
+    margin-left: auto;
+    color: var(--zenith-text-faint);
+}
+
+/* Both the fill and the line take the temperature gradient, set inline. */
+.zenith-weather__spark-fill {
+    stroke: none;
+    fill-opacity: 0.16;
+}
+
+.zenith-weather__spark-line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.zenith-weather__spark-baseline {
+    stroke: var(--zenith-border);
+    vector-effect: non-scaling-stroke;
+}
+
+.zenith-weather__spark-dot {
+    stroke: var(--zenith-bg-primary);
+    stroke-width: 1.5;
+}
+
+.zenith-weather__spark-rain rect {
+    fill: color-mix(in srgb, var(--zenith-info) 65%, transparent);
+}
+
+.zenith-weather__spark-hit {
+    fill: transparent;
+}
+
+/* High / low callouts, anchored to the hour they happen at. */
+.zenith-weather__spark-tag {
+    position: absolute;
+    padding: 0 2px;
+    font-size: 0.62rem;
+    line-height: 1.1;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.zenith-weather__spark-peak {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.6rem;
+    line-height: 1;
+    color: var(--zenith-info);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+.zenith-weather__spark-peak.is-left {
+    right: auto;
+    left: 0;
+}
+
+.zenith-weather__spark-axis {
+    position: relative;
+    height: 0.85rem;
+    margin-top: 2px;
+    font-size: 0.62rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__spark-axis span {
+    position: absolute;
+    top: 0;
+}
+
+/* Hourly — horizontal scroll strip that bleeds to the card edges. No
+   scroll-snap: snapping the first cell to the edge ate its left padding, and it
+   fights the wheel-to-scroll handler. */
+.zenith-weather__hourly {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 calc(var(--zenith-space-md) * -1);
+    padding: 0 var(--zenith-space-md);
+}
+
+.zenith-weather__hourly::-webkit-scrollbar {
+    display: none;
+}
+
+.zenith-weather__hour {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 46px;
+    padding: 2px 4px;
+    border-radius: var(--zenith-radius-sm);
+    transition: background var(--zenith-transition-fast);
+}
+
+/* Hover only where hovering exists. On a touch screen the state latches after a
+   tap and stays lit until something else is tapped, which reads as a selection
+   the user did not make. */
+@media (hover: hover) {
+    .zenith-weather__hour:hover {
+        background: var(--zenith-bg-hover);
+    }
+}
+
+.zenith-weather__hour-label {
+    font-size: 0.7rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__hour-icon {
+    color: var(--zenith-accent);
+}
+
+.zenith-weather__hour-pop {
+    font-size: 0.65rem;
+    line-height: 1;
+    min-height: 0.7rem;
+    color: var(--zenith-info);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__hour-temp {
+    font-size: 0.82rem;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+/* 10-day list with temperature range bars. */
+.zenith-weather__daily {
+    display: flex;
+    flex-direction: column;
+    margin-top: 4px;
+}
+
+.zenith-weather__day {
+    display: grid;
+    grid-template-columns: 2.8em 2.6em 18px 1.7em minmax(36px, 1fr) 1.7em;
+    align-items: center;
+    gap: 8px;
+    /* Tight rows so a full 10-day forecast fits the lg cell without scrolling. */
+    padding: 3px 6px;
+    margin: 0 -6px;
+    border-radius: var(--zenith-radius-sm);
+    font-size: 0.82rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    transition: background var(--zenith-transition-fast);
+}
+
+@media (hover: hover) {
+    .zenith-weather__day:hover {
+        background: var(--zenith-bg-hover);
+    }
+}
+
+.zenith-weather__day-label {
+    color: var(--zenith-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.zenith-weather__day-pop {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+    font-size: 0.7rem;
+    color: var(--zenith-info);
+}
+
+.zenith-weather__day-icon {
+    color: var(--zenith-text-muted);
+    justify-self: center;
+}
+
+.zenith-weather__day-lo {
+    color: var(--zenith-text-faint);
+    text-align: right;
+}
+
+.zenith-weather__day-hi {
+    color: var(--zenith-text-normal);
+    text-align: right;
+}
+
+.zenith-weather__day-track {
+    position: relative;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--zenith-bg-tertiary);
+    overflow: hidden;
+}
+
+.zenith-weather__day-range {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-radius: 3px;
+    min-width: 6px;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.06) inset;
+}
+
+/* ── Clickable card affordance ───────────────────── */
+/* The whole card opens the expanded lightbox. A faint corner icon hints at it
+   on hover/focus; the size picker keeps the body inert while arranging, so this
+   never fires in edit mode. */
+.zenith-weather--interactive {
+    position: relative;
+    cursor: pointer;
+    border-radius: var(--zenith-radius-md);
+}
+
+.zenith-weather--interactive:focus-visible {
+    outline: 2px solid var(--zenith-accent);
+    outline-offset: 2px;
+}
+
+.zenith-weather__expand-hint {
+    position: absolute;
+    top: 0;
+    right: 0;
+    color: var(--zenith-text-faint);
+    opacity: 0;
+    transition: opacity var(--zenith-transition-fast);
+    pointer-events: none;
+}
+
+.zenith-weather--interactive:hover .zenith-weather__expand-hint,
+.zenith-weather--interactive:focus-visible .zenith-weather__expand-hint {
+    opacity: 0.7;
+}
+
+/* ── Expanded panel ──────────────────────────────
+   The shell is the shared `.zenith-dialog` (see modal.css), which already owns
+   the scrim, the scroll lock, the focus trap, the bottom sheet and the safe-area
+   insets. `.zenith-weather-modal` is only a class on its panel, so everything
+   here is content styling — the bespoke portal this replaced reimplemented the
+   shell badly and animated a transform on its own scroll container. */
+.zenith-weather-modal__head {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-lg);
+    min-width: 0;
+}
+
+.zenith-weather-modal__head-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.zenith-weather-modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-md);
+    padding-top: var(--zenith-space-md);
+}
+
+/* Bigger, more comfortable type than any grid preset affords. */
+.zenith-weather-modal .zenith-weather__temp {
+    font-size: 2.6rem;
+    line-height: 1.05;
+}
+
+.zenith-weather-modal .zenith-weather__condition {
+    font-size: 0.95rem;
+}
+
+/* The hourly strip and day rows bleed to the grid cell's edges via negative
+   margins tuned for its padding; neutralize them inside the roomier panel. */
+.zenith-weather-modal .zenith-weather__hourly {
+    margin: 0;
+    padding: 0;
+}
+
+.zenith-weather-modal .zenith-weather__day {
+    margin-left: 0;
+    margin-right: 0;
+    font-size: 0.9rem;
+    padding: 5px 8px;
+}
+
+.zenith-weather-modal .zenith-weather__hour {
+    min-width: 54px;
+}
+
+/* ── Metric grid ("Now" tab) ─────────────────────── */
+.zenith-weather__metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-weather__metric {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+        'icon label'
+        'value value'
+        'hint hint';
+    align-items: center;
+    gap: 2px 6px;
+    padding: 10px 12px;
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-secondary);
+}
+
+.zenith-weather__metric-icon {
+    grid-area: icon;
+    display: inline-flex;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-weather__metric-label {
+    grid-area: label;
+    font-size: 0.72rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-weather__metric-value {
+    grid-area: value;
+    font-size: 1.1rem;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__metric-hint {
+    grid-area: hint;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.68rem;
+    color: var(--zenith-text-faint);
+}
+
+/* UV bands. Shared by the metric tile and the per-day extras row. */
+.is-uv-low { --zenith-uv: var(--zenith-success); }
+.is-uv-moderate { --zenith-uv: var(--zenith-warning); }
+.is-uv-high { --zenith-uv: #fb923c; }
+.is-uv-veryHigh { --zenith-uv: var(--zenith-danger); }
+.is-uv-extreme { --zenith-uv: #a855f7; }
+
+.zenith-weather__metric.is-uv-low .zenith-weather__metric-hint,
+.zenith-weather__metric.is-uv-moderate .zenith-weather__metric-hint,
+.zenith-weather__metric.is-uv-high .zenith-weather__metric-hint,
+.zenith-weather__metric.is-uv-veryHigh .zenith-weather__metric-hint,
+.zenith-weather__metric.is-uv-extreme .zenith-weather__metric-hint {
+    color: var(--zenith-uv);
+}
+
+/* ── Sun & moon tab ──────────────────────────────── */
+.zenith-weather__sunpanel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-md);
+}
+
+.zenith-weather__arc svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+.zenith-weather__arc-horizon {
+    stroke: var(--zenith-border);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+}
+
+.zenith-weather__arc-track {
+    fill: none;
+    stroke: var(--zenith-border);
+    stroke-width: 2;
+    stroke-dasharray: 3 4;
+    vector-effect: non-scaling-stroke;
+}
+
+.zenith-weather__arc-done {
+    fill: none;
+    stroke: var(--zenith-warning);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.zenith-weather__arc-sun {
+    fill: var(--zenith-warning);
+    stroke: var(--zenith-bg-primary);
+    stroke-width: 2;
+}
+
+/* Below the horizon: hollow, so "the sun is not up" is visible at a glance
+   rather than inferred from its position. */
+.zenith-weather__arc-sun.is-down {
+    fill: var(--zenith-bg-primary);
+    stroke: var(--zenith-text-faint);
+}
+
+.zenith-weather__arc-ends {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--zenith-space-sm);
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__arc-ends span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.zenith-weather__arc-until {
+    color: var(--zenith-text-normal);
+    font-weight: 600;
+}
+
+.zenith-weather__sunfacts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-md);
+    font-size: 0.8rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-weather__sunfacts span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.zenith-weather__sunfacts b {
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__moon {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-md);
+    padding: var(--zenith-space-md);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-secondary);
+}
+
+.zenith-weather__moon svg {
+    flex: none;
+    width: 56px;
+    height: 56px;
+}
+
+.zenith-weather__moon-dark {
+    fill: var(--zenith-bg-tertiary);
+    stroke: var(--zenith-border);
+    stroke-width: 1;
+}
+
+.zenith-weather__moon-lit {
+    fill: #e8e6df;
+}
+
+.zenith-weather__moon-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.zenith-weather__moon-name {
+    font-size: 0.95rem;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-weather__moon-illum {
+    font-size: 0.8rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-weather__moon-age {
+    font-size: 0.72rem;
+    color: var(--zenith-text-faint);
+}
+
+/* ── Air quality tab ─────────────────────────────── */
+.zenith-weather__airpanel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-md);
+}
+
+.zenith-weather__aqis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-weather__aqi {
+    padding: 10px 12px;
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-secondary);
+}
+
+.zenith-weather__aqi.is-good { --zenith-aqi: var(--zenith-success); }
+.zenith-weather__aqi.is-fair { --zenith-aqi: #84cc16; }
+.zenith-weather__aqi.is-moderate { --zenith-aqi: var(--zenith-warning); }
+.zenith-weather__aqi.is-poor { --zenith-aqi: #fb923c; }
+.zenith-weather__aqi.is-veryPoor { --zenith-aqi: var(--zenith-danger); }
+.zenith-weather__aqi.is-extreme { --zenith-aqi: #a855f7; }
+
+.zenith-weather__aqi-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.zenith-weather__aqi-label {
+    font-size: 0.72rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-weather__aqi-value {
+    font-size: 1.15rem;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__aqi-band {
+    margin-left: auto;
+    font-size: 0.72rem;
+    color: var(--zenith-aqi);
+}
+
+.zenith-weather__aqi-track {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--zenith-bg-tertiary);
+    overflow: hidden;
+}
+
+.zenith-weather__aqi-fill {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: var(--zenith-aqi);
+}
+
+.zenith-weather__pollutants {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-weather__pollutant {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.zenith-weather__pollutant-label {
+    font-size: 0.7rem;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-weather__pollutant-value {
+    font-size: 0.9rem;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__pollutant-value em {
+    margin-left: 3px;
+    font-size: 0.65rem;
+    font-style: normal;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-weather__pollen-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.zenith-weather__pollen-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 9px;
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-bg-secondary);
+    font-size: 0.78rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-weather__pollen-item b {
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__pollen-item.is-low b { color: var(--zenith-success); }
+.zenith-weather__pollen-item.is-moderate b { color: var(--zenith-warning); }
+.zenith-weather__pollen-item.is-high b { color: var(--zenith-danger); }
+
+/* Explanatory footnotes — deliberately quiet, but present, because the things
+   they explain (no moonrise, no pollen outside Europe) are otherwise mysteries. */
+.zenith-weather__note {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--zenith-text-faint);
+}
+
+/* ── Detailed series rows (expanded panel only) ──── */
+.zenith-weather__hour-mm,
+.zenith-weather__hour-wind {
+    font-size: 0.62rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+    min-height: 0.7rem;
+}
+
+.zenith-weather__hour-wind {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.zenith-weather__day-row + .zenith-weather__day-row {
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-weather__daily.is-detailed .zenith-weather__day-row {
+    padding: 2px 0;
+    /* Ten rows of two lines each is enough content to be worth skipping the
+       layout of the ones scrolled out of view. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 44px;
+}
+
+.zenith-weather__day-extra {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-md);
+    padding: 0 8px 4px;
+    font-size: 0.7rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-weather__day-extra span {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.zenith-weather__day-extra span[class*='is-uv-'] {
+    color: var(--zenith-uv);
+}
+
+@media (max-width: 520px) {
+    .zenith-weather-modal .zenith-weather__temp {
+        font-size: 2.1rem;
+    }
+
+    .zenith-weather-modal__head {
+        gap: var(--zenith-space-md);
+    }
+
+    .zenith-weather__metrics {
+        grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+    }
+}
+
+.zenith-cw__cta {
+    margin-top: 4px;
+    padding: 6px 16px;
+    border-radius: var(--zenith-radius-md);
+    border: none;
+    background: var(--zenith-accent);
+    color: var(--text-on-accent, #fff);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.zenith-cw__open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    align-self: flex-start;
+    padding: 6px 12px;
+    border-radius: var(--zenith-radius-md);
+    border: 1px solid var(--zenith-border);
+    background: transparent;
+    color: var(--zenith-text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--zenith-transition-fast);
+}
+
+.zenith-cw__open:hover {
+    color: var(--zenith-text-normal);
+    background: var(--zenith-bg-hover);
+    border-color: var(--zenith-accent);
+}
+
+/* ── Content Widget (.zenith-cw) ─────────────────── */
+.zenith-cw {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-cw__summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-cw__total {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.zenith-cw__total-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-cw__total-label {
+    font-size: 0.78rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-cw__avg {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--zenith-warning-bg);
+    color: var(--zenith-text-normal);
+    font-size: 0.76rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Proportional status bar — the whole library at a glance. */
+.zenith-cw__bar {
+    display: flex;
+    height: 6px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--zenith-bg-tertiary);
+}
+
+.zenith-cw__bar-seg {
+    height: 100%;
+    min-width: 3px;
+    transition: width var(--zenith-transition);
+}
+
+.zenith-cw__breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-sm) var(--zenith-space-md);
+}
+
+.zenith-cw__stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-cw__stat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.zenith-cw__stat-value {
+    font-weight: 600;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-cw__section-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-cw__list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.zenith-cw__item {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    padding: 6px var(--zenith-space-sm);
+    border-radius: var(--zenith-radius-md);
+    min-width: 0;
+    cursor: pointer;
+    outline: none;
+}
+
+.zenith-cw__item:hover,
+.zenith-cw__item:focus-visible {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-cw__item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-cw__item-sub {
+    font-size: 0.72rem;
+    color: var(--zenith-text-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Title line: the name, and the one number that goes with it.
+   The count used to ride at the end of a full-width progress bar, which parked
+   it against the card's right edge with a gap in the middle of every row. */
+.zenith-cw__item-top {
+    display: flex;
+    align-items: baseline;
+    gap: var(--zenith-space-sm);
+    min-width: 0;
+}
+
+.zenith-cw__item-value {
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+/* The meter runs under the text column, full width — it's a magnitude, not a
+   value to read, so it doesn't need to share its line with digits. */
+.zenith-cw__item-track {
+    display: block;
+    width: 100%;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--zenith-bg-tertiary);
+    overflow: hidden;
+}
+
+.zenith-cw__item-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--zenith-accent);
+    transition: width var(--zenith-transition);
+}
+
+/* "+1" — visible on hover/focus so the row stays calm at rest. */
+.zenith-cw__item button.zenith-cw__item-bump {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 1px solid var(--zenith-border);
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--zenith-transition-fast), color var(--zenith-transition-fast),
+        border-color var(--zenith-transition-fast);
+}
+
+.zenith-cw__item:hover button.zenith-cw__item-bump,
+.zenith-cw__item button.zenith-cw__item-bump:focus-visible {
+    opacity: 1;
+}
+
+.zenith-cw__item button.zenith-cw__item-bump:hover {
+    color: var(--zenith-accent);
+    border-color: var(--zenith-accent);
+}
+
+/* Coarse pointers have no hover — keep the action reachable. */
+@media (pointer: coarse) {
+    .zenith-cw__item button.zenith-cw__item-bump {
+        opacity: 1;
+    }
+}
+
+.zenith-cw__item-icon {
+    flex-shrink: 0;
+    color: var(--zenith-text-muted);
+    display: inline-flex;
+}
+
+/* Mini poster thumbnail for a Continue row (falls back to the type icon).
+   At 22px the cover was a sliver — on a dashboard the artwork is the fastest
+   way to recognise a row, so it gets enough width to actually be one. */
+.zenith-cw__item-thumb {
+    flex-shrink: 0;
+    width: 26px;
+    height: 37px;
+    border-radius: 4px;
+    background: var(--zenith-bg-tertiary) center / cover no-repeat;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.zenith-cw__item-thumb .zenith-obsidian-icon {
+    display: inline-flex;
+}
+
+.zenith-cw__item-title {
+    flex: 1;
+    font-size: 0.88rem;
+    color: var(--zenith-text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.zenith-cw__item-rating {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.75rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* "Open library" is where the widget ends, so it reads as the card's footer
+   rather than as one more thing in the list. Overrides the `.zenith-cw__open`
+   rule above by coming later at the same specificity. */
+.zenith-cw__open {
+    align-self: stretch;
+    justify-content: center;
+    width: 100%;
+    margin-top: var(--zenith-space-xs);
+    padding: 7px 12px;
+    border-radius: var(--zenith-radius-md);
+}
+
+.zenith-cw__hint {
+    font-size: 0.82rem;
+    color: var(--zenith-text-faint);
+    font-style: italic;
+}
+
+.zenith-cw__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    padding: var(--zenith-space-lg) 0;
+    color: var(--zenith-text-muted);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+/* ── Third-party widget demo ─────────────────────── */
+.zenith-thirdparty-demo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-xs);
+    padding: var(--zenith-space-sm) 0;
+}
+
+.zenith-thirdparty-demo__title {
+    font-size: 0.9rem;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-thirdparty-demo__counter {
+    font-size: 0.78rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Quick Add widget ───────────────────────────── */
+.zenith-qa {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.zenith-qa__input {
+    flex: 1;
+    min-width: 0;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.zenith-qa__input:focus {
+    border-color: var(--zenith-accent);
+}
+
+.zenith-qa__priority {
+    height: 36px;
+    padding: 0 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 0.85rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.zenith-qa__add,
+.zenith-qa__more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-border);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+
+.zenith-qa__add {
+    background: var(--zenith-accent);
+    color: white;
+    border-color: transparent;
+}
+
+.zenith-qa__add:hover:not(:disabled) {
+    background: var(--zenith-accent-hover);
+}
+
+.zenith-qa__add:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.zenith-qa__more {
+    background: var(--background-primary);
+    color: var(--text-muted);
+}
+
+.zenith-qa__more:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+/* ── Quick Add modal ────────────────────────────── */
+.zenith-quick-add .setting-item {
+    border: none;
+    padding: 8px 0;
+}

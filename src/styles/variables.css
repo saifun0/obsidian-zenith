@@ -1,0 +1,125 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Design Tokens (CSS Custom Properties)
+   Bridges Obsidian theme variables for consistent styling.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.zenith-root {
+    /* ── Surface Colors ─────────────────────────── */
+    --zenith-bg-primary: var(--background-primary);
+    --zenith-bg-secondary: var(--background-secondary);
+    --zenith-bg-tertiary: var(--background-modifier-form-field);
+    --zenith-bg-hover: var(--background-modifier-hover);
+
+    /* ── Text Colors ────────────────────────────── */
+    --zenith-text-normal: var(--text-normal);
+    --zenith-text-muted: var(--text-muted);
+    --zenith-text-faint: var(--text-faint);
+
+    /* ── Interactive ────────────────────────────── */
+    --zenith-accent: var(--interactive-accent);
+    --zenith-accent-hover: var(--interactive-accent-hover);
+    --zenith-border: color-mix(in srgb, var(--background-modifier-border) 40%, transparent);
+
+    /* ── Typography ─────────────────────────────── */
+    --zenith-font: var(--font-text);
+    --zenith-font-mono: var(--font-monospace);
+    --zenith-font-serif: "Newsreader", "Georgia", "Times New Roman", serif;
+
+    /* ── Shadows ────────────────────────────────── */
+    --zenith-shadow-xs: 0 2px 8px rgba(0, 0, 0, 0.03);
+    --zenith-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.04);
+    --zenith-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    --zenith-shadow-md: 0 12px 32px rgba(0, 0, 0, 0.06);
+    --zenith-shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.08);
+
+    /* ── Border Radius ──────────────────────────── */
+    --zenith-radius-xs: 4px;
+    --zenith-radius-sm: 6px;
+    --zenith-radius-md: 10px;
+    --zenith-radius-lg: 14px;
+    --zenith-radius-xl: 20px;
+
+    /* ── Transitions ────────────────────────────── */
+    --zenith-transition-fast: 150ms ease;
+    --zenith-transition: 200ms ease;
+    --zenith-transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ── Status Colors ──────────────────────────── */
+    --zenith-success: #10b981;
+    --zenith-success-bg: rgba(16, 185, 129, 0.12);
+    --zenith-warning: #f59e0b;
+    --zenith-warning-bg: rgba(245, 158, 11, 0.12);
+    --zenith-danger: #ef4444;
+    --zenith-danger-bg: rgba(239, 68, 68, 0.12);
+    --zenith-info: #3b82f6;
+    --zenith-info-bg: rgba(59, 130, 246, 0.12);
+
+    /* ── Priority Colors ────────────────────────── */
+    --zenith-priority-low: #6b7280;
+    --zenith-priority-medium: #3b82f6;
+    --zenith-priority-high: #f59e0b;
+    --zenith-priority-urgent: #ef4444;
+
+    /* ── Sky (weather sparkline) ────────────────────
+       Daylight is what gets painted; night is the card's own background. The
+       previous version had this backwards and derived the wash from
+       --zenith-text-normal, which on a dark theme is near-white — so night
+       rendered *lighter* than day. Stated per theme below rather than derived,
+       because "warmer and lighter" only means daylight on a dark surface. */
+    --zenith-sky-day: rgba(255, 200, 110, 0.13);
+    --zenith-sky-night: rgba(70, 100, 180, 0.05);
+
+    /* ── Spacing Scale ──────────────────────────── */
+    --zenith-space-xs: 4px;
+    --zenith-space-sm: 8px;
+    --zenith-space-md: 16px;
+    --zenith-space-lg: 24px;
+    --zenith-space-xl: 32px;
+    --zenith-space-2xl: 48px;
+}
+
+/* On a light card the same trick inverts: daylight is already the paper, so the
+   readable signal is a cool tint over the night hours instead. */
+.theme-light .zenith-root {
+    --zenith-sky-day: rgba(255, 186, 60, 0.10);
+    --zenith-sky-night: rgba(40, 60, 120, 0.10);
+}
+
+/* ── Density ──
+   Rescales the spacing tokens rather than overriding individual rules, so every
+   surface follows without each one needing its own compact variant. Set on
+   <body>, because `.zenith-root` is created per view and there are several. */
+body.zenith-density-compact .zenith-root {
+    --zenith-space-xs: 3px;
+    --zenith-space-sm: 6px;
+    --zenith-space-md: 11px;
+    --zenith-space-lg: 16px;
+    --zenith-space-xl: 22px;
+    --zenith-space-2xl: 32px;
+}
+
+body.zenith-density-spacious .zenith-root {
+    --zenith-space-xs: 6px;
+    --zenith-space-sm: 11px;
+    --zenith-space-md: 20px;
+    --zenith-space-lg: 30px;
+    --zenith-space-xl: 40px;
+    --zenith-space-2xl: 60px;
+}
+
+/* ── Motion off ──
+   Zeroes the transition tokens and kills animation outright. `!important` and
+   the wildcard are deliberate: this has to beat every rule that sets its own
+   animation, and a half-honoured motion setting is worse than none. */
+body.zenith-no-motion .zenith-root {
+    --zenith-transition-fast: 0s;
+    --zenith-transition: 0s;
+    --zenith-transition-slow: 0s;
+}
+
+body.zenith-no-motion .zenith-root *,
+body.zenith-no-motion .zenith-dialog,
+body.zenith-no-motion .zenith-dialog * {
+    animation: none !important;
+    transition: none !important;
+}

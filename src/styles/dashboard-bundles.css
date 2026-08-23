@@ -1,0 +1,439 @@
+/* ══════════════════════════════════════════════════════
+   Widget bundles — several widgets in one grid cell
+   ──────────────────────────────────────────────────────
+   Design: `Zenith Bundles.dc.html`, model C ("связка").
+
+   The governing idea is that a bundle at rest *is* its active widget. There is
+   no container frame, no second border, no chrome that says "group": the only
+   two marks are the rail of pips in the header and the shoulder peeking out
+   below the card — and the shoulder lives in the grid's gap, so it costs the
+   widget nothing at all.
+
+   Only `transform` and `opacity` are animated. The one exception is the active
+   pip's width (5→14px), which is 9px inside a flex row and can't move the grid.
+   ══════════════════════════════════════════════════════ */
+
+/* The header band a bundle keeps for its own chrome: the rail lives in it while
+   collapsed, the row actions while expanded. Declared on the cell rather than on
+   the bundle because the size panel is the bundle's *sibling*, not its child,
+   and has to be able to measure against the same band. */
+.zenith-grid__item {
+    --zenith-bundle-head: 34px;
+}
+
+.zenith-bundle {
+    --zenith-bundle-ease-std: cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    height: 100%;
+    min-height: 0;
+    /* Claim horizontal gestures, leave vertical ones to the scroller. Without
+       this the browser treats a sideways drag as a pan, swallows the pointer
+       stream, and the swipe never reaches us — which is exactly how the
+       gesture went missing on mobile. */
+    touch-action: pan-y;
+}
+
+/* ── Shoulder ────────────────────────────────────────
+   Sits under the card, inside the grid gap. Two at most: a deeper pile stops
+   reading as depth and starts reading as a stack of borders. */
+.zenith-bundle__shoulder {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: -5px;
+    height: 14px;
+    border: 1px solid var(--zenith-border);
+    border-top: none;
+    border-radius: 0 0 var(--zenith-radius-md) var(--zenith-radius-md);
+    background: var(--zenith-bg-tertiary);
+    pointer-events: none;
+}
+
+.zenith-bundle__shoulder.is-second {
+    left: 16px;
+    right: 16px;
+    bottom: -9px;
+    opacity: 0.75;
+}
+
+/* Expanded, the pile is open — there is nothing left underneath to hint at. */
+.zenith-bundle.is-expanded .zenith-bundle__shoulder {
+    opacity: 0;
+    transform: scaleX(0.9);
+    transition: opacity 150ms var(--zenith-bundle-ease-std),
+        transform 150ms var(--zenith-bundle-ease-std);
+}
+
+.zenith-bundle__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-secondary);
+    box-shadow: var(--zenith-shadow-xs);
+    overflow: hidden;
+}
+
+/* ── Stage: the active widget ────────────────────────
+   Holds the two cross-fading layers. Collapsed it fills the card; expanded it
+   keeps exactly the height the cell had before, so the active widget doesn't
+   move a pixel — that's what tells you the bundle opened rather than jumped. */
+.zenith-bundle__stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.zenith-bundle.is-expanded .zenith-bundle__stage {
+    flex: none;
+    height: var(--zenith-bundle-base, 100%);
+}
+
+.zenith-bundle__layer {
+    position: absolute;
+    inset: 0;
+    /* Transform-driven cross-fade; the layer is composited on its own. */
+    will-change: transform, opacity;
+}
+
+/* The widget on its way out must not swallow clicks meant for the new one. */
+.zenith-bundle__layer.is-leaving {
+    pointer-events: none;
+}
+
+.zenith-bundle__member {
+    height: 100%;
+    min-height: 0;
+}
+
+/* Keeps a long widget title from running under the rail. */
+.zenith-bundle__reserve {
+    flex: none;
+    display: block;
+}
+
+/* A member that can't render at the bundle's size says so instead of being
+   stretched into a shape it was never designed for. */
+.zenith-bundle__compact {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 2px;
+    color: var(--zenith-text-faint);
+    font-size: 0.72rem;
+    text-wrap: pretty;
+}
+
+/* ── Rail ────────────────────────────────────────────
+   Lives in the header row, right-aligned, over the layers. Always visible —
+   never a hover affordance, because Obsidian runs on phones too. */
+.zenith-bundle__rail {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: var(--zenith-bundle-head, 34px);
+    padding: 0 10px 0 8px;
+    background: var(--zenith-bg-secondary);
+}
+
+.zenith-bundle__pips {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.zenith-root button.zenith-bundle__pip {
+    display: flex;
+    align-items: center;
+    padding: 8px 2px;
+    border: none;
+    border-radius: var(--zenith-radius-xs);
+    background: none;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.zenith-bundle__pip-dot {
+    display: block;
+    width: 5px;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--zenith-text-faint);
+    transition: width 200ms var(--zenith-bundle-ease-std),
+        background-color 200ms var(--zenith-bundle-ease-std);
+}
+
+.zenith-root button.zenith-bundle__pip.is-active .zenith-bundle__pip-dot {
+    width: 14px;
+    background: var(--zenith-accent);
+}
+
+.zenith-bundle__pip-more {
+    color: var(--zenith-text-faint);
+    font-size: 0.62rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-root button.zenith-bundle__toggle {
+    display: flex;
+    align-items: center;
+    padding: 6px 2px;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-bundle__toggle:hover {
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+}
+
+/* ── Expanded sections ───────────────────────────────
+   Members below the anchor, divided by hairlines and nothing else: giving each
+   one its own card would put a border inside a border inside the cell. */
+.zenith-bundle__sections {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.zenith-bundle__row {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    flex: 1 1 0;
+    min-height: 76px;
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-bundle__row-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-bundle__grip {
+    display: flex;
+    align-items: flex-start;
+    flex: none;
+    padding: 9px 0 0 1px;
+    color: var(--zenith-text-faint);
+    cursor: grab;
+}
+
+.zenith-bundle__row-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: var(--zenith-bundle-head, 34px);
+    padding: 0 8px;
+    background: var(--zenith-bg-secondary);
+}
+
+.zenith-root button.zenith-bundle__row-btn {
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border: none;
+    border-radius: var(--zenith-radius-xs);
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-bundle__row-btn:hover {
+    background: var(--zenith-bg-hover);
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+}
+
+/* ── Merge affordance ────────────────────────────────
+   Shown once a dragged card has rested on another long enough. The ring is
+   drawn *inside* the target: neighbouring cells sit a gap apart, and an outer
+   ring would overlap the card next door. */
+.zenith-grid__merge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.zenith-grid__merge::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 2px dashed var(--zenith-accent);
+    border-radius: calc(var(--zenith-radius-md) - 2px);
+}
+
+.zenith-grid__merge.is-warning::before {
+    border-color: var(--zenith-warning);
+}
+
+.zenith-grid__merge-badge {
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: calc(100% - 24px);
+    padding: 5px 10px;
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-accent);
+    color: var(--text-on-accent, #fff);
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: var(--zenith-shadow-sm);
+}
+
+.zenith-grid__merge.is-warning .zenith-grid__merge-badge {
+    background: var(--zenith-warning);
+    color: #1c1710;
+}
+
+/* The card being dropped onto steps back so the ring and badge read clearly. */
+.zenith-grid.is-merging .zenith-grid__item[data-merge-target] .zenith-widget-card,
+.zenith-grid.is-merging .zenith-grid__item[data-merge-target] .zenith-bundle__card {
+    opacity: 0.5;
+    transition: opacity 150ms var(--zenith-bundle-ease-std);
+}
+
+/* ── Bundle inspector (edit mode) ────────────────────
+   Part of the size panel, because the panel belongs to the *bundle*: a bundle
+   is one cell of the grid, and its members don't have cells of their own.
+
+   The plain panel is a pill floating above the card's top-right corner. With a
+   member list inside it that pill grew sideways across the neighbouring widget,
+   so a panel that carries an inspector becomes a block pinned to the card's own
+   width instead.
+
+   Being that wide, it can no longer straddle the card's top edge: the rail sits
+   in that same corner with an opaque background and the same z-index, and being
+   later in the DOM it painted straight over the panel. So the block starts
+   *below* the header band instead. Nothing is lost by it — the header keeps
+   showing which member is on top, and the rail stays live, so a bundle can still
+   be flipped and expanded while the panel is open. */
+.zenith-grid__sizes-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.zenith-grid__sizes.has-extra {
+    top: var(--zenith-bundle-head, 34px);
+    left: 8px;
+    right: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: var(--zenith-radius-md);
+    /* Hangs the same 10px past the bottom edge the pill used to hang past the
+       top one; taller member lists scroll rather than outgrow the cell. */
+    max-height: calc(100% - var(--zenith-bundle-head, 34px) + 10px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.zenith-grid__sizes.has-extra .zenith-grid__sizes-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.zenith-bundle-inspector {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    padding-top: 7px;
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-bundle-inspector__head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-bundle-inspector__label {
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.zenith-root input.zenith-bundle-inspector__name {
+    flex: 1;
+    min-width: 0;
+    height: 22px;
+    padding: 0 4px;
+    border: none;
+    border-bottom: 1px dashed var(--zenith-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: 0.72rem;
+}
+
+.zenith-root input.zenith-bundle-inspector__name:focus {
+    border-bottom-color: var(--zenith-accent);
+    box-shadow: none;
+}
+
+.zenith-bundle-inspector__member {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.72rem;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-bundle-inspector__member-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.zenith-bundle-inspector__member-sizes {
+    color: var(--zenith-text-faint);
+    font-size: 0.62rem;
+    font-family: var(--zenith-font-mono);
+    letter-spacing: 0.06em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-bundle__pip-dot,
+    .zenith-bundle.is-expanded .zenith-bundle__shoulder,
+    .zenith-grid.is-merging .zenith-grid__item[data-merge-target] .zenith-widget-card,
+    .zenith-grid.is-merging .zenith-grid__item[data-merge-target] .zenith-bundle__card {
+        transition: none;
+    }
+}

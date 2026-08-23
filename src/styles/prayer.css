@@ -1,0 +1,1373 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Prayer times
+
+   Status is carried by the SHAPE of a mark (diamond, disc, ring, cross, dashed
+   ring, dot) and only confirmed by colour: the same mark has to survive being
+   drawn at 4px in a calendar cell, on either theme, beside four of its
+   siblings. Five shades would fail all three.
+
+   Buttons are scoped `parent + tag` (0,2,1) throughout: Obsidian styles bare
+   `button:not(.clickable-icon)` at 0,1,1 with its own background and
+   `--input-shadow`, and a plain class selector loses to it.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.zenith-prayer {
+    --zp-done: var(--zenith-success);
+    --zp-late: var(--zenith-warning);
+    --zp-missed: var(--zenith-danger);
+    /* Text drawn on the amber fill. Black at low alpha rather than white:
+       warning is a light colour on both themes, and white on it is unreadable. */
+    --zp-on-warning: #241a03;
+
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    box-sizing: border-box;
+    font-family: var(--zenith-font);
+}
+
+/* ── Marks ───────────────────────────────────────── */
+.zenith-prayer__mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    line-height: 1;
+    font-style: normal;
+}
+
+.zenith-prayer__mark.is-ontime {
+    background: var(--zp-done);
+    border-radius: 50%;
+}
+
+/* Same circle, hollow: prayed, but the window had closed. */
+.zenith-prayer__mark.is-late {
+    border: 2px solid var(--zp-late);
+    border-radius: 50%;
+}
+
+.zenith-prayer__mark.is-missed {
+    color: var(--zp-missed);
+    font-weight: 700;
+}
+
+/* Nobody has answered yet — an outline waiting to be filled. */
+.zenith-prayer__mark.is-none {
+    border: 1.5px dashed var(--zenith-text-faint);
+    border-radius: 50%;
+    opacity: 0.9;
+}
+
+/* Its time hasn't come: present, but not a slot you can act on. */
+.zenith-prayer__mark.is-future {
+    background: var(--zenith-text-faint);
+    border-radius: 50%;
+    opacity: 0.55;
+}
+
+.zenith-prayer__mark-absent {
+    font-size: 10px;
+    color: var(--zenith-text-faint);
+    white-space: nowrap;
+}
+
+/* ── Tiles ───────────────────────────────────────── */
+.zenith-prayer__tiles {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    min-width: 0;
+}
+
+.zenith-prayer button.zenith-prayer__tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
+    padding: 12px 8px;
+    border: 1px solid transparent;
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-tertiary);
+    color: var(--zenith-text-normal);
+    font-family: var(--zenith-font);
+    text-align: center;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background var(--zenith-transition-fast), border-color var(--zenith-transition-fast);
+}
+
+.zenith-prayer button.zenith-prayer__tile:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-prayer button.zenith-prayer__tile:focus,
+.zenith-prayer button.zenith-prayer__tile:focus-visible {
+    box-shadow: none;
+    outline: none;
+}
+
+.zenith-prayer button.zenith-prayer__tile:focus-visible {
+    outline: 2px solid var(--zenith-accent);
+    outline-offset: 2px;
+}
+
+/* Unanswered: an empty frame, so the eye counts what's left to do. */
+.zenith-prayer button.zenith-prayer__tile.is-none {
+    background: transparent;
+    border: 1px dashed var(--zenith-border);
+    color: var(--zenith-text-muted);
+}
+
+/* Not yet, or never today — outlined and inert. */
+.zenith-prayer button.zenith-prayer__tile.is-future,
+.zenith-prayer button.zenith-prayer__tile.is-absent {
+    background: transparent;
+    border: 1px solid var(--zenith-border);
+    color: var(--zenith-text-faint);
+    cursor: default;
+}
+
+.zenith-prayer button.zenith-prayer__tile.is-absent {
+    border-style: dashed;
+}
+
+/* One focal point per card: the prayer you are waiting for. */
+.zenith-prayer button.zenith-prayer__tile.is-next {
+    background: var(--zenith-bg-tertiary);
+    border: 1.5px solid var(--zenith-accent);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-prayer__tile-name {
+    font-size: 13px;
+    font-weight: 500;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zenith-prayer__tile.is-next .zenith-prayer__tile-name {
+    font-weight: 600;
+}
+
+.zenith-prayer__tile-time {
+    font-family: var(--zenith-font-serif);
+    font-size: 22px;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-prayer__tile.is-future .zenith-prayer__tile-time,
+.zenith-prayer__tile.is-absent .zenith-prayer__tile-time {
+    color: var(--zenith-text-faint);
+}
+
+.zenith-prayer__tile-mark {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 18px;
+}
+
+.zenith-prayer__tile-status {
+    font-size: 11px;
+    color: var(--zenith-text-faint);
+    text-transform: lowercase;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Row variant: one line per prayer, for panes too narrow for five tiles. */
+.zenith-prayer button.zenith-prayer__tile--row {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: var(--zenith-radius-sm);
+    text-align: left;
+}
+
+.zenith-prayer__tile--row .zenith-prayer__tile-name {
+    margin-right: auto;
+}
+
+.zenith-prayer__tile--row .zenith-prayer__tile-time {
+    font-size: 15px;
+}
+
+.zenith-prayer__tile--row .zenith-prayer__tile-mark {
+    margin-top: 0;
+    min-height: 0;
+    width: 18px;
+}
+
+/* Note variant: no times — the line above the tiles already carries one. */
+.zenith-prayer button.zenith-prayer__tile--note {
+    gap: 5px;
+    padding: 7px 0 6px;
+    border-radius: var(--zenith-radius-sm);
+}
+
+.zenith-prayer__tile--note .zenith-prayer__tile-name {
+    font-size: 12px;
+}
+
+.zenith-prayer__tile--note .zenith-prayer__tile-mark {
+    min-height: 14px;
+}
+
+/* ── Hero ────────────────────────────────────────── */
+.zenith-prayer__kicker {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-prayer__hero {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.zenith-prayer__hero-name {
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-top: 9px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zenith-prayer__hero-time {
+    font-family: var(--zenith-font-serif);
+    font-size: 54px;
+    line-height: 1;
+    letter-spacing: -0.015em;
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-prayer__countdown {
+    font-size: 15px;
+    color: var(--zenith-accent);
+    margin-top: 9px;
+}
+
+.zenith-prayer__marked {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: auto;
+    padding-top: 10px;
+    font-size: 12px;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-prayer__minimarks {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* The way into the full tracker, sitting at the end of the summary line. It
+   stays quiet until the pointer is over the widget: the widget's job is the
+   countdown, and a lit control competing with it would be the wrong emphasis. */
+.zenith-prayer button.zenith-prayer__open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    margin-left: auto;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--zenith-radius-xs);
+    background: transparent;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+    box-shadow: none;
+    opacity: 0.55;
+    transition: opacity var(--zenith-transition-fast), background var(--zenith-transition-fast);
+}
+
+.zenith-prayer--widget:hover .zenith-prayer__open {
+    opacity: 1;
+}
+
+.zenith-prayer button.zenith-prayer__open:hover {
+    background: var(--zenith-bg-hover);
+    border-color: var(--zenith-border);
+    color: var(--zenith-text-normal);
+    opacity: 1;
+}
+
+.zenith-prayer button.zenith-prayer__open:focus-visible {
+    outline: 2px solid var(--zenith-accent);
+    outline-offset: 1px;
+    opacity: 1;
+}
+
+/* No hover on a phone — the control has to be visible without one. */
+@media (pointer: coarse) {
+    .zenith-prayer button.zenith-prayer__open {
+        opacity: 1;
+    }
+}
+
+/* ── Widget frame ────────────────────────────────── */
+.zenith-prayer--widget {
+    height: 100%;
+    gap: 0;
+}
+
+.zenith-prayer__split {
+    display: flex;
+    gap: 24px;
+    flex: 1;
+    min-height: 0;
+}
+
+.zenith-prayer__split > .zenith-prayer__hero {
+    width: 262px;
+    flex: 0 0 262px;
+}
+
+.zenith-prayer__split > .zenith-prayer__tiles {
+    flex: 1;
+}
+
+.zenith-prayer__divider {
+    width: 1px;
+    flex: 0 0 1px;
+    background: var(--zenith-border);
+}
+
+.zenith-prayer__rule {
+    height: 1px;
+    background: var(--zenith-border);
+    margin: 18px 0;
+}
+
+.zenith-prayer__split--bottom {
+    flex: 0 0 auto;
+}
+
+/* ── sm: hero across the top, tiles along the bottom ── */
+.zenith-prayer--sm {
+    gap: 12px;
+}
+
+.zenith-prayer__hero--split {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.zenith-prayer__hero-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.zenith-prayer--sm .zenith-prayer__hero-name {
+    font-size: 22px;
+    margin-top: 6px;
+}
+
+.zenith-prayer--sm .zenith-prayer__hero-time {
+    font-size: 44px;
+    margin-top: 0;
+}
+
+.zenith-prayer--sm .zenith-prayer__countdown {
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.zenith-prayer--sm .zenith-prayer__marked {
+    margin-top: 0;
+    padding-top: 0;
+    font-size: 11px;
+}
+
+.zenith-prayer--sm .zenith-prayer__tiles {
+    margin-top: auto;
+    gap: 7px;
+}
+
+.zenith-prayer--sm button.zenith-prayer__tile {
+    gap: 2px;
+    padding: 8px 4px;
+    min-height: 68px;
+}
+
+.zenith-prayer--sm .zenith-prayer__tile-name {
+    font-size: 11px;
+}
+
+.zenith-prayer--sm .zenith-prayer__tile-time {
+    font-size: 15px;
+}
+
+.zenith-prayer--sm .zenith-prayer__tile-mark {
+    min-height: 14px;
+}
+
+/* ── lg: the same, with room for a week and the extras ── */
+.zenith-prayer--lg button.zenith-prayer__tile {
+    padding: 16px 8px;
+}
+
+.zenith-prayer--lg .zenith-prayer__tile-name {
+    font-size: 14px;
+}
+
+.zenith-prayer--lg .zenith-prayer__tile-time {
+    font-size: 26px;
+}
+
+/* ── stack: one line, then a row per prayer ────────
+   No gap on the root: five 40px rows plus the summary line fill the 222px card
+   exactly, and a gap here would push the last row past the bottom edge. The
+   rows are held down by `margin-top: auto` instead. */
+.zenith-prayer--stack {
+    gap: 0;
+}
+
+.zenith-prayer__oneline {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.zenith-prayer__oneline b {
+    font-weight: 600;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-prayer--stack .zenith-prayer__countdown {
+    font-size: 12px;
+    margin-top: 0;
+}
+
+.zenith-prayer__counter {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* The counter already claims the free space on this line; a second `auto`
+   would split it between them and strand the counter mid-row. */
+.zenith-prayer__oneline .zenith-prayer__open {
+    margin-left: 0;
+}
+
+.zenith-prayer__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5px;
+    margin-top: auto;
+}
+
+/* ── Week strip (lg) ─────────────────────────────── */
+.zenith-prayer__week {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-prayer__week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.zenith-prayer__week-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.zenith-prayer__week-label {
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-prayer__week-day.is-today .zenith-prayer__week-label {
+    color: var(--zenith-text-normal);
+    font-weight: 600;
+}
+
+/* Bottom-up, so a day reads as a stack that fills rather than a bar chart. */
+.zenith-prayer__week-segs {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 3px;
+    width: 100%;
+    align-items: center;
+}
+
+.zenith-prayer__week-segs .zenith-prayer__seg {
+    width: 100%;
+    max-width: 22px;
+    height: 4px;
+}
+
+.zenith-prayer__week-num {
+    font-family: var(--zenith-font-serif);
+    font-size: 11px;
+    color: var(--zenith-text-faint);
+}
+
+/* ── Segments (week, month) ──────────────────────── */
+.zenith-prayer__seg {
+    display: block;
+    border-radius: 1px;
+    background: var(--zenith-border);
+    opacity: 0.7;
+    box-sizing: border-box;
+}
+
+.zenith-prayer__seg.is-done {
+    background: var(--zp-done);
+    opacity: 1;
+}
+
+/* An owned miss is outlined, not filled: it is an answer, not an achievement. */
+.zenith-prayer__seg.is-missed {
+    background: transparent;
+    border: 1px solid var(--zp-missed);
+    opacity: 1;
+}
+
+/* ── Extras ──────────────────────────────────────── */
+.zenith-prayer__extras-panel {
+    display: flex;
+    flex-direction: column;
+    width: 262px;
+    flex: 0 0 262px;
+}
+
+.zenith-prayer__extras {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.zenith-prayer__extras-panel .zenith-prayer__extras {
+    flex-direction: column;
+    flex-wrap: nowrap;
+}
+
+.zenith-prayer button.zenith-prayer__extra {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    color: var(--zenith-text-muted);
+    font-family: var(--zenith-font);
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.zenith-prayer button.zenith-prayer__extra:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-prayer button.zenith-prayer__extra.is-done {
+    background: var(--zenith-bg-tertiary);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-prayer button.zenith-prayer__extra:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* Chip variant: rides in the list's heading line in the full view. */
+.zenith-prayer button.zenith-prayer__extra.is-compact {
+    height: 22px;
+    gap: 6px;
+    padding: 0 9px;
+    border-radius: 11px;
+    font-size: 12px;
+}
+
+/* ── Empty state ─────────────────────────────────── */
+.zenith-prayer__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--zenith-space-xs);
+    height: 100%;
+    padding: var(--zenith-space-lg) var(--zenith-space-md);
+    text-align: center;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-prayer__empty-title {
+    margin: 0;
+    font-size: 15px;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-prayer__empty-hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--zenith-text-faint);
+    max-width: 34ch;
+    line-height: 1.5;
+}
+
+.zenith-prayer__empty-hint.is-warn {
+    color: var(--zenith-warning);
+}
+
+.zenith-prayer button.zenith-prayer__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid var(--zenith-border);
+    border-radius: 8px;
+    background: var(--zenith-bg-secondary);
+    color: var(--zenith-text-normal);
+    font-family: var(--zenith-font);
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.zenith-prayer button.zenith-prayer__cta:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
+}
+
+/* ━━━ The full view ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* The rhythm runs on the spacing tokens rather than on constants. The version
+   this replaces hard-coded every gap, which meant the density setting — whose
+   whole job is rescaling those tokens — did nothing at all to this module. */
+.zenith-prayer-view {
+    max-width: 760px;
+    height: auto;
+    margin: 0 auto;
+    padding: var(--zenith-space-md) var(--zenith-space-md) var(--zenith-space-lg);
+    gap: var(--zenith-space-md);
+    animation: zenith-fade-in var(--zenith-transition-slow);
+}
+
+/* ── Day head: which day, where, what's next, the day's shape ──
+   One block, because it is one statement. As three it spent a third of the
+   page restating the same date at three type sizes. */
+.zenith-prayer__head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-sm);
+    padding: var(--zenith-space-sm) var(--zenith-space-md) 10px;
+    border-radius: var(--zenith-radius-md);
+    border-left: 3px solid var(--zenith-accent);
+    background: var(--zenith-bg-secondary);
+}
+
+.zenith-prayer__daybar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.zenith-prayer__date {
+    margin: 0;
+    padding: 0 2px;
+    font-family: var(--zenith-font-serif);
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--zenith-text-normal);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.zenith-prayer button.zenith-prayer__step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    color: var(--zenith-text-muted);
+    font-family: var(--zenith-font);
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.zenith-prayer button.zenith-prayer__step.is-wide {
+    width: auto;
+    padding: 0 9px;
+}
+
+.zenith-prayer button.zenith-prayer__step:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-prayer button.zenith-prayer__note-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid var(--zenith-border);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--zenith-text-muted);
+    font-family: var(--zenith-font);
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.zenith-prayer button.zenith-prayer__note-btn:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-prayer__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-prayer__place {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+/* ── What's next ─────────────────────────────────── */
+.zenith-prayer__next {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    min-width: 0;
+}
+
+.zenith-prayer__next-name {
+    font-size: 16px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.zenith-prayer__next-time {
+    margin-left: auto;
+    font-family: var(--zenith-font-serif);
+    font-size: 27px;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-prayer__next .zenith-prayer__countdown {
+    margin-top: 0;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* ── Day rail ────────────────────────────────────
+   What the labelled 56px band was for, minus the labels: the list two lines
+   below already names every one of these, and the shape is what only this can
+   show. Names live in the tooltips. */
+.zenith-prayer__rail {
+    position: relative;
+    height: 13px;
+}
+
+.zenith-prayer__rail-track,
+.zenith-prayer__rail-elapsed {
+    position: absolute;
+    left: 0;
+    top: 5px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.zenith-prayer__rail-track {
+    right: 0;
+    background: var(--zenith-bg-tertiary);
+}
+
+.zenith-prayer__rail-elapsed {
+    background: var(--zenith-text-faint);
+    opacity: 0.5;
+}
+
+.zenith-prayer__rail-tick {
+    position: absolute;
+    top: 1px;
+    width: 2px;
+    height: 11px;
+    border-radius: 1px;
+    background: var(--zenith-text-faint);
+    transform: translateX(-50%);
+}
+
+.zenith-prayer__rail-tick.is-done {
+    background: var(--zp-done);
+}
+
+.zenith-prayer__rail-now {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 13px;
+    background: var(--zenith-accent);
+    transform: translateX(-50%);
+}
+
+/* ── Times list ──────────────────────────────────── */
+.zenith-prayer__list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.zenith-prayer__list-head {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    margin-bottom: var(--zenith-space-xs);
+}
+
+.zenith-prayer__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: var(--zenith-radius-sm);
+}
+
+/* The prayer you're waiting for is the only framed row. */
+.zenith-prayer__row.is-next {
+    background: var(--zenith-bg-secondary);
+    border-color: var(--zenith-border);
+}
+
+.zenith-prayer__row.is-marker {
+    height: 22px;
+    opacity: 0.75;
+}
+
+.zenith-prayer__row-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-prayer__row-name {
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 88px;
+}
+
+.zenith-prayer__row.is-next .zenith-prayer__row-name {
+    font-weight: 600;
+}
+
+.zenith-prayer__row.is-marker .zenith-prayer__row-name {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--zenith-text-muted);
+}
+
+/* A row whose time hasn't come recedes instead of saying so in words. */
+.zenith-prayer__row.is-future .zenith-prayer__row-name,
+.zenith-prayer__row.is-future .zenith-prayer__row-time {
+    color: var(--zenith-text-muted);
+}
+
+.zenith-prayer__row.is-future .zenith-prayer__row-name {
+    font-weight: 400;
+}
+
+.zenith-prayer__row-time {
+    margin-left: auto;
+    font-family: var(--zenith-font-serif);
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-prayer__row.is-marker .zenith-prayer__row-time {
+    font-size: 13px;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-prayer__row-passive {
+    margin-left: 12px;
+    font-size: 12px;
+    color: var(--zenith-text-faint);
+    white-space: nowrap;
+}
+
+.zenith-prayer__row-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 12px;
+}
+
+/* The answer given nearly every time: labelled, and reporting the current
+   state rather than asking a fresh question. It no longer holds a 116px
+   minimum — the label is as wide as the longest status and no wider. */
+.zenith-prayer button.zenith-prayer__primary {
+    height: 26px;
+    padding: 0 11px;
+    border: 1px solid var(--zenith-accent);
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    color: var(--zenith-accent);
+    font-family: var(--zenith-font);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.zenith-prayer button.zenith-prayer__primary:hover {
+    background: color-mix(in srgb, var(--zenith-accent) 12%, transparent);
+}
+
+.zenith-prayer button.zenith-prayer__primary.is-ontime {
+    border-color: transparent;
+    background: var(--zp-done);
+    color: #fff;
+}
+
+.zenith-prayer button.zenith-prayer__primary.is-late {
+    border-color: transparent;
+    background: var(--zp-late);
+    color: var(--zp-on-warning);
+}
+
+.zenith-prayer button.zenith-prayer__primary.is-missed {
+    border-color: transparent;
+    background: var(--zp-missed);
+    color: #fff;
+}
+
+.zenith-prayer button.zenith-prayer__primary.is-ontime:hover,
+.zenith-prayer button.zenith-prayer__primary.is-late:hover,
+.zenith-prayer button.zenith-prayer__primary.is-missed:hover {
+    filter: brightness(1.08);
+    background: inherit;
+}
+
+.zenith-prayer button.zenith-prayer__pick {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+    box-shadow: none;
+    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast);
+}
+
+.zenith-prayer button.zenith-prayer__pick:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-prayer button.zenith-prayer__pick.is-active {
+    border-color: transparent;
+    color: #fff;
+}
+
+.zenith-prayer button.zenith-prayer__pick.is-late.is-active {
+    background: var(--zp-late);
+    color: var(--zp-on-warning);
+}
+
+.zenith-prayer button.zenith-prayer__pick.is-missed.is-active {
+    background: var(--zp-missed);
+}
+
+.zenith-prayer__note {
+    margin: 4px 0 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--zenith-text-faint);
+}
+
+/* ── Statistics ──────────────────────────────────
+   Also the day picker, now that the month grid is gone: every bar is a button,
+   and a low bar is exactly the day you came back for. */
+.zenith-prayer__stats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-prayer__stats-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.zenith-prayer__stats-value {
+    font-family: var(--zenith-font-serif);
+    font-size: 27px;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-prayer__stats-caption {
+    font-size: 12px;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-prayer__stats-head .zenith-prayer__kicker {
+    margin-left: auto;
+}
+
+.zenith-prayer__stats-strip {
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    min-width: 0;
+    height: 26px;
+}
+
+/* The button is the full height of the strip so the target doesn't shrink
+   with the bar it holds — an empty day is the one you most want to click. */
+.zenith-prayer button.zenith-prayer__stats-day {
+    display: flex;
+    align-items: flex-end;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.zenith-prayer button.zenith-prayer__stats-day:hover {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-prayer button.zenith-prayer__stats-day.is-selected {
+    box-shadow: inset 0 0 0 1px var(--zenith-accent);
+}
+
+.zenith-prayer button.zenith-prayer__stats-day:focus-visible {
+    outline: 2px solid var(--zenith-accent);
+    outline-offset: 1px;
+}
+
+.zenith-prayer__stats-bar {
+    width: 100%;
+    border-radius: 2px;
+    background: var(--zp-done);
+    opacity: 0.45;
+}
+
+.zenith-prayer__stats-bar.is-full {
+    opacity: 0.85;
+}
+
+.zenith-prayer__stats-bar.is-today {
+    background: var(--zenith-accent);
+    opacity: 1;
+}
+
+.zenith-prayer__stats-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px var(--zenith-space-md);
+    padding-top: var(--zenith-space-sm);
+    border-top: 1px solid var(--zenith-border);
+    font-size: 12px;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-prayer__stat {
+    white-space: nowrap;
+    text-transform: lowercase;
+}
+
+.zenith-prayer__stat b {
+    font-weight: 600;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── The tracker as a modal ──────────────────────
+   `contentEl` carries both `modal-content` and `zenith-root`. The root's
+   `height: 100%` would fight the modal's own sizing, so it is overridden here —
+   prayer.css loads after base.css and the two-class selector outranks it — and
+   the background is dropped so the modal's surface shows through instead of a
+   note-coloured panel painted on top of it. */
+.modal.zenith-prayer-modal {
+    display: flex;
+    flex-direction: column;
+    width: min(820px, 94vw);
+    max-width: min(820px, 94vw);
+    max-height: min(86vh, 900px);
+    padding: 0;
+}
+
+/* The view names the day itself, in the right typeface. */
+.zenith-prayer-modal .modal-title {
+    display: none;
+}
+
+.zenith-prayer-modal .modal-content {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    background: transparent;
+}
+
+/* Obsidian floats its close button over the top-right corner; the date row
+   keeps clear of it rather than running underneath. */
+.zenith-prayer-modal .zenith-prayer__daybar {
+    padding-right: 26px;
+}
+
+@media (max-width: 560px) {
+    .modal.zenith-prayer-modal {
+        width: 100%;
+        max-width: 100%;
+        max-height: 92vh;
+    }
+}
+
+/* ── Code block in a note ────────────────────────── */
+.zenith-prayer--block {
+    height: auto;
+    gap: 12px;
+    margin: 20px 0;
+    padding: 14px 0;
+    border-top: 1px solid var(--zenith-border);
+    border-bottom: 1px solid var(--zenith-border);
+}
+
+.zenith-prayer__block-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-prayer__block-head b {
+    font-family: var(--zenith-font-serif);
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-prayer--block .zenith-prayer__tiles {
+    display: flex;
+    gap: 6px;
+}
+
+.zenith-prayer--block button.zenith-prayer__tile {
+    flex: 1 1 0;
+}
+
+/* ── Settings: per-prayer offsets ────────────────── */
+.zenith-prayer-adjust {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--zenith-space-xs);
+    width: 100%;
+}
+
+.zenith-prayer-adjust__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--zenith-space-sm);
+    padding: 3px 6px;
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-bg-secondary);
+}
+
+.zenith-prayer-adjust__name {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.76rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-prayer-adjust__stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.zenith-prayer-adjust button.zenith-prayer-adjust__btn {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-xs);
+    background: transparent;
+    color: var(--zenith-text-muted);
+    font-family: var(--zenith-font);
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.zenith-prayer-adjust button.zenith-prayer-adjust__btn:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-prayer-adjust button.zenith-prayer-adjust__btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.zenith-prayer-adjust__value {
+    min-width: 30px;
+    text-align: center;
+    font-size: 0.74rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-prayer-adjust__value.is-set {
+    color: var(--zenith-accent);
+    font-weight: 600;
+}
+
+/* ── Narrow view ────────────────────────────────
+   The row no longer wraps: at 34px with the buttons trimmed it fits a 320px
+   pane on one line, and a wrapped row was three lines per prayer. */
+@media (max-width: 560px) {
+    .zenith-prayer__row {
+        gap: 7px;
+        padding: 0 8px;
+    }
+    .zenith-prayer__row-actions {
+        margin-left: 6px;
+    }
+    .zenith-prayer__row-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .zenith-prayer__next {
+        flex-wrap: wrap;
+        row-gap: 2px;
+    }
+    .zenith-prayer__note-btn span {
+        display: none;
+    }
+}
+
+/* ── Touch ──────────────────────────────────────
+   A modest bump, not a separate finger-sized layout: 26 → 32px matches what
+   the status buttons have always been, so nothing gets harder to hit while
+   the density this view was rebuilt for survives. */
+@media (pointer: coarse) {
+    .zenith-prayer__row {
+        height: 38px;
+    }
+    .zenith-prayer__row.is-marker {
+        height: 26px;
+    }
+    .zenith-prayer button.zenith-prayer__primary {
+        height: 32px;
+        padding: 0 12px;
+    }
+    .zenith-prayer button.zenith-prayer__pick {
+        width: 32px;
+        height: 32px;
+    }
+    .zenith-prayer button.zenith-prayer__step {
+        width: 28px;
+        height: 28px;
+    }
+    .zenith-prayer button.zenith-prayer__note-btn {
+        height: 28px;
+    }
+    .zenith-prayer button.zenith-prayer__extra.is-compact {
+        height: 26px;
+        border-radius: 13px;
+    }
+    .zenith-prayer__stats-strip {
+        height: 30px;
+    }
+}

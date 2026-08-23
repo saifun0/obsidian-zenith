@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build output (esbuild writes to ../zenith/, these are only safety nets)
+/main.js
+/main.js.map
+/styles.css
+/manifest.json
+/data.json
+
+# Scratch / reference material
+temp/
+
+# TypeScript & tool caches
+*.tsbuildinfo
+.eslintcache
+.cache/
+coverage/
+.vite/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

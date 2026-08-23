@@ -1,0 +1,358 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Shared Component Styles
+   Card, Badge, Tabs, IconButton, ProgressBar, PieChart
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ── Card ───────────────────────────────────────── */
+.zenith-card {
+    background: color-mix(in srgb, var(--zenith-bg-secondary) 40%, transparent);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-lg);
+    box-shadow: none; /* We remove default shadow for cleaner look, hover adds it */
+    transition: box-shadow var(--zenith-transition-slow), transform var(--zenith-transition-slow), background var(--zenith-transition-slow);
+}
+
+.zenith-card--pad-none { padding: 0; }
+.zenith-card--pad-sm   { padding: var(--zenith-space-sm); }
+.zenith-card--pad-md   { padding: var(--zenith-space-md); }
+.zenith-card--pad-lg   { padding: var(--zenith-space-lg); }
+
+.zenith-card--hoverable {
+    cursor: pointer;
+}
+
+.zenith-card--hoverable:hover {
+    box-shadow: var(--zenith-shadow-md);
+    transform: translateY(-2px);
+}
+
+/* ── Badge ──────────────────────────────────────── */
+.zenith-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+    border-radius: var(--zenith-radius-xl);
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.zenith-badge--md {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+}
+
+.zenith-badge--sm {
+    padding: 2px 8px;
+    font-size: 0.68rem;
+}
+
+.zenith-badge--default {
+    background: var(--zenith-bg-tertiary);
+    color: var(--zenith-text-muted);
+}
+
+.zenith-badge--success {
+    background: var(--zenith-success-bg);
+    color: var(--zenith-success);
+}
+
+.zenith-badge--warning {
+    background: var(--zenith-warning-bg);
+    color: var(--zenith-warning);
+}
+
+.zenith-badge--danger {
+    background: var(--zenith-danger-bg);
+    color: var(--zenith-danger);
+}
+
+.zenith-badge--info {
+    background: var(--zenith-info-bg);
+    color: var(--zenith-info);
+}
+
+.zenith-badge__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+/* ── Tabs ─────────────────────────────────────────
+   Pills rather than underlined tabs, and each one can carry its own accent via
+   `--zenith-tab-color` (content types publish theirs; anything that doesn't set
+   it falls back to the theme accent). Scoped parent + tag throughout because
+   Obsidian styles bare `button` at (0,1,1) — a plain `.zenith-tabs__tab` loses,
+   which is why these used to render inside its grey box no matter what
+   `background: none` we set. */
+.zenith-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: var(--zenith-space-md);
+}
+
+.zenith-tabs button.zenith-tabs__tab {
+    /* One property drives label, icon, ring, tint and badge together. */
+    --tab: var(--zenith-tab-color, var(--zenith-accent));
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 13px;
+    border: 1px solid var(--zenith-border);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--zenith-bg-secondary) 60%, transparent);
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color var(--zenith-transition-fast), background var(--zenith-transition-fast),
+        border-color var(--zenith-transition-fast), transform var(--zenith-transition-fast);
+}
+
+.zenith-tabs button.zenith-tabs__tab:hover {
+    color: var(--zenith-text-normal);
+    background: var(--zenith-bg-hover);
+    border-color: color-mix(in srgb, var(--tab) 40%, var(--zenith-border));
+}
+
+.zenith-tabs button.zenith-tabs__tab:active {
+    transform: scale(0.97);
+}
+
+.zenith-tabs button.zenith-tabs__tab:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--tab) 45%, transparent);
+}
+
+.zenith-tabs button.zenith-tabs__tab--active {
+    color: var(--tab);
+    font-weight: 600;
+    border-color: color-mix(in srgb, var(--tab) 55%, transparent);
+    background: color-mix(in srgb, var(--tab) 14%, transparent);
+}
+
+/* The icon carries the type's colour even when the tab is idle — muted, so the
+   row reads as one strip rather than a rainbow, but enough to scan by. */
+.zenith-tabs__tab-icon {
+    display: inline-flex;
+    align-items: center;
+    color: var(--tab);
+    opacity: 0.5;
+    transition: opacity var(--zenith-transition-fast);
+}
+
+.zenith-tabs__tab-icon .zenith-obsidian-icon {
+    display: inline-flex;
+}
+
+.zenith-tabs button.zenith-tabs__tab:hover .zenith-tabs__tab-icon {
+    opacity: 0.85;
+}
+
+.zenith-tabs button.zenith-tabs__tab--active .zenith-tabs__tab-icon {
+    opacity: 1;
+}
+
+.zenith-tabs__tab-count {
+    font-size: 0.66rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: var(--zenith-radius-xl);
+    background: var(--zenith-bg-tertiary);
+    color: var(--zenith-text-faint);
+    min-width: 18px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast);
+}
+
+.zenith-tabs button.zenith-tabs__tab--active .zenith-tabs__tab-count {
+    background: color-mix(in srgb, var(--tab) 22%, transparent);
+    color: var(--tab);
+}
+
+@media (max-width: 600px) {
+    /* The row wraps rather than hiding labels: an icon-only pill is only
+       readable once you already know what the icons mean. */
+    .zenith-tabs button.zenith-tabs__tab {
+        padding: 6px 10px;
+    }
+}
+
+/* ── Icon Button ────────────────────────────────── */
+.zenith-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    cursor: pointer;
+    transition: all var(--zenith-transition-fast);
+    flex-shrink: 0;
+}
+
+.zenith-icon-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.zenith-icon-btn--default {
+    background: var(--zenith-bg-tertiary);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-icon-btn--default:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-icon-btn--ghost {
+    background: transparent;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-icon-btn--ghost:hover:not(:disabled) {
+    background: var(--zenith-bg-tertiary);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-icon-btn--danger {
+    background: transparent;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-icon-btn--danger:hover:not(:disabled) {
+    background: var(--zenith-danger-bg);
+    color: var(--zenith-danger);
+}
+
+/* ── Progress Bar ───────────────────────────────── */
+.zenith-progress-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.zenith-progress-bar__label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.zenith-progress-bar__label {
+    font-size: 0.75rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-progress-bar__value {
+    font-size: 0.7rem;
+    color: var(--zenith-text-faint);
+    font-weight: 500;
+}
+
+.zenith-progress-bar__track {
+    width: 100%;
+    background: var(--zenith-bg-tertiary);
+    border-radius: var(--zenith-radius-xl);
+    overflow: hidden;
+}
+
+.zenith-progress-bar__track--sm { height: 4px; }
+.zenith-progress-bar__track--md { height: 6px; }
+.zenith-progress-bar__track--lg { height: 10px; }
+
+.zenith-progress-bar__fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--zenith-progress-color, var(--zenith-accent));
+    transition: width var(--zenith-transition-slow);
+    position: relative;
+}
+
+.zenith-progress-bar__fill--animated::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: zenith-shimmer 2s ease-in-out infinite;
+}
+
+/* ── Pie Chart ──────────────────────────────────── */
+.zenith-pie-chart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--zenith-space-md);
+}
+
+.zenith-pie-chart__svg {
+    overflow: visible;
+}
+
+.zenith-pie-chart__segment {
+    animation: zenith-fade-in 0.6s ease both;
+    transition: opacity var(--zenith-transition);
+}
+
+.zenith-pie-chart__segment:hover {
+    opacity: 0.8;
+    filter: brightness(1.1);
+}
+
+.zenith-pie-chart__total {
+    font-family: var(--zenith-font);
+}
+
+.zenith-pie-chart__legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.zenith-pie-chart__legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+}
+
+.zenith-pie-chart__legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.zenith-pie-chart__legend-label {
+    color: var(--zenith-text-normal);
+    flex: 1;
+}
+
+.zenith-pie-chart__legend-value {
+    color: var(--zenith-text-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.zenith-pie-chart--empty {
+    opacity: 0.5;
+}
+
+.zenith-pie-chart__empty-text {
+    font-size: 0.8rem;
+    color: var(--zenith-text-faint);
+}

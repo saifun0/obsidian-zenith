@@ -1,0 +1,1316 @@
+/* ══════════════════════════════════════════════════════
+   Tasks Calendar
+   ──────────────────────────────────────────────────────
+   Prefix `zenith-tcal` (view) / `zenith-tcalw` (widget). Zenith ships one flat
+   stylesheet namespace, so nothing here reuses a name another module owns.
+
+   The colour of an entry is its *kind* — why it's on that day — because that's
+   what distinguishes two chips sitting in the same cell. Priority is a second
+   channel: a thicker left edge, so it reads without competing for hue.
+   ══════════════════════════════════════════════════════ */
+
+/* React's mount point. Without a definite height here the calendar's own
+   `height: 100%` resolves to `auto`, every week row collapses onto its content,
+   and the month sits in the top third of an empty pane. */
+.zenith-tcal-mount {
+    height: 100%;
+}
+
+.zenith-tcal {
+    /* One column template for every band — the day-number row, the ribbon
+       lanes and the chip stacks are separate grids that have to line up. */
+    --tcal-cols: 1.6em repeat(7, minmax(0, 1fr));
+    --tcal-lane-h: 17px;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-sm);
+    height: 100%;
+    min-height: 0;
+    padding: var(--zenith-space-md);
+    box-sizing: border-box;
+    font-size: 0.85rem;
+}
+
+/* ── Kind colours ────────────────────────────────────
+   Set as a custom property on the element so the chip, the agenda row and the
+   statistics list can each use it differently (border, icon, dot) without
+   repeating the palette three times.
+
+   Values follow the `Week Ahead` design spec, so the calendar view and the
+   dashboard widget name a kind with the same hue. The widget computes them in
+   JS instead of reading these — it mixes them into `color-mix()` fills — but
+   the mapping is the one place it's written down. */
+.zenith-tcal .is-overdue {
+    --tcal-kind: var(--zenith-danger, #ef4444);
+}
+.zenith-tcal .is-due,
+.zenith-tcal .is-process {
+    --tcal-kind: var(--zenith-accent);
+}
+.zenith-tcal .is-recurrence {
+    --tcal-kind: var(--zenith-info, #3b82f6);
+}
+.zenith-tcal .is-start {
+    --tcal-kind: var(--zenith-success, #10b981);
+}
+.zenith-tcal .is-scheduled {
+    --tcal-kind: var(--zenith-text-muted);
+}
+.zenith-tcal .is-dailyNote {
+    --tcal-kind: var(--zenith-text-faint);
+}
+.zenith-tcal .is-done {
+    --tcal-kind: var(--zenith-success, #10b981);
+}
+.zenith-tcal .is-cancelled {
+    --tcal-kind: var(--zenith-text-faint);
+}
+
+/* ── Toolbar ─────────────────────────────────────────
+   One row: filter, view switcher, the month you're on, options and progress.
+   `flex-wrap` so a narrow leaf drops the trailing controls to a second line
+   instead of squashing the title until it's unreadable. */
+.zenith-tcal__bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-sm);
+}
+
+/* Obsidian styles bare `<button>` at (0,1,1) with a background and
+   `--input-shadow`, which outranks a plain class — every button below is
+   therefore scoped parent + tag, hover and focus states included, or the
+   default box shows through. */
+.zenith-root button.zenith-tcal__tool,
+.zenith-root button.zenith-tcal__mode,
+.zenith-root button.zenith-tcal__stat {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 28px;
+    min-width: 28px;
+    padding: 0 6px;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast);
+}
+
+.zenith-root button.zenith-tcal__tool:hover,
+.zenith-root button.zenith-tcal__mode:hover,
+.zenith-root button.zenith-tcal__stat:hover {
+    background: var(--zenith-bg-hover);
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-root button.zenith-tcal__tool.is-active,
+.zenith-root button.zenith-tcal__mode.is-active,
+.zenith-root button.zenith-tcal__stat.is-active {
+    background: color-mix(in srgb, var(--zenith-accent) 18%, transparent);
+    box-shadow: none;
+    color: var(--zenith-accent);
+}
+
+.zenith-tcal__modes {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-bg-secondary);
+}
+
+.zenith-tcal__nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin: 0 auto;
+}
+
+.zenith-root button.zenith-tcal__title {
+    min-width: 9em;
+    padding: 4px 10px;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: center;
+    text-transform: capitalize;
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-tcal__title:hover {
+    background: var(--zenith-bg-hover);
+    box-shadow: none;
+}
+
+.zenith-tcal__bar-end {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Progress ring around the counter: a conic sweep of how much of the range is
+   already done, so the number reads against something. */
+.zenith-tcal__stat {
+    position: relative;
+    padding-right: 8px;
+}
+
+.zenith-tcal__stat::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: var(--zenith-radius-sm);
+    padding: 1px;
+    background: conic-gradient(
+        var(--zenith-accent) var(--zenith-tcal-progress, 0%),
+        var(--zenith-border) 0
+    );
+    /* Ring, not a filled block: mask out everything but the 1px border band. */
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.zenith-tcal__stat-count {
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Popovers ────────────────────────────────────────
+   Anchored, not portalled: the toolbar is at the top of a full-height view, so
+   there's no ancestor clipping them and no need to track scroll. */
+.zenith-tcal__pop-host {
+    position: relative;
+}
+
+.zenith-tcal__pop {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 20;
+    min-width: 190px;
+    margin: 0;
+    padding: 4px;
+    list-style: none;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-primary);
+    box-shadow: var(--zenith-shadow-md);
+}
+
+.zenith-tcal__pop-head {
+    padding: 4px 8px 6px;
+    color: var(--zenith-text-faint);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.zenith-root button.zenith-tcal__pop-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 5px 8px;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: 0.82rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-tcal__pop-item:hover {
+    background: var(--zenith-bg-hover);
+    box-shadow: none;
+}
+
+.zenith-root button.zenith-tcal__pop-item.is-on {
+    color: var(--zenith-accent);
+}
+
+.zenith-tcal__pop--stats .zenith-tcal__pop-item svg {
+    color: var(--tcal-kind, var(--zenith-text-muted));
+}
+
+.zenith-tcal__pop-check {
+    width: 1em;
+    color: var(--zenith-accent);
+}
+
+.zenith-tcal__pop-label {
+    flex: 1;
+}
+
+.zenith-tcal__pop-count {
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-root button.zenith-tcal__pop-item.zenith-tcal__pop-clear {
+    justify-content: center;
+    color: var(--zenith-text-muted);
+    font-size: 0.78rem;
+}
+
+/* ── Month grid ──────────────────────────────────────
+   No boxes. A filled rectangle per day turns six weeks into a wall of chrome
+   that competes with the tasks inside it; a hairline between weeks and the
+   day numbers pinned to the top-left is enough structure to read a grid by.
+
+   Each week is a single grid so a ribbon can span columns:
+     row 1              day numbers
+     rows 2…1+lanes     one multi-day ribbon each
+     last row           the day's chips */
+.zenith-tcal__month {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.zenith-tcal__weekdays {
+    display: grid;
+    grid-template-columns: var(--tcal-cols);
+    gap: 0 4px;
+    flex: 0 0 auto;
+    padding-bottom: 4px;
+}
+
+/* `grid-template-rows` is set inline per week — `repeat()` rejects a count of
+   zero, so a week with no ribbons would invalidate the whole declaration and
+   take the `auto … 1fr` down with it. */
+.zenith-tcal__row {
+    display: grid;
+    grid-template-columns: var(--tcal-cols);
+    gap: 0 4px;
+    flex: 1;
+    min-height: 0;
+    padding: 3px 0 4px;
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-tcal__weekday {
+    padding: 0 4px;
+    color: var(--zenith-text-faint);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* The week-number gutter is a button in the body rows and a plain span in the
+   header, so the shared look is class-only and the button reset sits on top.
+   It whispers on purpose: two columns of numbers side by side is exactly the
+   ambiguity that made the first version hard to read, so only the day numbers
+   are allowed any weight. */
+.zenith-tcal__wk {
+    grid-row: 1 / -1;
+    align-self: start;
+    justify-self: center;
+    padding: 1px 0 0;
+    color: var(--zenith-text-faint);
+    font-size: 0.6rem;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.5;
+}
+
+.zenith-root button.zenith-tcal__wk {
+    border: none;
+    border-radius: var(--zenith-radius-xs);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-tcal__wk:hover {
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-accent);
+    opacity: 1;
+}
+
+.zenith-tcal__daynum-cell {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding-bottom: 2px;
+}
+
+/* Days outside the month stay legible but recede — they're context, not
+   content. Only the number fades: the tasks on those days are real. */
+.zenith-tcal__daynum-cell.is-outside .zenith-tcal__daynum {
+    opacity: 0.4;
+}
+
+.zenith-tcal__stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Today is a filled pill on the number rather than a tinted cell — one small
+   solid mark reads faster than a large wash, and it doesn't fight the ribbons
+   crossing the row. */
+.zenith-root .zenith-tcal__daynum-cell.is-today button.zenith-tcal__daynum,
+.zenith-tcal__daynum-cell.is-today .zenith-tcal__daynum,
+.zenith-root .zenith-tcal__week-head.is-today button.zenith-tcal__daynum,
+.zenith-tcal__week-head.is-today .zenith-tcal__daynum {
+    background: var(--zenith-accent);
+    color: var(--text-on-accent, #fff);
+    font-weight: 700;
+}
+
+/* Like the week gutter: a button only while the journal module can open the
+   day's note, a span otherwise. */
+.zenith-tcal__daynum {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.55em;
+    height: 1.55em;
+    padding: 0;
+    border-radius: 999px;
+    color: var(--zenith-text-muted);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-root button.zenith-tcal__daynum {
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-tcal__daynum:hover {
+    background: var(--zenith-bg-hover);
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+}
+
+/* ── Chips ───────────────────────────────────────────
+   A glyph in the kind colour and plain text — no fill. Eight filled blocks in a
+   week row is the thing that reads as noise; the colour lives in the icon,
+   which is enough to tell "due" from "done" at a glance, and the background
+   only appears under the pointer.
+
+   One line, ellipsised: a calendar cell is a glance, not a reading surface. The
+   full text is in the tooltip and, one click away, in the note. */
+.zenith-root button.zenith-tcal__chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    padding: 1px 3px;
+    border: none;
+    border-left: 2px solid transparent;
+    border-radius: var(--zenith-radius-xs);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.72rem;
+    line-height: 1.45;
+    text-align: left;
+    cursor: pointer;
+    transition: opacity var(--zenith-transition-fast), background var(--zenith-transition-fast),
+        color var(--zenith-transition-fast);
+}
+
+.zenith-root button.zenith-tcal__chip:hover {
+    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-text-muted)) 18%, transparent);
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+}
+
+/* Priority earns the only coloured edge, and only when it's actually urgent —
+   a marker every chip carries is a marker that says nothing. */
+.zenith-root button.zenith-tcal__chip.is-priority-high {
+    border-left-color: var(--zenith-warning, #f59e0b);
+}
+
+.zenith-root button.zenith-tcal__chip.is-priority-urgent {
+    border-left-color: var(--zenith-danger, #ef4444);
+}
+
+/* ── Ribbons ─────────────────────────────────────────
+   The multi-day bar. This one *is* filled: it has to read as a single object
+   crossing several columns, which an outline can't do. */
+.zenith-root button.zenith-tcal__ribbon {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    align-self: center;
+    min-width: 0;
+    height: calc(var(--tcal-lane-h) - 3px);
+    padding: 0 5px;
+    border: none;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 22%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 40%, transparent);
+    color: var(--zenith-text-normal);
+    font-size: 0.7rem;
+    line-height: 1;
+    text-align: left;
+    cursor: pointer;
+    transition: opacity var(--zenith-transition-fast), background var(--zenith-transition-fast);
+}
+
+.zenith-root button.zenith-tcal__ribbon:hover {
+    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 34%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 60%, transparent);
+}
+
+/* A square end is the conventional "continues past here". */
+.zenith-root button.zenith-tcal__ribbon.is-clipped-start {
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+}
+
+.zenith-root button.zenith-tcal__ribbon.is-clipped-end {
+    border-top-right-radius: 2px;
+    border-bottom-right-radius: 2px;
+}
+
+.zenith-root button.zenith-tcal__ribbon.is-priority-high,
+.zenith-root button.zenith-tcal__ribbon.is-priority-urgent {
+    font-weight: 600;
+}
+
+.zenith-tcal__ribbon-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.zenith-tcal__ribbon-due {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: var(--tcal-kind, var(--zenith-accent));
+}
+
+.zenith-tcal__chip.is-done .zenith-tcal__chip-title,
+.zenith-tcal__chip.is-cancelled .zenith-tcal__chip-title,
+.zenith-tcal__row-item.is-done .zenith-tcal__row-title,
+.zenith-tcal__row-item.is-cancelled .zenith-tcal__row-title {
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+/* Focused a kind in the statistics popover: everything else fades back rather
+   than disappearing, so you keep the shape of the month while you read one layer. */
+.zenith-tcal__chip.is-dim,
+.zenith-tcal__row-item.is-dim {
+    opacity: 0.25;
+}
+
+.zenith-tcal__chip-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: var(--tcal-kind, var(--zenith-text-muted));
+}
+
+.zenith-tcal__chip-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.zenith-tcal__chip-note {
+    flex: 0 1 auto;
+    max-width: 40%;
+    overflow: hidden;
+    color: var(--zenith-text-faint);
+    font-size: 0.66rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* The hour, on views with no rows to place it in. Tabular so a stack of chips
+   lines its times up, and in the kind's colour because the time IS the reason
+   the entry is on that day. */
+.zenith-tcal__chip-time {
+    flex: 0 0 auto;
+    color: var(--tcal-kind, var(--zenith-text-muted));
+    font-size: 0.66rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-tcal__row-time {
+    flex: 0 0 auto;
+    width: 3.2em;
+    color: var(--zenith-text-muted);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-tcal__chip-flag {
+    flex: 0 0 auto;
+    padding: 0 3px;
+    border-radius: var(--zenith-radius-xs);
+    background: var(--zenith-danger-bg);
+    color: var(--zenith-danger);
+    font-size: 0.62rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-root button.zenith-tcal__more {
+    padding: 1px 4px;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    font-size: 0.66rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-tcal__more:hover {
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-accent);
+}
+
+/* ── Week & day views ────────────────────────────────
+   Three bands over the same columns — headers, everything all-day, then the
+   hours — so a multi-day bar can cross them and 15:00 lines up across every
+   day. `--tcal-days` is 7 in the week view and 1 in the day view; nothing else
+   differs between the two, which is why they are one component.
+
+   The hour gutter takes the first column of all three bands, so the band label
+   and the hour labels share one left edge. */
+.zenith-tcal__week {
+    --tcal-gutter: 3.4em;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.zenith-tcal__week-heads,
+.zenith-tcal__band,
+.zenith-tcal__hour-grid {
+    display: grid;
+    grid-template-columns: var(--tcal-gutter) repeat(var(--tcal-days, 7), minmax(0, 1fr));
+    gap: 0 4px;
+}
+
+/* All three bands reserve a scrollbar gutter, whether or not they have one.
+   The hours scroll and the band can; the headers never do — but a scrollbar
+   appearing in one of them would narrow that band's columns alone, and the
+   whole view rests on 15:00 sitting in the same place in all three. */
+.zenith-tcal__week-heads,
+.zenith-tcal__band,
+.zenith-tcal__hours {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+}
+
+.zenith-tcal__week-heads {
+    flex: 0 0 auto;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--zenith-border);
+}
+
+.zenith-tcal__week-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    padding: 0 2px;
+}
+
+.zenith-tcal__col-weekday {
+    color: var(--zenith-text-faint);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.zenith-tcal__week-head.is-today .zenith-tcal__col-weekday {
+    color: var(--zenith-accent);
+}
+
+/* ── All-day band ────────────────────────────────────
+   Everything the hour grid can't place: the 🛫→📅 ribbons and the chips for
+   tasks due on a day rather than at a time. Capped and scrollable, because a
+   Thursday with twelve undated tasks must not be allowed to push the hours off
+   the screen — the hours are what this view is for. */
+.zenith-tcal__band {
+    flex: 0 0 auto;
+    max-height: 30%;
+    padding: 4px 0 3px;
+    border-bottom: 1px solid var(--zenith-border);
+}
+
+.zenith-tcal__band-label {
+    grid-row: 1 / -1;
+    align-self: start;
+    padding: 2px 6px 0 0;
+    color: var(--zenith-text-faint);
+    font-size: 0.6rem;
+    line-height: 1.2;
+    text-align: right;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.zenith-tcal__band-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    padding: 0 1px;
+    border-radius: var(--zenith-radius-sm);
+}
+
+/* The one place a whole column is tinted: in a seven-column week there's room
+   for it, and it marks the day without a box around every other one. */
+.zenith-tcal__band-stack.is-today,
+.zenith-tcal__daycol.is-today {
+    background: color-mix(in srgb, var(--zenith-accent) 7%, transparent);
+}
+
+/* ── Hour grid ───────────────────────────────────────
+   Rows are drawn as a repeating gradient on the columns rather than as
+   elements: 24 hairlines × 7 columns is 168 nodes that exist only to be looked
+   at, and a gradient can't drift out of alignment with the blocks, which are
+   positioned from the same pixels-per-minute. */
+.zenith-tcal__hours {
+    flex: 1;
+    min-height: 0;
+}
+
+.zenith-tcal__hour-grid {
+    position: relative;
+    padding-top: 2px;
+}
+
+.zenith-tcal__gutter {
+    position: relative;
+}
+
+/* Sat ON the line it names, not under it — the label marks where the hour
+   begins, which is the edge a block's top aligns to. */
+.zenith-tcal__hour {
+    position: absolute;
+    right: 6px;
+    transform: translateY(-50%);
+    color: var(--zenith-text-faint);
+    font-size: 0.65rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.zenith-tcal__daycol {
+    position: relative;
+    min-width: 0;
+    border-left: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent calc(var(--tcal-hour-h, 46px) - 1px),
+        var(--zenith-border) calc(var(--tcal-hour-h, 46px) - 1px),
+        var(--zenith-border) var(--tcal-hour-h, 46px)
+    );
+}
+
+/* ── Events ──────────────────────────────────────────
+   Filled, unlike a chip: a block has to read as an object that owns those two
+   hours, which an outline can't say. Height is the duration, so the column
+   answers "how much of this day is spoken for" before any title is read. */
+.zenith-root button.zenith-tcal__event {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 2px 5px 2px 6px;
+    border: none;
+    border-left: 3px solid var(--tcal-kind, var(--zenith-accent));
+    border-radius: var(--zenith-radius-xs);
+    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 20%, var(--zenith-bg-primary));
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: 0.72rem;
+    line-height: 1.25;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    transition: background var(--zenith-transition-fast), box-shadow var(--zenith-transition-fast),
+        opacity var(--zenith-transition-fast);
+}
+
+.zenith-root button.zenith-tcal__event:hover {
+    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 34%, var(--zenith-bg-primary));
+    box-shadow: var(--zenith-shadow-sm);
+    /* Above its neighbours while hovered, so a block squeezed into a third of
+       the column can still be read without being clicked. */
+    z-index: 3;
+}
+
+/* The end was never stated — the height is the default slot, and the dashed
+   foot is the block admitting it. */
+.zenith-root button.zenith-tcal__event.is-open-end {
+    border-bottom: 1px dashed color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 55%, transparent);
+}
+
+/* Priority is weight here, not a coloured edge: that edge is already spoken
+   for by the kind, and an event has no second border to spend. Same choice the
+   ribbons make, for the same reason. */
+.zenith-root button.zenith-tcal__event.is-priority-high,
+.zenith-root button.zenith-tcal__event.is-priority-urgent {
+    font-weight: 600;
+}
+
+.zenith-tcal__event.is-dim {
+    opacity: 0.25;
+}
+
+.zenith-tcal__event-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.zenith-tcal__event-time {
+    flex: 1;
+    min-width: 0;
+    color: var(--tcal-kind, var(--zenith-accent));
+    font-size: 0.63rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.zenith-tcal__event-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: var(--tcal-kind, var(--zenith-accent));
+}
+
+.zenith-tcal__event-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.zenith-tcal__event-note {
+    color: var(--zenith-text-faint);
+    font-size: 0.62rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.zenith-tcal__event.is-done .zenith-tcal__event-title,
+.zenith-tcal__event.is-cancelled .zenith-tcal__event-title {
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+/* Half an hour has room for one line, not two: the time and the title share it,
+   and the title takes whatever the time leaves. */
+.zenith-root button.zenith-tcal__event.is-compact {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 5px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
+.zenith-tcal__event.is-compact .zenith-tcal__event-head {
+    flex: 0 0 auto;
+}
+
+.zenith-tcal__event.is-compact .zenith-tcal__event-time {
+    flex: 0 0 auto;
+}
+
+.zenith-tcal__event.is-compact .zenith-tcal__event-title {
+    flex: 1;
+    white-space: nowrap;
+}
+
+/* A quarter of an hour is a sliver. The icon goes, because a 10px glyph next to
+   4-point text is decoration. */
+.zenith-tcal__event.is-tiny .zenith-tcal__event-icon {
+    display: none;
+}
+
+/* ── Now ─────────────────────────────────────────────
+   A hairline across every column, solid and dotted in today's — the week is
+   read across, so "where the day has got to" has to be visible in all seven,
+   but only one of them is actually now. */
+.zenith-tcal__now {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed color-mix(in srgb, var(--zenith-danger) 40%, transparent);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.zenith-tcal__now.is-today {
+    border-top: 2px solid var(--zenith-danger);
+}
+
+.zenith-tcal__now.is-today::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--zenith-danger);
+}
+
+.zenith-tcal__now-label {
+    position: absolute;
+    left: 2px;
+    transform: translateY(-50%);
+    padding: 0 3px;
+    border-radius: var(--zenith-radius-xs);
+    background: var(--zenith-danger);
+    color: var(--text-on-accent, #fff);
+    font-size: 0.6rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    z-index: 3;
+    pointer-events: none;
+}
+
+/* ── Agenda ──────────────────────────────────────────
+   Wide rows, so this is the view that carries a status control. */
+.zenith-tcal__agenda {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--zenith-space-md);
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.zenith-tcal__day-head {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--zenith-border);
+}
+
+.zenith-tcal__day-label {
+    flex: 1;
+    color: var(--zenith-text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.zenith-tcal__day-head.is-today .zenith-tcal__day-label {
+    color: var(--zenith-accent);
+}
+
+.zenith-tcal__day-count {
+    color: var(--zenith-text-faint);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-tcal__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.zenith-tcal__row-item {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    padding: 3px 6px;
+    border-radius: var(--zenith-radius-sm);
+    transition: background var(--zenith-transition-fast);
+}
+
+.zenith-tcal__row-item:hover {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-tcal__row-kind {
+    display: inline-flex;
+    color: var(--tcal-kind, var(--zenith-text-muted));
+}
+
+.zenith-root button.zenith-tcal__row-title {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: 0.85rem;
+    text-align: left;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-tcal__row-title:hover {
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-accent);
+}
+
+.zenith-tcal__row-note {
+    flex: 0 1 auto;
+    max-width: 30%;
+    overflow: hidden;
+    color: var(--zenith-text-faint);
+    font-size: 0.72rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.zenith-tcal__empty {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--zenith-space-sm);
+    color: var(--zenith-text-muted);
+}
+
+/* ══════════════════════════════════════════════════════
+   Week-ahead dashboard widget — design `WA_Ribbon` (1b)
+   ──────────────────────────────────────────────────────
+   One axis of seven day-columns across the card, and every task is a block
+   sitting on the days it occupies. The title lives inside the block rather than
+   in a column of its own: that is what makes the card read the same at two
+   tasks and at twelve — fewer tasks means wider blocks, not more empty space.
+
+   Rows are `flex: 1 1 0` with a floor, so they divide whatever height the card
+   has instead of stacking to a fixed one. Anything that doesn't fit collapses
+   into "+N", never clipped at the edge.
+   ══════════════════════════════════════════════════════ */
+
+/* The whole card is the click target — everything in it leads to the Tasks
+   view, so there is nothing to hit separately. That also keeps the axis free of
+   nested interactive elements, which a `role="button"` container would hide
+   from screen readers anyway. */
+.zenith-tcalw {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.zenith-tcalw:hover .zenith-tcalw__more,
+.zenith-tcalw:focus-visible .zenith-tcalw__more {
+    color: var(--zenith-accent);
+}
+
+/* ── Day scale ───────────────────────────────────────
+   Seven equal columns; the 6px inset lines each label up with the left edge of
+   the bar that starts in that column. */
+.zenith-tcalw__days {
+    display: flex;
+    flex: none;
+}
+
+.zenith-tcalw__day {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    padding-left: 6px;
+}
+
+.zenith-tcalw__day-name {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-tcalw__day-name.is-today {
+    color: var(--zenith-text-normal);
+}
+
+.zenith-tcalw__day-num {
+    font-size: 0.62rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Overdue strip ───────────────────────────────────
+   Above the axis, not on it: overdue work has no day this week, and giving it
+   a column would be a lie about when it's due. */
+.zenith-tcalw__overdue {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    min-height: 22px;
+    padding: 0 8px 0 7px;
+    border-left: 2px solid var(--zenith-danger);
+    border-radius: var(--zenith-radius-sm);
+    background: color-mix(in oklab, var(--zenith-danger) 12%, var(--zenith-bg-primary));
+}
+
+.zenith-tcalw__overdue svg {
+    flex: none;
+    color: var(--zenith-danger);
+}
+
+.zenith-tcalw__overdue-count {
+    flex: none;
+    color: var(--zenith-danger);
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-tcalw__overdue-names {
+    min-width: 0;
+    color: var(--zenith-text-muted);
+    font-size: 0.7rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* ── Axis ────────────────────────────────────────────
+   The lanes stack in normal flow; the day grid is a layer behind them, so a
+   bar reads against the column it starts in instead of floating. */
+.zenith-tcalw__axis {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+}
+
+.zenith-tcalw__grid {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    pointer-events: none;
+}
+
+.zenith-tcalw__column {
+    flex: 1;
+    border-left: 1px solid var(--zenith-border);
+}
+
+.zenith-tcalw__column.is-today {
+    background: var(--zenith-bg-secondary);
+}
+
+.zenith-tcalw__lane {
+    position: relative;
+    flex: 1 1 0;
+    min-height: 20px;
+}
+
+/* ── Bars ────────────────────────────────────────────
+   A range is a filled ribbon between its two days. A single date is the same
+   block with no fill: the 2px edge marks the day and the title simply runs on
+   to the right, which keeps one-day tasks legible instead of squeezing them
+   into a seventh of the card. */
+.zenith-tcalw__bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 3px 7px 3px 6px;
+    border-radius: var(--zenith-radius-sm);
+    box-sizing: border-box;
+    color: var(--zenith-text-normal);
+    overflow: hidden;
+    /* `border-left` and `background` come from the row's colour, inline. */
+}
+
+.zenith-tcalw__bar.is-range {
+    font-weight: 500;
+}
+
+/* Square right edge = the task continues past Sunday. */
+.zenith-tcalw__bar.is-open-end {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.zenith-tcalw__prio {
+    flex: none;
+    width: 5px;
+    height: 5px;
+    border-radius: 2px;
+}
+
+.zenith-tcalw__title {
+    min-width: 0;
+    font-size: 0.78rem;
+    line-height: 1.25;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.zenith-tcalw__kind {
+    flex: none;
+    font-size: 0.6rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* Time left on the deadline. `flex: none` and tabular figures because these
+   stack into a right-hand column that gets read vertically — a proportional
+   font would make "11 д" and "4 д" fail to line up. Far narrower than the note
+   name it replaced, which is what gives the title back its room. */
+.zenith-tcalw__due {
+    flex: none;
+    color: var(--zenith-text-faint);
+    font-size: 0.6rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.zenith-tcalw__due.is-later {
+    color: var(--zenith-text-faint);
+}
+
+/* Emphasis rather than a fourth colour: "soon" has to out-rank "later" without
+   competing with the two that mean something is actually wrong. */
+.zenith-tcalw__due.is-soon {
+    color: var(--zenith-text-muted);
+    font-weight: 600;
+}
+
+.zenith-tcalw__due.is-today {
+    color: var(--zenith-warning);
+    font-weight: 600;
+}
+
+.zenith-tcalw__due.is-overdue {
+    color: var(--zenith-danger);
+    font-weight: 600;
+}
+
+/* The chevron for a bar that runs past the horizon, as a CSS triangle so it
+   needs no icon slot inside an already tight row. */
+.zenith-tcalw__tail {
+    flex: none;
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 5px solid currentColor;
+}
+
+.zenith-tcalw__empty {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--zenith-text-muted);
+    font-size: 0.8rem;
+}
+
+.zenith-tcalw__empty svg {
+    color: var(--zenith-success);
+}
+
+.zenith-tcalw__more {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: none;
+    padding-left: 6px;
+    color: var(--zenith-text-faint);
+    font-size: 0.68rem;
+    transition: color var(--zenith-transition-fast);
+}
+
+/* ── Footer ──────────────────────────────────────────
+   The counts the axis can't state: how much there is in total, how much of it
+   runs over several days, and when the next hard date lands. */
+.zenith-tcalw__foot {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex: none;
+    padding-top: 5px;
+    border-top: 1px solid var(--zenith-border);
+    color: var(--zenith-text-faint);
+    font-size: 0.65rem;
+}
+
+.zenith-tcalw__foot-stats {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-tcalw__foot-range {
+    margin-left: auto;
+    flex: none;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}

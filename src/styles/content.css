@@ -1,0 +1,1891 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Content Module Styles
+   Card gallery, content cards, statistics view
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ── Content Container ──────────────────────────── */
+.zenith-content {
+    padding: var(--zenith-space-lg);
+    max-width: 1200px;
+    margin: 0 auto;
+    animation: zenith-fade-in var(--zenith-transition-slow);
+}
+
+.zenith-content__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--zenith-space-md);
+}
+
+.zenith-content__header-left {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-sm) var(--zenith-space-md);
+    min-width: 0;
+}
+
+.zenith-content__header-actions {
+    display: flex;
+    gap: var(--zenith-space-xs);
+    flex-shrink: 0;
+}
+
+/* Header pulse: count, what's moving, what's done, how it's rated. */
+.zenith-content__summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    font-size: 0.82rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-content__summary-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-content__summary-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.zenith-content__summary-dot.is-in-progress { background: var(--zenith-info); }
+.zenith-content__summary-dot.is-completed { background: var(--zenith-success); }
+
+/* ── Section labels (Continue / Library) ──────────
+   A micro-label trailing a hairline, not a heading. The section still gets
+   marked, but a bold 0.95rem line with an accent icon and a count pill was
+   competing with the posters it was supposed to introduce. */
+.zenith-content-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 var(--zenith-space-sm);
+    font-size: 0.66rem;
+    font-weight: 650;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--zenith-text-faint);
+}
+.zenith-content-section::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--zenith-border);
+}
+.zenith-content-section__count {
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Content Gallery ──────────────────────────────
+   Tighter columns than before (160px → 136px): the title moved off the artwork
+   onto its own line, so a tile no longer needs to be wide enough to read two
+   lines of overlaid text. */
+.zenith-content-gallery__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+    gap: var(--zenith-space-md);
+    align-items: start;
+    margin-top: var(--zenith-space-sm);
+}
+
+@media (max-width: 600px) {
+    .zenith-content-gallery__grid {
+        grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+        gap: var(--zenith-space-sm);
+    }
+}
+
+/* ── Poster card ──────────────────────────────────
+   Artwork on top, text beneath. The art carries exactly two marks — the score
+   and a progress hairline — where it used to carry seven overlaid elements. */
+.zenith-poster {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+    cursor: pointer;
+    border-radius: var(--zenith-radius-md);
+    outline: none;
+    animation: zenith-scale-in var(--zenith-transition-slow) ease both;
+}
+
+.zenith-poster__art {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--zenith-bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--zenith-radius-md);
+    border: 1px solid var(--zenith-border);
+    box-shadow: var(--zenith-shadow-sm);
+    overflow: hidden;
+    transition: transform var(--zenith-transition), box-shadow var(--zenith-transition);
+}
+
+/* A lift, without the scale it used to carry: at a 136px column a 2% grow eats
+   into the neighbouring tile, and the title below the art stays put anyway. */
+.zenith-poster:hover .zenith-poster__art,
+.zenith-poster:focus-visible .zenith-poster__art {
+    transform: translateY(-3px);
+    box-shadow: var(--zenith-shadow-lg);
+}
+.zenith-poster:focus-visible .zenith-poster__art {
+    border-color: var(--zenith-accent);
+}
+
+/* Score — the one badge left on the artwork. */
+.zenith-poster__score {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px 2px 6px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.6);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* How far in, as a hairline along the bottom edge of the cover.
+   The fill is grey by default and takes the "in progress" blue only when the
+   item actually is: that colour change is what replaced the status pill, so a
+   shelved item at 5/13 can't be mistaken for one you're watching. Blue rather
+   than the theme accent because this is status, and status has its own palette. */
+.zenith-poster__line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.38);
+}
+.zenith-poster__line-fill {
+    height: 100%;
+    background: var(--zenith-text-faint);
+    transition: width var(--zenith-transition), background var(--zenith-transition);
+}
+.zenith-poster__line.is-running .zenith-poster__line-fill {
+    background: var(--zenith-info);
+}
+
+/* ── Poster text, below the artwork ──────────────── */
+.zenith-poster__body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+.zenith-poster__title {
+    font-size: 0.79rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--zenith-text-normal);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.zenith-poster__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    min-width: 0;
+    font-size: 0.68rem;
+    color: var(--zenith-text-faint);
+}
+.zenith-poster__sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+}
+/* The type reads as a coloured glyph now; its name was redundant next to the
+   filter row that just selected it. */
+.zenith-poster__type {
+    display: inline-flex;
+    flex-shrink: 0;
+}
+.zenith-poster__type .zenith-obsidian-icon {
+    display: inline-flex;
+}
+.zenith-poster__sub-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* One slot, one fact — chosen by status, so a progress readout, a completion
+   tick and a length hint can never crowd the same corner. */
+.zenith-poster__slot {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.zenith-poster__slot.is-muted {
+    color: var(--zenith-text-faint);
+}
+.zenith-poster__slot.is-done {
+    color: var(--zenith-success);
+}
+
+/* Skeleton loading tiles */
+.zenith-poster.is-skeleton {
+    pointer-events: none;
+}
+.zenith-poster.is-skeleton .zenith-poster__art {
+    background: linear-gradient(100deg, var(--zenith-bg-tertiary) 30%, var(--zenith-bg-hover) 50%, var(--zenith-bg-tertiary) 70%);
+    background-size: 200% 100%;
+    animation: zenith-shimmer 1.3s infinite linear;
+}
+@keyframes zenith-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+/* ── Continue shelf ───────────────────────────────
+   Wide rows in a wrapping grid, not a scrolling strip of posters. The shelf and
+   the grid mean different things — "partway through" vs "in the library" — and
+   looking identical was the reason the shelf had to be labelled to be
+   understood at all. */
+.zenith-content-shelf {
+    margin: var(--zenith-space-md) 0 var(--zenith-space-lg);
+}
+.zenith-content-shelf__row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-resume {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    min-width: 0;
+    padding: 8px 10px 8px 8px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-secondary);
+    cursor: pointer;
+    outline: none;
+    animation: zenith-scale-in var(--zenith-transition-slow) ease both;
+    transition: border-color var(--zenith-transition), background var(--zenith-transition);
+}
+.zenith-resume:hover,
+.zenith-resume:focus-visible {
+    border-color: var(--zenith-accent);
+    background: var(--zenith-bg-hover);
+}
+.zenith-resume.is-selected {
+    outline: 2px solid var(--zenith-accent);
+    outline-offset: 2px;
+}
+
+.zenith-resume__art {
+    position: relative;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--zenith-radius-sm);
+    background-color: var(--zenith-bg-tertiary);
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+}
+.zenith-resume__art .zenith-obsidian-icon {
+    display: inline-flex;
+}
+/* The shared selection tick is sized for a poster; on a 40px thumb it needs to
+   come in from the corner. */
+.zenith-resume__art .zenith-poster__check {
+    top: 3px;
+    right: 3px;
+    width: 16px;
+    height: 16px;
+    border-width: 1.5px;
+}
+
+.zenith-resume__main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.zenith-resume__top {
+    display: flex;
+    align-items: baseline;
+    gap: var(--zenith-space-sm);
+    min-width: 0;
+}
+.zenith-resume__title {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--zenith-text-normal);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.zenith-resume__count {
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.zenith-resume__meter {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+}
+.zenith-resume__track {
+    flex: 1;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--zenith-bg-tertiary);
+    overflow: hidden;
+}
+.zenith-resume__fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--zenith-info);
+    transition: width var(--zenith-transition);
+}
+.zenith-resume__pct {
+    flex-shrink: 0;
+    min-width: 3ch;
+    text-align: right;
+    font-size: 0.66rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Parent + tag scoping, or Obsidian's own button rules put a box back on it. */
+.zenith-resume button.zenith-resume__bump {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 1px solid var(--zenith-border);
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--zenith-transition-fast), background var(--zenith-transition-fast),
+        color var(--zenith-transition-fast), border-color var(--zenith-transition-fast);
+}
+.zenith-resume:hover button.zenith-resume__bump,
+.zenith-resume button.zenith-resume__bump:focus-visible {
+    opacity: 1;
+}
+.zenith-resume button.zenith-resume__bump:hover {
+    background: var(--zenith-accent);
+    border-color: var(--zenith-accent);
+    color: #fff;
+}
+/* Coarse pointers have no hover — keep the action reachable. */
+@media (pointer: coarse) {
+    .zenith-resume button.zenith-resume__bump {
+        opacity: 1;
+    }
+}
+
+/* Shown when the Continue shelf already accounts for the whole library. */
+.zenith-content-gallery__allclear {
+    margin: 0;
+    padding: var(--zenith-space-md) 0;
+    font-size: 0.85rem;
+    color: var(--zenith-text-faint);
+}
+
+/* ── Content Stats ──────────────────────────────── */
+.zenith-content-stats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-lg);
+    animation: zenith-fade-in var(--zenith-transition-slow);
+}
+
+.zenith-content-stats__summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--zenith-space-md);
+}
+
+@media (max-width: 600px) {
+    .zenith-content-stats__summary {
+        grid-template-columns: 1fr;
+    }
+}
+
+.zenith-content-stats__metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+}
+
+.zenith-content-stats__metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--zenith-text-normal);
+    line-height: 1;
+}
+
+.zenith-content-stats__metric-label {
+    font-size: 0.78rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-content-stats__charts {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--zenith-space-md);
+}
+
+@media (max-width: 700px) {
+    .zenith-content-stats__charts {
+        grid-template-columns: 1fr;
+    }
+}
+
+.zenith-content-stats__chart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--zenith-space-md);
+}
+
+.zenith-content-stats__chart-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--zenith-text-normal);
+    margin: 0;
+    align-self: flex-start;
+}
+
+/* ── Add form: type pills ─────────────────────────── */
+.zenith-form__types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.zenith-dialog button.zenith-type-pill,
+.zenith-root button.zenith-type-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    border-radius: 999px;
+    border: 1px solid var(--zenith-border);
+    background: var(--zenith-bg-tertiary);
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.zenith-dialog button.zenith-type-pill:hover,
+.zenith-root button.zenith-type-pill:hover {
+    color: var(--zenith-text-normal);
+    border-color: var(--zenith-text-faint);
+}
+.zenith-dialog button.zenith-type-pill.is-active,
+.zenith-root button.zenith-type-pill.is-active {
+    font-weight: 600;
+}
+.zenith-type-pill .zenith-obsidian-icon {
+    display: inline-flex;
+}
+
+/* ── Add form: poster preview beside the identity fields ── */
+.zenith-form__identity {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+.zenith-form__identity-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+.zenith-form__poster {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    width: 84px;
+}
+.zenith-form__poster-art {
+    position: relative;
+    width: 84px;
+    aspect-ratio: 2 / 3;
+    border-radius: var(--zenith-radius-sm);
+    border: 1px solid var(--zenith-border);
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.zenith-form__poster-busy {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+}
+.zenith-form__poster-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.62rem;
+    color: var(--zenith-text-faint);
+}
+/* Load probe — present in the DOM only to report onError/onLoad. */
+.zenith-form__poster-probe {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ── Metadata picker (title search + result list) ─── */
+.zenith-picker {
+    position: relative;
+}
+.zenith-picker__input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.zenith-picker__icon {
+    position: absolute;
+    left: 11px;
+    color: var(--zenith-text-muted);
+    pointer-events: none;
+}
+.zenith-dialog .zenith-picker__input,
+.zenith-root .zenith-picker__input {
+    padding-left: 34px;
+}
+.zenith-picker__panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    padding: 4px;
+    /* ~4.5 rows: enough to browse, short enough that the row below is clearly
+       cut off rather than looking like part of the last one. */
+    max-height: 340px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--zenith-bg-primary);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+/* Names the upstream once, so the per-row badge can be dropped. */
+.zenith-picker__origin {
+    padding: 5px 8px 6px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--zenith-text-faint);
+}
+.zenith-picker__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.zenith-picker__list li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+/* A hairline between rows: with 48px covers stacked edge to edge the list read
+   as one continuous strip of artwork with text floating over it. */
+.zenith-picker__list li + li {
+    border-top: 1px solid color-mix(in srgb, var(--zenith-border) 55%, transparent);
+}
+/* Parent + tag scoping: a bare `.class` loses to Obsidian's own `button`
+   rules, which is what put a frame and centred text on every result row. */
+.zenith-picker__list li button.zenith-picker__result,
+.zenith-picker__list button.zenith-picker__result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    /* Must clear the 48px thumb — at 6px the rows collided. */
+    min-height: 64px;
+    padding: 8px;
+    margin: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    border-radius: var(--zenith-radius-sm);
+    cursor: pointer;
+    text-align: left;
+    font-size: inherit;
+    line-height: 1.35;
+    color: var(--zenith-text-normal);
+}
+.zenith-picker__list li button.zenith-picker__result:hover,
+.zenith-picker__list li button.zenith-picker__result.is-active {
+    background: var(--zenith-bg-hover);
+}
+.zenith-picker__list li button.zenith-picker__result:focus,
+.zenith-picker__list li button.zenith-picker__result:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+.zenith-picker__thumb {
+    width: 34px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: var(--zenith-radius-xs);
+    background: var(--zenith-bg-tertiary) center / cover no-repeat;
+}
+.zenith-picker__body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+.zenith-picker__title {
+    font-size: 0.88rem;
+    font-weight: 500;
+    line-height: 1.3;
+    /* Two lines rather than one hard truncation: long anime/manga titles differ
+       only near the end ("… - Ketsubetsu-tan"), so cutting at one line makes
+       neighbouring entries indistinguishable. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.zenith-picker__sub {
+    font-size: 0.75rem;
+    color: var(--zenith-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.zenith-picker__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    padding-top: 1px;
+}
+.zenith-picker__score {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--zenith-warning);
+    font-variant-numeric: tabular-nums;
+}
+.zenith-picker__source {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--zenith-text-faint);
+}
+.zenith-picker__note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 10px;
+    font-size: 0.82rem;
+    color: var(--zenith-text-muted);
+}
+.zenith-picker__note--error {
+    color: var(--zenith-danger);
+}
+.zenith-picker__panel button.zenith-picker__retry {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-xs);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+.zenith-picker__panel button.zenith-picker__retry:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+/* ── Progress control ─────────────────────────────── */
+.zenith-progress-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.zenith-progress-control__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.zenith-progress-control__inputs {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-bg-tertiary);
+}
+.zenith-progress-control__inputs:focus-within {
+    border-color: var(--zenith-accent);
+}
+.zenith-progress-control input.zenith-progress-control__num {
+    width: 3.6em;
+    padding: 3px 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: 0.92rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    outline: none;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+.zenith-progress-control input.zenith-progress-control__num::-webkit-outer-spin-button,
+.zenith-progress-control input.zenith-progress-control__num::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.zenith-progress-control__sep {
+    color: var(--zenith-text-faint);
+}
+.zenith-progress-control__unit {
+    font-size: 0.78rem;
+    color: var(--zenith-text-muted);
+    padding-left: 2px;
+}
+.zenith-dialog button.zenith-progress-control__step,
+.zenith-root button.zenith-progress-control__step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-bg-tertiary);
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    cursor: pointer;
+}
+.zenith-dialog button.zenith-progress-control__step:hover:not(:disabled),
+.zenith-root button.zenith-progress-control__step:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
+    border-color: var(--zenith-accent);
+}
+.zenith-dialog button.zenith-progress-control__step:disabled,
+.zenith-root button.zenith-progress-control__step:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+.zenith-dialog button.zenith-progress-control__finish,
+.zenith-root button.zenith-progress-control__finish {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 11px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+.zenith-dialog button.zenith-progress-control__finish:hover,
+.zenith-root button.zenith-progress-control__finish:hover {
+    color: var(--zenith-success);
+    border-color: var(--zenith-success);
+}
+.zenith-progress-control__meter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.zenith-progress-control__track {
+    flex: 1;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--zenith-bg-tertiary);
+    overflow: hidden;
+}
+.zenith-progress-control__fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--zenith-accent);
+    transition: width var(--zenith-transition);
+}
+.zenith-progress-control__pct {
+    font-size: 0.75rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 2.6em;
+    text-align: right;
+}
+
+@media (max-width: 560px) {
+    .zenith-form__identity {
+        gap: 10px;
+    }
+    .zenith-form__poster,
+    .zenith-form__poster-art {
+        width: 64px;
+    }
+}
+
+/* ── Gallery controls (type / search / filter / sort) ────
+   One row. The type filter used to be a full-width `<Tabs>` bar above this,
+   so two bands of chrome stood between opening the view and seeing a poster. */
+.zenith-content-gallery__controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0;
+    flex-wrap: wrap;
+}
+
+/* Type filter as a segmented control. Deliberately not the shared `.zenith-tabs`
+   component — that one is also worn by the tasks and weather views, and this
+   shape is only right here. */
+.zenith-content-gallery__types {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    max-width: 100%;
+    padding: 3px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-secondary);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.zenith-content-gallery__types::-webkit-scrollbar {
+    display: none;
+}
+
+.zenith-content-gallery__types button.zenith-content-gallery__type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast);
+}
+.zenith-content-gallery__types button.zenith-content-gallery__type:hover {
+    color: var(--zenith-text-normal);
+}
+.zenith-content-gallery__types button.zenith-content-gallery__type.is-active {
+    background: var(--zenith-bg-primary);
+    color: var(--zenith-text-normal);
+    font-weight: 600;
+    box-shadow: var(--zenith-shadow-xs);
+}
+.zenith-content-gallery__types button.zenith-content-gallery__type:focus-visible {
+    outline: 2px solid var(--zenith-accent);
+    outline-offset: -1px;
+}
+
+/* The type's own colour lands on its icon, so the row stays scannable by hue
+   without tinting the whole control the way the tab bar did. */
+.zenith-content-gallery__type-icon {
+    display: inline-flex;
+    color: var(--zenith-type-color, var(--zenith-text-faint));
+}
+.zenith-content-gallery__type-icon .zenith-obsidian-icon {
+    display: inline-flex;
+}
+.zenith-content-gallery__type-count {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-content-gallery__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 160px;
+    padding: 0 10px;
+    height: 34px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+}
+
+.zenith-content-gallery__search:focus-within {
+    border-color: var(--interactive-accent);
+}
+
+.zenith-content-gallery__search-icon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.zenith-content-gallery__search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-normal);
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.zenith-content-gallery__search button.zenith-content-gallery__search-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.zenith-content-gallery__search button.zenith-content-gallery__search-clear:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.zenith-content-gallery__select {
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+/* Sort select + direction toggle read as one control. */
+.zenith-content-gallery__sort {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.zenith-content-gallery__controls button.zenith-content-gallery__sortdir {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+    box-shadow: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.zenith-content-gallery__controls button.zenith-content-gallery__sortdir:hover {
+    color: var(--text-normal);
+    border-color: var(--interactive-accent);
+}
+
+/* Filter feedback: how much of the library you're actually looking at. */
+.zenith-content-gallery__resultbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: -4px 0 12px;
+    font-size: 0.8rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-content-gallery button.zenith-content-gallery__clear,
+.zenith-empty-state button.zenith-content-gallery__clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border: 1px solid var(--zenith-border);
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.76rem;
+    cursor: pointer;
+}
+
+.zenith-content-gallery button.zenith-content-gallery__clear:hover,
+.zenith-empty-state button.zenith-content-gallery__clear:hover {
+    color: var(--zenith-text-normal);
+    border-color: var(--zenith-accent);
+    background: var(--zenith-bg-hover);
+}
+
+@media (max-width: 600px) {
+    /* Search takes the full first row; the two selects share the second. */
+    .zenith-content-gallery__search {
+        flex: 1 1 100%;
+    }
+    .zenith-content-gallery__select {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+/* ── Content detail modal ─────────────────────────── */
+/* Layout only — the shell (scrim, panel, close, sheet behaviour) is modal.css. */
+.zenith-dialog__panel.zenith-content-modal {
+    max-height: min(88vh, 660px);
+}
+.zenith-content-modal__poster {
+    flex: 0 0 38%;
+    max-width: 260px;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--zenith-bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.zenith-content-modal__body {
+    flex: 1;
+    min-width: 0;
+    padding: var(--zenith-space-xl);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.zenith-content-modal__type {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.zenith-content-modal__type .zenith-obsidian-icon {
+    display: inline-flex;
+}
+.zenith-content-modal__title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--zenith-text-normal);
+}
+.zenith-content-modal__sub {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--zenith-text-muted);
+}
+.zenith-content-modal__genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.zenith-content-modal__chip {
+    font-size: 0.72rem;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--zenith-bg-tertiary);
+    color: var(--zenith-text-muted);
+}
+/* One control panel instead of three stacked fields.
+   The 1px grid gap doubles as the hairline between cells: it survives wrapping,
+   where per-cell borders would leave a stray edge at the start of each row. */
+.zenith-content-modal__panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    margin: var(--zenith-space-sm) 0 2px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-border);
+    overflow: hidden;
+}
+.zenith-content-modal__cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 9px 12px;
+    background: var(--zenith-bg-secondary);
+}
+/* Progress carries two number inputs and a "finished" shortcut, so it takes a
+   row of its own rather than being squeezed into a third of the width. */
+.zenith-content-modal__cell--progress {
+    grid-column: 1 / -1;
+}
+.zenith-content-modal__control-label {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--zenith-text-faint);
+    font-weight: 600;
+}
+.zenith-content-modal__status {
+    padding: 5px 8px;
+    border-radius: var(--zenith-radius-sm);
+    border: 1px solid var(--zenith-border);
+    background: var(--zenith-bg-secondary);
+    color: var(--zenith-text-normal);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.zenith-content-modal__status.is-in-progress { color: var(--zenith-info, #3b82f6); }
+.zenith-content-modal__status.is-completed { color: var(--zenith-success, #10b981); }
+.zenith-content-modal__status.is-dropped { color: var(--zenith-danger, #ef4444); }
+.zenith-content-modal__desc {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--zenith-text-muted);
+}
+.zenith-content-modal__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.zenith-content-modal__tag {
+    font-size: 0.72rem;
+    color: var(--zenith-accent);
+}
+.zenith-content-modal__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 12px;
+}
+
+/* Delete sits apart from the row and is named by its tooltip. As a full red
+   button it read as one of four things you might reasonably want to do next,
+   which is the wrong weight for the only irreversible one. */
+.zenith-dialog button.zenith-content-modal__delete {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+    border: 1px solid transparent;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+}
+.zenith-dialog button.zenith-content-modal__delete:hover:not(:disabled) {
+    color: var(--zenith-danger);
+    border-color: color-mix(in srgb, var(--zenith-danger) 45%, transparent);
+    background: var(--zenith-danger-bg);
+}
+.zenith-dialog button.zenith-content-modal__delete:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    /* Sheet layout: poster on top, details scroll beneath it. */
+    .zenith-dialog__panel.zenith-content-modal .zenith-dialog__body--bare {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .zenith-content-modal__poster {
+        flex: 0 0 200px;
+        max-width: none;
+        width: 100%;
+    }
+    .zenith-content-modal__body {
+        padding: var(--zenith-space-lg) var(--zenith-space-md)
+            calc(var(--zenith-space-lg) + env(safe-area-inset-bottom, 0px));
+        overflow: visible;
+    }
+}
+
+/* ── Content type settings ────────────────────────── */
+.zenith-ctypes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.zenith-ctype {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    background: var(--background-primary);
+}
+/* A tracker switched off is still fully editable — it just isn't being kept
+   right now, and the card says so by receding rather than by locking. */
+.zenith-ctype.is-off {
+    border-style: dashed;
+}
+
+/* Everything fades except the controls that undo it — a switch you can't find
+   because it faded with the thing it switched is a trap. */
+.zenith-ctype.is-off .zenith-ctype__icon,
+.zenith-ctype.is-off .zenith-ctype__label,
+.zenith-ctype.is-off .zenith-ctype__color,
+.zenith-ctype.is-off .zenith-ctype__row {
+    opacity: 0.5;
+}
+
+.zenith-ctype__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.zenith-ctype__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-secondary);
+    cursor: pointer;
+}
+.zenith-ctype__icon .zenith-obsidian-icon {
+    display: inline-flex;
+}
+.zenith-ctype__label {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-secondary);
+    color: var(--text-normal);
+}
+.zenith-ctype__color {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    padding: 2px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: none;
+    cursor: pointer;
+}
+.zenith-ctype__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.zenith-ctype__remove:hover {
+    background: var(--background-modifier-hover);
+    color: var(--color-red, #e5534b);
+}
+.zenith-ctype__row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.zenith-ctype__field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 150px;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+}
+.zenith-ctype__field select,
+.zenith-ctype__field input {
+    padding: 6px 8px;
+    font-size: 0.85rem;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-secondary);
+    color: var(--text-normal);
+}
+.zenith-ctype__fields {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.zenith-ctype__fields-label {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+}
+.zenith-ctype__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.zenith-ctype__chip {
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    border-radius: 999px;
+    cursor: pointer;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+    color: var(--text-muted);
+}
+.zenith-ctype__chip.is-on {
+    background: color-mix(in srgb, var(--interactive-accent) 20%, transparent);
+    border-color: var(--interactive-accent);
+    color: var(--text-normal);
+}
+.zenith-ctype__add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px;
+    border: 1px dashed var(--background-modifier-border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+.zenith-ctype__add:hover {
+    color: var(--text-normal);
+    border-color: var(--text-faint);
+}
+
+/* ── Content statistics extras ────────────────────── */
+.zenith-content-stats__summary {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.zenith-content-stats__hint {
+    margin: -4px 0 10px;
+    font-size: 0.8rem;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-content-stats__stalled {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.zenith-content-stats__stalled li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--zenith-space-md);
+    font-size: 0.86rem;
+}
+
+.zenith-content-stats__stalled-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zenith-content-stats__stalled-days {
+    flex-shrink: 0;
+    font-size: 0.76rem;
+    color: var(--zenith-warning);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-content-stats__genres {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.zenith-content-stats__genre {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--zenith-bg-tertiary);
+    color: var(--zenith-text-muted);
+    font-size: 0.78rem;
+}
+
+.zenith-content-stats__genre-count {
+    font-weight: 700;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Additions per month. A plain column chart — the shape of a growing library
+   is the point, not precise values, so the bars carry their count in a title. */
+.zenith-content-stats__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 110px;
+    overflow-x: auto;
+}
+
+.zenith-content-stats__bar {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+    flex: 1 0 22px;
+    height: 100%;
+}
+
+.zenith-content-stats__bar-fill {
+    width: 100%;
+    min-height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--zenith-accent);
+}
+
+.zenith-content-stats__bar-label {
+    font-size: 0.62rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Card actions, selection and the length hint
+   ───────────────────────────────────────────────────────────── */
+
+/* Quick "+1" on an in-progress tile. Hidden until the card is hovered or
+   something inside it has focus, so the poster wall stays a poster wall. */
+.zenith-poster .zenith-poster__bump {
+    position: absolute;
+    right: 7px;
+    /* Clears the progress hairline along the bottom edge. */
+    bottom: 9px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--zenith-accent);
+    box-shadow: var(--zenith-shadow-md);
+    color: #fff;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity var(--zenith-transition-fast), transform var(--zenith-transition-fast);
+}
+.zenith-poster:hover .zenith-poster__bump,
+.zenith-poster:focus-within .zenith-poster__bump {
+    opacity: 1;
+    transform: scale(1);
+}
+/* Touch has no hover: a permanently visible button beats an unreachable one. */
+@media (hover: none) {
+    .zenith-poster .zenith-poster__bump {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.zenith-poster__check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.75);
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+}
+.zenith-poster__check.is-on {
+    background: var(--zenith-accent);
+    border-color: var(--zenith-accent);
+}
+.zenith-poster.is-selected .zenith-poster__art {
+    outline: 2px solid var(--zenith-accent);
+    outline-offset: 2px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Genre filter chip + bulk action bar
+   ───────────────────────────────────────────────────────────── */
+
+.zenith-content-gallery button.zenith-content-gallery__genre-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border: 1px solid var(--zenith-accent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--zenith-accent) 14%, transparent);
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: 0.76rem;
+    cursor: pointer;
+}
+.zenith-content-gallery button.zenith-content-gallery__genre-chip:hover {
+    background: color-mix(in srgb, var(--zenith-accent) 24%, transparent);
+}
+
+.zenith-content-gallery__controls button.zenith-content-gallery__sortdir.is-active {
+    color: var(--zenith-accent);
+    border-color: var(--zenith-accent);
+    background: color-mix(in srgb, var(--zenith-accent) 12%, transparent);
+}
+
+.zenith-content-gallery__bulkbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    margin: -4px 0 12px;
+    padding: 8px 12px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-secondary);
+}
+.zenith-content-gallery__bulkcount {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--zenith-text-normal);
+    margin-right: auto;
+}
+.zenith-content-gallery button.zenith-content-gallery__bulkdelete {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border: 1px solid var(--zenith-danger);
+    border-radius: 8px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-danger);
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+.zenith-content-gallery button.zenith-content-gallery__bulkdelete:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--zenith-danger) 14%, transparent);
+}
+.zenith-content-gallery button.zenith-content-gallery__bulkdelete:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Detail modal: clickable genres, both scores, the date row
+   ───────────────────────────────────────────────────────────── */
+
+/* The chip became a button (it filters the library now), which drags in
+   Obsidian's default button box — hence the parent + tag scoping. */
+.zenith-root button.zenith-content-modal__chip {
+    padding: 3px 9px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: var(--zenith-bg-tertiary);
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+.zenith-root button.zenith-content-modal__chip:hover {
+    border-color: var(--zenith-accent);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-content-modal__rating,
+.zenith-form__rating {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    flex-wrap: wrap;
+}
+.zenith-content-modal__external,
+.zenith-form__external {
+    font-size: 0.7rem;
+    color: var(--zenith-text-faint);
+    white-space: nowrap;
+    cursor: help;
+}
+
+.zenith-content-modal__dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-md);
+    margin-top: 2px;
+}
+.zenith-content-modal__date {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-root button.zenith-content-modal__desc-toggle {
+    margin-top: 4px;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-accent);
+    font-size: 0.76rem;
+    cursor: pointer;
+}
+.zenith-root button.zenith-content-modal__desc-toggle:hover {
+    text-decoration: underline;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Duplicate warning in the add form
+   ───────────────────────────────────────────────────────────── */
+
+.zenith-form__dupes {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 6px;
+    padding: 7px 10px;
+    border: 1px solid color-mix(in srgb, var(--zenith-warning, #f59e0b) 45%, transparent);
+    border-radius: var(--zenith-radius-sm);
+    background: color-mix(in srgb, var(--zenith-warning, #f59e0b) 10%, transparent);
+}
+.zenith-form__dupes-head {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--zenith-warning, #f59e0b);
+}
+.zenith-form__dupe {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    color: var(--zenith-text-normal);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Statistics: genres are filters now
+   ───────────────────────────────────────────────────────────── */
+
+.zenith-root button.zenith-content-stats__genre {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--zenith-border);
+    border-radius: 999px;
+    background: var(--zenith-bg-tertiary);
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+.zenith-root button.zenith-content-stats__genre:hover {
+    border-color: var(--zenith-accent);
+    background: var(--zenith-bg-hover);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Import dialog
+   ───────────────────────────────────────────────────────────── */
+
+.zenith-import {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-md);
+}
+.zenith-import__intro {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--zenith-text-muted);
+}
+/* The native file input is unstylable across platforms; the button in front of
+   it is what the user actually sees. */
+.zenith-import__file {
+    display: none;
+}
+.zenith-dialog button.zenith-import__pick {
+    justify-content: center;
+    width: 100%;
+}
+.zenith-import__error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--zenith-danger);
+}
+.zenith-import__summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    font-size: 0.82rem;
+    color: var(--zenith-text-normal);
+}
+.zenith-import__badge {
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--zenith-accent) 18%, transparent);
+    color: var(--zenith-accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.zenith-import__option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--zenith-text-normal);
+    cursor: pointer;
+}
+.zenith-import__types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-sm);
+}
+.zenith-import__type {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 600;
+}
+.zenith-import__type-count {
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.zenith-import__preview {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    max-height: 190px;
+    overflow-y: auto;
+}
+.zenith-import__preview li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--zenith-space-sm);
+    font-size: 0.8rem;
+}
+.zenith-import__preview-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.zenith-import__note {
+    margin: 0;
+    font-size: 0.76rem;
+    line-height: 1.45;
+    color: var(--zenith-text-faint);
+}

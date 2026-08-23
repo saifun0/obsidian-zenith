@@ -1,0 +1,757 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Dashboard widget grid (iOS-style, 4 columns)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.zenith-grid {
+    position: relative;
+    width: 100%;
+}
+
+/* Items are absolutely placed and moved with `transform`, so re-flowing the
+   grid animates instead of jumping. */
+.zenith-grid__item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    min-width: 0;
+    transition: transform var(--zenith-transition), width var(--zenith-transition),
+        height var(--zenith-transition);
+}
+
+/* The card fills its cell exactly — that's what lines neighbours up. Both need
+   border-box or the card's 1px border makes it 2px taller than its cell. */
+.zenith-grid__item,
+.zenith-grid__item > .zenith-widget-card {
+    box-sizing: border-box;
+}
+
+.zenith-grid__item > .zenith-widget-card {
+    height: 100%;
+    min-height: 0;
+    animation: none; /* placement is animated by the item, not the card */
+}
+
+/* Content taller than the chosen preset scrolls inside the card instead of
+   stretching it and breaking the grid. */
+.zenith-grid__item .zenith-widget-card__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    /* overflow-y:auto alone computes overflow-x to auto too, letting the hourly
+       strip's edge-bleed scroll the whole card sideways. Pin it to hidden. */
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
+.zenith-grid__item .zenith-widget-card__body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.zenith-grid__item .zenith-widget-card__body::-webkit-scrollbar-thumb {
+    background: var(--zenith-border);
+    border-radius: 4px;
+}
+
+.zenith-grid__item .zenith-widget-card__body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ── Edit mode ───────────────────────────────────── */
+
+/* The wiggle lives on the card, not the item: the item's `transform` is already
+   used for placement and the two would overwrite each other. */
+@keyframes zenith-widget-wiggle {
+    0%, 100% { transform: rotate(-0.45deg); }
+    50% { transform: rotate(0.45deg); }
+}
+
+.zenith-grid.is-editing .zenith-grid__item > .zenith-widget-card {
+    animation: zenith-widget-wiggle 0.28s ease-in-out infinite;
+    border-color: var(--zenith-border);
+    cursor: grab;
+}
+
+/* Stagger so the cards don't wobble in lockstep. */
+.zenith-grid.is-editing .zenith-grid__item:nth-child(2n) > .zenith-widget-card {
+    animation-delay: -0.09s;
+}
+.zenith-grid.is-editing .zenith-grid__item:nth-child(3n) > .zenith-widget-card {
+    animation-delay: -0.17s;
+}
+
+/* Widget content is inert while arranging — the whole card is a drag handle. */
+.zenith-grid.is-editing .zenith-widget-card__body {
+    pointer-events: none;
+    user-select: none;
+    overflow: hidden;
+}
+
+.zenith-grid.is-editing .zenith-grid__item {
+    touch-action: none; /* let a touch-drag move the widget, not scroll the pane */
+    outline: none;
+}
+
+/* Keyboard focus while arranging — arrow keys move the focused widget. */
+.zenith-grid.is-editing .zenith-grid__item:focus-visible > .zenith-widget-card {
+    border-color: var(--zenith-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--zenith-accent) 45%, transparent);
+}
+
+/* The widget being dragged tracks the pointer 1:1, so no easing on it. */
+.zenith-grid__item.is-dragging {
+    z-index: 10;
+    transition: none;
+    cursor: grabbing;
+}
+
+/* Scoped through `.is-editing` so it out-specifies the wiggle rule above —
+   otherwise the animation keeps running and overwrites the lift transform. */
+.zenith-grid.is-editing .zenith-grid__item.is-dragging > .zenith-widget-card,
+.zenith-grid__item.is-dragging > .zenith-widget-card {
+    animation: none;
+    transform: scale(1.02);
+    box-shadow: var(--zenith-shadow-lg);
+    border-color: var(--zenith-accent);
+    cursor: grabbing;
+}
+
+/* ── Remove badge (edit mode) ────────────────────── */
+.zenith-grid__item button.zenith-grid__remove {
+    position: absolute;
+    top: -9px;
+    left: -9px;
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--zenith-border);
+    border-radius: 50%;
+    background: var(--zenith-bg-primary);
+    box-shadow: var(--zenith-shadow-sm);
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    transition: color var(--zenith-transition-fast), background var(--zenith-transition-fast),
+        border-color var(--zenith-transition-fast);
+}
+
+.zenith-grid__item button.zenith-grid__remove:hover {
+    background: var(--zenith-danger, #ef4444);
+    border-color: var(--zenith-danger, #ef4444);
+    color: #fff;
+    box-shadow: var(--zenith-shadow-sm);
+}
+
+.zenith-grid__item button.zenith-grid__remove:focus,
+.zenith-grid__item button.zenith-grid__remove:focus-visible,
+.zenith-grid__item button.zenith-grid__remove:active {
+    outline: none;
+}
+
+/* ── Size picker (edit mode) ─────────────────────── */
+.zenith-grid__sizes {
+    position: absolute;
+    top: -10px;
+    right: 8px;
+    z-index: 3;
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--zenith-bg-primary);
+    border: 1px solid var(--zenith-border);
+    box-shadow: var(--zenith-shadow-sm);
+}
+
+/* Scoped with the tag so it out-specifies Obsidian's default button box. */
+.zenith-grid__sizes button.zenith-grid__size {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    border-radius: 999px;
+    color: var(--zenith-text-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: color var(--zenith-transition-fast), background var(--zenith-transition-fast);
+}
+
+.zenith-grid__sizes button.zenith-grid__size:hover {
+    color: var(--zenith-text-normal);
+    background: var(--zenith-bg-hover);
+    box-shadow: none;
+}
+
+.zenith-grid__sizes button.zenith-grid__size:focus,
+.zenith-grid__sizes button.zenith-grid__size:focus-visible,
+.zenith-grid__sizes button.zenith-grid__size:active {
+    outline: none;
+    box-shadow: none;
+}
+
+.zenith-grid__sizes button.zenith-grid__size.is-active {
+    background: var(--zenith-accent);
+    color: #fff;
+}
+
+/* Landing spot for the dragged widget. */
+.zenith-grid__placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    border: 2px dashed color-mix(in srgb, var(--zenith-accent) 55%, transparent);
+    border-radius: var(--zenith-radius-lg);
+    background: color-mix(in srgb, var(--zenith-accent) 8%, transparent);
+    transition: transform var(--zenith-transition), width var(--zenith-transition),
+        height var(--zenith-transition);
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-grid.is-editing .zenith-grid__item > .zenith-widget-card {
+        animation: none;
+    }
+    .zenith-grid__item,
+    .zenith-grid__placeholder {
+        transition: none;
+    }
+}
+
+/* ── Add-widget panel (edit mode) ────────────────── */
+/* ── Grid settings bar (edit mode) ───────────────── */
+.zenith-gridbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-md);
+    margin-top: var(--zenith-space-lg);
+    padding: var(--zenith-space-sm) var(--zenith-space-md);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-lg);
+    background: color-mix(in srgb, var(--zenith-bg-secondary) 60%, transparent);
+    animation: zenith-fade-in var(--zenith-transition) ease both;
+}
+
+.zenith-gridbar__title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-gridbar__controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-md);
+    flex: 1;
+}
+
+.zenith-gridbar__control {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-gridbar__control.is-disabled {
+    opacity: 0.45;
+}
+
+.zenith-gridbar__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    color: var(--zenith-text-muted);
+    white-space: nowrap;
+}
+
+.zenith-gridbar__stepper {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-bg-primary);
+    overflow: hidden;
+}
+
+.zenith-gridbar__stepper button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.95rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.zenith-gridbar__stepper button:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-gridbar__stepper button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.zenith-gridbar__value {
+    min-width: 3.4em;
+    padding: 0 2px;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-gridbar button.zenith-gridbar__reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+.zenith-gridbar button.zenith-gridbar__reset:hover:not(:disabled) {
+    color: var(--zenith-text-normal);
+    border-color: var(--zenith-accent);
+}
+
+.zenith-gridbar button.zenith-gridbar__reset:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* ── Add-widget gallery (edit mode) ──────────────── */
+.zenith-add-sheet {
+    margin-top: var(--zenith-space-md);
+    padding: var(--zenith-space-md);
+    border: 1px dashed var(--zenith-border);
+    border-radius: var(--zenith-radius-lg);
+    background: color-mix(in srgb, var(--zenith-bg-secondary) 50%, transparent);
+    animation: zenith-fade-in var(--zenith-transition) ease both;
+}
+
+.zenith-add-sheet__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-sm);
+    margin-bottom: var(--zenith-space-md);
+}
+
+.zenith-add-sheet__title {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--zenith-space-sm);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-add-sheet__count {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-add-sheet__search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 180px;
+    padding: 0 8px;
+    height: 28px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-bg-primary);
+    color: var(--zenith-text-muted);
+}
+
+.zenith-add-sheet__search:focus-within {
+    border-color: var(--zenith-accent);
+}
+
+.zenith-add-sheet__search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    color: var(--zenith-text-normal);
+    font-size: 0.82rem;
+    outline: none;
+}
+
+.zenith-add-sheet__search button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+}
+
+.zenith-add-sheet__search button:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-add-sheet__group + .zenith-add-sheet__group {
+    margin-top: var(--zenith-space-md);
+}
+
+.zenith-add-sheet__group-label {
+    margin-bottom: 6px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-add-sheet__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: var(--zenith-space-lg) 0;
+    color: var(--zenith-text-muted);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.zenith-add-sheet__empty-hint {
+    color: var(--zenith-text-faint);
+    font-size: 0.8rem;
+}
+
+/* Cards wrap to fill the row. A stretched grid track left a big gap between a
+   short label and the far-right action. */
+.zenith-add-sheet__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-add-sheet__list button.zenith-add-sheet__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: var(--zenith-space-sm) var(--zenith-space-md);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-primary);
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--zenith-transition-fast),
+        background var(--zenith-transition-fast), opacity var(--zenith-transition-fast);
+}
+
+.zenith-add-sheet__list button.zenith-add-sheet__item:hover {
+    border-color: var(--zenith-accent);
+    background: var(--zenith-bg-hover);
+    box-shadow: none;
+}
+
+.zenith-add-sheet__list button.zenith-add-sheet__item:focus,
+.zenith-add-sheet__list button.zenith-add-sheet__item:focus-visible {
+    outline: none;
+    border-color: var(--zenith-accent);
+}
+
+/* Already on the grid: still listed (so the catalogue never looks empty) but
+   clearly secondary, and clicking takes it back off. */
+.zenith-add-sheet__list button.zenith-add-sheet__item.is-added {
+    opacity: 0.55;
+    border-style: dashed;
+}
+
+.zenith-add-sheet__list button.zenith-add-sheet__item.is-added:hover {
+    opacity: 1;
+    border-color: var(--zenith-danger);
+}
+
+.zenith-add-sheet__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* Smaller than the two-line text block so it reads as a badge with air
+       around it, not a slab wedged into the card. */
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-bg-tertiary);
+    color: var(--zenith-accent);
+}
+
+.zenith-add-sheet__text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-add-sheet__name {
+    font-size: 0.88rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zenith-add-sheet__meta {
+    font-size: 0.72rem;
+    color: var(--zenith-text-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Miniature of the widget's footprint on the *current* grid, so the preview
+   still tells the truth after the column count is changed. */
+.zenith-add-sheet__footprint {
+    display: grid;
+    gap: 1.5px;
+    width: 26px;
+    flex-shrink: 0;
+}
+
+.zenith-add-sheet__cell {
+    aspect-ratio: 1;
+    border-radius: 1px;
+    background: var(--zenith-bg-tertiary);
+}
+
+.zenith-add-sheet__cell.is-filled {
+    background: var(--zenith-accent);
+}
+
+.zenith-add-sheet__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-add-sheet__item:hover .zenith-add-sheet__action {
+    color: var(--zenith-accent);
+}
+
+.zenith-add-sheet__item.is-added:hover .zenith-add-sheet__action {
+    color: var(--zenith-danger);
+}
+
+/* ── Stacked (narrow pane / mobile) ──────────────── */
+/* One full-width column with its own order (`dashboardStackOrder`). Cards stay
+   absolutely positioned here too, so the same drag code reorders them. */
+.zenith-grid.is-stacked .zenith-grid__item {
+    width: 100%;
+}
+
+/* Width-in-columns stepper, alongside the S/M/L presets. The presets only offer
+   half-width and full-width — identical proportions at any column count — so
+   this is what actually gives the column setting something to do. */
+.zenith-grid__span {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    padding-left: 3px;
+    margin-left: 2px;
+    border-left: 1px solid var(--zenith-border);
+}
+
+.zenith-grid__span-value {
+    min-width: 2.4em;
+    text-align: center;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+    cursor: default;
+}
+
+.zenith-grid__sizes button.zenith-grid__size:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.zenith-grid__span-unit {
+    opacity: 0.6;
+    font-size: 0.9em;
+}
+
+/* ── Saved layouts (.zenith-presets) ─────────────────
+   Sits under the grid controls while arranging, in the same quiet card so the
+   two read as one row of tools rather than two competing panels. */
+.zenith-presets {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-sm) var(--zenith-space-md);
+    margin-top: var(--zenith-space-sm);
+    padding: var(--zenith-space-sm) var(--zenith-space-md);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-lg);
+    background: color-mix(in srgb, var(--zenith-bg-secondary) 60%, transparent);
+    animation: zenith-fade-in var(--zenith-transition) ease both;
+}
+
+.zenith-presets__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-presets__list {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-sm);
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.zenith-presets__hint {
+    font-size: 0.8rem;
+    color: var(--zenith-text-faint);
+}
+
+/* One chip is a group of controls, not a button: applying, renaming and
+   deleting are three different intentions and each gets its own hit area. */
+.zenith-presets__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 4px 2px 2px;
+    border: 1px solid var(--zenith-border);
+    border-radius: 999px;
+    background: var(--zenith-bg-primary);
+    transition: border-color var(--zenith-transition-fast);
+}
+.zenith-presets__chip:hover { border-color: var(--zenith-accent); }
+.zenith-presets__chip.is-active {
+    border-color: var(--zenith-accent);
+    background: color-mix(in srgb, var(--zenith-accent) 12%, transparent);
+}
+
+.zenith-root button.zenith-presets__apply {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 220px;
+    padding: 3px 8px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+.zenith-presets__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The arrangement on screen has drifted from what was saved under this name. */
+.zenith-presets__dot {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--zenith-warning, #f59e0b);
+}
+
+.zenith-root button.zenith-presets__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+    transition: color var(--zenith-transition-fast), background var(--zenith-transition-fast);
+}
+.zenith-root button.zenith-presets__action:hover {
+    color: var(--zenith-text-normal);
+    background: var(--zenith-bg-hover);
+}
+.zenith-root button.zenith-presets__action--danger:hover {
+    color: var(--zenith-danger, #e5534b);
+    background: color-mix(in srgb, var(--zenith-danger, #e5534b) 14%, transparent);
+}
+
+.zenith-root button.zenith-presets__save {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--zenith-transition-fast);
+}
+.zenith-root button.zenith-presets__save:hover:not(:disabled) {
+    color: var(--zenith-accent);
+    border-color: var(--zenith-accent);
+}
+.zenith-root button.zenith-presets__save:disabled {
+    opacity: 0.5;
+    cursor: default;
+}

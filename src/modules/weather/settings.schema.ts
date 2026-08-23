@@ -1,0 +1,107 @@
+import { coreSchema } from '../../settings/schema/types';
+import { createPlaceField } from '../../settings/components/PlaceField';
+
+/**
+ * Weather settings, as data.
+ *
+ * `coreSchema` is an identity function whose only job is to make TypeScript
+ * check every `key` against `ZenithSettings` at the definition site — a typo
+ * here would otherwise be a setting that renders fine and never persists.
+ *
+ * The location picker is the one `custom` field: it debounces a geocoding
+ * request, shows candidates and talks to the device's geolocation, none of
+ * which a generic control can express.
+ */
+export const weatherSettingsSchema = coreSchema({
+    moduleId: 'weather',
+    groups: [
+        {
+            id: 'location',
+            fields: [
+                {
+                    type: 'custom',
+                    key: 'weatherPlace',
+                    render: createPlaceField({
+                        settingsKey: 'weatherPlace',
+                        labelKey: 'settings.weatherPlace',
+                        descKey: 'settings.weatherPlace.desc',
+                        // Clearing the legacy key stops the widget's one-time
+                        // migration from re-resolving the old free-text city
+                        // over this choice.
+                        extraPatch: { weatherCity: '' },
+                    }),
+                },
+                {
+                    type: 'toggle',
+                    key: 'weatherAllowIpLookup',
+                    labelKey: 'settings.weatherIpLookup',
+                    descKey: 'settings.weatherIpLookup.desc',
+                    default: false,
+                    // Only reachable when nothing else can answer, so it stays
+                    // out of the way until the user is actually relying on
+                    // automatic location.
+                    showIf: (v) => !v.weatherPlace,
+                },
+            ],
+        },
+        {
+            id: 'units',
+            titleKey: 'settings.weatherUnitsGroup',
+            fields: [
+                {
+                    type: 'segmented',
+                    key: 'weatherUnit',
+                    labelKey: 'settings.weatherUnit',
+                    descKey: 'settings.weatherUnit.desc',
+                    default: 'c',
+                    options: [
+                        { value: 'c', label: '°C' },
+                        { value: 'f', label: '°F' },
+                    ],
+                },
+            ],
+        },
+        {
+            id: 'sections',
+            titleKey: 'settings.weatherSectionsGroup',
+            fields: [
+                {
+                    type: 'select',
+                    key: 'weatherForecastDays',
+                    labelKey: 'settings.weatherForecast',
+                    descKey: 'settings.weatherForecast.desc',
+                    default: 10,
+                    numeric: true,
+                    options: [
+                        { value: '0', labelKey: 'settings.weatherForecast.off' },
+                        { value: '5', label: '5' },
+                        { value: '7', label: '7' },
+                        { value: '10', label: '10' },
+                    ],
+                },
+                {
+                    type: 'toggle',
+                    key: 'weatherShowHourly',
+                    labelKey: 'settings.weatherHourly',
+                    descKey: 'settings.weatherHourly.desc',
+                    default: true,
+                },
+                {
+                    type: 'toggle',
+                    key: 'weatherShowSun',
+                    labelKey: 'settings.weatherSun',
+                    descKey: 'settings.weatherSun.desc',
+                    default: true,
+                },
+                {
+                    type: 'toggle',
+                    key: 'weatherShowAir',
+                    labelKey: 'settings.weatherAir',
+                    descKey: 'settings.weatherAir.desc',
+                    default: true,
+                    noteKey: 'settings.weatherPrivacy',
+                },
+            ],
+        },
+    ],
+});

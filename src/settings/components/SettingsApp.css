@@ -1,0 +1,960 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Settings App CSS
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.vertical-tab-content-container .zenith-custom-settings-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.zenith-settings {
+    padding: 24px 32px; /* Restored safe padding */
+    max-width: 700px; /* Restored max-width so it's not edge-to-edge on large screens */
+    margin: 0 auto;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    color: var(--text-normal);
+}
+
+/* ── Mobile: clear Obsidian's floating chrome ──
+   The container above zeroes its padding so the desktop layout can run
+   edge-to-edge. On a phone that padding was the only thing keeping the first
+   row out from under the floating back/close buttons, which sit *over* the
+   scroll area — so it comes back here, plus the bottom safe-area inset the
+   home indicator needs. */
+.zenith-custom-settings-container.is-mobile-settings .zenith-settings {
+    padding: 48px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Our own back/title row would otherwise stack a second header under
+   Obsidian's; tighten it so the two don't read as a double heading. */
+.zenith-custom-settings-container.is-mobile-settings .zenith-settings__header {
+    margin-bottom: 20px;
+}
+
+/* ── Header & Back Button ── */
+.zenith-settings__header {
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center the title */
+    position: relative; /* For absolutely positioning the back button */
+    min-height: 32px;
+}
+
+.zenith-settings__title {
+    font-family: inherit;
+    font-size: 1.3rem !important;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+    color: var(--text-normal);
+    text-align: center;
+}
+
+.zenith-settings__back-btn {
+    position: absolute;
+    left: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent !important; /* Force override Obsidian button styles */
+    border: none !important;
+    box-shadow: none !important;
+    padding: 4px 8px 4px 0 !important;
+    margin: 0 !important;
+    color: var(--text-muted) !important;
+    cursor: pointer;
+    transition: color 0.2s ease !important;
+}
+
+.zenith-settings__back-btn:hover {
+    color: var(--text-normal) !important;
+    background: transparent !important; /* Ensure no background on hover */
+}
+
+.zenith-settings__back-text {
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    line-height: 1 !important;
+}
+
+/* ── Root Menu (iOS Settings Grouped Style) ── */
+.zenith-settings__menu {
+    display: flex;
+    flex-direction: column;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    overflow: hidden; /* Ensure rounded corners for children */
+}
+
+.zenith-settings__menu-item {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    background: transparent;
+    border-bottom: 1px solid var(--background-modifier-border);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.zenith-settings__menu-item:last-child {
+    border-bottom: none;
+}
+
+.zenith-settings__menu-item:hover {
+    background: var(--background-modifier-hover);
+}
+
+.zenith-settings__menu-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+    color: var(--interactive-accent);
+    border-radius: 6px;
+    margin-right: 16px;
+}
+
+.zenith-settings__menu-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.zenith-settings__menu-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-normal);
+}
+
+.zenith-settings__menu-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.zenith-settings__menu-chevron {
+    color: var(--text-faint);
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.zenith-settings__menu-item:hover .zenith-settings__menu-chevron {
+    transform: translateX(2px);
+    color: var(--text-normal);
+}
+
+/* ── Content (Drill-down views) ── */
+.zenith-settings__content {
+    animation: zenithFadeIn 0.2s ease;
+}
+
+@keyframes zenithFadeIn {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.zenith-settings__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid color-mix(in srgb, var(--background-modifier-border) 40%, transparent);
+    gap: 24px;
+}
+
+.zenith-settings__item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.zenith-settings__item-info {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.zenith-settings__item-name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-normal);
+}
+
+.zenith-settings__item-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.zenith-settings__item-control {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* ── Inputs & Selects ── */
+.zenith-settings__input,
+.zenith-settings__select {
+    width: 260px !important;
+    height: 32px !important; /* Slightly more compact */
+    min-height: 32px !important;
+    padding: 0 12px !important;
+    margin: 0 !important;
+    border: 1px solid var(--background-modifier-border) !important;
+    border-radius: 6px !important;
+    background: var(--background-primary) !important;
+    color: var(--text-normal) !important;
+    font-family: inherit !important;
+    font-size: 0.9rem !important;
+    line-height: 30px !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+}
+
+.zenith-settings__input:focus,
+.zenith-settings__select:focus {
+    border-color: var(--interactive-accent) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent) !important;
+}
+
+/* ── Toggles ── */
+.zenith-settings__toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.zenith-settings__toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.zenith-settings__toggle-label input[type="checkbox"] {
+    cursor: pointer;
+    width: 20px !important;
+    height: 20px !important;
+    margin: 0 !important;
+    accent-color: var(--interactive-accent);
+}
+
+/* ── Stacked items (label above full-width control) ── */
+.zenith-settings__item--stack {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+}
+
+.zenith-settings__item--stack .zenith-settings__item-control {
+    justify-content: flex-start;
+}
+
+.zenith-settings__item--stack .zenith-settings__input {
+    width: 100% !important;
+    max-width: 360px;
+}
+
+/* ── Hints ── */
+.zenith-settings__hint {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+    margin-bottom: 16px;
+}
+
+.zenith-settings__hint--warn {
+    color: var(--text-normal);
+    background: color-mix(in srgb, var(--color-orange, #e0a030) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-orange, #e0a030) 40%, transparent);
+}
+
+.zenith-settings__hint--info {
+    background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--interactive-accent) 30%, transparent);
+}
+
+.zenith-settings__inline-btn {
+    padding: 4px 10px !important;
+    font-size: 0.8rem !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--background-modifier-border) !important;
+    background: var(--background-primary) !important;
+    color: var(--text-normal) !important;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.zenith-settings__inline-btn:hover {
+    background: var(--background-modifier-hover) !important;
+}
+
+/* ── Color control ── */
+.zenith-settings__color-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.zenith-settings__color {
+    width: 40px;
+    height: 32px;
+    padding: 2px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+/* ── Section label ── */
+.zenith-settings__section-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin: 8px 0 4px;
+}
+
+.zenith-settings__item-desc--block {
+    display: block;
+    margin-bottom: 12px;
+}
+
+/* ── Widget list ── */
+.zenith-settings__widget-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.zenith-settings__widget-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--background-modifier-border) 50%, transparent);
+}
+
+.zenith-settings__widget-row:last-child {
+    border-bottom: none;
+}
+
+.zenith-settings__widget-name {
+    font-size: 0.92rem;
+    color: var(--text-normal);
+}
+
+.zenith-settings__widget-name.is-hidden {
+    color: var(--text-faint);
+    text-decoration: line-through;
+}
+
+.zenith-settings__widget-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.zenith-settings__icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.zenith-settings__icon-btn:hover:not(:disabled) {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.zenith-settings__icon-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* ── Module groups ── */
+.zenith-settings__module-group {
+    margin-bottom: 24px;
+}
+
+.zenith-settings__group-title {
+    margin: 0 0 12px 0;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.zenith-settings__empty-note {
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px dashed var(--background-modifier-border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+/* ── Vault settings: CTA button + icon rows ── */
+.zenith-settings__inline-btn--cta {
+    background: var(--interactive-accent) !important;
+    color: var(--text-on-accent, #fff) !important;
+    border-color: transparent !important;
+    font-weight: 500;
+}
+.zenith-settings__inline-btn--cta:hover {
+    background: var(--interactive-accent-hover) !important;
+}
+
+.zenith-settings__icon-row-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+.zenith-settings__icon-row-path {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.88rem;
+    color: var(--text-normal);
+}
+
+/* ── About section ── */
+.zenith-about__hero {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+.zenith-about__logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--interactive-accent) 16%, transparent);
+    color: var(--interactive-accent);
+    flex-shrink: 0;
+}
+.zenith-about__name {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text-normal);
+    line-height: 1.1;
+}
+.zenith-about__version {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+.zenith-about__desc {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--text-normal);
+    margin: 0 0 18px;
+}
+.zenith-about__facts {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.zenith-about__fact {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 11px 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--background-modifier-border) 50%, transparent);
+}
+.zenith-about__fact:last-child {
+    border-bottom: none;
+}
+.zenith-about__fact-key {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+.zenith-about__fact-val {
+    font-size: 0.9rem;
+    color: var(--text-normal);
+    text-align: right;
+}
+.zenith-about__note {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--background-secondary);
+}
+
+/* ━━━ Schema form controls ━━━
+   Native Obsidian variables throughout, not --zenith-*: the settings tab
+   renders outside .zenith-root, where those tokens are not declared. */
+
+/* A field switched off by a `disabledIf` — visible, so the user can see the
+   setting exists and why, but clearly not in play. */
+.zenith-settings__item.is-disabled {
+    opacity: 0.5;
+}
+
+/* Segmented: two or three choices, all visible. Beats a <select> at this size
+   because the alternatives need no tap to discover. */
+.zenith-seg {
+    display: inline-flex;
+    padding: 2px;
+    gap: 2px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+}
+
+.zenith-seg__opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--text-muted) !important;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.zenith-seg__opt.is-active {
+    background: var(--background-primary) !important;
+    color: var(--text-normal) !important;
+}
+
+.zenith-settings__num {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.zenith-settings__num .zenith-settings__input {
+    width: 90px;
+}
+
+.zenith-settings__num-unit {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.zenith-settings__slider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 280px;
+}
+
+.zenith-settings__slider input[type='range'] {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Tabular so the number doesn't jitter the layout as the thumb moves. */
+.zenith-settings__slider-value {
+    flex: none;
+    min-width: 3.5em;
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-settings__textarea {
+    width: 100%;
+    max-width: 360px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    resize: vertical;
+}
+
+.zenith-settings__input.is-mono,
+.zenith-settings__textarea.is-mono {
+    font-family: var(--font-monospace);
+    font-size: 0.82rem;
+}
+
+.zenith-settings__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.zenith-settings__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px !important;
+    border: 1px solid var(--background-modifier-border) !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--text-muted) !important;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.zenith-settings__chip.is-active {
+    border-color: var(--interactive-accent) !important;
+    background: color-mix(in srgb, var(--interactive-accent) 15%, transparent) !important;
+    color: var(--text-normal) !important;
+}
+
+/* Muted until hovered — a destructive button that shouts from the resting state
+   makes every settings page feel dangerous. */
+.zenith-settings__inline-btn--danger {
+    color: var(--text-muted) !important;
+}
+
+.zenith-settings__inline-btn--danger:hover {
+    border-color: var(--text-error, #e05252) !important;
+    color: var(--text-error, #e05252) !important;
+}
+
+.zenith-settings__media-preview {
+    width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* ━━━ Module installer ━━━ */
+.zenith-modinstall__input {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.zenith-modinstall__input .zenith-settings__input,
+.zenith-modinstall__input .zenith-settings__textarea {
+    width: 100%;
+    max-width: none;
+}
+
+.zenith-modinstall__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+}
+
+.zenith-modinstall__row-main {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+
+.zenith-modinstall__name {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    font-size: 0.92rem;
+    color: var(--text-normal);
+}
+
+.zenith-modinstall__name em {
+    font-style: normal;
+    font-size: 0.75rem;
+    color: var(--text-faint);
+}
+
+/* The origin is never truncated with an ellipsis — a half-shown URL is exactly
+   the thing someone would need to read in full to spot a lookalike. */
+.zenith-modinstall__origin {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    word-break: break-all;
+}
+
+.zenith-modinstall__badge {
+    align-self: flex-start;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-orange, #e0a030) 16%, transparent);
+    color: var(--text-normal);
+    font-size: 0.68rem;
+}
+
+.zenith-modinstall__row-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* ━━━ Third-party consent modal ━━━ */
+.zenith-consent__warning {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--color-orange, #e0a030) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-orange, #e0a030) 40%, transparent);
+    color: var(--text-normal);
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.zenith-consent__facts {
+    margin: 14px 0;
+}
+
+.zenith-consent__fact {
+    display: flex;
+    gap: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+    font-size: 0.85rem;
+}
+
+.zenith-consent__fact-key {
+    flex: none;
+    width: 88px;
+    color: var(--text-muted);
+}
+
+.zenith-consent__fact-val {
+    color: var(--text-normal);
+    word-break: break-word;
+}
+
+.zenith-consent__claimed {
+    margin: 14px 0 4px;
+    font-size: 0.78rem;
+    color: var(--text-faint);
+}
+
+.zenith-consent__code pre {
+    max-height: 260px;
+    overflow: auto;
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+    font-size: 0.75rem;
+}
+
+.zenith-consent__confirm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0 12px;
+    font-size: 0.88rem;
+}
+
+.zenith-consent__buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* ── Weather location picker ──
+   Native Obsidian variables, not --zenith-*: the settings tab renders outside
+   .zenith-root, so the design tokens simply aren't declared here. */
+.zenith-wplace__current {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+}
+
+.zenith-wplace__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.88rem;
+    color: var(--text-normal);
+}
+
+.zenith-wplace__hits {
+    list-style: none;
+    width: 100%;
+    max-width: 360px;
+    margin: 8px 0 12px;
+    padding: 4px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+}
+
+.zenith-wplace__hit {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 9px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-align: left;
+    cursor: pointer;
+}
+
+.zenith-wplace__hit:hover {
+    background: var(--background-modifier-hover) !important;
+}
+
+.zenith-wplace__hit-name {
+    font-size: 0.88rem;
+    color: var(--text-normal);
+}
+
+/* Two places can share a name — the region is what tells them apart, so it is
+   always rendered even though it reads as secondary. */
+.zenith-wplace__hit-where {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* ── Icon packs ──
+   One row per installed pack: what it is called, where it came from, how many
+   icons it contributed, a strip of samples, and — the part that earns the
+   panel — the files it could not use, with the reason. */
+.zenith-iconpack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--background-modifier-border) 50%, transparent);
+}
+
+.zenith-iconpack:last-child {
+    border-bottom: none;
+}
+
+.zenith-iconpack__head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+}
+
+.zenith-iconpack__name {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.zenith-iconpack__meta {
+    font-size: 0.76rem;
+    color: var(--text-faint);
+}
+
+.zenith-iconpack__count {
+    margin-left: auto;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-iconpack__preview {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.zenith-iconpack__glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 7px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+}
+
+.zenith-iconpack__more {
+    font-size: 0.76rem;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-iconpack__skipped {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 8px 10px;
+    list-style: none;
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--color-yellow, #f59e0b) 10%, transparent);
+}
+
+.zenith-iconpack__skipped li {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.zenith-iconpack__skipped svg {
+    flex-shrink: 0;
+    align-self: center;
+    color: var(--color-yellow, #f59e0b);
+}
+
+.zenith-iconpack__skipped code {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    color: var(--text-normal);
+}
