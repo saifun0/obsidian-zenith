@@ -220,6 +220,12 @@ export class CryptoRemote implements SyncRemote {
      * Every upload waits on the same attempt, and they fail together if it
      * fails. Files landing in a folder whose salt never got stored would be
      * unreadable by anyone, this device included.
+     *
+     * The marker is read back before any file follows it. Two devices setting
+     * up the same empty folder at the same moment would otherwise both write a
+     * salt, and the loser's files would be undecryptable — which the next run
+     * reads as "these files are gone from the remote", and acts on. Reading
+     * back turns that into a refusal on the device that lost.
      */
     private claim(): Promise<void> {
         if (!this.pendingMarker) return Promise.resolve();
@@ -227,6 +233,13 @@ export class CryptoRemote implements SyncRemote {
         this.claiming ??= (async () => {
             const marker = this.pendingMarker as CryptoMarker;
             await this.inner.write(MARKER_KEY, serializeMarker(marker), Date.now());
+
+            const settled = parseMarker(await this.inner.readBinary(MARKER_KEY));
+            if (!settled || settled.salt !== marker.salt) {
+                throw new Error(
+                    'Another device set this remote folder up at the same moment. Sync again — the second attempt will use its settings.'
+                );
+            }
             this.pendingMarker = null;
         })();
         return this.claiming;

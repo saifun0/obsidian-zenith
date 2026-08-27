@@ -256,3 +256,34 @@ describe('the previous-sync identity', () => {
         expect(new CryptoRemote(a, PASSWORD).id).not.toBe(new CryptoRemote(b, PASSWORD).id);
     });
 });
+
+describe('two devices claiming the same empty folder', () => {
+    it('lets exactly one of them win, and tells the other', async () => {
+        // Both see an empty folder and derive a salt of their own; whichever
+        // marker is written last is the one that counts. The loser's files
+        // would be undecryptable, and the run after that would read them as
+        // deleted from the remote and act on it.
+        const inner = fakeRemote();
+        const loser = new CryptoRemote(inner, PASSWORD);
+        const winner = new CryptoRemote(inner, PASSWORD);
+        await loser.list();
+        await winner.list();
+
+        // The other device gets its own marker in between our write and our
+        // read-back, which is the ordering that actually goes wrong.
+        const real = inner.write;
+        inner.write = async (key, data, mtime) => {
+            const result = await real(key, data, mtime);
+            if (key === MARKER_KEY) {
+                inner.write = real;
+                await winner.write('theirs.md', bytes('theirs'), 1000);
+            }
+            return result;
+        };
+
+        await expect(loser.write('ours.md', bytes('ours'), 1000)).rejects.toThrow(
+            /Another device set this remote folder up/
+        );
+        expect((await winner.list()).map((e) => e.key)).toEqual(['theirs.md']);
+    });
+});
