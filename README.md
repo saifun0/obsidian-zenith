@@ -637,6 +637,176 @@ locally.
 
 ---
 
+## Setting up Dropbox
+
+This build of Zenith ships with a Dropbox app registration, so there is nothing to set up
+on Dropbox's side: skip to step 8, leave **Dropbox app key** empty, and press Connect.
+
+Registering your own is worth it if you would rather have your own rate limits, your own
+name on the consent screen, and no dependence on a registration you do not control. It
+takes about two minutes — and note step 5: your own app needs the redirect URI added, or
+authorization fails before it starts.
+
+1. Open <https://www.dropbox.com/developers/apps> and choose **Create app**.
+2. Pick **Scoped access**.
+3. Pick the access type:
+   - **App folder** — recommended. Zenith can only ever see `/Apps/<your app name>/`, so a
+     mistake cannot reach the rest of your Dropbox.
+   - **Full Dropbox** — only if the vault has to live somewhere that already exists.
+4. Give it a name. Dropbox app names are globally unique, so `zenith-yourname` rather than
+   `zenith`.
+5. Under **OAuth 2 → Redirect URIs**, add `obsidian://zenith-dropbox` and press **Add**.
+   This is what lets the browser hand the authorization straight back to Obsidian instead
+   of making you copy a code — and unlike a `localhost` redirect it works on a phone too.
+   Leave **Allow public clients (Implicit Grant & PKCE)** on **Allow**.
+6. Go to the **Permissions** tab and tick all four of:
+
+   | Scope | What Zenith does with it |
+   | --- | --- |
+   | `account_info.read` | Confirm the connection works, for the **Test** button |
+   | `files.metadata.read` | List the folder and check a single file |
+   | `files.content.read` | Download |
+   | `files.content.write` | Upload and delete |
+
+   Then press **Submit** at the bottom. It is easy to miss, and nothing is saved without it.
+7. Back on the **Settings** tab, copy the **App key**. Not the App secret — Zenith
+   authorizes with PKCE and never sends a secret, which is what lets it run on a phone.
+
+Then in Obsidian, under **Settings → Zenith → Sync**:
+
+8. Turn on **Sync note files** and choose **Dropbox** as the backend.
+9. Paste the App key into **Dropbox app key**.
+10. Set **Folder in the account** — with App-folder access this is relative to
+   `/Apps/<your app name>/`. Leave it empty to use that folder directly. If you are
+   turning on encryption, this has to be a folder with nothing in it.
+11. Press **Connect**. Dropbox opens in your browser; approve the app and it returns you
+    to Obsidian on its own. If it does not — some desktops hand custom links nowhere — use
+    **The browser did not bring me back**, which starts the flow again with the code shown
+    on screen for you to copy.
+12. Press **Test connection**, then **Preview** — and read the plan before applying it. The
+    first run always asks, whatever it contains.
+
+### Why a client id can ship at all
+
+An OAuth `client_id` is not a secret. RFC 8252 starts from the position that a native app
+cannot keep one, and PKCE exists so a published id is still safe to authorize against: the
+code it yields is useless without a verifier that never leaves the device. Every desktop
+application talking to these providers has its id in the binary.
+
+What a shared registration costs is shared fate — provider limits apply partly per app, a
+registration can be throttled, and a development-status Dropbox app is capped on linked
+accounts until it has been through review. That is what the override is for.
+
+### If it does not work
+
+**"This Dropbox app is not allowed to …"** — a permission is missing. Add it in the
+Permissions tab, press Submit, then **Disconnect and Connect again** in Zenith: an
+authorization already granted does not pick up permissions added afterwards. This is the
+single most common way to get stuck.
+
+**"Dropbox rejected the connection — authorize again"** — the stored token is dead.
+Disconnect and connect again.
+
+**The browser shows an error about the redirect URI.** `obsidian://zenith-dropbox` is
+missing from the app's Redirect URIs, or was typed differently — Dropbox compares it
+exactly. Add it, or use **The browser did not bring me back** to authorize by copying the
+code instead.
+
+**The app is in "Development" status.** That is fine and needs no application: development
+apps work fully, for up to 500 linked accounts. Only publishing to other people needs
+production status.
+
+**Sync feels slow, or a lot of files fail.** Lower **Parallel transfers**. Zenith already
+waits out Dropbox's rate limiting rather than failing the file, but fewer transfers at
+once means it has less to wait out.
+
+---
+
+## Encrypted sync
+
+Turn on **Settings → Sync → Encrypt everything before it is uploaded** and Zenith
+encrypts file contents *and* filenames before anything leaves the device. The server —
+Dropbox, OneDrive, S3 or WebDAV — holds ciphertext under unreadable names and never sees
+the password.
+
+Encrypted sync needs a folder of its own. Encrypted and plain files cannot share one, so
+pointing it at a folder that already holds notes is refused rather than mixed into.
+
+**Losing the password loses the notes.** There is no copy of it on the server; that is the
+whole point. It sits in `data.json` in plain text like every other credential here —
+Obsidian offers plugins no keychain — so back it up the way you back up anything else you
+cannot regenerate.
+
+### The format
+
+Documented so that the vault is never hostage to this plugin: everything below can be
+re-implemented in a short script against any standard crypto library.
+
+A file called `.zenith-crypt.json` sits at the root of the remote folder, unencrypted. It
+holds no secret — only the KDF parameters, the salt, and a check value:
+
+```json
+{
+  "version": 1,
+  "iterations": 600000,
+  "salt": "<16 random bytes, base64>",
+  "check": "<32 bytes, base64>"
+}
+```
+
+Keys are derived once per remote, not once per file:
+
+```
+root        = PBKDF2-HMAC-SHA256(password, salt, iterations)          → 32 bytes
+contentKey  = HKDF-SHA256(root, info = "zenith/sync/content/v1")      → 32 bytes
+nameKey     = HKDF-SHA256(root, info = "zenith/sync/name/v1")         → 32 bytes
+nameNonce   = HKDF-SHA256(root, info = "zenith/sync/name-nonce/v1")   → 32 bytes
+check       = HKDF-SHA256(root, info = "zenith/sync/check/v1")        → 32 bytes
+```
+
+HKDF is used with an empty salt. `check` is compared against the marker's, which is how a
+mistyped password is caught before anything is uploaded rather than weeks later.
+
+**File contents** are AES-256-GCM with a random nonce, and the file's own vault path as
+additional authenticated data — so the same bytes filed at another path do not decrypt:
+
+```
+bytes 0..3    magic, ASCII "ZNC1"
+byte  4       format version, 1
+byte  5       algorithm, 1 = AES-256-GCM
+bytes 6..17   nonce, 12 bytes
+bytes 18..    ciphertext, with the 16-byte tag at the end
+```
+
+The overhead is a fixed 34 bytes, which is deliberate: it lets the plugin work out a file's
+decrypted size from its encrypted size without downloading it, and the sync plan compares
+sizes to decide whether two copies are the same file.
+
+**Paths** are encrypted one segment at a time, so the folder tree survives and names stay
+short. Each segment is AES-256-GCM over the segment text, with the plaintext parent path as
+additional authenticated data, and a *deterministic* nonce — the first 12 bytes of
+`HMAC-SHA256(nameNonce, full plaintext path down to this segment)`. Determinism is what
+makes two devices agree on a name instead of each uploading its own copy. The nonce is
+stored in front of the ciphertext because decryption cannot recompute it, and the whole
+thing is [RFC 4648 base32](https://www.rfc-editor.org/rfc/rfc4648), lower-case and
+unpadded:
+
+```
+segment = base32( nonce[12] || AES-256-GCM(nameKey, nonce, segment, aad = parent path) )
+```
+
+Base32 rather than base64 because Dropbox compares paths case-insensitively, and two names
+differing only in case would silently collide.
+
+### What the server still learns
+
+Not the contents, and not the names. It does see how many files there are, roughly how large
+each one is, when each was written, and the shape of the folder tree. Hiding those needs
+padding and decoy traffic, which cost real bandwidth and would make the size comparison
+above impossible — this stops where Remotely Save and rclone stop, for the same reasons.
+
+---
+
 ## License
 
 [MIT](LICENSE) © Saifun

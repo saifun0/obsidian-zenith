@@ -100,6 +100,17 @@ export interface AuthUrlParams {
     scopes?: string[];
     /** Omitted entirely when absent — which is what makes Dropbox show the code. */
     redirectUri?: string;
+    /**
+     * Opaque value echoed back on the redirect, and checked when it arrives.
+     *
+     * Only meaningful with a redirect. A code the user copied by hand came from
+     * a page they were looking at; a code that arrives over a URL scheme came
+     * from whoever could open that URL, and any application on the device can
+     * open one. Matching `state` against what this device sent is what makes
+     * the difference between finishing our authorization and finishing
+     * somebody else's.
+     */
+    state?: string;
     extra?: Record<string, string>;
 }
 
@@ -113,6 +124,7 @@ export function buildAuthUrl(params: AuthUrlParams): string {
     };
     if (params.scopes?.length) query.scope = params.scopes.join(' ');
     if (params.redirectUri) query.redirect_uri = params.redirectUri;
+    if (params.state) query.state = params.state;
 
     const search = Object.entries(query)
         .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)

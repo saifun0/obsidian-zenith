@@ -1,7 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, ExternalLink, LogOut } from 'lucide-react';
+import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
+import {
+    dropboxClientId,
+    DROPBOX_REDIRECT_URI,
+    onedriveClientId,
+} from '../services/remotes/appIds';
+import { randomState } from '../services/remotes/oauthPending';
 import { challengeFor, generateVerifier, type DeviceCodeStart } from '../services/remotes/oauth';
 import { DropboxRemote } from '../services/remotes/dropboxRemote';
 import { OneDriveRemote } from '../services/remotes/onedriveRemote';
@@ -9,11 +16,18 @@ import { OneDriveRemote } from '../services/remotes/onedriveRemote';
 /**
  * Connecting a device to Dropbox or OneDrive.
  *
- * Two visibly different flows, because the providers offer different ways to
- * authorize something that cannot receive a redirect — see `oauth.ts`. Dropbox
- * shows a code to paste back; Microsoft has the user type a short code
- * elsewhere while the plugin waits. Both are shaped so they work on a phone,
- * which is the whole point of syncing.
+ * Two visibly different flows, because the providers offer different ways in.
+ *
+ * Dropbox accepts an `obsidian://` redirect, so the browser hands the
+ * authorization straight back and there is nothing to copy — on a phone as much
+ * as on a desktop, which is what makes it worth preferring. Microsoft does not
+ * take one here, so it uses the device grant: a short code typed on any device
+ * while the plugin waits.
+ *
+ * The Dropbox flow keeps its old shape as a fallback. A URL scheme depends on
+ * something outside the app agreeing to hand the link over, and when that does
+ * not happen there is nothing to debug from inside Obsidian — so the panel
+ * offers the copy-the-code path rather than leaving the user at a dead end.
  */
 
 type Provider = 'dropbox' | 'onedrive';
@@ -27,20 +41,27 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
     const settings = useZenithStore((s) => s.settings);
     const updateSettings = useZenithStore((s) => s.updateSettings);
 
-    const clientId = (
-        provider === 'dropbox' ? settings.syncDropboxClientId : settings.syncOnedriveClientId
-    ).trim();
+    // The user's own registration when they gave one, Zenith's otherwise. Empty
+    // only when this build ships none and none was entered — which is the one
+    // case the panel has nothing to offer but an explanation.
+    const clientId =
+        provider === 'dropbox'
+            ? dropboxClientId(settings.syncDropboxClientId)
+            : onedriveClientId(settings.syncOnedriveClientId);
     const tokens = provider === 'dropbox' ? settings.syncDropboxTokens : settings.syncOnedriveTokens;
     const tokenKey = provider === 'dropbox' ? 'syncDropboxTokens' : 'syncOnedriveTokens';
 
+    const { plugin } = useApp();
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Dropbox: the verifier has to survive from opening the browser until the
-    // user pastes the code back, which may be a minute later.
+    /** Which Dropbox flow is in the air, if either. */
+    const [awaiting, setAwaiting] = useState<'redirect' | 'paste' | null>(null);
+    // Only the copy-the-code path keeps the verifier here. The redirect path
+    // cannot: it finishes in the protocol handler, long after this component
+    // may have been unmounted, so the plugin holds that one.
     const verifier = useRef<string | null>(null);
     const [codeDraft, setCodeDraft] = useState('');
-    const [awaitingPaste, setAwaitingPaste] = useState(false);
 
     // OneDrive: what the user is being asked to type, and where.
     const [device, setDevice] = useState<DeviceCodeStart | null>(null);
@@ -57,21 +78,53 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
 
     const disconnect = useCallback(() => {
         updateSettings({ [tokenKey]: null });
+        plugin.oauthPending.cancel();
         setDevice(null);
-        setAwaitingPaste(false);
+        setAwaiting(null);
         setError(null);
-    }, [tokenKey, updateSettings]);
+    }, [plugin, tokenKey, updateSettings]);
 
     // ── Dropbox ──────────────────────────────────────
 
-    const startDropbox = async () => {
+    /**
+     * `viaRedirect` picks the flow. The two differ in one place only — whether
+     * a redirect URI is sent — but that one place decides everything after it:
+     * with a redirect Dropbox returns the code to the app and there is nothing
+     * on screen to copy; without one it shows the code and returns nowhere.
+     */
+    const startDropbox = async (viaRedirect: boolean) => {
         setError(null);
         setBusy(true);
         try {
-            verifier.current = generateVerifier();
-            const challenge = await challengeFor(verifier.current);
-            window.open(DropboxRemote.authorizeUrl(clientId, challenge), '_blank');
-            setAwaitingPaste(true);
+            const secret = generateVerifier();
+            const challenge = await challengeFor(secret);
+
+            if (!viaRedirect) {
+                verifier.current = secret;
+                window.open(DropboxRemote.authorizeUrl(clientId, challenge), '_blank');
+                setAwaiting('paste');
+                return;
+            }
+
+            const state = randomState();
+            // Registered before the browser opens, not after: on a phone the
+            // switch away can be immediate, and a callback that arrives before
+            // we are ready to answer it is a callback we reject.
+            plugin.oauthPending.begin({
+                provider: 'dropbox',
+                verifier: secret,
+                state,
+                clientId,
+                redirectUri: DROPBOX_REDIRECT_URI,
+            });
+            window.open(
+                DropboxRemote.authorizeUrl(clientId, challenge, {
+                    redirectUri: DROPBOX_REDIRECT_URI,
+                    state,
+                }),
+                '_blank'
+            );
+            setAwaiting('redirect');
         } catch (err) {
             setError(describe(err));
         } finally {
@@ -84,17 +137,17 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
         setError(null);
         setBusy(true);
         try {
-            const result = await DropboxRemote.completeAuthorization(
+            const result = await DropboxRemote.completeAuthorization({
                 clientId,
-                codeDraft,
-                verifier.current
-            );
+                code: codeDraft,
+                verifier: verifier.current,
+            });
             if (!result.ok) {
                 setError(result.error.message);
                 return;
             }
             updateSettings({ syncDropboxTokens: result.tokens });
-            setAwaitingPaste(false);
+            setAwaiting(null);
             setCodeDraft('');
             verifier.current = null;
         } catch (err) {
@@ -207,7 +260,38 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
                 </div>
             )}
 
-            {provider === 'dropbox' && awaitingPaste && (
+            {provider === 'dropbox' && awaiting === 'redirect' && (
+                <div className="zenith-sync__deviceCode">
+                    <p className="zenith-sync__hint">{t('auth.redirect.waiting')}</p>
+                    <div className="zenith-sync__actions">
+                        <button
+                            type="button"
+                            className="zenith-sync__btn"
+                            onClick={() => {
+                                plugin.oauthPending.cancel();
+                                setAwaiting(null);
+                            }}
+                        >
+                            {t('auth.cancel')}
+                        </button>
+                        {/* The dead end this avoids: a URL scheme depends on
+                            something outside Obsidian agreeing to hand the link
+                            over, and when it does not there is nothing here to
+                            see. Starting again without a redirect puts the code
+                            back on screen where it can be copied. */}
+                        <button
+                            type="button"
+                            className="zenith-sync__btn"
+                            onClick={() => void startDropbox(false)}
+                            disabled={busy}
+                        >
+                            {t('auth.redirect.stuck')}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {provider === 'dropbox' && awaiting === 'paste' && (
                 <div className="zenith-sync__row">
                     <label className="zenith-sync__label" htmlFor="zenith-auth-code">
                         {t('auth.paste')}
@@ -231,11 +315,13 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
                 </div>
             )}
 
-            {!device && !awaitingPaste && (
+            {!device && !awaiting && (
                 <button
                     type="button"
                     className="zenith-sync__btn is-primary"
-                    onClick={() => void (provider === 'dropbox' ? startDropbox() : startOneDrive())}
+                    onClick={() =>
+                        void (provider === 'dropbox' ? startDropbox(true) : startOneDrive())
+                    }
                     disabled={busy}
                 >
                     <ExternalLink size={13} />

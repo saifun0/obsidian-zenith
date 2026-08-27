@@ -166,7 +166,14 @@
     margin-bottom: 20px;
     padding-bottom: 20px;
     border-bottom: 1px solid color-mix(in srgb, var(--background-modifier-border) 40%, transparent);
-    gap: 24px;
+    column-gap: 24px;
+    row-gap: 12px;
+    /* A row reads: label and description on the left, the control on the right,
+       and any note or error on its own full-width line beneath. Without the wrap
+       a note becomes a third column and squeezes the label into a strip — which
+       is the opposite of what a note is for, and it happens on exactly the rows
+       that had something important enough to say twice. */
+    flex-wrap: wrap;
 }
 
 .zenith-settings__item:last-child {
@@ -267,7 +274,114 @@
     max-width: 360px;
 }
 
+/* ── Masked fields ── */
+.zenith-settings__secret {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zenith-settings__item--stack .zenith-settings__secret {
+    width: 100%;
+    max-width: 360px;
+}
+
+/* The input keeps its declared width as a starting point and gives way to the
+   button, rather than the pair overflowing the row. `min-width` has to be zero
+   or a flex item refuses to shrink below its content. */
+.zenith-settings__secret .zenith-settings__input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.zenith-settings__reveal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.zenith-settings__reveal:hover:not(:disabled) {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+.zenith-settings__reveal:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* ── Notes ──
+   A caveat lives behind a mark beside the label instead of taking a box on the
+   page. Errors are not notes and stay where they are — see `SettingRow`. */
+.zenith-settings__note {
+    display: inline-flex;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+
+.zenith-settings__noteMark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0 !important;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-faint);
+    cursor: help;
+}
+
+.zenith-settings__noteMark:hover,
+.zenith-settings__noteMark:focus-visible,
+.zenith-settings__noteMark.is-open {
+    color: var(--text-accent);
+    background: transparent;
+}
+
+.zenith-settings__noteBubble {
+    position: fixed;
+    z-index: 100;
+    max-width: 320px;
+    padding: 9px 11px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-secondary);
+    /* The bubble sits inside the label, which is larger and heavier. Both are
+       reset rather than inherited, or the note reads as a second title. */
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: 1.45;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 32%);
+    /* Never in the way of the pointer that is chasing it. */
+    pointer-events: none;
+}
+
 /* ── Hints ── */
+/* Only inside a row: a hint standing on its own elsewhere keeps its spacing.
+   Not applied to a stacked row, where the column direction already puts it on
+   its own line and a 100% basis would be measured against the height. */
+.zenith-settings__item:not(.zenith-settings__item--stack) > .zenith-settings__hint {
+    flex: 1 0 100%;
+}
+
+.zenith-settings__item > .zenith-settings__hint {
+    margin-bottom: 0;
+}
+
 .zenith-settings__hint {
     display: flex;
     align-items: center;

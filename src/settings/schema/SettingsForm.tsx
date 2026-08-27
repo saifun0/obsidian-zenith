@@ -151,6 +151,9 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ schema, values, onCh
                             value={fieldValue<string>(field, values)}
                             placeholder={field.placeholder}
                             monospace={field.monospace}
+                            secret={field.secret}
+                            revealLabel={t('settings.secret.reveal')}
+                            hideLabel={t('settings.secret.hide')}
                             disabled={disabled}
                             onChange={set}
                         />
@@ -204,6 +207,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ schema, values, onCh
                 label={t(field.labelKey)}
                 desc={field.descKey ? t(field.descKey) : undefined}
                 note={field.noteKey ? t(field.noteKey) : undefined}
+                noteLabel={t('settings.hint.aria')}
                 error={isValueField(field) ? (fieldError(field, values, t) ?? undefined) : undefined}
                 // Wide inputs need the full row width; a folder path in a
                 // right-hand column is unreadable at any vault depth.

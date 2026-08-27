@@ -393,6 +393,25 @@ export interface ZenithSettings {
     syncDropboxTokens: StoredTokens | null;
     syncOnedriveTokens: StoredTokens | null;
 
+    /**
+     * Encrypt everything before it leaves the device.
+     *
+     * Contents and filenames both. Off by default: switching it on for an
+     * existing remote means starting again in an empty folder, which is not a
+     * thing to do to somebody quietly.
+     */
+    syncEncryptionEnabled: boolean;
+    /**
+     * The password the encryption key is derived from.
+     *
+     * Never sent anywhere, and not recoverable — there is no copy of it on the
+     * remote, which is the entire point. Stored in `data.json` in plain text
+     * like every other credential here, because Obsidian offers plugins no
+     * keychain; the settings UI says so rather than letting anyone assume
+     * otherwise.
+     */
+    syncEncryptionPassword: string;
+
     /** Vault folder to sync. Empty means the whole vault. */
     syncLocalRoot: string;
     /** Include `.obsidian` — themes, other plugins, workspace layout. */
@@ -617,6 +636,8 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     syncOauthFolder: '',
     syncDropboxTokens: null,
     syncOnedriveTokens: null,
+    syncEncryptionEnabled: false,
+    syncEncryptionPassword: '',
     syncLocalRoot: '',
     syncIncludeConfigDir: false,
     syncExcludes: [],

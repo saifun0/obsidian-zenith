@@ -51,6 +51,8 @@ export const SyncApp: React.FC = () => {
     const [status, setStatus] = useState<SyncStatus | null>(service?.getStatus() ?? null);
     const [history, setHistory] = useState<JournalEntry[]>([]);
     const [busy, setBusy] = useState(false);
+    /** What the last press of the button actually did. */
+    const [outcome, setOutcome] = useState<string | null>(null);
     const [nameDraft, setNameDraft] = useState(service?.getStatus().deviceName ?? '');
     const nameTouched = useRef(false);
 
@@ -75,13 +77,34 @@ export const SyncApp: React.FC = () => {
         void refreshHistory();
     }, [refreshHistory, status?.lastPullAt, status?.lastPublishAt]);
 
+    /**
+     * Pull, publish, and say what came of it.
+     *
+     * The saying is the point. A device syncing on its own has nothing to
+     * merge and nothing to be told about, so the page looked identical before
+     * and after — which is indistinguishable from a button that does not work,
+     * and it is the state every new setup is in.
+     */
     const syncNow = async () => {
         if (!service) return;
         setBusy(true);
+        setOutcome(null);
         try {
-            await service.pull();
-            await service.publish();
+            const pulled = await service.pull();
+            const published = await service.publish();
             await refreshHistory();
+
+            // An error of its own is already on the page; adding a second
+            // sentence about it here would just be saying it twice.
+            if (!pulled || published === null) return;
+
+            if (pulled.received > 0) {
+                setOutcome(t.plural('sync.result.received', pulled.received));
+            } else if (pulled.peers === 0) {
+                setOutcome(t('sync.result.alone'));
+            } else {
+                setOutcome(t('sync.result.agreed'));
+            }
         } finally {
             setBusy(false);
         }
@@ -122,6 +145,8 @@ export const SyncApp: React.FC = () => {
                     {t('sync.syncNow')}
                 </button>
             </header>
+
+            {outcome && !status.error && <p className="zenith-sync__hint">{outcome}</p>}
 
             {status.error && (
                 <p className="zenith-sync__error">

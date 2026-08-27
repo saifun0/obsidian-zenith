@@ -52,10 +52,12 @@ export interface S3Config {
 /**
  * Shared by the OAuth-based providers.
  *
- * `clientId` is the user's own app registration rather than one shipped with
- * the plugin. Baking in a client id would mean registering apps under someone's
- * identity and shipping the result, which is both a support burden and against
- * what the providers ask for.
+ * `clientId` is Zenith's own registration, or the user's when they supplied one
+ * — see `appIds`. Publishing a client id is not the leak it looks like: PKCE is
+ * built on the assumption that a native app's id is public, and the code it
+ * yields is useless without a verifier that never leaves the device. What a
+ * shared registration does cost is shared limits and shared fate, which is why
+ * overriding it stays possible.
  */
 export interface OAuthConfigBase {
     clientId: string;
@@ -95,6 +97,17 @@ export interface SyncRemote {
 
     /** Every file under the configured folder. Folders are not returned. */
     list(): Promise<FileEntity[]>;
+
+    /**
+     * One file as the server reports it now, or null when it is not there.
+     *
+     * Exists so the engine can re-read a single object after transferring it
+     * without asking for the whole listing again. That sounds like a small
+     * saving and is not: a run that pulls five hundred files would otherwise
+     * fetch five hundred complete recursive listings, which is slow everywhere
+     * and gets the device rate-limited on Dropbox before the run finishes.
+     */
+    stat(key: string): Promise<FileEntity | null>;
 
     readBinary(key: string): Promise<ArrayBuffer>;
 

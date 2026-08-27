@@ -22,6 +22,7 @@ import { useZenithStore, resetZenithStore } from './store';
 import type { ZenithSettings } from './store';
 import type { SettingsSyncService } from './modules/sync/services/settingsSync';
 import type { FileSyncService } from './modules/sync/services/fileSync';
+import { PendingAuthStore } from './modules/sync/services/remotes/oauthPending';
 import { ZenithSettingTab } from './settings/ZenithSettingTab';
 import { registerQuickAddTaskCommand } from './modules/tasks/commands';
 import { dashboardWidgets, type DashboardWidgetDefinition } from './modules/dashboard/widgets';
@@ -60,6 +61,17 @@ export default class ZenithPlugin extends Plugin {
      * user's notes and only runs when they ask.
      */
     fileSync: FileSyncService | null = null;
+
+    /**
+     * The authorization the user is part-way through, if any.
+     *
+     * Lives on the plugin rather than in the settings pane because that is not
+     * where it finishes: the browser hands the code back through the
+     * `obsidian://` handler, and by then the pane that started the flow may be
+     * closed. Unconditional and lifecycle-free — it holds nothing until asked
+     * to, so there is nothing to start or stop.
+     */
+    readonly oauthPending = new PendingAuthStore();
 
     /** Disposers for store subscriptions — cleaned up on unload. */
     private disposers: Array<() => void> = [];

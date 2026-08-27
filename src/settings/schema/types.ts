@@ -109,6 +109,15 @@ export interface TextField<K extends string> extends FieldBase<K> {
     default: string;
     placeholder?: string;
     monospace?: boolean;
+    /**
+     * Mask the value, with a control to reveal it.
+     *
+     * For credentials. Not a security measure — the value is in `data.json`
+     * either way — but a settings page left open on a shared screen should not
+     * be showing a password, and a masked field is also what tells the user
+     * this one IS a password.
+     */
+    secret?: boolean;
 }
 export interface TextareaField<K extends string> extends FieldBase<K> {
     type: 'textarea';
