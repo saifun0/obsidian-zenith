@@ -639,8 +639,8 @@ locally.
 
 ## Setting up Dropbox
 
-If this build of Zenith ships with a Dropbox app registration, skip to step 7 — leave
-**Dropbox app key** empty and it is used automatically.
+This build of Zenith ships with a Dropbox app registration, so there is nothing to set up
+on Dropbox's side: skip to step 8, leave **Dropbox app key** empty, and press Connect.
 
 Registering your own is worth it if you would rather have your own rate limits, your own
 name on the consent screen, and no dependence on a registration you do not control. It

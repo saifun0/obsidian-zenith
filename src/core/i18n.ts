@@ -1153,7 +1153,7 @@ const EN: Dict = {
     'sync.settings.onedriveClientId': 'Application (client) ID',
     'sync.settings.onedriveClientId.desc': 'From an app registration in the Azure portal. Register it as a public client and allow the device code flow.',
     'sync.settings.dropboxClientId.optional':
-        'Leave empty to use the app Zenith ships with. To use your own instead: create one at dropbox.com/developers with scoped access, and grant it account_info.read, files.metadata.read, files.content.read and files.content.write.',
+        'Leave empty to use the app Zenith ships with. To use your own instead: create one at dropbox.com/developers with scoped access, add obsidian://zenith-dropbox to its redirect URIs, and grant it account_info.read, files.metadata.read, files.content.read and files.content.write.',
     'sync.settings.onedriveClientId.optional':
         'Leave empty to use the app Zenith ships with. To use your own instead: register one in the Azure portal as a public client, and allow the device code flow.',
     'sync.settings.ownApp.optional':
@@ -2476,7 +2476,7 @@ const RU: Dict = {
     'sync.settings.onedriveClientId': 'Application (client) ID',
     'sync.settings.onedriveClientId.desc': 'Из регистрации приложения в портале Azure. Зарегистрируйте как public client и разрешите device code flow.',
     'sync.settings.dropboxClientId.optional':
-        'Оставьте пустым, чтобы использовать приложение, поставляемое с Zenith. Чтобы поставить своё: создайте его на dropbox.com/developers со scoped access и выдайте account_info.read, files.metadata.read, files.content.read и files.content.write.',
+        'Оставьте пустым, чтобы использовать приложение, поставляемое с Zenith. Чтобы поставить своё: создайте его на dropbox.com/developers со scoped access, добавьте obsidian://zenith-dropbox в его redirect URIs и выдайте account_info.read, files.metadata.read, files.content.read и files.content.write.',
     'sync.settings.onedriveClientId.optional':
         'Оставьте пустым, чтобы использовать приложение, поставляемое с Zenith. Чтобы поставить своё: зарегистрируйте его в портале Azure как public client и разрешите device code flow.',
     'sync.settings.ownApp.optional':

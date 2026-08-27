@@ -29,7 +29,7 @@
  * app has been registered and, if it is going to be used by more than a handful
  * of people, taken through Dropbox's production review.
  */
-export const SHIPPED_DROPBOX_CLIENT_ID: string = '';
+export const SHIPPED_DROPBOX_CLIENT_ID: string = 'wkfvqxma6g5rllf';
 
 /**
  * The `obsidian://` action Dropbox sends the user back to.
