@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, ExternalLink, LogOut } from 'lucide-react';
 import { useTranslation } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
+import { dropboxClientId, onedriveClientId } from '../services/remotes/appIds';
 import { challengeFor, generateVerifier, type DeviceCodeStart } from '../services/remotes/oauth';
 import { DropboxRemote } from '../services/remotes/dropboxRemote';
 import { OneDriveRemote } from '../services/remotes/onedriveRemote';
@@ -27,9 +28,13 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
     const settings = useZenithStore((s) => s.settings);
     const updateSettings = useZenithStore((s) => s.updateSettings);
 
-    const clientId = (
-        provider === 'dropbox' ? settings.syncDropboxClientId : settings.syncOnedriveClientId
-    ).trim();
+    // The user's own registration when they gave one, Zenith's otherwise. Empty
+    // only when this build ships none and none was entered — which is the one
+    // case the panel has nothing to offer but an explanation.
+    const clientId =
+        provider === 'dropbox'
+            ? dropboxClientId(settings.syncDropboxClientId)
+            : onedriveClientId(settings.syncOnedriveClientId);
     const tokens = provider === 'dropbox' ? settings.syncDropboxTokens : settings.syncOnedriveTokens;
     const tokenKey = provider === 'dropbox' ? 'syncDropboxTokens' : 'syncOnedriveTokens';
 

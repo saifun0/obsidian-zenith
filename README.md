@@ -639,9 +639,12 @@ locally.
 
 ## Setting up Dropbox
 
-Zenith uses **your own** Dropbox app registration rather than one shipped with the
-plugin — providers ask people not to distribute an app identity, and a shared one would
-be a shared rate limit besides. It takes about two minutes.
+If this build of Zenith ships with a Dropbox app registration, skip to step 7 — leave
+**Dropbox app key** empty and it is used automatically.
+
+Registering your own is worth it if you would rather have your own rate limits, your own
+name on the consent screen, and no dependence on a registration you do not control. It
+takes about two minutes.
 
 1. Open <https://www.dropbox.com/developers/apps> and choose **Create app**.
 2. Pick **Scoped access**.
@@ -675,6 +678,17 @@ Then in Obsidian, under **Settings → Zenith → Sync**:
     code. Paste the code back into Obsidian and press **Finish**.
 11. Press **Test connection**, then **Preview** — and read the plan before applying it. The
     first run always asks, whatever it contains.
+
+### Why a client id can ship at all
+
+An OAuth `client_id` is not a secret. RFC 8252 starts from the position that a native app
+cannot keep one, and PKCE exists so a published id is still safe to authorize against: the
+code it yields is useless without a verifier that never leaves the device. Every desktop
+application talking to these providers has its id in the binary.
+
+What a shared registration costs is shared fate — provider limits apply partly per app, a
+registration can be throttled, and a development-status Dropbox app is capped on linked
+accounts until it has been through review. That is what the override is for.
 
 ### If it does not work
 

@@ -2,6 +2,7 @@ import { vaultModuleFs } from '../../../core/moduleFs';
 import { useZenithStore } from '../../../store';
 import type { SyncPlan } from '../fileSyncTypes';
 import { syncPaths } from '../syncTypes';
+import { dropboxClientId, onedriveClientId } from './remotes/appIds';
 import { CryptoRemote } from './crypto/cryptoRemote';
 import { PrevSyncStore } from './prevSyncStore';
 import { SyncEngine, type SyncProgress, type SyncRunResult } from './SyncEngine';
@@ -176,9 +177,12 @@ export class FileSyncService {
                 // tokens there is nothing to authorize a request with, and every
                 // call would fail identically. "Not connected yet" is a clearer
                 // state than "configured but broken".
-                return !!s.syncDropboxClientId.trim() && !!s.syncDropboxTokens?.accessToken;
+                return !!dropboxClientId(s.syncDropboxClientId) && !!s.syncDropboxTokens?.accessToken;
             case 'onedrive':
-                return !!s.syncOnedriveClientId.trim() && !!s.syncOnedriveTokens?.accessToken;
+                return (
+                    !!onedriveClientId(s.syncOnedriveClientId) &&
+                    !!s.syncOnedriveTokens?.accessToken
+                );
             default:
                 return !!s.syncRemoteUrl.trim() && !!s.syncRemoteUser.trim();
         }
@@ -222,14 +226,22 @@ export class FileSyncService {
 
         if (s.syncRemoteKind === 'dropbox') {
             return new DropboxRemote(
-                { kind: 'dropbox', clientId: s.syncDropboxClientId.trim(), folder: s.syncOauthFolder.trim() },
+                {
+                    kind: 'dropbox',
+                    clientId: dropboxClientId(s.syncDropboxClientId),
+                    folder: s.syncOauthFolder.trim(),
+                },
                 this.tokenStore('syncDropboxTokens')
             );
         }
 
         if (s.syncRemoteKind === 'onedrive') {
             return new OneDriveRemote(
-                { kind: 'onedrive', clientId: s.syncOnedriveClientId.trim(), folder: s.syncOauthFolder.trim() },
+                {
+                    kind: 'onedrive',
+                    clientId: onedriveClientId(s.syncOnedriveClientId),
+                    folder: s.syncOauthFolder.trim(),
+                },
                 this.tokenStore('syncOnedriveTokens')
             );
         }

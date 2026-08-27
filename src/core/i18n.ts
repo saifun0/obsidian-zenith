@@ -1152,6 +1152,12 @@ const EN: Dict = {
     'sync.settings.dropboxClientId.desc': 'The app key from an app you create at dropbox.com/developers — scoped access, app folder or full Dropbox. Grant it account_info.read, files.metadata.read, files.content.read and files.content.write.',
     'sync.settings.onedriveClientId': 'Application (client) ID',
     'sync.settings.onedriveClientId.desc': 'From an app registration in the Azure portal. Register it as a public client and allow the device code flow.',
+    'sync.settings.dropboxClientId.optional':
+        'Leave empty to use the app Zenith ships with. To use your own instead: create one at dropbox.com/developers with scoped access, and grant it account_info.read, files.metadata.read, files.content.read and files.content.write.',
+    'sync.settings.onedriveClientId.optional':
+        'Leave empty to use the app Zenith ships with. To use your own instead: register one in the Azure portal as a public client, and allow the device code flow.',
+    'sync.settings.ownApp.optional':
+        'Your own registration gets you your own rate limits and your own name on the consent screen, and leaves you unaffected if the shipped app is ever throttled. Changing an app’s permissions later does not change an authorization already granted: disconnect and connect again after you do.',
     'sync.settings.ownApp.note': 'Your own registration, not one shipped with Zenith — a plugin cannot distribute someone else’s app identity. Changing an app’s permissions later does not change an authorization already granted: disconnect and connect again after you do.',
     'sync.settings.oauthFolder': 'Folder in the account',
     'sync.settings.oauthFolder.desc': 'Leave empty to use the account root.',
@@ -2466,6 +2472,12 @@ const RU: Dict = {
     'sync.settings.dropboxClientId.desc': 'App key приложения, созданного на dropbox.com/developers — scoped access, папка приложения или полный доступ. Выдайте ему account_info.read, files.metadata.read, files.content.read и files.content.write.',
     'sync.settings.onedriveClientId': 'Application (client) ID',
     'sync.settings.onedriveClientId.desc': 'Из регистрации приложения в портале Azure. Зарегистрируйте как public client и разрешите device code flow.',
+    'sync.settings.dropboxClientId.optional':
+        'Оставьте пустым, чтобы использовать приложение, поставляемое с Zenith. Чтобы поставить своё: создайте его на dropbox.com/developers со scoped access и выдайте account_info.read, files.metadata.read, files.content.read и files.content.write.',
+    'sync.settings.onedriveClientId.optional':
+        'Оставьте пустым, чтобы использовать приложение, поставляемое с Zenith. Чтобы поставить своё: зарегистрируйте его в портале Azure как public client и разрешите device code flow.',
+    'sync.settings.ownApp.optional':
+        'Своя регистрация даёт собственные лимиты и своё имя на экране согласия, и вас не заденет, если поставляемое приложение когда-нибудь затроттлят. Изменение разрешений приложения не меняет уже выданную авторизацию: после правки отключитесь и подключитесь заново.',
     'sync.settings.ownApp.note': 'Ваша собственная регистрация, а не поставляемая с Zenith — плагин не может распространять чужую идентичность приложения. Изменение разрешений приложения не меняет уже выданную авторизацию: после правки отключитесь и подключитесь заново.',
     'sync.settings.oauthFolder': 'Папка в аккаунте',
     'sync.settings.oauthFolder.desc': 'Пусто — корень аккаунта.',

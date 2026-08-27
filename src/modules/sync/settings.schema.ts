@@ -1,4 +1,5 @@
 import { coreSchema } from '../../settings/schema/types';
+import { HAS_SHIPPED_DROPBOX, HAS_SHIPPED_ONEDRIVE } from './services/remotes/appIds';
 
 /**
  * Sync settings, as data.
@@ -196,8 +197,16 @@ export const syncSettingsSchema = coreSchema({
                     type: 'text',
                     key: 'syncDropboxClientId',
                     labelKey: 'sync.settings.dropboxClientId',
-                    descKey: 'sync.settings.dropboxClientId.desc',
-                    noteKey: 'sync.settings.ownApp.note',
+                    // Two readings of the same field. With a registration in the
+                    // build it is an override and the copy should say so; with
+                    // none it is required, and offering to leave it empty would
+                    // be an instruction that does not work.
+                    descKey: HAS_SHIPPED_DROPBOX
+                        ? 'sync.settings.dropboxClientId.optional'
+                        : 'sync.settings.dropboxClientId.desc',
+                    noteKey: HAS_SHIPPED_DROPBOX
+                        ? 'sync.settings.ownApp.optional'
+                        : 'sync.settings.ownApp.note',
                     default: '',
                     monospace: true,
                     layout: 'stack',
@@ -207,8 +216,12 @@ export const syncSettingsSchema = coreSchema({
                     type: 'text',
                     key: 'syncOnedriveClientId',
                     labelKey: 'sync.settings.onedriveClientId',
-                    descKey: 'sync.settings.onedriveClientId.desc',
-                    noteKey: 'sync.settings.ownApp.note',
+                    descKey: HAS_SHIPPED_ONEDRIVE
+                        ? 'sync.settings.onedriveClientId.optional'
+                        : 'sync.settings.onedriveClientId.desc',
+                    noteKey: HAS_SHIPPED_ONEDRIVE
+                        ? 'sync.settings.ownApp.optional'
+                        : 'sync.settings.ownApp.note',
                     default: '',
                     monospace: true,
                     layout: 'stack',
