@@ -42,7 +42,7 @@ describe('core settings schemas agree with DEFAULT_SETTINGS', () => {
         // One test per schema rather than per field: a schema made entirely of
         // `custom` fields (media) has no value fields at all, and an empty
         // `describe` is an error in vitest.
-        it(`${schema.moduleId} declares only real settings, with matching types`, () => {
+        it(`${schema.moduleId} declares only real settings, with matching defaults`, () => {
             const mismatches: string[] = [];
             for (const field of flattenFields(schema)) {
                 if (!isValueField(field)) continue;
@@ -61,6 +61,16 @@ describe('core settings schemas agree with DEFAULT_SETTINGS', () => {
                 // multiselect cannot be declared against a scalar setting.
                 if (Array.isArray(field.default) !== Array.isArray(stored)) {
                     mismatches.push(`${field.key}: array-ness differs`);
+                }
+                // And the values, not only their shapes. Matching types was
+                // never the point — two sources of truth for one default are a
+                // risk because they can hold DIFFERENT defaults, which is
+                // exactly what `tasksFolderPath` did: `Zenith/Tasks` in the
+                // schema against something else entirely in the settings.
+                if (JSON.stringify(field.default) !== JSON.stringify(stored)) {
+                    mismatches.push(
+                        `${field.key}: schema ${JSON.stringify(field.default)} vs stored ${JSON.stringify(stored)}`
+                    );
                 }
             }
             expect(mismatches).toEqual([]);

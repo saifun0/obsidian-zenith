@@ -1,3 +1,4 @@
+import { DEFAULT_TASKS_FOLDER } from '../../core/constants';
 import { coreSchema } from '../../settings/schema/types';
 
 export const tasksSettingsSchema = coreSchema({
@@ -38,8 +39,8 @@ export const tasksSettingsSchema = coreSchema({
                     key: 'tasksFolderPath',
                     labelKey: 'settings.tasksFolder',
                     descKey: 'settings.tasksFolder.desc',
-                    default: 'Zenith/Tasks',
-                    placeholder: 'Zenith/Tasks',
+                    default: DEFAULT_TASKS_FOLDER,
+                    placeholder: DEFAULT_TASKS_FOLDER,
                     showIf: (v) => !v.journalCaptureTasks,
                 },
             ],

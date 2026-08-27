@@ -1,3 +1,4 @@
+import { DEFAULT_CONTENT_FOLDER } from '../../core/constants';
 import { coreSchema } from '../../settings/schema/types';
 import { ContentTypesSettings } from '../../settings/components/ContentTypesSettings';
 
@@ -12,8 +13,8 @@ export const contentSettingsSchema = coreSchema({
                     key: 'contentFolderPath',
                     labelKey: 'settings.contentFolder',
                     descKey: 'settings.contentFolder.desc',
-                    default: 'Zenith/Content',
-                    placeholder: 'Zenith/Content',
+                    default: DEFAULT_CONTENT_FOLDER,
+                    placeholder: DEFAULT_CONTENT_FOLDER,
                 },
                 {
                     type: 'toggle',
