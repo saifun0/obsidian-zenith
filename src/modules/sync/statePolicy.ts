@@ -222,6 +222,8 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     syncRemoteUser: { scope: 'device' },
     syncRemotePassword: { scope: 'device' },
     syncRemoteDir: { scope: 'device' },
+    syncEncryptionEnabled: { scope: 'device' },
+    syncEncryptionPassword: { scope: 'device' },
     syncLocalRoot: { scope: 'device' },
     syncIncludeConfigDir: { scope: 'device' },
     syncExcludes: { scope: 'device' },

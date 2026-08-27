@@ -2,6 +2,7 @@ import { vaultModuleFs } from '../../../core/moduleFs';
 import { useZenithStore } from '../../../store';
 import type { SyncPlan } from '../fileSyncTypes';
 import { syncPaths } from '../syncTypes';
+import { CryptoRemote } from './crypto/cryptoRemote';
 import { PrevSyncStore } from './prevSyncStore';
 import { SyncEngine, type SyncProgress, type SyncRunResult } from './SyncEngine';
 import { WebdavRemote } from './remotes/webdavRemote';
@@ -155,6 +156,12 @@ export class FileSyncService {
         const s = useZenithStore.getState().settings;
         if (!s.syncFilesEnabled) return false;
 
+        // Encryption switched on with no password is not a configuration, it is
+        // a half-finished one. Deriving a key from an empty string would encrypt
+        // the vault under a password anybody could guess, and would do it
+        // silently — so this reads as "not configured yet" instead.
+        if (s.syncEncryptionEnabled && !s.syncEncryptionPassword) return false;
+
         // Enough to attempt a connection. Whether the credentials are RIGHT is
         // the server's answer to give, not something to guess at here.
         switch (s.syncRemoteKind) {
@@ -194,7 +201,22 @@ export class FileSyncService {
         };
     }
 
+    /**
+     * The configured backend, wrapped in encryption when it is switched on.
+     *
+     * The wrapping happens here and nowhere else, which is what lets every
+     * backend stay unaware of it — and what makes "is this vault encrypted"
+     * one line to read rather than a flag to trace through four classes.
+     */
     private remote(): SyncRemote | null {
+        const s = useZenithStore.getState().settings;
+        const base = this.baseRemote();
+        if (!base) return null;
+
+        return s.syncEncryptionEnabled ? new CryptoRemote(base, s.syncEncryptionPassword) : base;
+    }
+
+    private baseRemote(): SyncRemote | null {
         const s = useZenithStore.getState().settings;
         if (!this.isConfigured()) return null;
 

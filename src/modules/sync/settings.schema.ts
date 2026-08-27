@@ -218,6 +218,39 @@ export const syncSettingsSchema = coreSchema({
                 },
                 {
                     type: 'heading',
+                    key: 'encryptionHeading',
+                    labelKey: 'sync.settings.encryption',
+                    showIf: (v) => v.syncFilesEnabled === true,
+                },
+                {
+                    type: 'toggle',
+                    key: 'syncEncryptionEnabled',
+                    labelKey: 'sync.settings.encrypt',
+                    descKey: 'sync.settings.encrypt.desc',
+                    // Said before the switch is flipped, not after: turning this
+                    // on points the device at what is, as far as the engine is
+                    // concerned, a different remote. An existing folder is
+                    // refused rather than mixed into.
+                    noteKey: 'sync.settings.encrypt.note',
+                    default: false,
+                    showIf: (v) => v.syncFilesEnabled === true,
+                },
+                {
+                    type: 'text',
+                    key: 'syncEncryptionPassword',
+                    labelKey: 'sync.settings.encryptPassword',
+                    descKey: 'sync.settings.encryptPassword.desc',
+                    // Two warnings in one note, both worth the space: it lives in
+                    // `data.json` like every other credential here, and unlike
+                    // every other credential here, losing it loses the data.
+                    noteKey: 'sync.settings.encryptPassword.note',
+                    default: '',
+                    monospace: true,
+                    layout: 'stack',
+                    showIf: (v) => v.syncFilesEnabled === true && v.syncEncryptionEnabled === true,
+                },
+                {
+                    type: 'heading',
                     key: 'scopeHeading',
                     labelKey: 'sync.settings.scope',
                     showIf: (v) => v.syncFilesEnabled === true,

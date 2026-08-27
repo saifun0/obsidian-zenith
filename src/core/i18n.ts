@@ -1183,6 +1183,17 @@ const EN: Dict = {
     'sync.settings.password.note': 'Stored in plain text in this plugin’s data file, like every Obsidian plugin credential — the app gives plugins no keychain. Use an app password rather than your main one.',
     'sync.settings.remoteDir': 'Folder on the server',
     'sync.settings.remoteDir.desc': 'Where this vault lives on the server. Created on the first upload.',
+    'sync.settings.encryption': 'Encryption',
+    'sync.settings.encrypt': 'Encrypt everything before it is uploaded',
+    'sync.settings.encrypt.desc':
+        'Contents and filenames both. The server holds ciphertext and unreadable names, and never sees the password.',
+    'sync.settings.encrypt.note':
+        'Needs a folder of its own: encrypted and plain files cannot share one, so switching this on for a remote that already holds notes will be refused rather than mixed in. The first run afterwards is a reviewed first run.',
+    'sync.settings.encryptPassword': 'Encryption password',
+    'sync.settings.encryptPassword.desc':
+        'The same password on every device that syncs this vault. It is checked against the remote, so a typo is reported before anything is uploaded.',
+    'sync.settings.encryptPassword.note':
+        'Stored in data.json in plain text, like every credential here — Obsidian offers plugins no keychain. Unlike the others, there is no copy of it anywhere else: lose it and the notes on the server cannot be read by anyone, including you.',
     'sync.settings.scope': 'What gets synced',
     'sync.settings.localRoot': 'Folder to sync',
     'sync.settings.localRoot.desc': 'Leave empty for the whole vault.',
@@ -2479,6 +2490,17 @@ const RU: Dict = {
     'sync.settings.password.note': 'Хранится открытым текстом в файле данных плагина, как любой пароль в плагинах Obsidian — приложение не даёт плагинам доступа к связке ключей. Заведите отдельный пароль приложения, не основной.',
     'sync.settings.remoteDir': 'Папка на сервере',
     'sync.settings.remoteDir.desc': 'Где на сервере лежит этот волт. Создаётся при первой загрузке.',
+    'sync.settings.encryption': 'Шифрование',
+    'sync.settings.encrypt': 'Шифровать всё перед отправкой',
+    'sync.settings.encrypt.desc':
+        'И содержимое, и имена файлов. На сервере лежит шифротекст и нечитаемые имена, пароль туда не попадает никогда.',
+    'sync.settings.encrypt.note':
+        'Нужна отдельная папка: зашифрованные и обычные файлы не уживаются в одной, поэтому включение для папки, где уже лежат заметки, будет отклонено, а не смешано. Первый запуск после включения — с обязательным просмотром плана.',
+    'sync.settings.encryptPassword': 'Пароль шифрования',
+    'sync.settings.encryptPassword.desc':
+        'Одинаковый на всех устройствах этого хранилища. Сверяется с удалённой папкой, так что опечатка вскроется до того, как что-то будет загружено.',
+    'sync.settings.encryptPassword.note':
+        'Хранится в data.json открытым текстом, как и любой другой пароль здесь — связки ключей Obsidian плагинам не даёт. В отличие от остальных, копии этого пароля нет больше нигде: потеряете — заметки на сервере не прочитает никто, включая вас.',
     'sync.settings.scope': 'Что синхронизируется',
     'sync.settings.localRoot': 'Папка для синхронизации',
     'sync.settings.localRoot.desc': 'Пусто — весь волт.',
