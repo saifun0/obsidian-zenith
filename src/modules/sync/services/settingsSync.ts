@@ -43,6 +43,24 @@ const PUBLISH_DEBOUNCE_MS = 1500;
 /** How often to look for peer changes while the window has focus. */
 const DEFAULT_POLL_MS = 20_000;
 
+/**
+ * What one round trip actually did.
+ *
+ * Returned rather than only recorded in the status, because "nothing changed"
+ * and "nothing happened" look identical from outside and mean opposite things.
+ * A device on its own has genuinely nothing to merge, and a button that answers
+ * that with silence reads as broken every single time.
+ */
+export interface SyncOutcome {
+    /** Settings this device stamped as newly changed and sent. */
+    published: number;
+    /** Other devices whose outbox was read. */
+    peers: number;
+    /** Settings that changed HERE as a result of the merge. */
+    received: number;
+    conflicts: number;
+}
+
 export interface SyncStatus {
     enabled: boolean;
     deviceId: string;
@@ -199,8 +217,8 @@ export class SettingsSyncService {
     /**
      * Write this device's outbox, stamping only the keys whose values moved.
      */
-    async publish(): Promise<void> {
-        if (!this.store) return;
+    async publish(): Promise<number | null> {
+        if (!this.store) return null;
         const settings = useZenithStore.getState().settings;
 
         const values: Record<string, unknown> = {};
@@ -232,6 +250,7 @@ export class SettingsSyncService {
             await this.saveDeviceState();
             this.published = state;
             this.patchStatus({ lastPublishAt: now, error: null });
+            const sent = moved.length;
 
             if (moved.length > 0) {
                 await this.store.appendJournal(this.registry.id, {
@@ -242,9 +261,13 @@ export class SettingsSyncService {
                     keys: moved,
                 });
             }
+            return sent;
         } catch (err) {
             console.error('Zenith sync: failed to publish', err);
             this.patchStatus({ error: describe(err) });
+            // Null, not zero: nothing was sent AND something is wrong, and the
+            // caller has a different thing to say about each.
+            return null;
         }
     }
 
@@ -365,8 +388,8 @@ export class SettingsSyncService {
      * previous document. That per-peer ancestor is what makes a deletion
      * distinguishable from an addition — see the note in `stateMerge`.
      */
-    async pull(): Promise<void> {
-        if (!this.store) return;
+    async pull(): Promise<Omit<SyncOutcome, 'published'> | null> {
+        if (!this.store) return null;
         const selfId = this.registry.id;
 
         // Flush a local edit still sitting in the publish debounce first.
@@ -417,11 +440,19 @@ export class SettingsSyncService {
                 error: null,
             });
 
-            if (allChanged.size === 0) return;
+            const outcome = {
+                peers: peers.length,
+                received: allChanged.size,
+                conflicts: allConflicts.length,
+            };
+
+            if (allChanged.size === 0) return outcome;
             await this.applyIncoming(current, [...allChanged], allConflicts, now);
+            return outcome;
         } catch (err) {
             console.error('Zenith sync: failed to pull', err);
             this.patchStatus({ error: describe(err) });
+            return null;
         }
     }
 
