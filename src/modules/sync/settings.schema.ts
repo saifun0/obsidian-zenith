@@ -71,6 +71,13 @@ export const syncSettingsSchema = coreSchema({
                     default: false,
                 },
                 {
+                    type: 'heading',
+                    key: 'serverHeading',
+                    labelKey: 'sync.settings.server',
+                    descKey: 'sync.settings.server.desc',
+                    showIf: (v) => v.syncFilesEnabled === true,
+                },
+                {
                     type: 'segmented',
                     key: 'syncRemoteKind',
                     labelKey: 'sync.settings.kind',
@@ -93,25 +100,26 @@ export const syncSettingsSchema = coreSchema({
                     placeholder: 'https://host/remote.php/dav/files/me',
                     monospace: true,
                     layout: 'stack',
-                    showIf: (v) => v.syncFilesEnabled === true && v.syncRemoteKind !== 's3',
+                    showIf: (v) => v.syncFilesEnabled === true && v.syncRemoteKind === 'webdav',
                 },
                 {
                     type: 'text',
                     key: 'syncRemoteUser',
                     labelKey: 'sync.settings.user',
                     default: '',
-                    showIf: (v) => v.syncFilesEnabled === true && v.syncRemoteKind !== 's3',
+                    showIf: (v) => v.syncFilesEnabled === true && v.syncRemoteKind === 'webdav',
                 },
                 {
                     type: 'text',
                     key: 'syncRemotePassword',
+                    secret: true,
                     labelKey: 'sync.settings.password',
                     // Said plainly rather than left to assumption: Obsidian
                     // offers plugins no keychain, so this sits in `data.json` in
                     // the vault like every other plugin credential.
                     noteKey: 'sync.settings.password.note',
                     default: '',
-                    showIf: (v) => v.syncFilesEnabled === true && v.syncRemoteKind !== 's3',
+                    showIf: (v) => v.syncFilesEnabled === true && v.syncRemoteKind === 'webdav',
                 },
                 {
                     type: 'text',
@@ -120,7 +128,7 @@ export const syncSettingsSchema = coreSchema({
                     descKey: 'sync.settings.remoteDir.desc',
                     default: '',
                     placeholder: 'my-vault',
-                    showIf: (v) => v.syncFilesEnabled === true && v.syncRemoteKind !== 's3',
+                    showIf: (v) => v.syncFilesEnabled === true && v.syncRemoteKind === 'webdav',
                 },
                 {
                     type: 'text',
@@ -160,6 +168,7 @@ export const syncSettingsSchema = coreSchema({
                 {
                     type: 'text',
                     key: 'syncS3Secret',
+                    secret: true,
                     labelKey: 'sync.settings.s3Secret',
                     noteKey: 'sync.settings.password.note',
                     default: '',
@@ -238,8 +247,13 @@ export const syncSettingsSchema = coreSchema({
                 {
                     type: 'text',
                     key: 'syncEncryptionPassword',
+                    secret: true,
                     labelKey: 'sync.settings.encryptPassword',
                     descKey: 'sync.settings.encryptPassword.desc',
+                    validate: (value, v) =>
+                        v.syncEncryptionEnabled === true && !String(value ?? '').trim()
+                            ? 'sync.settings.encryptPassword.required'
+                            : null,
                     // Two warnings in one note, both worth the space: it lives in
                     // `data.json` like every other credential here, and unlike
                     // every other credential here, losing it loses the data.

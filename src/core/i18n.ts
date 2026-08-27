@@ -58,6 +58,8 @@ const EN: Dict = {
     // Settings — appearance
     'settings.accentColor': 'Accent Color',
     'settings.accentColor.desc': "Overrides Zenith's accent. Leave empty to use Obsidian's.",
+    'settings.secret.reveal': 'Show the value',
+    'settings.secret.hide': 'Hide the value',
     'settings.reset': 'Reset',
     'settings.widgets': 'Dashboard Widgets',
     'settings.widgets.desc':
@@ -1136,9 +1138,9 @@ const EN: Dict = {
     'inbox.source.copy': 'duplicate copy',
 
     // Sync — file engine settings
-    'sync.settings.stateGroup': 'Settings',
+    'sync.settings.stateGroup': 'Zenith settings',
     'sync.settings.filesGroup': 'Note files',
-    'sync.settings.filesGroup.desc': 'Sync the vault itself to a WebDAV server. Separate from settings sync, and never runs on a timer.',
+    'sync.settings.filesGroup.desc': 'Sync the vault itself to storage you control. Separate from settings sync, and never runs on a timer.',
     'sync.settings.files': 'Sync note files',
     'sync.settings.files.desc': 'Move notes and attachments between this device and a server you control.',
     'sync.settings.files.note': 'If another sync tool already covers this vault, leave this off — two engines on the same files will fight.',
@@ -1162,7 +1164,9 @@ const EN: Dict = {
     'auth.expired': 'The code expired before it was approved. Try again.',
     'auth.device.instructions': 'Open the page below and enter this code:',
     'auth.device.waiting': 'Waiting for you to approve it…',
-    'sync.settings.kind.desc': 'WebDAV needs only a password. S3 also covers MinIO, Backblaze B2, Cloudflare R2, Wasabi and anything else that speaks the same API.',
+    'sync.settings.kind.desc': 'Dropbox and OneDrive authorize in the browser and keep the time you edited a file. WebDAV needs only a password. S3 also covers MinIO, Backblaze B2, Cloudflare R2, Wasabi and anything else speaking the same API.',
+    'sync.settings.server': 'Server',
+    'sync.settings.server.desc': 'Where the vault goes. Only the fields for the backend you pick are shown.',
     'sync.settings.kind.webdav': 'WebDAV',
     'sync.settings.kind.s3': 'S3',
     'sync.settings.s3Endpoint': 'Endpoint',
@@ -1192,12 +1196,14 @@ const EN: Dict = {
     'sync.settings.encryptPassword': 'Encryption password',
     'sync.settings.encryptPassword.desc':
         'The same password on every device that syncs this vault. It is checked against the remote, so a typo is reported before anything is uploaded.',
+    'sync.settings.encryptPassword.required':
+        'Encryption is on but no password is set, so nothing will sync until there is one.',
     'sync.settings.encryptPassword.note':
         'Stored in data.json in plain text, like every credential here — Obsidian offers plugins no keychain. Unlike the others, there is no copy of it anywhere else: lose it and the notes on the server cannot be read by anyone, including you.',
     'sync.settings.scope': 'What gets synced',
     'sync.settings.localRoot': 'Folder to sync',
     'sync.settings.localRoot.desc': 'Leave empty for the whole vault.',
-    'sync.settings.includeConfig': 'Include Obsidian settings',
+    'sync.settings.includeConfig': 'Carry Obsidian settings too',
     'sync.settings.includeConfig.desc': 'Themes, other plugins and workspace layout.',
     'sync.settings.includeConfig.note': 'Zenith’s own settings are never carried this way — the settings merge above owns them.',
     'sync.settings.safety': 'Safety',
@@ -1349,6 +1355,8 @@ const RU: Dict = {
 
     'settings.accentColor': 'Акцентный цвет',
     'settings.accentColor.desc': 'Переопределяет акцент Zenith. Пусто — как в Obsidian.',
+    'settings.secret.reveal': 'Показать значение',
+    'settings.secret.hide': 'Скрыть значение',
     'settings.reset': 'Сбросить',
     'settings.widgets': 'Виджеты дашборда',
     'settings.widgets.desc':
@@ -2443,9 +2451,9 @@ const RU: Dict = {
     'inbox.source.copy': 'дубликат',
 
     // Синхронизация — настройки файлового движка
-    'sync.settings.stateGroup': 'Настройки',
+    'sync.settings.stateGroup': 'Настройки Zenith',
     'sync.settings.filesGroup': 'Файлы заметок',
-    'sync.settings.filesGroup.desc': 'Синхронизация самого волта с WebDAV-сервером. Отдельно от настроек и никогда не по таймеру.',
+    'sync.settings.filesGroup.desc': 'Синхронизация самого волта с хранилищем, которым вы управляете. Отдельно от настроек и никогда не по таймеру.',
     'sync.settings.files': 'Синхронизировать файлы заметок',
     'sync.settings.files.desc': 'Перемещать заметки и вложения между этим устройством и вашим сервером.',
     'sync.settings.files.note': 'Если волт уже ведёт другой синхронизатор, оставьте выключенным — два движка на одних файлах будут мешать друг другу.',
@@ -2469,7 +2477,9 @@ const RU: Dict = {
     'auth.expired': 'Код истёк до подтверждения. Попробуйте снова.',
     'auth.device.instructions': 'Откройте страницу ниже и введите этот код:',
     'auth.device.waiting': 'Жду подтверждения…',
-    'sync.settings.kind.desc': 'WebDAV нужен только пароль. S3 покрывает также MinIO, Backblaze B2, Cloudflare R2, Wasabi и всё остальное, что говорит на том же API.',
+    'sync.settings.kind.desc': 'Dropbox и OneDrive авторизуются через браузер и сохраняют время вашей правки файла. WebDAV нужен только пароль. S3 покрывает также MinIO, Backblaze B2, Cloudflare R2, Wasabi и всё остальное, что говорит на том же API.',
+    'sync.settings.server': 'Сервер',
+    'sync.settings.server.desc': 'Куда уезжает волт. Показаны только поля выбранного бэкенда.',
     'sync.settings.kind.webdav': 'WebDAV',
     'sync.settings.kind.s3': 'S3',
     'sync.settings.s3Endpoint': 'Адрес сервиса',
@@ -2499,12 +2509,14 @@ const RU: Dict = {
     'sync.settings.encryptPassword': 'Пароль шифрования',
     'sync.settings.encryptPassword.desc':
         'Одинаковый на всех устройствах этого хранилища. Сверяется с удалённой папкой, так что опечатка вскроется до того, как что-то будет загружено.',
+    'sync.settings.encryptPassword.required':
+        'Шифрование включено, но пароль не задан — пока его нет, ничего синхронизироваться не будет.',
     'sync.settings.encryptPassword.note':
         'Хранится в data.json открытым текстом, как и любой другой пароль здесь — связки ключей Obsidian плагинам не даёт. В отличие от остальных, копии этого пароля нет больше нигде: потеряете — заметки на сервере не прочитает никто, включая вас.',
     'sync.settings.scope': 'Что синхронизируется',
     'sync.settings.localRoot': 'Папка для синхронизации',
     'sync.settings.localRoot.desc': 'Пусто — весь волт.',
-    'sync.settings.includeConfig': 'Включая настройки Obsidian',
+    'sync.settings.includeConfig': 'Возить и настройки Obsidian',
     'sync.settings.includeConfig.desc': 'Темы, другие плагины и раскладка рабочего пространства.',
     'sync.settings.includeConfig.note': 'Собственные настройки Zenith этим путём не поедут — ими ведает слияние настроек выше.',
     'sync.settings.safety': 'Предохранители',

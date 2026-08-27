@@ -151,6 +151,9 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ schema, values, onCh
                             value={fieldValue<string>(field, values)}
                             placeholder={field.placeholder}
                             monospace={field.monospace}
+                            secret={field.secret}
+                            revealLabel={t('settings.secret.reveal')}
+                            hideLabel={t('settings.secret.hide')}
                             disabled={disabled}
                             onChange={set}
                         />

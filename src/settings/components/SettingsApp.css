@@ -166,7 +166,14 @@
     margin-bottom: 20px;
     padding-bottom: 20px;
     border-bottom: 1px solid color-mix(in srgb, var(--background-modifier-border) 40%, transparent);
-    gap: 24px;
+    column-gap: 24px;
+    row-gap: 12px;
+    /* A row reads: label and description on the left, the control on the right,
+       and any note or error on its own full-width line beneath. Without the wrap
+       a note becomes a third column and squeezes the label into a strip — which
+       is the opposite of what a note is for, and it happens on exactly the rows
+       that had something important enough to say twice. */
+    flex-wrap: wrap;
 }
 
 .zenith-settings__item:last-child {
@@ -267,7 +274,56 @@
     max-width: 360px;
 }
 
+/* ── Masked fields ── */
+.zenith-settings__secret {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zenith-settings__item--stack .zenith-settings__secret {
+    width: 100%;
+    max-width: 360px;
+}
+
+.zenith-settings__reveal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.zenith-settings__reveal:hover:not(:disabled) {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+.zenith-settings__reveal:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
 /* ── Hints ── */
+/* Only inside a row: a hint standing on its own elsewhere keeps its spacing.
+   Not applied to a stacked row, where the column direction already puts it on
+   its own line and a 100% basis would be measured against the height. */
+.zenith-settings__item:not(.zenith-settings__item--stack) > .zenith-settings__hint {
+    flex: 1 0 100%;
+}
+
+.zenith-settings__item > .zenith-settings__hint {
+    margin-bottom: 0;
+}
+
 .zenith-settings__hint {
     display: flex;
     align-items: center;

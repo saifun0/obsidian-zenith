@@ -181,22 +181,63 @@ export const Slider: React.FC<{
     </div>
 );
 
+/**
+ * A text field, optionally a masked one.
+ *
+ * `secret` hides the value and offers to show it, rather than hiding it for
+ * good. Settings passwords are typed once and then only ever checked — against
+ * what the other device has, against what the server was set up with — and a
+ * field nobody can read turns every such check into deleting it and typing it
+ * again from memory, which for the encryption password is exactly the thing
+ * that loses a vault.
+ */
 export const TextInput: React.FC<{
     value: string;
     placeholder?: string;
     monospace?: boolean;
+    secret?: boolean;
+    revealLabel?: string;
+    hideLabel?: string;
     disabled?: boolean;
     onChange: (v: string) => void;
-}> = ({ value, placeholder, monospace, disabled, onChange }) => (
-    <input
-        type="text"
-        className={`zenith-settings__input${monospace ? ' is-mono' : ''}`}
-        value={value}
-        placeholder={placeholder}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-    />
-);
+}> = ({ value, placeholder, monospace, secret, revealLabel, hideLabel, disabled, onChange }) => {
+    const [revealed, setRevealed] = React.useState(false);
+
+    const input = (
+        <input
+            type={secret && !revealed ? 'password' : 'text'}
+            className={`zenith-settings__input${monospace ? ' is-mono' : ''}`}
+            value={value}
+            placeholder={placeholder}
+            disabled={disabled}
+            // Password managers offering to fill a WebDAV password into a note
+            // app's settings is noise at best and a wrong value at worst.
+            autoComplete="off"
+            spellCheck={false}
+            onChange={(e) => onChange(e.target.value)}
+        />
+    );
+
+    if (!secret) return input;
+
+    const label = revealed ? (hideLabel ?? 'Hide') : (revealLabel ?? 'Show');
+    return (
+        <div className="zenith-settings__secret">
+            {input}
+            <button
+                type="button"
+                className="zenith-settings__reveal"
+                onClick={() => setRevealed((on) => !on)}
+                disabled={disabled}
+                aria-label={label}
+                aria-pressed={revealed}
+                title={label}
+            >
+                <DynamicIcon name={revealed ? 'eye-off' : 'eye'} size={15} />
+            </button>
+        </div>
+    );
+};
 
 export const TextArea: React.FC<{
     value: string;
