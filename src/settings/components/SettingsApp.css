@@ -286,6 +286,14 @@
     max-width: 360px;
 }
 
+/* The input keeps its declared width as a starting point and gives way to the
+   button, rather than the pair overflowing the row. `min-width` has to be zero
+   or a flex item refuses to shrink below its content. */
+.zenith-settings__secret .zenith-settings__input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
 .zenith-settings__reveal {
     display: flex;
     align-items: center;
