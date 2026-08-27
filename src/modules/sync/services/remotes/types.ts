@@ -96,6 +96,17 @@ export interface SyncRemote {
     /** Every file under the configured folder. Folders are not returned. */
     list(): Promise<FileEntity[]>;
 
+    /**
+     * One file as the server reports it now, or null when it is not there.
+     *
+     * Exists so the engine can re-read a single object after transferring it
+     * without asking for the whole listing again. That sounds like a small
+     * saving and is not: a run that pulls five hundred files would otherwise
+     * fetch five hundred complete recursive listings, which is slow everywhere
+     * and gets the device rate-limited on Dropbox before the run finishes.
+     */
+    stat(key: string): Promise<FileEntity | null>;
+
     readBinary(key: string): Promise<ArrayBuffer>;
 
     /**

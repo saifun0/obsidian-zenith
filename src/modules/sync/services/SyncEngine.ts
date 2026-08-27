@@ -283,9 +283,15 @@ export class SyncEngine {
         await this.fs.writeBinary(path, data);
 
         const stat = await this.fs.stat(path);
-        // Re-list rather than assume: the remote entity we planned against may
+        // Re-read rather than assume: the remote entity we planned against may
         // be stale, and the record has to describe what is there now.
-        const remoteNow = (await this.remote.list()).find((e) => e.key === sourceKey);
+        //
+        // One object, not the whole listing. This used to walk the entire remote
+        // tree once per downloaded file, which on a run that pulls a few hundred
+        // notes is a few hundred complete recursive listings — slow against any
+        // server and enough on its own to get the device throttled by Dropbox
+        // before the run finished.
+        const remoteNow = await this.remote.stat(sourceKey);
         if (!stat || !remoteNow) return null;
 
         return toPrevRecord({ key, size: stat.size, mtimeCli: stat.mtime }, remoteNow);

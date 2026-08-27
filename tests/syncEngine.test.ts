@@ -67,6 +67,13 @@ function fakeRemote(state: FakeRemoteState): SyncRemote {
                     mtimeSvr: o.mtimeSvr,
                 })
             ),
+        stat: async (key) => {
+            state.calls.push(`stat:${key}`);
+            const object = state.objects[key];
+            return object
+                ? { key, size: object.data.length, mtimeCli: object.mtimeSvr, mtimeSvr: object.mtimeSvr }
+                : null;
+        },
         readBinary: async (key) => new TextEncoder().encode(state.objects[key]?.data ?? '').buffer,
         write: async (key, data, mtimeCli) => {
             state.calls.push(`write:${key}`);

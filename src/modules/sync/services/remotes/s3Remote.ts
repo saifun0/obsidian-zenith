@@ -110,6 +110,38 @@ export class S3Remote implements SyncRemote {
         return out;
     }
 
+    /**
+     * HEAD one object.
+     *
+     * The listing is a paged walk of the whole prefix; this is one request, and
+     * the engine calls it once per transferred file. `x-amz-meta-zenith-mtime`
+     * comes back on a HEAD where it does not appear in a listing at all, so a
+     * single object read this way actually knows more about itself than the
+     * listing did.
+     */
+    async stat(key: string): Promise<FileEntity | null> {
+        const res = await this.send('HEAD', this.objectPath(key));
+        if (res.status === 404) return null;
+        if (res.status >= 400) throw new Error(describeS3Error(res.text, res.status));
+
+        const headers = lowerKeys(res.headers);
+        const size = Number(headers['content-length']);
+        const stored = Number(headers[MTIME_META]);
+        const svr = Date.parse(headers['last-modified'] ?? '');
+        const mtimeSvr = Number.isFinite(svr) ? svr : Date.now();
+
+        return {
+            key,
+            size: Number.isFinite(size) ? size : 0,
+            // The metadata header is the only place the user's own edit time
+            // survives a round trip through S3; without it the store time is
+            // the honest answer, even though it is not the same question.
+            mtimeCli: Number.isFinite(stored) ? stored : mtimeSvr,
+            mtimeSvr,
+            etag: (headers.etag ?? '').replace(/^(W\/)?"|"$/g, '') || undefined,
+        };
+    }
+
     // ── Transfer ─────────────────────────────────────
 
     async readBinary(key: string): Promise<ArrayBuffer> {
@@ -126,7 +158,7 @@ export class S3Remote implements SyncRemote {
 
         // The etag comes straight back on the PUT, so there is no need to list
         // again just to learn the object's new version.
-        const etag = (res.headers?.etag ?? res.headers?.ETag ?? '').replace(/^(W\/)?"|"$/g, '');
+        const etag = (lowerKeys(res.headers).etag ?? '').replace(/^(W\/)?"|"$/g, '');
         return {
             key,
             size: data.byteLength,
@@ -339,4 +371,18 @@ function encodePath(path: string): string {
         .filter(Boolean)
         .map((segment) => encodeURIComponent(segment))
         .join('/');
+}
+
+/**
+ * Response headers, lower-cased.
+ *
+ * S3-compatible servers disagree about the casing they send back — `ETag` from
+ * AWS, `etag` from several others — and a lookup that guesses wrong reads as
+ * "the server sent no etag", which quietly downgrades the comparison to size
+ * and time.
+ */
+function lowerKeys(headers: Record<string, string> | undefined): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const [key, value] of Object.entries(headers ?? {})) out[key.toLowerCase()] = value;
+    return out;
 }

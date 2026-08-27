@@ -159,6 +159,27 @@ export class OneDriveRemote implements SyncRemote {
         return out;
     }
 
+    /**
+     * One item by path.
+     *
+     * `$select` is not used here on purpose: the default projection already
+     * carries everything `parseItem` reads, and a select list that drifts out of
+     * step with the parser fails by returning zeroes rather than by erroring.
+     */
+    async stat(key: string): Promise<FileEntity | null> {
+        const res = await this.graph('GET', this.itemPath(key));
+        if (res.status === 404) return null;
+        if (res.status >= 400) throw new Error(describeGraphError(res.text, res.status));
+
+        const body = safeJson(res.text) as Record<string, unknown>;
+        // A folder answers this call perfectly happily. Saying "no file here"
+        // is more use to the caller than a size of zero.
+        if (body.folder !== undefined) return null;
+
+        const item = parseItem(body);
+        return item ? { key, ...item } : null;
+    }
+
     // ── Transfer ─────────────────────────────────────
 
     async readBinary(key: string): Promise<ArrayBuffer> {

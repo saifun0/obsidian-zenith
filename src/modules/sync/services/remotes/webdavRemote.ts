@@ -134,7 +134,7 @@ export class WebdavRemote implements SyncRemote {
 
         // Ask what the server actually stored rather than assuming it took what
         // we sent; the answer is what goes into the previous-sync record.
-        const stored = await this.statOne(key);
+        const stored = await this.stat(key);
         return (
             stored ?? {
                 key,
@@ -152,10 +152,13 @@ export class WebdavRemote implements SyncRemote {
         if (res.status >= 400) throw new Error(`DELETE ${key} answered ${res.status}`);
     }
 
-    // ── Internals ────────────────────────────────────
-
-    /** One PROPFIND for a single path, used to read back what an upload stored. */
-    private async statOne(key: string): Promise<FileEntity | null> {
+    /**
+     * One PROPFIND at `Depth: 0`, for a single path.
+     *
+     * Used to read back what an upload stored, and by the engine after a
+     * download instead of asking for the whole tree again.
+     */
+    async stat(key: string): Promise<FileEntity | null> {
         const res = await this.dav('PROPFIND', this.fileUrl(key), {
             headers: { Depth: '0' },
             body: PROPFIND_BODY,
@@ -166,6 +169,8 @@ export class WebdavRemote implements SyncRemote {
         const found = entries.find((e) => !e.isFolder);
         return found ? found.entity : null;
     }
+
+    // ── Internals ────────────────────────────────────
 
     /**
      * Create every missing folder above `key`.
