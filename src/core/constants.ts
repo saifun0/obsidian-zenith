@@ -29,8 +29,14 @@ export const IMAGE_EXTENSIONS = [
 ] as const;
 
 // ── Default Folder Paths ─────────────────────────────
-export const DEFAULT_TASKS_FOLDER = 'tasks';
-export const DEFAULT_CONTENT_FOLDER = 'content';
+//
+// Every one of these has to name a folder `VAULT_STRUCTURE` actually creates.
+// `tasks` and `content` did not, so a vault scaffolded by Zenith's own button
+// started life pointing at two folders Zenith had not made — and said so in the
+// console, on every reload, for as long as nobody noticed. `defaultFolders.test`
+// is what keeps the two lists in step from here.
+export const DEFAULT_TASKS_FOLDER = '10 Inbox';
+export const DEFAULT_CONTENT_FOLDER = '30 Content';
 /**
  * Daily notes live in their own subfolder of the scaffold's journal folder,
  * which leaves the folder itself free for the weekly/monthly notes and indexes
