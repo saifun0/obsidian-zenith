@@ -79,24 +79,40 @@ export class DropboxRemote implements SyncRemote {
      * `token_access_type=offline` is what makes Dropbox issue a refresh token.
      * Without it the connection works for four hours and then silently stops,
      * which is a maddening thing to debug.
+     *
+     * With a `redirectUri` Dropbox sends the user back to it; without one it
+     * displays the code for them to copy. Both are wanted: the redirect is the
+     * flow anyone should get, and the copy is what still works when the device
+     * has nothing registered for the URL scheme.
      */
-    static authorizeUrl(clientId: string, challenge: string): string {
+    static authorizeUrl(
+        clientId: string,
+        challenge: string,
+        options: { redirectUri?: string; state?: string } = {}
+    ): string {
         return buildAuthUrl({
             authUrl: AUTH_URL,
             clientId,
             challenge,
+            redirectUri: options.redirectUri,
+            state: options.state,
             extra: { token_access_type: 'offline' },
         });
     }
 
+    /**
+     * Trade the code for tokens.
+     *
+     * `redirectUri` has to be repeated here exactly as it was sent to the
+     * authorization page, or not sent at all if it was not — Dropbox compares
+     * the two and rejects the exchange when they differ.
+     */
     static async completeAuthorization(
-        clientId: string,
-        code: string,
-        verifier: string,
+        params: { clientId: string; code: string; verifier: string; redirectUri?: string },
         post: PostForm = postForm,
         now = Date.now()
     ) {
-        return exchangeCode(post, { tokenUrl: TOKEN_URL, clientId, code, verifier }, now);
+        return exchangeCode(post, { tokenUrl: TOKEN_URL, ...params }, now);
     }
 
     async checkConnection(): Promise<ConnectionResult> {

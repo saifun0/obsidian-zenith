@@ -6,6 +6,8 @@ import { SyncView } from './SyncView';
 import { syncSettingsSchema } from './settings.schema';
 import { SettingsSyncService } from './services/settingsSync';
 import { FileSyncService } from './services/fileSync';
+import { DROPBOX_PROTOCOL_ACTION } from './services/remotes/appIds';
+import { DropboxRemote } from './services/remotes/dropboxRemote';
 import type { SettingsSchema } from '../../settings/schema/types';
 
 /**
@@ -76,6 +78,13 @@ export class SyncModule extends BaseModule {
             },
         });
 
+        // Dropbox sends the user back here after they approve. Registered on the
+        // plugin because the callback arrives whether or not anything of ours is
+        // open — that is the point of it.
+        this.plugin.registerObsidianProtocolHandler(DROPBOX_PROTOCOL_ACTION, (params) => {
+            void this.finishDropboxAuth(params);
+        });
+
         this.disposers.push(
             this.plugin.registerNavAction({
                 id: 'sync.view',
@@ -118,6 +127,56 @@ export class SyncModule extends BaseModule {
         // zero or negative interval would spin the poll timer flat out.
         const seconds = Math.min(600, Math.max(5, Math.round(syncPollSeconds) || 20));
         await this.service.start(seconds * 1000);
+    }
+
+    /**
+     * Finish an authorization the browser has just handed back.
+     *
+     * Runs outside any view, so everything it has to say it says with a notice.
+     * The three ways this legitimately fails — the user pressed Cancel, the
+     * callback does not match anything this device started, the exchange itself
+     * was refused — are each worth a different sentence, because the thing to
+     * do about them is different.
+     */
+    private async finishDropboxAuth(params: Record<string, string>): Promise<void> {
+        const pending = this.plugin.oauthPending;
+
+        if (params.error) {
+            pending.cancel();
+            new Notice(
+                `Zenith: Dropbox did not authorize this device — ${params.error_description || params.error}`
+            );
+            return;
+        }
+
+        const claimed = pending.take(params.state ?? '');
+        if (!claimed || !params.code) {
+            // Either nothing was in flight, or this callback answers a request
+            // we never made. Both are the same instruction to the user, and
+            // saying which would tell whoever sent it how close they got.
+            new Notice(
+                'Zenith: that Dropbox link does not match an authorization started here. Press Connect again.'
+            );
+            return;
+        }
+
+        const result = await DropboxRemote.completeAuthorization({
+            // The id the flow began with, not whatever is in settings now — a
+            // code is only valid for the app that asked for it.
+            clientId: claimed.clientId,
+            code: params.code,
+            verifier: claimed.verifier,
+            redirectUri: claimed.redirectUri,
+        });
+
+        if (!result.ok) {
+            new Notice(`Zenith: could not connect to Dropbox — ${result.error.message}`);
+            return;
+        }
+
+        useZenithStore.getState().updateSettings({ syncDropboxTokens: result.tokens });
+        this.files?.refresh();
+        new Notice('Zenith: Dropbox connected.');
     }
 
     private async syncNow(): Promise<void> {

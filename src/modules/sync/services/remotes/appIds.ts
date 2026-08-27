@@ -31,6 +31,22 @@
  */
 export const SHIPPED_DROPBOX_CLIENT_ID: string = '';
 
+/**
+ * The `obsidian://` action Dropbox sends the user back to.
+ *
+ * Dropbox accepts a custom scheme here, which is the whole reason this flow is
+ * worth having: Obsidian registers the handler on desktop and on phones alike,
+ * so the browser hands the authorization straight back to the app on every
+ * platform. A localhost redirect would have been desktop-only, which for a sync
+ * feature is the half that matters least.
+ *
+ * It has to match the registration exactly. Anyone using their own app key must
+ * add this same URI to their own app's Redirect URIs, or Dropbox refuses the
+ * authorization before it starts — the settings say so.
+ */
+export const DROPBOX_PROTOCOL_ACTION = 'zenith-dropbox';
+export const DROPBOX_REDIRECT_URI = `obsidian://${DROPBOX_PROTOCOL_ACTION}`;
+
 /** Zenith's own Azure application (client) id. Empty as above. */
 export const SHIPPED_ONEDRIVE_CLIENT_ID: string = '';
 
