@@ -66,9 +66,31 @@ export interface CanvasEdge {
     label?: string;
 }
 
+/**
+ * A node or edge this module could not validate, kept exactly as it was read
+ * together with where it sat in the file.
+ *
+ * `at` is the slot it must land on again when the canvas is written. Obsidian
+ * draws nodes in file order, so appending these to the end instead would
+ * quietly bring a background group to the front.
+ */
+export interface PreservedEntry {
+    at: number;
+    value: unknown;
+}
+
 export interface CanvasData {
     nodes: CanvasNode[];
     edges: CanvasEdge[];
+    /**
+     * Everything `parseCanvas` did not recognise, carried through untouched.
+     *
+     * A canvas is rewritten wholesale, so anything the parser drops is deleted
+     * from the user's file the moment any command runs. Unknown node types are
+     * the ordinary case — a newer Obsidian, or another plugin's own node — and
+     * none of that is ours to discard just because we cannot lay it out.
+     */
+    preserved?: { nodes: PreservedEntry[]; edges: PreservedEntry[] };
 }
 
 export const EMPTY_CANVAS: CanvasData = { nodes: [], edges: [] };
@@ -88,6 +110,24 @@ export function isTextNode(node: CanvasNode): node is CanvasTextNode {
 
 export function isFileNode(node: CanvasNode): node is CanvasFileNode {
     return node.type === 'file';
+}
+
+/**
+ * Does `outer` fully hold `inner`?
+ *
+ * This is the entirety of group membership on a canvas: Obsidian stores no
+ * member list, so a node belongs to a group when it sits inside the group's
+ * rectangle and nowhere else. Every feature that moves or resizes anything has
+ * to agree on this exact test, or one of them will resize a card out of a group
+ * that another is still treating as a member.
+ */
+export function contains(outer: CanvasNodeBase, inner: CanvasNodeBase): boolean {
+    return (
+        inner.x >= outer.x &&
+        inner.y >= outer.y &&
+        inner.x + inner.width <= outer.x + outer.width &&
+        inner.y + inner.height <= outer.y + outer.height
+    );
 }
 
 /**
@@ -141,29 +181,69 @@ export function parseCanvas(raw: string): CanvasData {
     const rawEdges = Array.isArray(parsed.edges) ? parsed.edges : [];
 
     const nodes: CanvasNode[] = [];
-    for (const candidate of rawNodes) {
-        if (!isRecord(candidate)) continue;
-        const { id, type, x, y, width, height } = candidate;
-        if (typeof id !== 'string' || typeof type !== 'string') continue;
-        if (!isFiniteNumber(x) || !isFiniteNumber(y)) continue;
-        if (!isFiniteNumber(width) || !isFiniteNumber(height)) continue;
-        if (type !== 'text' && type !== 'file' && type !== 'link' && type !== 'group') continue;
-        nodes.push(candidate as unknown as CanvasNode);
+    const heldNodes: PreservedEntry[] = [];
+    rawNodes.forEach((candidate, at) => {
+        if (isKnownNode(candidate)) nodes.push(candidate as unknown as CanvasNode);
+        else heldNodes.push({ at, value: candidate });
+    });
+
+    // Two sets, because they answer different questions. `known` is what the
+    // transforms are allowed to touch; `present` is everything that will still
+    // be in the file afterwards, including what we are only passing through —
+    // an edge may legitimately point at a node we do not understand.
+    const known = new Set(nodes.map((n) => n.id));
+    const present = new Set(known);
+    for (const held of heldNodes) {
+        const id = isRecord(held.value) ? held.value.id : undefined;
+        if (typeof id === 'string') present.add(id);
     }
 
-    const known = new Set(nodes.map((n) => n.id));
     const edges: CanvasEdge[] = [];
+    const heldEdges: PreservedEntry[] = [];
+    // Counts only the edges that survive, so the recorded slot is the one the
+    // edge must occupy in the file we write, not the one it had on the way in.
+    let slot = 0;
     for (const candidate of rawEdges) {
         if (!isRecord(candidate)) continue;
         const { id, fromNode, toNode } = candidate;
         if (typeof id !== 'string') continue;
         if (typeof fromNode !== 'string' || typeof toNode !== 'string') continue;
-        // An edge pointing at a deleted node makes Obsidian drop the whole file.
-        if (!known.has(fromNode) || !known.has(toNode)) continue;
-        edges.push(candidate as unknown as CanvasEdge);
+        // An edge pointing at a node that is in no part of the file makes
+        // Obsidian drop the whole canvas, so a truly dangling one is still cut.
+        if (!present.has(fromNode) || !present.has(toNode)) continue;
+        if (known.has(fromNode) && known.has(toNode)) {
+            edges.push(candidate as unknown as CanvasEdge);
+            slot++;
+        } else {
+            heldEdges.push({ at: slot++, value: candidate });
+        }
     }
 
-    return { nodes, edges };
+    if (!heldNodes.length && !heldEdges.length) return { nodes, edges };
+    return { nodes, edges, preserved: { nodes: heldNodes, edges: heldEdges } };
+}
+
+/** Everything the transforms know how to move, resize and re-attach. */
+function isKnownNode(candidate: unknown): boolean {
+    if (!isRecord(candidate)) return false;
+    const { id, type, x, y, width, height } = candidate;
+    if (typeof id !== 'string' || typeof type !== 'string') return false;
+    if (!isFiniteNumber(x) || !isFiniteNumber(y)) return false;
+    if (!isFiniteNumber(width) || !isFiniteNumber(height)) return false;
+    return type === 'text' || type === 'file' || type === 'link' || type === 'group';
+}
+
+/** Put the untouched entries back into the slots they came from. */
+function reinsert(kept: readonly unknown[], held: readonly PreservedEntry[]): unknown[] {
+    if (!held.length) return kept as unknown[];
+    const bySlot = new Map(held.map((h) => [h.at, h.value]));
+    const out: unknown[] = [];
+    let next = 0;
+    for (let i = 0; i < kept.length + held.length; i++) {
+        if (bySlot.has(i)) out.push(bySlot.get(i));
+        else out.push(kept[next++]);
+    }
+    return out;
 }
 
 /**
@@ -171,7 +251,14 @@ export function parseCanvas(raw: string): CanvasData {
  * canvas touched by this module does not show up as a whole-file diff in git.
  */
 export function serializeCanvas(data: CanvasData): string {
-    return JSON.stringify({ nodes: data.nodes, edges: data.edges }, null, '\t');
+    return JSON.stringify(
+        {
+            nodes: reinsert(data.nodes, data.preserved?.nodes ?? []),
+            edges: reinsert(data.edges, data.preserved?.edges ?? []),
+        },
+        null,
+        '\t'
+    );
 }
 
 /** Axis-aligned bounds of a set of nodes, or null when there are none. */

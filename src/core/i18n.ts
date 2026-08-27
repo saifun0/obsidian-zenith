@@ -1296,6 +1296,8 @@ const EN: Dict = {
     'canvas.action.straighten': 'Reattach arrows to the nearest sides',
     'canvas.notice.straightened': 'Arrows reattached.',
     'canvas.notice.alreadyStraight': 'Every arrow already leaves the right side.',
+    'canvas.notice.scopeUnknown':
+        'Could not read the selection on this open canvas, so nothing was changed. Close the tab and run it again to rearrange the whole canvas.',
 };
 
 const RU: Dict = {
@@ -2592,6 +2594,8 @@ const RU: Dict = {
     'canvas.action.straighten': 'Пересадить стрелки на ближние грани',
     'canvas.notice.straightened': 'Стрелки пересажены.',
     'canvas.notice.alreadyStraight': 'Все стрелки уже выходят с нужной грани.',
+    'canvas.notice.scopeUnknown':
+        'Не удалось прочитать выделение на открытом холсте — ничего не изменено. Закройте вкладку и повторите, чтобы перестроить весь холст.',
 };
 
 /**

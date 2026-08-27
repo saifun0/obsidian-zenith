@@ -1,5 +1,6 @@
 import {
     boundsOf,
+    contains,
     isGroupNode,
     type CanvasData,
     type CanvasEdge,
@@ -57,52 +58,82 @@ interface Block {
     height: number;
 }
 
-function contains(group: CanvasNode, node: CanvasNode): boolean {
-    return (
-        node.x >= group.x &&
-        node.y >= group.y &&
-        node.x + node.width <= group.x + group.width &&
-        node.y + node.height <= group.y + group.height
-    );
+/** A node that belongs to no group, and so moves entirely on its own. */
+function soloBlock(node: CanvasNode): Block {
+    return {
+        id: node.id,
+        nodes: [node],
+        x: node.x,
+        y: node.y,
+        width: node.width,
+        height: node.height,
+    };
 }
 
 /**
  * Partition nodes into movable blocks.
  *
- * Groups are claimed outermost-first. The opposite order looks tempting — put
- * each node in the tightest group that holds it — but it breaks nesting: the
- * inner group would take the shared nodes and then drift away from the outer
- * one, which is exactly the tearing this whole design exists to prevent. An
- * outer group must carry everything inside it, nested groups included.
+ * The rule is that two groups holding the same node cannot be laid out
+ * independently: whichever moved second would leave the shared node behind and
+ * silently lose it as a member. So groups are merged into one block whenever
+ * they share a node, which covers both the nested case (an inner group is held
+ * by the outer one, and so is everything in it) and the merely overlapping case
+ * — two groups the user dragged across each other, which claiming
+ * outermost-first used to tear apart.
  */
 function toBlocks(nodes: readonly CanvasNode[]): Block[] {
-    const groups = nodes.filter(isGroupNode).slice().sort((a, b) => b.width * b.height - a.width * a.height);
-    const claimed = new Set<string>();
-    const blocks: Block[] = [];
+    const groups = nodes.filter(isGroupNode);
+    if (!groups.length) return nodes.map(soloBlock);
 
-    for (const group of groups) {
-        if (claimed.has(group.id)) continue;
-        const members = nodes.filter(
-            (n) => n.id !== group.id && !claimed.has(n.id) && contains(group, n)
-        );
-        const all = [group, ...members];
-        for (const n of all) claimed.add(n.id);
-        const b = boundsOf(all)!;
-        blocks.push({ id: group.id, nodes: all, x: b.minX, y: b.minY, width: b.width, height: b.height });
-    }
+    const parent = new Map<string, string>(groups.map((g) => [g.id, g.id]));
+    const find = (id: string): string => {
+        let root = id;
+        while (parent.get(root) !== root) root = parent.get(root)!;
+        let walk = id;
+        while (parent.get(walk) !== root) {
+            const next = parent.get(walk)!;
+            parent.set(walk, root);
+            walk = next;
+        }
+        return root;
+    };
+    const union = (a: string, b: string): void => {
+        const ra = find(a);
+        const rb = find(b);
+        if (ra !== rb) parent.set(ra, rb);
+    };
 
+    // Every group holding this node. More than one means those groups are tied
+    // together from now on.
+    const holders = new Map<string, string[]>();
     for (const node of nodes) {
-        if (claimed.has(node.id)) continue;
-        blocks.push({
-            id: node.id,
-            nodes: [node],
-            x: node.x,
-            y: node.y,
-            width: node.width,
-            height: node.height,
-        });
+        const held = groups.filter((g) => g.id !== node.id && contains(g, node));
+        if (!held.length) continue;
+        holders.set(
+            node.id,
+            held.map((g) => g.id)
+        );
+        for (let i = 1; i < held.length; i++) union(held[0].id, held[i].id);
     }
 
+    const members = new Map<string, CanvasNode[]>();
+    const claimed = new Set<string>();
+    for (const node of nodes) {
+        const held = holders.get(node.id);
+        const root = held ? find(held[0]) : isGroupNode(node) ? find(node.id) : null;
+        if (root === null) continue;
+        const bucket = members.get(root);
+        if (bucket) bucket.push(node);
+        else members.set(root, [node]);
+        claimed.add(node.id);
+    }
+
+    const blocks: Block[] = [];
+    for (const [root, all] of members) {
+        const b = boundsOf(all)!;
+        blocks.push({ id: root, nodes: all, x: b.minX, y: b.minY, width: b.width, height: b.height });
+    }
+    for (const node of nodes) if (!claimed.has(node.id)) blocks.push(soloBlock(node));
     return blocks;
 }
 
@@ -130,8 +161,11 @@ function applyPlacements(
         for (const node of placeBlock(block, x, y)) moved.set(node.id, node);
     }
     // Preserve the original node order: Obsidian uses it for z-ordering, so
-    // reordering would silently bring background groups to the front.
+    // reordering would silently bring background groups to the front. The
+    // spread carries `preserved` along; dropping it here would delete whatever
+    // the parser could not read.
     return {
+        ...data,
         nodes: data.nodes.map((n) => moved.get(n.id) ?? n),
         edges: data.edges,
     };
