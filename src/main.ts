@@ -121,7 +121,7 @@ export default class ZenithPlugin extends Plugin {
     }
 
     async onload(): Promise<void> {
-        console.log('Zenith: Loading plugin...');
+        const startedAt = Date.now();
 
         // ── Restore persisted settings ───────────────
         this.pluginData = (await this.loadData()) ?? {};
@@ -291,7 +291,19 @@ export default class ZenithPlugin extends Plugin {
             )
         );
 
-        console.log('Zenith: Plugin loaded successfully ✓');
+        // One line, not fifteen.
+        //
+        // Every module used to announce itself, which on a full vault buried
+        // the warnings underneath — and the warnings are the only part of a
+        // successful load worth reading. What is actually useful about a load
+        // is that it finished, how long it took, and whether anything Zenith
+        // did not write is in the mix; all three fit on one line.
+        const modules = this.moduleManager.getLoadedModuleIds().length;
+        const outside = this.moduleManager.getThirdPartyModuleIds();
+        const from = outside.length > 0 ? `, ${outside.length} third-party: ${outside.join(', ')}` : '';
+        console.log(
+            `Zenith ${this.manifest.version}: ready in ${Date.now() - startedAt} ms (${modules} modules${from})`
+        );
     }
 
     async onunload(): Promise<void> {
@@ -310,7 +322,6 @@ export default class ZenithPlugin extends Plugin {
         // stale tasks/content/modules linger and subscriptions could double up).
         resetZenithStore();
 
-        console.log('Zenith: Plugin unloaded.');
     }
 
     /**

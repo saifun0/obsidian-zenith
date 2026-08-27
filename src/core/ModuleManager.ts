@@ -60,6 +60,8 @@ export class ModuleManager {
     private modules: Map<string, IModule> = new Map();
     /** IDs of modules whose `onload` has run and not yet been undone. */
     private loadedIds: Set<string> = new Set();
+    /** Loaded modules that Zenith did not ship. Reported once, in the summary. */
+    private readonly thirdPartyIds: Set<string> = new Set();
     private loaded = false;
     private plugin!: ZenithPlugin;
 
@@ -342,7 +344,10 @@ export class ModuleManager {
             await this.injectStyles(id);
             this.modules.set(id, instance);
             this.problems.delete(id);
-            console.log(`Zenith: loaded third-party module "${id}"`);
+            // Remembered rather than announced. Which modules came from outside
+            // the plugin is worth knowing when something misbehaves, but it is
+            // one fact about the whole load, not a line each.
+            this.thirdPartyIds.add(id);
             return instance;
         } catch (err) {
             this.note(id, 'eval-error', err instanceof Error ? err.message : String(err));
@@ -376,7 +381,6 @@ export class ModuleManager {
         try {
             await module.onload();
             this.loadedIds.add(id);
-            console.log(`Zenith: Module "${id}" initialized.`);
             return true;
         } catch (error) {
             this.note(id, 'onload-error', error instanceof Error ? error.message : String(error));
@@ -402,7 +406,6 @@ export class ModuleManager {
         if (module) {
             try {
                 await module.onunload();
-                console.log(`Zenith: Module "${id}" unloaded.`);
             } catch (error) {
                 console.error(`Zenith: Failed to unload module "${id}":`, error);
             }
@@ -505,6 +508,18 @@ export class ModuleManager {
     /** IDs of modules that have run `onload` and are currently active. */
     getLoadedModuleIds(): string[] {
         return Array.from(this.loadedIds);
+    }
+
+    /**
+     * IDs of the loaded modules that came from outside the plugin.
+     *
+     * Reported once, in the load summary. When something is behaving strangely
+     * the first useful question is whether a module Zenith did not write is
+     * involved, and this is the cheapest possible way to have that answer
+     * already on screen.
+     */
+    getThirdPartyModuleIds(): string[] {
+        return Array.from(this.thirdPartyIds).filter((id) => this.loadedIds.has(id));
     }
 
     isLoaded(): boolean {
