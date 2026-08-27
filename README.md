@@ -637,6 +637,65 @@ locally.
 
 ---
 
+## Setting up Dropbox
+
+Zenith uses **your own** Dropbox app registration rather than one shipped with the
+plugin — providers ask people not to distribute an app identity, and a shared one would
+be a shared rate limit besides. It takes about two minutes.
+
+1. Open <https://www.dropbox.com/developers/apps> and choose **Create app**.
+2. Pick **Scoped access**.
+3. Pick the access type:
+   - **App folder** — recommended. Zenith can only ever see `/Apps/<your app name>/`, so a
+     mistake cannot reach the rest of your Dropbox.
+   - **Full Dropbox** — only if the vault has to live somewhere that already exists.
+4. Give it a name. Dropbox app names are globally unique, so `zenith-yourname` rather than
+   `zenith`.
+5. Go to the **Permissions** tab and tick all four of:
+
+   | Scope | What Zenith does with it |
+   | --- | --- |
+   | `account_info.read` | Confirm the connection works, for the **Test** button |
+   | `files.metadata.read` | List the folder and check a single file |
+   | `files.content.read` | Download |
+   | `files.content.write` | Upload and delete |
+
+   Then press **Submit** at the bottom. It is easy to miss, and nothing is saved without it.
+6. Back on the **Settings** tab, copy the **App key**. Not the App secret — Zenith
+   authorizes with PKCE and never sends a secret, which is what lets it run on a phone.
+
+Then in Obsidian, under **Settings → Zenith → Sync**:
+
+7. Turn on **Sync note files** and choose **Dropbox** as the backend.
+8. Paste the App key into **Dropbox app key**.
+9. Set **Folder in the account** — with App-folder access this is relative to
+   `/Apps/<your app name>/`. Leave it empty to use that folder directly. If you are
+   turning on encryption, this has to be a folder with nothing in it.
+10. Press **Connect**. Dropbox opens in your browser; approve the app and it shows you a
+    code. Paste the code back into Obsidian and press **Finish**.
+11. Press **Test connection**, then **Preview** — and read the plan before applying it. The
+    first run always asks, whatever it contains.
+
+### If it does not work
+
+**"This Dropbox app is not allowed to …"** — a permission is missing. Add it in the
+Permissions tab, press Submit, then **Disconnect and Connect again** in Zenith: an
+authorization already granted does not pick up permissions added afterwards. This is the
+single most common way to get stuck.
+
+**"Dropbox rejected the connection — authorize again"** — the stored token is dead.
+Disconnect and connect again.
+
+**The app is in "Development" status.** That is fine and needs no application: development
+apps work fully, for up to 500 linked accounts. Only publishing to other people needs
+production status.
+
+**Sync feels slow, or a lot of files fail.** Lower **Parallel transfers**. Zenith already
+waits out Dropbox's rate limiting rather than failing the file, but fewer transfers at
+once means it has less to wait out.
+
+---
+
 ## Encrypted sync
 
 Turn on **Settings → Sync → Encrypt everything before it is uploaded** and Zenith

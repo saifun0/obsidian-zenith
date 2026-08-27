@@ -2,8 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
     asciiJson,
     describeDropboxError,
+    describeScope,
     DropboxRemote,
     dropboxTime,
+    missingScope,
     parseListing,
     parseMetadata,
     SIMPLE_UPLOAD_LIMIT,
@@ -380,5 +382,52 @@ describe('DropboxRemote.remove', () => {
     it('reports anything else', async () => {
         const fake = fakeHttp([{ status: 403, text: '{"error_summary":"insufficient_space/.."}' }]);
         await expect(remoteWith(fake).remove('a.md')).rejects.toThrow(/insufficient_space/);
+    });
+});
+
+describe('a Dropbox app that was not given a permission', () => {
+    const MISSING = JSON.stringify({
+        error_summary: 'missing_scope/.',
+        error: { '.tag': 'missing_scope', required_scope: 'account_info.read' },
+    });
+
+    it('names the scope, and what adding it would allow', async () => {
+        // A missing permission and a dead token both arrive as a 401, and the
+        // fixes have nothing in common. "Authorize again" against a missing
+        // scope sends someone round the same loop indefinitely.
+        const fake = fakeHttp([{ status: 401, text: MISSING }]);
+        const result = await remoteWith(fake).checkConnection();
+
+        expect(result.ok).toBe(false);
+        expect(result.error).toContain('account_info.read');
+        expect(result.error).toContain('check who it is signed in as');
+        expect(result.error).toMatch(/disconnect and connect again/);
+    });
+
+    it('still says "authorize again" when the token is simply dead', async () => {
+        const fake = fakeHttp([{ status: 401, text: '{"error_summary":"invalid_access_token/"}' }]);
+        const result = await remoteWith(fake).checkConnection();
+
+        expect(result.error).toBe('Dropbox rejected the connection — authorize again.');
+    });
+
+    it('reads the scope out of the body, and nothing out of anything else', () => {
+        expect(missingScope(MISSING)).toBe('account_info.read');
+        expect(missingScope('{"error":{".tag":"invalid_access_token"}}')).toBeNull();
+        expect(missingScope('not json at all')).toBeNull();
+    });
+
+    it('has plain words for every scope the plugin asks for', () => {
+        for (const scope of [
+            'account_info.read',
+            'files.metadata.read',
+            'files.content.read',
+            'files.content.write',
+        ]) {
+            // Never the raw scope name echoed back: the point of the sentence is
+            // to say what was refused, not to repeat the identifier.
+            expect(describeScope(scope)).not.toContain(scope);
+        }
+        expect(describeScope('sharing.write')).toContain('sharing.write');
     });
 });

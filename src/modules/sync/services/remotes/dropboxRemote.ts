@@ -103,7 +103,19 @@ export class DropboxRemote implements SyncRemote {
         try {
             const res = await this.rpc('/users/get_current_account', null);
             if (res.status === 401) {
-                return { ok: false, error: 'Dropbox rejected the connection — authorize again.' };
+                // A permission the app was never granted and a token that has
+                // stopped working arrive as the same status, and the fixes have
+                // nothing in common: one is a checkbox in the Dropbox app
+                // console followed by a fresh authorization, the other is just
+                // the authorization. Telling someone to reconnect when the
+                // scope is missing sends them round the loop forever.
+                const missing = missingScope(res.text);
+                return {
+                    ok: false,
+                    error: missing
+                        ? `This Dropbox app is not allowed to ${describeScope(missing)}. Add "${missing}" to its permissions at dropbox.com/developers, submit the change, then disconnect and connect again — an existing authorization does not pick up new permissions.`
+                        : 'Dropbox rejected the connection — authorize again.',
+                };
             }
             if (res.status >= 400) {
                 return { ok: false, error: describeDropboxError(res.text, res.status) };
@@ -388,6 +400,36 @@ export function parseMetadata(raw: unknown): DropboxMetadata | null {
         serverModified: Number.isFinite(server) ? server : 0,
         rev: typeof item.rev === 'string' ? item.rev : undefined,
     };
+}
+
+/**
+ * The scope a 401 was complaining about, when it named one.
+ *
+ * A scoped Dropbox app answers `missing_scope` with the exact permission it
+ * wanted, which is the difference between an error someone can act on and one
+ * they can only guess at.
+ */
+export function missingScope(body: string): string | null {
+    const parsed = safeJson(body) as Record<string, unknown>;
+    const error = (parsed.error ?? {}) as Record<string, unknown>;
+    if (error['.tag'] !== 'missing_scope') return null;
+    return typeof error.required_scope === 'string' ? error.required_scope : null;
+}
+
+/** Plain words for a scope name, so the message says what was refused. */
+export function describeScope(scope: string): string {
+    switch (scope) {
+        case 'account_info.read':
+            return 'check who it is signed in as';
+        case 'files.metadata.read':
+            return 'see what is in the folder';
+        case 'files.content.read':
+            return 'download files';
+        case 'files.content.write':
+            return 'upload or delete files';
+        default:
+            return `use "${scope}"`;
+    }
 }
 
 /**
