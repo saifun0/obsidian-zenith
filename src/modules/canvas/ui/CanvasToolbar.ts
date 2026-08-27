@@ -37,10 +37,23 @@ export class CanvasToolbar {
         }
     }
 
-    /** Remove every button this class added, from every canvas. */
+    /**
+     * Remove every button this class added, from every canvas.
+     *
+     * A canvas can live in a popout window, which has its own `document`, so a
+     * single global query from the main one would leave the button behind
+     * there — still drawn, still clickable, by a module that is switched off.
+     */
     unmountAll(): void {
-        for (const el of Array.from(document.querySelectorAll(`.${MARKER}`))) {
-            el.remove();
+        const documents = new Set<Document>([document]);
+        for (const leaf of this.app.workspace.getLeavesOfType(CANVAS_VIEW_TYPE)) {
+            const doc = leaf.view?.containerEl?.ownerDocument;
+            if (doc) documents.add(doc);
+        }
+        for (const doc of documents) {
+            for (const el of Array.from(doc.querySelectorAll(`.${MARKER}`))) {
+                el.remove();
+            }
         }
     }
 

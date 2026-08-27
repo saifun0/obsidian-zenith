@@ -157,3 +157,43 @@ describe('layoutCanvas with a selection', () => {
         }
     });
 });
+
+describe('cards that sit inside a group', () => {
+    const grp = (id: string, x: number, y: number, width: number, height: number): CanvasNode =>
+        ({ id, type: 'group', x, y, width, height, label: id }) as CanvasNode;
+    const card = (id: string, x: number, y: number, height: number, body: string): CanvasNode =>
+        ({ id, type: 'text', x, y, width: 300, height, text: body }) as CanvasNode;
+
+    const long = Array.from({ length: 30 }, (_, i) => `line ${i} of some text`).join('\n');
+
+    it('never grows a card out of the group holding it', () => {
+        // Growing past the group's edge would end the card's membership without
+        // saying so, and the next tidy would leave it behind.
+        const data: CanvasData = { nodes: [grp('g', 0, 0, 400, 150), card('c', 20, 20, 60, long)], edges: [] };
+        const fitted = byId(fitNodes(data), 'c');
+        expect(fitted.height).toBeGreaterThan(60);
+        expect(fitted.y + fitted.height).toBeLessThanOrEqual(150);
+    });
+
+    it('still shrinks a card that has room to spare', () => {
+        const data: CanvasData = { nodes: [grp('g', 0, 0, 400, 500), card('c', 20, 20, 400, 'hi')], edges: [] };
+        expect(byId(fitNodes(data), 'c').height).toBe(opts.minHeight);
+    });
+
+    it('leaves a card alone when the group is too short for even the floor', () => {
+        const data: CanvasData = { nodes: [grp('g', 0, 0, 400, 60), card('c', 20, 20, 30, long)], edges: [] };
+        expect(byId(fitNodes(data), 'c').height).toBe(30);
+    });
+
+    it('a fitted card is still carried by its group when the canvas is tidied', () => {
+        const before: CanvasData = {
+            nodes: [grp('g', 0, 0, 400, 150), card('c', 20, 20, 60, long), card('far', 2000, 0, 100, 'far')],
+            edges: [],
+        };
+        const offset = (d: CanvasData) =>
+            `${byId(d, 'c').x - byId(d, 'g').x},${byId(d, 'c').y - byId(d, 'g').y}`;
+
+        const fitted = fitNodes(before);
+        expect(offset(layoutCanvas(fitted, 'grid'))).toBe(offset(fitted));
+    });
+});

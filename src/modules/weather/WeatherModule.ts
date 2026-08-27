@@ -34,7 +34,6 @@ export class WeatherModule extends BaseModule {
                 sizes: ['sm', 'md', 'lg'],
                 defaultSize: 'sm',
                 order: 20,
-                bare: true,
                 component: WeatherWidget,
             })
         );

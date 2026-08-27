@@ -103,18 +103,39 @@ function layoutOptions(): Partial<LayoutOptions> {
 }
 
 /**
- * Node ids the user has selected on the open canvas, when there are enough of
- * them to arrange. One selected node has no arrangement, and an empty selection
- * means "the whole canvas" rather than "nothing".
+ * Which nodes a rearranging command may touch — or `null` when it must not run.
+ *
+ * The distinction that matters is between "the live canvas says nothing is
+ * selected" and "we could not ask the live canvas at all". The first means the
+ * whole canvas, which is what the user wants. The second used to mean the whole
+ * canvas too, and that is the dangerous reading: an Obsidian release that
+ * renames the private canvas object would turn "tidy these three nodes" into
+ * "reshuffle all four hundred", silently, with no undo worth the name. The
+ * fragile layer failing has to cost the feature, never the user's arrangement.
+ *
+ * A canvas that is not open anywhere is not that case — nothing can be selected
+ * in it, so the whole file is the only thing the command could mean.
  */
-function selectedIds(app: App, file: TFile): ReadonlySet<string> | undefined {
-    const bridge = CanvasBridge.from(findOpenCanvasLeaf(app, file));
-    const ids = bridge?.selection().map((n) => n.id) ?? [];
-    return ids.length >= 2 ? new Set(ids) : undefined;
+function confineTo(app: App, file: TFile): { only?: ReadonlySet<string> } | null {
+    const leaf = findOpenCanvasLeaf(app, file);
+    if (!leaf) return {};
+
+    const bridge = CanvasBridge.from(leaf);
+    if (!bridge) {
+        new Notice(t('canvas.notice.scopeUnknown'));
+        return null;
+    }
+
+    // One selected node has no arrangement of its own, so that reads as "all
+    // of it" as well.
+    const ids = bridge.selection().map((n) => n.id);
+    return ids.length >= 2 ? { only: new Set(ids) } : {};
 }
 
 async function runLayout(app: App, file: TFile, kind: LayoutKind): Promise<void> {
-    const only = selectedIds(app, file);
+    const confined = confineTo(app, file);
+    if (!confined) return;
+    const { only } = confined;
     let result: CanvasData | null = null;
     try {
         const changed = await updateCanvasFile(app, file, (data) => {
@@ -167,7 +188,9 @@ async function runTransform(
 }
 
 async function runFit(app: App, file: TFile): Promise<void> {
-    const only = selectedIds(app, file);
+    const confined = confineTo(app, file);
+    if (!confined) return;
+    const { only } = confined;
     await runTransform(app, file, (data) => fitNodes(data, { only }), {
         done: t('canvas.notice.fitted'),
         noop: t('canvas.notice.alreadyFitted'),
@@ -175,7 +198,9 @@ async function runFit(app: App, file: TFile): Promise<void> {
 }
 
 async function runStraighten(app: App, file: TFile): Promise<void> {
-    const only = selectedIds(app, file);
+    const confined = confineTo(app, file);
+    if (!confined) return;
+    const { only } = confined;
     await runTransform(app, file, (data) => normalizeEdgeSides(data, 'auto', only), {
         done: t('canvas.notice.straightened'),
         noop: t('canvas.notice.alreadyStraight'),

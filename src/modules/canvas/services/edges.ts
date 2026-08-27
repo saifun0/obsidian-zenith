@@ -93,5 +93,5 @@ export function normalizeEdgeSides(
         return { ...edge, fromSide, toSide };
     });
 
-    return changed ? { nodes: data.nodes, edges } : data;
+    return changed ? { ...data, edges } : data;
 }

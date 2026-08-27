@@ -48,7 +48,10 @@ export interface DashboardWidgetProps {
 export interface DashboardWidgetDefinition {
     /** Unique id, e.g. "tasks.overview". Namespaced by module by convention. */
     id: string;
-    /** Optional header title. Omit (with `bare`) for chrome-less widgets. */
+    /**
+     * Header title. Optional only because a widget may prefer the name derived
+     * from its id; every widget gets a header either way.
+     */
     title?: string;
     /**
      * One line on what the widget shows, for the add-widget gallery. Without it
@@ -78,8 +81,6 @@ export interface DashboardWidgetDefinition {
      * dashboard context. May return a cleanup function.
      */
     mount?: (el: HTMLElement, ctx: DashboardWidgetContext) => void | (() => void);
-    /** Render without the card wrapper / header. */
-    bare?: boolean;
 }
 
 /**

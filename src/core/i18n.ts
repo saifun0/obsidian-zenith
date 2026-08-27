@@ -596,16 +596,14 @@ const EN: Dict = {
     'dashboard.bundle.role': 'Widget bundle',
     'dashboard.bundle.count.one': 'Bundle · {count}',
     'dashboard.bundle.count.other': 'Bundle · {count}',
-    'dashboard.bundle.expand': 'Show every widget in the bundle',
-    'dashboard.bundle.collapse': 'Collapse the bundle',
     'dashboard.bundle.extract': 'Give this widget its own cell',
-    'dashboard.bundle.bringToTop': 'Bring to the top',
     'dashboard.bundle.moveUp': 'Move earlier in the bundle',
+    'dashboard.bundle.moveDown': 'Move later in the bundle',
     'dashboard.bundle.name': 'Bundle name',
     'dashboard.bundle.namePlaceholder': 'name (optional)',
     'dashboard.bundle.mergeHint': 'Bundle these together',
     'dashboard.bundle.mergeSizeHint': "{name} has no {size} size — it'll show compact",
-    'dashboard.bundle.compact': '{name} has no {size} size — open the bundle to see it',
+    'dashboard.bundle.compact': '{name} has no {size} size — resize the bundle, or give it its own cell',
     'dashboard.bundle.dissolved': 'Zenith: bundle dissolved — one widget left.',
 
     // ── Tasks ───────────────────────────────────────
@@ -1296,6 +1294,8 @@ const EN: Dict = {
     'canvas.action.straighten': 'Reattach arrows to the nearest sides',
     'canvas.notice.straightened': 'Arrows reattached.',
     'canvas.notice.alreadyStraight': 'Every arrow already leaves the right side.',
+    'canvas.notice.scopeUnknown':
+        'Could not read the selection on this open canvas, so nothing was changed. Close the tab and run it again to rearrange the whole canvas.',
 };
 
 const RU: Dict = {
@@ -1879,16 +1879,14 @@ const RU: Dict = {
     'dashboard.bundle.count.one': 'Связка · {count}',
     'dashboard.bundle.count.few': 'Связка · {count}',
     'dashboard.bundle.count.many': 'Связка · {count}',
-    'dashboard.bundle.expand': 'Показать все виджеты связки',
-    'dashboard.bundle.collapse': 'Свернуть связку',
     'dashboard.bundle.extract': 'Вынуть виджет в свою ячейку',
-    'dashboard.bundle.bringToTop': 'Поднять наверх',
     'dashboard.bundle.moveUp': 'Сдвинуть раньше в связке',
+    'dashboard.bundle.moveDown': 'Сдвинуть позже в связке',
     'dashboard.bundle.name': 'Имя связки',
     'dashboard.bundle.namePlaceholder': 'имя (необязательно)',
     'dashboard.bundle.mergeHint': 'Объединить в связку',
     'dashboard.bundle.mergeSizeHint': '{name} не умеет {size} — покажется компактно',
-    'dashboard.bundle.compact': '{name} не умеет размер {size} — раскройте связку',
+    'dashboard.bundle.compact': '{name} не умеет размер {size} — поменяйте размер связки или выньте его в свою ячейку',
     'dashboard.bundle.dissolved': 'Zenith: связка распущена — остался один виджет.',
 
     // ── Задачи ──────────────────────────────────────
@@ -2592,6 +2590,8 @@ const RU: Dict = {
     'canvas.action.straighten': 'Пересадить стрелки на ближние грани',
     'canvas.notice.straightened': 'Стрелки пересажены.',
     'canvas.notice.alreadyStraight': 'Все стрелки уже выходят с нужной грани.',
+    'canvas.notice.scopeUnknown':
+        'Не удалось прочитать выделение на открытом холсте — ничего не изменено. Закройте вкладку и повторите, чтобы перестроить весь холст.',
 };
 
 /**

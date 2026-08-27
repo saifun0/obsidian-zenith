@@ -1,4 +1,11 @@
-import { isTextNode, type CanvasData, type CanvasNode } from '../canvasTypes';
+import {
+    contains,
+    isGroupNode,
+    isTextNode,
+    type CanvasData,
+    type CanvasGroupNode,
+    type CanvasNode,
+} from '../canvasTypes';
 
 export interface FitOptions {
     /** Never shrink a card below this, however little it holds. */
@@ -75,6 +82,7 @@ export function heightForText(text: string, width: number, opts: FitOptions): nu
  */
 export function fitNodes(data: CanvasData, options: Partial<FitOptions> = {}): CanvasData {
     const opts = { ...DEFAULT_FIT_OPTIONS, ...options };
+    const groups = data.nodes.filter(isGroupNode);
     let changed = false;
 
     const nodes: CanvasNode[] = data.nodes.map((node) => {
@@ -83,11 +91,43 @@ export function fitNodes(data: CanvasData, options: Partial<FitOptions> = {}): C
         if (!isTextNode(node)) return node;
         if (opts.only && !opts.only.has(node.id)) return node;
 
-        const height = heightForText(node.text, node.width, opts);
+        let height = heightForText(node.text, node.width, opts);
+
+        // Growing a card out of the bottom of its group would end its
+        // membership without saying so, and the next tidy would leave it
+        // behind when the group moves. A card that scrolls is a far smaller
+        // problem than a card that quietly falls out of its group.
+        const room = roomInsideGroup(node, groups);
+        if (room !== null) {
+            // Too little room to honour even the minimum: leave the card
+            // exactly as it is rather than shrink it to something unreadable.
+            if (room < opts.minHeight) return node;
+            height = Math.min(height, room);
+        }
+
         if (height === node.height) return node;
         changed = true;
         return { ...node, height };
     });
 
-    return changed ? { nodes, edges: data.edges } : data;
+    return changed ? { ...data, nodes } : data;
+}
+
+/**
+ * How tall a node may grow before it escapes the group holding it, or null when
+ * no group does.
+ *
+ * The tightest group wins, which is the innermost one a node sits in. Measured
+ * against where the node is right now: a card the user has already dragged half
+ * out of a group is not a member, and clamping it would be inventing one.
+ */
+function roomInsideGroup(node: CanvasNode, groups: readonly CanvasGroupNode[]): number | null {
+    let room: number | null = null;
+    for (const group of groups) {
+        if (group.id === node.id) continue;
+        if (!contains(group, node)) continue;
+        const available = group.y + group.height - node.y;
+        if (room === null || available < room) room = available;
+    }
+    return room;
 }

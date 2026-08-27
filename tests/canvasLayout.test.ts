@@ -402,3 +402,41 @@ describe('boundsOf', () => {
         });
     });
 });
+
+describe('groups that share nodes', () => {
+    /** Offsets from the first node, which a rigid block has to preserve exactly. */
+    const shape = (data: CanvasData, ids: string[]): string => {
+        const at = (id: string) => data.nodes.find((n) => n.id === id)!;
+        const base = at(ids[0]);
+        return ids.map((id) => `${at(id).x - base.x},${at(id).y - base.y}`).join(' ');
+    };
+
+    it('two overlapping groups move as one block', () => {
+        // Neither group contains the other; they simply overlap, and one node
+        // sits in the overlap. Claiming outermost-first used to give that node
+        // to the larger group and move the smaller one out from under it.
+        const tied = ['ga', 'gb', 'shared', 'onlyA', 'onlyB'];
+        const before = canvas([
+            group('ga', 0, 0, 300, 300),
+            group('gb', 200, 200, 300, 300),
+            node('shared', 210, 210, 50, 50),
+            node('onlyA', 10, 10, 50, 50),
+            node('onlyB', 400, 400, 50, 50),
+            node('far', 2000, 0),
+        ]);
+
+        expect(shape(layoutCanvas(before, 'grid'), tied)).toBe(shape(before, tied));
+    });
+
+    it('nested groups still move as one block', () => {
+        const tied = ['outer', 'inner', 'deep'];
+        const before = canvas([
+            group('outer', 0, 0, 400, 400),
+            group('inner', 50, 50, 200, 200),
+            node('deep', 60, 60, 50, 50),
+            node('far', 2000, 0),
+        ]);
+
+        expect(shape(layoutCanvas(before, 'grid'), tied)).toBe(shape(before, tied));
+    });
+});

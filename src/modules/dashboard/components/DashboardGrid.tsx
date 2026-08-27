@@ -12,7 +12,6 @@ import {
 import {
     addItem,
     bottomOf,
-    compact,
     layoutsEqual,
     moveItem,
     reconcileLayout,
@@ -54,7 +53,6 @@ import {
 import { GridWidget } from './GridWidget';
 import { BundleCard } from './BundleCard';
 import { BundleInspector } from './BundleInspector';
-import { useBundleExpansion } from '../grid/useBundleExpansion';
 import { AddWidgetSheet, type AddableWidget } from './AddWidgetSheet';
 import { GridSettingsBar } from './GridSettingsBar';
 import { LayoutPresetsBar } from './LayoutPresetsBar';
@@ -407,22 +405,9 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
         onLongPress: enterEditing,
     });
 
-    const expansion = useBundleExpansion({ containerRef });
-
-    // An expansion for a bundle that no longer exists would keep growing a cell
-    // that isn't there.
-    useEffect(() => {
-        expansion.prune(new Set(bundles.map((b) => b.id)));
-    }, [bundles, expansion]);
-
-    // While dragging, everyone re-flows around the dragged widget live. Expanded
-    // bundles are taller before that reflow runs, so the neighbours below them
-    // land in the right place.
-    const withExpansion = useMemo(
-        () => expansion.apply(layout, bundles, cfg.rowHeight, cfg.gap, cfg.columns),
-        [expansion, layout, bundles, cfg.rowHeight, cfg.gap, cfg.columns]
-    );
-    const effective = drag.preview ?? (withExpansion === layout ? layout : compact(withExpansion, cfg.columns));
+    // A bundle is exactly one cell tall, whatever it holds, so the laid-out
+    // grid is the grid — nothing grows underneath the drag preview.
+    const effective = drag.preview ?? layout;
     const effectiveStack = useMemo(() => {
         if (!drag.stackPreview) return stackItems;
         const byId = new Map(stackItems.map((i) => [i.id, i]));
@@ -563,7 +548,6 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                     key={item.id}
                                     def={{
                                         id: bundle.id,
-                                        bare: true,
                                         title: bundle.name,
                                         icon: 'layers',
                                     }}
@@ -599,6 +583,16 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                             onExtract={(widgetId) =>
                                                 extractMember(bundle.id, widgetId)
                                             }
+                                            onReorder={(widgetId, index) =>
+                                                commitBundles(
+                                                    reorderMembers(
+                                                        bundles,
+                                                        bundle.id,
+                                                        widgetId,
+                                                        index
+                                                    )
+                                                )
+                                            }
                                         />
                                     }
                                     size={item.size}
@@ -631,37 +625,9 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                                 )
                                             )
                                         }
-                                        expanded={expansion.isExpanded(bundle.id)}
                                         editing={editing}
-                                        baseHeight={pxHeight(
-                                            dimsOf(
-                                                layout.find((i) => i.id === bundle.id) ?? item,
-                                                cfg.columns
-                                            ).h,
-                                            cfg.rowHeight,
-                                            cfg.gap
-                                        )}
                                         onSetActive={(widgetId) =>
                                             commitBundles(setActive(bundles, bundle.id, widgetId))
-                                        }
-                                        onToggleExpanded={() => expansion.toggle(bundle.id)}
-                                        onExtract={
-                                            editing
-                                                ? (widgetId) => extractMember(bundle.id, widgetId)
-                                                : undefined
-                                        }
-                                        onReorder={
-                                            editing
-                                                ? (widgetId, index) =>
-                                                      commitBundles(
-                                                          reorderMembers(
-                                                              bundles,
-                                                              bundle.id,
-                                                              widgetId,
-                                                              index
-                                                          )
-                                                      )
-                                                : undefined
                                         }
                                     />
                                 </GridWidget>
