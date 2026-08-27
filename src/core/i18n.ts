@@ -58,6 +58,7 @@ const EN: Dict = {
     // Settings — appearance
     'settings.accentColor': 'Accent Color',
     'settings.accentColor.desc': "Overrides Zenith's accent. Leave empty to use Obsidian's.",
+    'settings.hint.aria': 'Worth knowing about this setting',
     'settings.secret.reveal': 'Show the value',
     'settings.secret.hide': 'Hide the value',
     'settings.reset': 'Reset',
@@ -1355,6 +1356,7 @@ const RU: Dict = {
 
     'settings.accentColor': 'Акцентный цвет',
     'settings.accentColor.desc': 'Переопределяет акцент Zenith. Пусто — как в Obsidian.',
+    'settings.hint.aria': 'Что стоит знать об этой настройке',
     'settings.secret.reveal': 'Показать значение',
     'settings.secret.hide': 'Скрыть значение',
     'settings.reset': 'Сбросить',

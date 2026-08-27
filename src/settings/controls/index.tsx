@@ -16,10 +16,93 @@ import { DynamicIcon } from '../../components/shared/DynamicIcon';
  * module's own bucket.
  */
 
+/**
+ * A caveat, folded into a mark beside the label.
+ *
+ * These notes are worth keeping — "this password is stored in plain text",
+ * "turning this on needs an empty folder" — but they are things to read once,
+ * and a page of them shouts every one of them on every visit. A page that
+ * shouts everything is a page nobody reads, which is the opposite of what a
+ * warning is for.
+ *
+ * ── Why the bubble is `position: fixed` ──
+ *
+ * The settings pane scrolls, and a scroll container clips on both axes whether
+ * you ask it to or not — `overflow-y: auto` forces `overflow-x` away from
+ * `visible`. An absolutely positioned bubble would therefore be cut off exactly
+ * at the top and bottom of the list, which is where half the rows are. Viewport
+ * coordinates escape that.
+ */
+export const InfoHint: React.FC<{ text: string; label?: string }> = ({ text, label }) => {
+    const anchor = React.useRef<HTMLButtonElement>(null);
+    const bubble = React.useRef<HTMLDivElement>(null);
+    const [open, setOpen] = React.useState(false);
+    const id = React.useId();
+
+    // Layout effect, not effect: the bubble is measured and placed before the
+    // browser paints, so it never appears at the top-left corner first.
+    React.useLayoutEffect(() => {
+        const tip = bubble.current;
+        const button = anchor.current;
+        if (!open || !tip || !button) return;
+
+        const from = button.getBoundingClientRect();
+        const box = tip.getBoundingClientRect();
+        const edge = 8;
+
+        const centred = from.left + from.width / 2 - box.width / 2;
+        const left = Math.max(edge, Math.min(centred, window.innerWidth - box.width - edge));
+
+        // Below by default, above when there is no room — the rows near the
+        // bottom of a long settings page are the common case, not the corner one.
+        const below = from.bottom + 8;
+        const top = below + box.height > window.innerHeight - edge ? from.top - box.height - 8 : below;
+
+        tip.style.left = `${left}px`;
+        tip.style.top = `${top}px`;
+    }, [open]);
+
+    return (
+        <span className="zenith-settings__note">
+            <button
+                ref={anchor}
+                type="button"
+                className={`zenith-settings__noteMark${open ? ' is-open' : ''}`}
+                // Tap toggles, hover reveals. Pointer events rather than mouse
+                // ones because a tap on a touchscreen also fires a synthetic
+                // `mouseenter` first — which with a plain toggle would open the
+                // note and then immediately close it again, on exactly the
+                // devices the tap is there for.
+                onClick={() => setOpen((on) => !on)}
+                onPointerEnter={(e) => e.pointerType === 'mouse' && setOpen(true)}
+                onPointerLeave={(e) => e.pointerType === 'mouse' && setOpen(false)}
+                onFocus={() => setOpen(true)}
+                onBlur={() => setOpen(false)}
+                onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
+                // The note itself is the accessible name. A screen reader
+                // cannot hover, so a button announced only as "more info" would
+                // put the caveat somewhere its user can never reach.
+                aria-label={label ? `${label}. ${text}` : text}
+                aria-describedby={open ? id : undefined}
+            >
+                <DynamicIcon name="info" size={14} />
+            </button>
+            {open && (
+                <div ref={bubble} id={id} role="tooltip" className="zenith-settings__noteBubble">
+                    {text}
+                </div>
+            )}
+        </span>
+    );
+};
+
 interface RowProps {
     label: string;
     desc?: string;
+    /** A caveat worth reading once. Shown from a mark beside the label. */
     note?: string;
+    /** Translated accessible name for that mark. */
+    noteLabel?: string;
     error?: string;
     layout?: 'row' | 'stack';
     disabled?: boolean;
@@ -30,6 +113,7 @@ export const SettingRow: React.FC<RowProps> = ({
     label,
     desc,
     note,
+    noteLabel,
     error,
     layout = 'row',
     disabled,
@@ -45,11 +129,16 @@ export const SettingRow: React.FC<RowProps> = ({
             .join(' ')}
     >
         <div className="zenith-settings__item-info">
-            <span className="zenith-settings__item-name">{label}</span>
+            <span className="zenith-settings__item-name">
+                {label}
+                {note && <InfoHint text={note} label={noteLabel} />}
+            </span>
             {desc && <span className="zenith-settings__item-desc">{desc}</span>}
         </div>
         <div className="zenith-settings__item-control">{children}</div>
-        {note && <div className="zenith-settings__hint">{note}</div>}
+        {/* An error stays on the page rather than hiding behind a mark. A note
+            is background someone can choose to read; an error is the reason the
+            thing in front of them is not working. */}
         {error && <div className="zenith-settings__hint zenith-settings__hint--warn">{error}</div>}
     </div>
 );

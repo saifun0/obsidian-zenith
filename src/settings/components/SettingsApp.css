@@ -320,6 +320,56 @@
     cursor: default;
 }
 
+/* ── Notes ──
+   A caveat lives behind a mark beside the label instead of taking a box on the
+   page. Errors are not notes and stay where they are — see `SettingRow`. */
+.zenith-settings__note {
+    display: inline-flex;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+
+.zenith-settings__noteMark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0 !important;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-faint);
+    cursor: help;
+}
+
+.zenith-settings__noteMark:hover,
+.zenith-settings__noteMark:focus-visible,
+.zenith-settings__noteMark.is-open {
+    color: var(--text-accent);
+    background: transparent;
+}
+
+.zenith-settings__noteBubble {
+    position: fixed;
+    z-index: 100;
+    max-width: 320px;
+    padding: 9px 11px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-secondary);
+    /* The bubble sits inside the label, which is larger and heavier. Both are
+       reset rather than inherited, or the note reads as a second title. */
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: 1.45;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 32%);
+    /* Never in the way of the pointer that is chasing it. */
+    pointer-events: none;
+}
+
 /* ── Hints ── */
 /* Only inside a row: a hint standing on its own elsewhere keeps its spacing.
    Not applied to a stacked row, where the column direction already puts it on
