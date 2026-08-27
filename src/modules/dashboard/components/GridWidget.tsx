@@ -2,6 +2,7 @@ import React, { useEffect, useRef, type CSSProperties, type FC } from 'react';
 import { X } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
+import { prettifyWidgetId } from '../widgets';
 import type { DashboardWidgetContext, DashboardWidgetDefinition } from '../widgets';
 import { useTranslation } from '../../../core/i18n';
 
@@ -210,12 +211,16 @@ export const GridWidget: FC<GridWidgetProps> = ({
 
             {children ?? (
                 <div className="zenith-widget-card">
-                    {!def.bare && def.title && (
-                        <div className="zenith-widget-card__header">
-                            <DynamicIcon name={def.icon} size={15} />
-                            <span className="zenith-widget-card__title">{def.title}</span>
-                        </div>
-                    )}
+                    {/* Every widget wears the same header. A widget that thinks
+                        its own hero line says enough still gets one, because a
+                        dashboard of cards that disagree about whether they have
+                        a title reads as unfinished rather than as minimal. */}
+                    <div className="zenith-widget-card__header">
+                        <DynamicIcon name={def.icon} size={15} />
+                        <span className="zenith-widget-card__title">
+                            {def.title ?? prettifyWidgetId(def.id)}
+                        </span>
+                    </div>
                     <div className="zenith-widget-card__body">
                         {Body ? <Body size={size} /> : <DomWidgetHost def={def} ctx={ctx} />}
                     </div>

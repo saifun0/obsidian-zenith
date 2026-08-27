@@ -13,12 +13,12 @@
    pip's width (5→14px), which is 9px inside a flex row and can't move the grid.
    ══════════════════════════════════════════════════════ */
 
-/* The header band a bundle keeps for its own chrome: the rail lives in it while
-   collapsed, the row actions while expanded. Declared on the cell rather than on
-   the bundle because the size panel is the bundle's *sibling*, not its child,
-   and has to be able to measure against the same band. */
+/* The header band a bundle keeps for its own chrome. It is the card header's
+   band, not a second one — the rail has to land on the active widget's title,
+   not near it. Declared on the cell rather than on the bundle because the size
+   panel is the bundle's *sibling*, not its child, and measures against it too. */
 .zenith-grid__item {
-    --zenith-bundle-head: 34px;
+    --zenith-bundle-head: var(--zenith-widget-head-h);
 }
 
 .zenith-bundle {
@@ -56,14 +56,6 @@
     opacity: 0.75;
 }
 
-/* Expanded, the pile is open — there is nothing left underneath to hint at. */
-.zenith-bundle.is-expanded .zenith-bundle__shoulder {
-    opacity: 0;
-    transform: scaleX(0.9);
-    transition: opacity 150ms var(--zenith-bundle-ease-std),
-        transform 150ms var(--zenith-bundle-ease-std);
-}
-
 .zenith-bundle__card {
     position: relative;
     display: flex;
@@ -71,7 +63,10 @@
     height: 100%;
     min-height: 0;
     border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-md);
+    /* The same corner a plain widget card has. A bundle is one cell of the
+       dashboard like any other; rounding it differently made it read as a
+       different kind of object sitting among them. */
+    border-radius: var(--zenith-radius-lg);
     background: var(--zenith-bg-secondary);
     box-shadow: var(--zenith-shadow-xs);
     overflow: hidden;
@@ -87,11 +82,6 @@
     min-height: 0;
 }
 
-.zenith-bundle.is-expanded .zenith-bundle__stage {
-    flex: none;
-    height: var(--zenith-bundle-base, 100%);
-}
-
 .zenith-bundle__layer {
     position: absolute;
     inset: 0;
@@ -104,9 +94,17 @@
     pointer-events: none;
 }
 
+/* Inside a bundle the widget card is not a card — the bundle's frame already
+   is one. Left to itself it draws a second hairline a pixel inside the first
+   and curves it to a different radius, which is what puts little ears in every
+   corner where the two disagree. */
 .zenith-bundle__member {
     height: 100%;
     min-height: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
 }
 
 /* Keeps a long widget title from running under the rail. */
@@ -132,14 +130,23 @@
    never a hover affordance, because Obsidian runs on phones too. */
 .zenith-bundle__rail {
     position: absolute;
+    /* The stage already starts inside the frame's border, so this is flush
+       with the card's inner edge — no inset of its own, and no corner of its
+       own either: `overflow: hidden` on the frame clips the rail to exactly
+       the curve the card has, whatever that curve is later changed to.
+       The height stops a pixel short so the header's hairline shows through
+       rather than being painted over, and so the pips centre on the same box
+       the title does. */
     top: 0;
     right: 0;
+    height: calc(var(--zenith-bundle-head) - 1px);
     z-index: 3;
     display: flex;
     align-items: center;
     gap: 4px;
-    height: var(--zenith-bundle-head, 34px);
-    padding: 0 10px 0 8px;
+    box-sizing: border-box;
+    padding: 0 var(--zenith-space-md) 0 8px;
+    /* Opaque, because it floats over the cards cross-fading beneath it. */
     background: var(--zenith-bg-secondary);
 }
 
@@ -152,7 +159,9 @@
 .zenith-root button.zenith-bundle__pip {
     display: flex;
     align-items: center;
-    padding: 8px 2px;
+    /* Generous vertically so the tap target survives on a phone, while the dot
+       it draws stays small. The padding is the target; the dot is the mark. */
+    padding: 7px 2px;
     border: none;
     border-radius: var(--zenith-radius-xs);
     background: none;
@@ -160,18 +169,20 @@
     cursor: pointer;
 }
 
+/* A true circle at rest, a thin bar when active — same height either way, so
+   the rail reads as one row of marks rather than a pill among dots. */
 .zenith-bundle__pip-dot {
     display: block;
-    width: 5px;
-    height: 5px;
-    border-radius: 3px;
-    background: var(--zenith-text-faint);
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--zenith-text-muted);
     transition: width 200ms var(--zenith-bundle-ease-std),
         background-color 200ms var(--zenith-bundle-ease-std);
 }
 
 .zenith-root button.zenith-bundle__pip.is-active .zenith-bundle__pip-dot {
-    width: 14px;
+    width: 13px;
     background: var(--zenith-accent);
 }
 
@@ -179,70 +190,6 @@
     color: var(--zenith-text-faint);
     font-size: 0.62rem;
     font-variant-numeric: tabular-nums;
-}
-
-.zenith-root button.zenith-bundle__toggle {
-    display: flex;
-    align-items: center;
-    padding: 6px 2px;
-    border: none;
-    background: none;
-    box-shadow: none;
-    color: var(--zenith-text-muted);
-    cursor: pointer;
-}
-
-.zenith-root button.zenith-bundle__toggle:hover {
-    background: none;
-    box-shadow: none;
-    color: var(--zenith-text-normal);
-}
-
-/* ── Expanded sections ───────────────────────────────
-   Members below the anchor, divided by hairlines and nothing else: giving each
-   one its own card would put a border inside a border inside the cell. */
-.zenith-bundle__sections {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-height: 0;
-    overflow-y: auto;
-    scrollbar-width: thin;
-}
-
-.zenith-bundle__row {
-    position: relative;
-    display: flex;
-    align-items: stretch;
-    flex: 1 1 0;
-    min-height: 76px;
-    border-top: 1px solid var(--zenith-border);
-}
-
-.zenith-bundle__row-body {
-    flex: 1;
-    min-width: 0;
-}
-
-.zenith-bundle__grip {
-    display: flex;
-    align-items: flex-start;
-    flex: none;
-    padding: 9px 0 0 1px;
-    color: var(--zenith-text-faint);
-    cursor: grab;
-}
-
-.zenith-bundle__row-actions {
-    position: absolute;
-    top: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    height: var(--zenith-bundle-head, 34px);
-    padding: 0 8px;
-    background: var(--zenith-bg-secondary);
 }
 
 .zenith-root button.zenith-bundle__row-btn {
@@ -342,7 +289,7 @@
 }
 
 .zenith-grid__sizes.has-extra {
-    top: var(--zenith-bundle-head, 34px);
+    top: var(--zenith-bundle-head);
     left: 8px;
     right: 8px;
     flex-direction: column;
@@ -352,7 +299,7 @@
     border-radius: var(--zenith-radius-md);
     /* Hangs the same 10px past the bottom edge the pill used to hang past the
        top one; taller member lists scroll rather than outgrow the cell. */
-    max-height: calc(100% - var(--zenith-bundle-head, 34px) + 10px);
+    max-height: calc(100% - var(--zenith-bundle-head) + 10px);
     overflow-y: auto;
     scrollbar-width: thin;
 }
@@ -431,7 +378,6 @@
 
 @media (prefers-reduced-motion: reduce) {
     .zenith-bundle__pip-dot,
-    .zenith-bundle.is-expanded .zenith-bundle__shoulder,
     .zenith-grid.is-merging .zenith-grid__item[data-merge-target] .zenith-widget-card,
     .zenith-grid.is-merging .zenith-grid__item[data-merge-target] .zenith-bundle__card {
         transition: none;

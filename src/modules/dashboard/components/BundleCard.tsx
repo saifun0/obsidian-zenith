@@ -1,12 +1,4 @@
-import React, { useCallback, useLayoutEffect, useRef, type CSSProperties, type FC } from 'react';
-import {
-    ArrowUp,
-    ArrowUpToLine,
-    ChevronsDownUp,
-    ChevronsUpDown,
-    CornerUpRight,
-    GripVertical,
-} from 'lucide-react';
+import React, { useCallback, useRef, type CSSProperties, type FC } from 'react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { useTranslation } from '../../../core/i18n';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
@@ -14,7 +6,7 @@ import type { DashboardWidgetContext, DashboardWidgetDefinition } from '../widge
 import { prettifyWidgetId } from '../widgets';
 import { DomWidgetHost } from './GridWidget';
 import { BUNDLE_MAX_PIPS, type WidgetBundle } from '../grid/bundleTypes';
-import { EASE, useBundleSwitch, useReducedMotion } from '../grid/useBundleSwitch';
+import { useBundleSwitch } from '../grid/useBundleSwitch';
 
 /** Horizontal travel that counts as a swipe rather than a tap. */
 const SWIPE_THRESHOLD_PX = 40;
@@ -43,19 +35,17 @@ const MemberView: FC<MemberViewProps> = ({ def, ctx, size, railReserve, compact 
 
     return (
         <div className="zenith-widget-card zenith-bundle__member">
-            {!def.bare && def.title && (
-                <div className="zenith-widget-card__header">
-                    <DynamicIcon name={def.icon} size={15} />
-                    <span className="zenith-widget-card__title">{def.title}</span>
-                    {railReserve ? (
-                        <span
-                            className="zenith-bundle__reserve"
-                            style={{ width: railReserve }}
-                            aria-hidden="true"
-                        />
-                    ) : null}
-                </div>
-            )}
+            <div className="zenith-widget-card__header">
+                <DynamicIcon name={def.icon} size={15} />
+                <span className="zenith-widget-card__title">{label}</span>
+                {railReserve ? (
+                    <span
+                        className="zenith-bundle__reserve"
+                        style={{ width: railReserve }}
+                        aria-hidden="true"
+                    />
+                ) : null}
+            </div>
             <div className="zenith-widget-card__body">
                 {compact ? (
                     <div className="zenith-bundle__compact">
@@ -79,31 +69,22 @@ interface BundleCardProps {
     size: WidgetSize;
     /** Members that can't render at `size` and fall back to the compact strip. */
     unsupported: Set<string>;
-    expanded: boolean;
     editing: boolean;
-    /**
-     * Height of the cell before expansion, in px. The active widget keeps it
-     * while expanded — it's the anchor that shows the bundle stayed put.
-     */
-    baseHeight: number;
     onSetActive: (widgetId: string) => void;
-    onToggleExpanded: () => void;
-    /** Expanded view only, and only while arranging. */
-    onExtract?: (widgetId: string) => void;
-    onReorder?: (widgetId: string, index: number) => void;
 }
 
 /**
  * A bundle in its cell.
  *
- * At rest it *is* the active widget — same card, same header, no second frame
- * around it. What marks it as a bundle is two small things: the rail of pips in
- * the header, and the shoulder peeking out below the bottom edge (which lives
- * in the grid's gap and so costs the widget no space at all).
+ * It *is* the active widget — same card, same header, no second frame around
+ * it. What marks it as a bundle is two small things: the rail of pips sitting
+ * on the header's own line, and the shoulder peeking out below the bottom edge
+ * (which lives in the grid's gap and so costs the widget no space at all).
  *
- * Expanded, the active widget stays exactly where it was — it's the anchor that
- * shows the bundle didn't move — and the others appear beneath it as sections
- * divided by hairlines.
+ * There is deliberately no way to unfold every member at once. Growing the cell
+ * to stack them was a second layout the dashboard never asked for — the point
+ * of a bundle is that it occupies one cell — and the controls that view carried
+ * now live in the inspector, alongside the rest of the bundle's settings.
  *
  * Design: `Zenith Bundles.dc.html`, model C.
  */
@@ -113,16 +94,10 @@ export const BundleCard: FC<BundleCardProps> = ({
     ctx,
     size,
     unsupported,
-    expanded,
     editing,
-    baseHeight,
     onSetActive,
-    onToggleExpanded,
-    onExtract,
-    onReorder,
 }) => {
     const t = useTranslation();
-    const reduced = useReducedMotion();
     const members = bundle.members;
 
     const { layers, targetId, layerRef, switchTo, step } = useBundleSwitch({
@@ -132,33 +107,10 @@ export const BundleCard: FC<BundleCardProps> = ({
     });
 
     const swipeStart = useRef<{ x: number; y: number } | null>(null);
-    const sectionsRef = useRef<HTMLDivElement>(null);
-
-    /** Sections cascade in on expand; on collapse they leave bottom-up. */
-    useLayoutEffect(() => {
-        const host = sectionsRef.current;
-        if (!host || !expanded) return;
-        const rows = Array.from(host.querySelectorAll<HTMLElement>('[data-bundle-row]'));
-        rows.forEach((row, i) => {
-            row.getAnimations().forEach((a) => a.cancel());
-            if (reduced) {
-                row.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 100, fill: 'both' });
-                return;
-            }
-            row.animate(
-                [
-                    { opacity: 0, transform: 'translateY(8px)' },
-                    { opacity: 1, transform: 'translateY(0px)' },
-                ],
-                { duration: 200, delay: Math.min(i * 40, 200), easing: EASE.out, fill: 'both' }
-            );
-        });
-    }, [expanded, reduced, members]);
 
     const onPointerDown = (e: React.PointerEvent) => {
-        // Arranging owns the pointer (that's a drag), and an expanded bundle
-        // shows everything already — there's nothing to swipe to.
-        if (editing || expanded || e.pointerType === 'mouse') return;
+        // Arranging owns the pointer — there that gesture is a drag, not a swipe.
+        if (editing || e.pointerType === 'mouse') return;
         swipeStart.current = { x: e.clientX, y: e.clientY };
         // Capture so the release still reaches us when the finger travels off
         // the card — otherwise a swipe that overshoots simply does nothing.
@@ -199,16 +151,6 @@ export const BundleCard: FC<BundleCardProps> = ({
                 e.preventDefault();
                 switchTo(members[members.length - 1]);
                 break;
-            case 'Enter':
-                e.preventDefault();
-                onToggleExpanded();
-                break;
-            case 'Escape':
-                if (expanded) {
-                    e.preventDefault();
-                    onToggleExpanded();
-                }
-                break;
         }
     };
 
@@ -230,17 +172,18 @@ export const BundleCard: FC<BundleCardProps> = ({
     );
 
     // Six pips, then a "+N" — past that the rail costs more header than the
-    // widget's own title can spare, and the full list lives in the expansion.
+    // widget's own title can spare, and the full list is in the inspector.
     const shown = members.slice(0, BUNDLE_MAX_PIPS);
     const overflow = members.length - shown.length;
-    const railWidth = shown.length * 9 + 8 + (overflow > 0 ? 22 : 0);
+    // A pip plus its gap, plus the rail's own padding. Generous on purpose: all
+    // it does is stop a long title running under the pips.
+    const railWidth = shown.length * 13 + 18 + (overflow > 0 ? 26 : 0);
 
-    const others = members.filter((id) => id !== targetId);
     const label = (id: string) => defsById.get(id)?.title ?? prettifyWidgetId(id);
 
     return (
         <div
-            className={`zenith-bundle ${expanded ? 'is-expanded' : ''}`}
+            className="zenith-bundle"
             role="group"
             aria-roledescription={t('dashboard.bundle.role')}
             aria-label={bundle.name || t.plural('dashboard.bundle.count', members.length)}
@@ -249,7 +192,6 @@ export const BundleCard: FC<BundleCardProps> = ({
             onPointerDown={onPointerDown}
             onPointerUp={onPointerUp}
             onPointerCancel={() => (swipeStart.current = null)}
-            style={{ '--zenith-bundle-base': `${baseHeight}px` } as CSSProperties}
         >
             {/* The shoulder sits in the grid gap, below the card — it marks a
                 bundle without taking a pixel from the widget. Two at most:
@@ -260,7 +202,10 @@ export const BundleCard: FC<BundleCardProps> = ({
             )}
 
             <div className="zenith-bundle__card">
-                <div className="zenith-bundle__stage" style={{ '--zenith-bundle-rail': `${railWidth}px` } as CSSProperties}>
+                <div
+                    className="zenith-bundle__stage"
+                    style={{ '--zenith-bundle-rail': `${railWidth}px` } as CSSProperties}
+                >
                     {/* Keyed by widget id, never by slot — see `BundleSwitch.layers`. */}
                     {layers.map((id) => (
                         <div
@@ -272,98 +217,38 @@ export const BundleCard: FC<BundleCardProps> = ({
                         </div>
                     ))}
 
+                    {/* Outside the layers on purpose: the pips belong to the
+                        bundle, not to whichever member is on top, so they hold
+                        still while the cards cross-fade underneath them. */}
                     <div className="zenith-bundle__rail">
-                        {!expanded && (
-                            <div className="zenith-bundle__pips" role="tablist" aria-label={t('dashboard.bundle.role')}>
-                                {shown.map((id) => (
-                                    <button
-                                        key={id}
-                                        className={`zenith-bundle__pip ${id === targetId ? 'is-active' : ''}`}
-                                        role="tab"
-                                        aria-selected={id === targetId}
-                                        aria-label={label(id)}
-                                        title={label(id)}
-                                        onPointerDown={(e) => e.stopPropagation()}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            switchTo(id);
-                                        }}
-                                    >
-                                        <span className="zenith-bundle__pip-dot" />
-                                    </button>
-                                ))}
-                                {overflow > 0 && (
-                                    <span className="zenith-bundle__pip-more">+{overflow}</span>
-                                )}
-                            </div>
-                        )}
-                        <button
-                            className="zenith-bundle__toggle"
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onToggleExpanded();
-                            }}
-                            aria-expanded={expanded}
-                            aria-label={t(expanded ? 'dashboard.bundle.collapse' : 'dashboard.bundle.expand')}
-                            title={t(expanded ? 'dashboard.bundle.collapse' : 'dashboard.bundle.expand')}
+                        <div
+                            className="zenith-bundle__pips"
+                            role="tablist"
+                            aria-label={t('dashboard.bundle.role')}
                         >
-                            {expanded ? <ChevronsDownUp size={13} /> : <ChevronsUpDown size={13} />}
-                        </button>
+                            {shown.map((id) => (
+                                <button
+                                    key={id}
+                                    className={`zenith-bundle__pip ${id === targetId ? 'is-active' : ''}`}
+                                    role="tab"
+                                    aria-selected={id === targetId}
+                                    aria-label={label(id)}
+                                    title={label(id)}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        switchTo(id);
+                                    }}
+                                >
+                                    <span className="zenith-bundle__pip-dot" />
+                                </button>
+                            ))}
+                            {overflow > 0 && (
+                                <span className="zenith-bundle__pip-more">+{overflow}</span>
+                            )}
+                        </div>
                     </div>
                 </div>
-
-                {expanded && (
-                    <div className="zenith-bundle__sections" ref={sectionsRef}>
-                        {others.map((id, i) => (
-                            <div className="zenith-bundle__row" data-bundle-row key={id}>
-                                {editing && (
-                                    <span
-                                        className="zenith-bundle__grip"
-                                        aria-hidden="true"
-                                        onPointerDown={(e) => e.stopPropagation()}
-                                    >
-                                        <GripVertical size={13} />
-                                    </span>
-                                )}
-                                <div className="zenith-bundle__row-body">{renderMember(id, 52)}</div>
-                                <div className="zenith-bundle__row-actions">
-                                    {editing && onReorder && i > 0 && (
-                                        <button
-                                            className="zenith-bundle__row-btn"
-                                            onPointerDown={(e) => e.stopPropagation()}
-                                            onClick={() => onReorder(id, members.indexOf(id) - 1)}
-                                            aria-label={t('dashboard.bundle.moveUp')}
-                                            title={t('dashboard.bundle.moveUp')}
-                                        >
-                                            <ArrowUp size={12} />
-                                        </button>
-                                    )}
-                                    {onExtract && (
-                                        <button
-                                            className="zenith-bundle__row-btn"
-                                            onPointerDown={(e) => e.stopPropagation()}
-                                            onClick={() => onExtract(id)}
-                                            aria-label={t('dashboard.bundle.extract')}
-                                            title={t('dashboard.bundle.extract')}
-                                        >
-                                            <CornerUpRight size={12} />
-                                        </button>
-                                    )}
-                                    <button
-                                        className="zenith-bundle__row-btn"
-                                        onPointerDown={(e) => e.stopPropagation()}
-                                        onClick={() => switchTo(id)}
-                                        aria-label={t('dashboard.bundle.bringToTop')}
-                                        title={t('dashboard.bundle.bringToTop')}
-                                    >
-                                        <ArrowUpToLine size={12} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
             </div>
         </div>
     );

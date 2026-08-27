@@ -80,10 +80,6 @@ export class PrayerModule extends BaseModule {
                 sizes: ['sm', 'md', 'lg'],
                 defaultSize: 'md',
                 order: 25,
-                // Chrome-less like the clock and the weather: the hero line
-                // already says which prayer is next, and a header repeating
-                // "Prayer" above it would be the third label in two lines.
-                bare: true,
                 component: PrayerWidget,
             }),
             this.plugin.registerNavAction({

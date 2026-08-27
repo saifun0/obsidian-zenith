@@ -47,7 +47,6 @@ export class DashboardModule extends BaseModule {
                 sizes: ['sm', 'md'],
                 defaultSize: 'sm',
                 order: 10,
-                bare: true,
                 component: TimeWidget,
             })
         );

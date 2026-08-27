@@ -124,11 +124,19 @@
     min-width: 0;
 }
 
+/* Every card wears one, and it is always the same height — that is what makes
+   a row of widgets read as a row rather than as a pile. The hairline is the
+   card's own division: everything above it names the widget, everything below
+   it is the widget. */
 .zenith-widget-card__header {
     display: flex;
     align-items: center;
+    flex: none;
     gap: var(--zenith-space-sm);
-    padding: var(--zenith-space-md) var(--zenith-space-md) 0;
+    box-sizing: border-box;
+    height: var(--zenith-widget-head-h);
+    padding: 0 var(--zenith-space-md);
+    border-bottom: 1px solid var(--zenith-border);
     color: var(--zenith-text-muted);
 }
 
