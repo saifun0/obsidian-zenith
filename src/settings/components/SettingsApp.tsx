@@ -15,12 +15,14 @@ import { useZenithStore } from '../../store';
 import { useApp } from '../../context/AppContext';
 import { useTranslation } from '../../core/i18n';
 import { CheckboxCard } from '../../components/ui/CheckboxCard';
+import { DynamicIcon } from '../../components/shared/DynamicIcon';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
 import { VaultScaffoldModal } from '../../core/VaultScaffoldModal';
 import { IconPickerModal } from '../../core/IconPickerModal';
 import { JournalSettings } from './JournalSettings';
 import { IconPacksSettings } from './IconPacksSettings';
 import { ModuleInstallerPanel } from './ModuleInstaller';
+import { configurableModules } from '../moduleMenu';
 import { CoreSettingsForm } from '../schema/CoreSettingsForm';
 import { appearanceSchema, generalSchema } from '../schema/coreSchemas';
 import { ModuleSettingsForm } from '../schema/ModuleSettingsForm';
@@ -59,20 +61,82 @@ export const SettingsApp: React.FC = () => {
         { id: 'about', icon: <Info size={18} />, titleKey: 'settings.about', descKey: 'settings.about.desc' },
     ];
 
-    const renderRootMenu = () => (
-        <div className="zenith-settings__menu">
-            {MENU.map((m) => (
-                <div key={m.id} className="zenith-settings__menu-item" onClick={() => setActiveCategory(m.id)}>
-                    <div className="zenith-settings__menu-icon">{m.icon}</div>
-                    <div className="zenith-settings__menu-text">
-                        <div className="zenith-settings__menu-title">{t(m.titleKey)}</div>
-                        <div className="zenith-settings__menu-desc">{t(m.descKey)}</div>
-                    </div>
-                    <ChevronRight size={18} className="zenith-settings__menu-chevron" />
+    const menuRow = (
+        key: string,
+        icon: React.ReactNode,
+        title: string,
+        desc: string,
+        onClick: () => void,
+        badge?: string
+    ) => (
+        <div key={key} className="zenith-settings__menu-item" onClick={onClick}>
+            <div className="zenith-settings__menu-icon">{icon}</div>
+            <div className="zenith-settings__menu-text">
+                <div className="zenith-settings__menu-title">
+                    {title}
+                    {badge && <span className="zenith-settings__menu-badge">{badge}</span>}
                 </div>
-            ))}
+                <div className="zenith-settings__menu-desc">{desc}</div>
+            </div>
+            <ChevronRight size={18} className="zenith-settings__menu-chevron" />
         </div>
     );
+
+    /**
+     * Whether a module has anything to show on a settings page.
+     *
+     * The journal is asked about by name because it brings a hand-written page
+     * rather than a schema — the same exception `renderModuleSettings` makes,
+     * and the two have to agree or the list offers a row that opens nothing, or
+     * hides one that would have worked.
+     */
+    const hasSettings = (id: string) =>
+        id === 'journal' || !!plugin.moduleManager.get(id)?.getSettingsSchema?.();
+
+    const renderRootMenu = () => {
+        const modules = configurableModules(
+            availableModules,
+            settings.activeModuleIds,
+            hasSettings
+        );
+
+        return (
+            <>
+                <div className="zenith-settings__menu">
+                    {MENU.map((m) =>
+                        menuRow(m.id, m.icon, t(m.titleKey), t(m.descKey), () =>
+                            setActiveCategory(m.id)
+                        )
+                    )}
+                </div>
+
+                {/* Every module's settings, one click from the front door.
+                    They are also reachable through Active modules, which is
+                    where you go to switch one on — but that is a different
+                    errand from changing what an module you already use does,
+                    and it was the only way to get here. */}
+                {modules.length > 0 && (
+                    <>
+                        <div className="zenith-settings__menu-divider">
+                            {t('settings.moduleSettings')}
+                        </div>
+                        <div className="zenith-settings__menu">
+                            {modules.map((m) =>
+                                menuRow(
+                                    m.id,
+                                    <DynamicIcon name={m.icon ?? ''} fallback={LayoutGrid} size={18} />,
+                                    m.name,
+                                    m.description,
+                                    () => setActiveModuleId(m.id),
+                                    m.isBuiltIn ? undefined : t('settings.thirdPartyBadge')
+                                )
+                            )}
+                        </div>
+                    </>
+                )}
+            </>
+        );
+    };
 
     // ── General ─────────────────────────────────────────────────────────────
 

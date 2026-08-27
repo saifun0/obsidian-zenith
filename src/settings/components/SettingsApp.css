@@ -91,6 +91,44 @@
     overflow: hidden; /* Ensure rounded corners for children */
 }
 
+/* The line between "settings of the plugin" and "settings of its modules".
+   Labelled rather than a bare rule: two identical cards stacked with nothing
+   between them read as one list that happens to have a gap in it. */
+.zenith-settings__menu-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+}
+
+.zenith-settings__menu-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--background-modifier-border);
+}
+
+/* Third-party rows say so. A module is plain JavaScript with the same reach as
+   Obsidian itself, and a list that renders one indistinguishably from a built-in
+   is quietly claiming otherwise. */
+.zenith-settings__menu-badge {
+    margin-left: 8px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--background-modifier-border);
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
 .zenith-settings__menu-item {
     display: flex;
     align-items: center;
