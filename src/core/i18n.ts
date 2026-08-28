@@ -113,10 +113,15 @@ const EN: Dict = {
         'Turn off to remove transitions and dialog motion. Already off when your system asks for reduced motion.',
 
     // Dashboard
-    'settings.dashGreeting': 'Greeting',
-    'settings.dashGreeting.desc': 'Say good morning, afternoon or evening at the top.',
+    'settings.dashHeading': 'Heading',
+    'settings.dashHeading.desc': 'What stands at the top of the dashboard.',
+    'settings.dashHeading.none': 'None',
+    'settings.dashHeading.greeting': 'Greeting',
+    'settings.dashHeading.custom': 'My own',
+    'settings.dashHeadingText': 'Your heading',
+    'settings.dashHeadingText.desc': 'Left empty, the dashboard opens with no heading at all.',
     'settings.dashDate': "Today's date",
-    'settings.dashDate.desc': 'Show the date under the greeting.',
+    'settings.dashDate.desc': 'Show today\u2019s date at the top of the dashboard.',
 
     // Prayer times
     'settings.prayerPlace': 'Location',
@@ -630,15 +635,15 @@ const EN: Dict = {
     'weather.pollen.ragweed': 'Ragweed',
 
     // ── Dashboard ───────────────────────────────────
-    'dashboard.goodNight': 'Good night',
-    'dashboard.goodMorning': 'Good morning',
-    'dashboard.goodAfternoon': 'Good afternoon',
-    'dashboard.goodEvening': 'Good evening',
     'dashboard.editLayout': 'Edit layout',
     'dashboard.doneEditing': 'Done',
     'dashboard.empty': 'No widgets on the dashboard. Use Edit layout to add some.',
     'dashboard.noWidgets': 'No dashboard widgets are enabled. Activate modules in Zenith settings.',
     'dashboard.grid': 'Grid',
+    'dashboard.goodNight': 'Good night',
+    'dashboard.goodMorning': 'Good morning',
+    'dashboard.goodAfternoon': 'Good afternoon',
+    'dashboard.goodEvening': 'Good evening',
     'dashboard.presets': 'Layouts',
     'dashboard.presets.save': 'Save current',
     'dashboard.presets.saveAs': 'Save layout',
@@ -1643,10 +1648,15 @@ const RU: Dict = {
         'Выключите, чтобы убрать переходы и движение диалогов. И так выключены, если система просит уменьшить движение.',
 
     // Дашборд
-    'settings.dashGreeting': 'Приветствие',
-    'settings.dashGreeting.desc': 'Здороваться в шапке в зависимости от времени суток.',
+    'settings.dashHeading': 'Заголовок',
+    'settings.dashHeading.desc': 'Что стоит в шапке дашборда.',
+    'settings.dashHeading.none': 'Нет',
+    'settings.dashHeading.greeting': 'Приветствие',
+    'settings.dashHeading.custom': 'Свой',
+    'settings.dashHeadingText': 'Ваш заголовок',
+    'settings.dashHeadingText.desc': 'Если оставить пустым, дашборд откроется вообще без заголовка.',
     'settings.dashDate': 'Сегодняшняя дата',
-    'settings.dashDate.desc': 'Показывать дату под приветствием.',
+    'settings.dashDate.desc': 'Показывать сегодняшнюю дату в шапке дашборда.',
 
     // Намаз
     'settings.prayerPlace': 'Место',
@@ -2168,15 +2178,15 @@ const RU: Dict = {
     'weather.pollen.ragweed': 'Амброзия',
 
     // ── Дашборд ─────────────────────────────────────
-    'dashboard.goodNight': 'Доброй ночи',
-    'dashboard.goodMorning': 'Доброе утро',
-    'dashboard.goodAfternoon': 'Добрый день',
-    'dashboard.goodEvening': 'Добрый вечер',
     'dashboard.editLayout': 'Настроить раскладку',
     'dashboard.doneEditing': 'Готово',
     'dashboard.empty': 'На дашборде нет виджетов. Нажмите «Настроить раскладку», чтобы добавить.',
     'dashboard.noWidgets': 'Ни один виджет не включён. Активируйте модули в настройках Zenith.',
     'dashboard.grid': 'Сетка',
+    'dashboard.goodNight': 'Доброй ночи',
+    'dashboard.goodMorning': 'Доброе утро',
+    'dashboard.goodAfternoon': 'Добрый день',
+    'dashboard.goodEvening': 'Добрый вечер',
     'dashboard.presets': 'Лайауты',
     'dashboard.presets.save': 'Сохранить текущий',
     'dashboard.presets.saveAs': 'Сохранить лайаут',

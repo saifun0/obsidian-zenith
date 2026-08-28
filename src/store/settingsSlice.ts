@@ -137,8 +137,14 @@ export interface ZenithSettings {
     calendarSlotMinutes: number;
 
     /** Greet the user by time of day at the top of the dashboard. */
-    dashboardShowGreeting: boolean;
     /** Show today's date under the greeting. */
+    /**
+     * What stands at the top of the dashboard: nothing, a greeting that follows
+     * the hour, or a line the user wrote.
+     */
+    dashboardHeading: 'none' | 'greeting' | 'custom';
+    /** The line itself, when `dashboardHeading` is `custom`. */
+    dashboardHeadingText: string;
     dashboardShowDate: boolean;
 
     /**
@@ -545,8 +551,12 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     calendarShowOverdue: true,
     calendarSpanColors: true,
     calendarSlotMinutes: 60,
-    dashboardShowGreeting: true,
-    dashboardShowDate: true,
+    dashboardHeading: 'none',
+    dashboardHeadingText: '',
+    // Off unless asked for. The date is on the clock card, on the calendar and
+    // in Obsidian's own status bar; a dashboard that opens with a bare wall of
+    // cards is the point of it.
+    dashboardShowDate: false,
     prayerPlace: null,
     prayerMethod: DEFAULT_METHOD_ID,
     prayerFajrAngle: 16,

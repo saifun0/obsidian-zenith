@@ -89,7 +89,8 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     calendarSlotMinutes: { scope: 'shared' },
 
     // ── Dashboard content (not placement) ──
-    dashboardShowGreeting: { scope: 'shared' },
+    dashboardHeading: { scope: 'shared' },
+    dashboardHeadingText: { scope: 'shared' },
     dashboardShowDate: { scope: 'shared' },
     dashboardPresets: { scope: 'shared', merge: 'byId' },
 
