@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays, Clock } from 'lucide-react';
-import { moment, TFile, type App } from 'obsidian';
+import { TFile, type App } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import type { DashboardWidgetProps } from '../widgets';
+import {
+    JournalWriter,
+    journalConfig,
+    type JournalConfig,
+} from '../../journal/services/journalWriter';
 import { useTranslation, type Translator } from '../../../core/i18n';
 
 // ── Helpers ──────────────────────────────────────────
@@ -85,57 +90,25 @@ function monthGrid(year: number, month: number): Date[] {
 
 // ── Daily notes ──────────────────────────────────────
 
-interface DailyNotesOptions {
-    folder?: string;
-    format?: string;
-}
-
-/** Read the core Daily Notes plugin's folder/format (untyped internal API);
- *  falls back to a sensible default when the plugin is off. */
-function dailyNotesOptions(app: App): DailyNotesOptions {
-    const internal = (
-        app as unknown as {
-            internalPlugins?: {
-                getPluginById?(id: string): { instance?: { options?: DailyNotesOptions } } | null;
-            };
-        }
-    ).internalPlugins;
-    return internal?.getPluginById?.('daily-notes')?.instance?.options ?? {};
-}
-
-/** Vault path of the daily note for `date`, honouring the configured format. */
-function dailyNotePath(opts: DailyNotesOptions, date: Date): string {
-    // Obsidian's exported `moment` is typed as a namespace; it's callable at
-    // runtime, so cast to the small function shape we need.
-    const m = moment as unknown as (inp?: Date) => { format(fmt: string): string };
-    const name = m(date).format(opts.format?.trim() || 'YYYY-MM-DD');
-    const dir = (opts.folder ?? '').replace(/^\/+|\/+$/g, '');
-    return `${dir ? `${dir}/` : ''}${name}.md`;
-}
-
-/** Open the daily note for `date`, creating it (and any parent folder) if it
- *  doesn't exist yet. Opens in a new tab so the dashboard stays put. */
-async function openDailyNote(app: App, date: Date): Promise<void> {
-    const path = dailyNotePath(dailyNotesOptions(app), date);
-    let file = app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof TFile)) {
-        const slash = path.lastIndexOf('/');
-        if (slash > 0) {
-            const parent = path.slice(0, slash);
-            if (!app.vault.getAbstractFileByPath(parent)) {
-                await app.vault.createFolder(parent).catch(() => undefined);
-            }
-        }
-        try {
-            file = await app.vault.create(path, '');
-        } catch {
-            // Lost a create race (or similar) — fall back to whatever's there now.
-            file = app.vault.getAbstractFileByPath(path);
-        }
-    }
-    if (file instanceof TFile) {
-        await app.workspace.getLeaf('tab').openFile(file);
-    }
+/**
+ * Opening a day from the calendar goes through the journal's own writer.
+ *
+ * It used to read the CORE Daily Notes plugin's folder and format instead,
+ * which is the wrong place twice over. Zenith's journal is deliberately
+ * independent of that plugin — its own folder, pattern and template — so even
+ * with the core plugin on and configured, the calendar could file a note
+ * somewhere the journal would never look for it. And with the core plugin off,
+ * its options object is simply empty: no folder, no format, so every day landed
+ * as `YYYY-MM-DD.md` in the vault root.
+ *
+ * `ensureNote` is the same call the journal view and the check-in widget use.
+ * It builds the note from the configured template, creates whatever folders the
+ * filename pattern implies, and survives two clicks racing each other.
+ */
+async function openDailyNote(app: App, writer: JournalWriter, config: JournalConfig, iso: string) {
+    const file = await writer.ensureNote(config, iso);
+    // A new tab, so the dashboard stays where it was.
+    await app.workspace.getLeaf('tab').openFile(file);
 }
 
 // ── Mini calendar ────────────────────────────────────
@@ -154,6 +127,7 @@ const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) =
     const t = useTranslation();
     const { app } = useApp();
     const tasks = useZenithStore((s) => s.tasks);
+    const settings = useZenithStore((s) => s.settings);
 
     const [view, setView] = useState(() => {
         const d = new Date();
@@ -184,9 +158,11 @@ const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) =
         return set;
     }, [tasks]);
 
-    const dnOpts = useMemo(() => dailyNotesOptions(app), [app]);
-    const hasNote = (d: Date): boolean =>
-        app.vault.getAbstractFileByPath(dailyNotePath(dnOpts, d)) instanceof TFile;
+    const writer = useMemo(() => new JournalWriter(app), [app]);
+    // Rebuilt whenever the journal's folder, pattern or template changes, so a
+    // setting edited in another pane reaches the calendar without a reload.
+    const config = useMemo(() => journalConfig(settings), [settings]);
+    const hasNote = (d: Date): boolean => writer.find(config, ymd(d)) instanceof TFile;
     void tick; // `hasNote` reads the vault live; `tick` just forces a recheck.
 
     const shift = (delta: number) =>
@@ -199,7 +175,9 @@ const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) =
         setView({ y: d.getFullYear(), m: d.getMonth() });
     };
     const openDay = (d: Date) => {
-        void openDailyNote(app, d).then(() => setTick((n) => n + 1));
+        void openDailyNote(app, writer, config, ymd(d))
+            .then(() => setTick((n) => n + 1))
+            .catch((err) => console.error('Zenith: could not open the daily note', err));
     };
 
     return (
