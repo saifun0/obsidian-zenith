@@ -3,35 +3,93 @@
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 /* ── Container ───────────────────────────────────── */
+/* Full width, with the canvas centred inside it. The canvas used to be this
+   element, and the rail a flex sibling of the board — which meant the rail's
+   width came out of the centred box, and the board sat that much left of true
+   centre. The rail is out of the flow now, so the canvas is centred as if it
+   did not exist. */
 .zenith-dashboard {
-    padding: var(--zenith-space-lg) var(--zenith-space-md) var(--zenith-space-2xl);
-    max-width: 920px;
-    margin: 0 auto;
+    /* The board's own inset, named so the rail can be pinned to the same line
+       rather than to a copy of these values — it is positioned out of the flow,
+       so nothing would keep the two in step on its own. */
+    --zenith-dash-pad-y: var(--zenith-space-lg);
+    --zenith-dash-pad-x: var(--zenith-space-md);
+    --zenith-dash-rail-w: 34px;
+
+    /* The rail is out of the flow, so the board would happily run underneath
+       it. The gutter holds the board clear — and it is the same on both sides,
+       because a gutter only on the right would push the board off centre,
+       which is the whole thing taking the rail out of the flow was for. */
+    --zenith-dash-gutter: calc(
+        var(--zenith-dash-pad-x) + var(--zenith-dash-rail-w) + var(--zenith-space-md)
+    );
+
+    position: relative;
+    padding: var(--zenith-dash-pad-y) var(--zenith-dash-gutter) var(--zenith-space-2xl);
     animation: zenith-fade-in var(--zenith-transition-slow);
+}
+
+/* The canvas. Its `max-width` is set inline, from the setting. */
+.zenith-dashboard__main {
+    margin: 0 auto;
+    min-width: 0;
+}
+
+/* A full-height column pinned to the pane's right edge and taken out of the
+   flow. It exists only so the rail inside it has something to be sticky
+   within — `position: sticky` needs a parent that scrolls past it, and an
+   absolutely positioned element cannot be sticky itself. */
+.zenith-dashboard__railwrap {
+    position: absolute;
+    top: var(--zenith-dash-pad-y);
+    bottom: var(--zenith-space-2xl);
+    right: var(--zenith-dash-pad-x);
+    width: var(--zenith-dash-rail-w);
+    pointer-events: none;
+}
+
+/* Sticky rather than scrolling away with the board: these are the controls FOR
+   the board, and a dashboard three screens long would otherwise leave you
+   scrolling back to the top to arrange the bottom of it. */
+.zenith-dashboard__rail {
+    position: sticky;
+    /* The same air the board has above it, so a stuck rail does not end up
+       flush against the top of the pane. */
+    top: var(--zenith-dash-pad-y);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--zenith-space-sm);
+    pointer-events: auto;
+    z-index: 5;
 }
 
 @media (min-width: 720px) {
     .zenith-dashboard {
-        padding: var(--zenith-space-xl) var(--zenith-space-xl) var(--zenith-space-2xl);
+        --zenith-dash-pad-y: var(--zenith-space-xl);
+        --zenith-dash-pad-x: var(--zenith-space-xl);
     }
 }
 
 /* ── Header ──────────────────────────────────────── */
+/* Both halves are optional and by default neither is there, so this element
+   only exists when it has something in it — see the component. */
 .zenith-dashboard__header {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--zenith-space-md);
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
     margin-bottom: var(--zenith-space-lg);
 }
 
 .zenith-dashboard__title {
+    margin: 0;
     font-size: 1.9rem;
     font-weight: 500;
-    color: var(--zenith-text-normal);
-    margin: 0 0 2px;
-    letter-spacing: -0.01em;
     line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--zenith-text-normal);
+    overflow-wrap: anywhere;
 }
 
 @media (min-width: 720px) {
@@ -40,49 +98,156 @@
     }
 }
 
+/* Weekday carried, day and month behind a hairline — the same weighting the
+   clock card gives a date, so the two agree on what a date looks like. */
 .zenith-dashboard__date {
-    font-size: 0.85rem;
-    color: var(--zenith-text-muted);
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    min-width: 0;
     margin: 0;
+    font-size: 1rem;
+    transition: font-size var(--zenith-transition-fast);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.zenith-dashboard__refresh {
+/* Under a heading it is a caption, not the header's own line. */
+.zenith-dashboard__header.has-title .zenith-dashboard__date {
+    font-size: 0.85rem;
+}
+
+.zenith-dashboard__weekday {
+    font-weight: 600;
+    text-transform: capitalize;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-dashboard__daymonth {
+    color: var(--zenith-text-muted);
+}
+
+.zenith-dashboard__daymonth::before {
+    content: '';
+    display: inline-block;
+    width: 1px;
+    height: 0.8em;
+    margin-right: 9px;
+    vertical-align: -0.08em;
+    background: var(--zenith-border);
+}
+
+/* Layouts and arranging share one control: they are the same errand, and three
+   identical squares said nothing about which of them belonged together. */
+.zenith-dashboard__group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-secondary);
+    overflow: hidden;
+}
+
+/* A hairline between them rather than a gap — a gap would make two buttons
+   again. */
+.zenith-dashboard__group .zenith-dashboard__action + .zenith-dashboard__action {
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-dashboard button.zenith-dashboard__action {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
+    width: 32px;
     height: 34px;
-    border-radius: var(--zenith-radius-md);
-    border: 1px solid var(--zenith-border);
-    background: var(--zenith-bg-secondary);
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
     color: var(--zenith-text-muted);
     cursor: pointer;
-    transition: all var(--zenith-transition-fast);
+    transition: color var(--zenith-transition-fast), background var(--zenith-transition-fast);
 }
 
-.zenith-dashboard__refresh:hover:not(:disabled) {
+/* Refreshing is a different errand, so it keeps its own edges. */
+.zenith-dashboard button.zenith-dashboard__action--lone {
+    height: 32px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-secondary);
+}
+
+/* ── Narrow pane: the rail lies down again ───────────
+   A column of buttons costs the same width whatever the pane is, and on a phone
+   that width is a tenth of the board. Above it, it costs a line — which a short
+   board can spare and a narrow one cannot. */
+@media (max-width: 560px) {
+    /* In the flow again, so it needs no gutter held open for it. */
+    .zenith-dashboard {
+        --zenith-dash-gutter: var(--zenith-dash-pad-x);
+    }
+
+    /* Back into the flow, above the board — it comes first in the DOM for
+       exactly this. */
+    .zenith-dashboard__railwrap {
+        position: static;
+        width: auto;
+        margin-bottom: var(--zenith-space-md);
+        pointer-events: auto;
+    }
+
+    .zenith-dashboard__rail {
+        position: static;
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+
+    .zenith-dashboard__group {
+        flex-direction: row;
+    }
+
+    .zenith-dashboard__group .zenith-dashboard__action + .zenith-dashboard__action {
+        border-top: none;
+        border-left: 1px solid var(--zenith-border);
+    }
+
+    .zenith-dashboard button.zenith-dashboard__action {
+        width: 34px;
+        height: 32px;
+    }
+
+    .zenith-dashboard button.zenith-dashboard__action--lone {
+        width: 32px;
+    }
+}
+
+.zenith-dashboard button.zenith-dashboard__action:hover:not(:disabled) {
     color: var(--zenith-text-normal);
     background: var(--zenith-bg-hover);
+    box-shadow: none;
 }
 
-.zenith-dashboard__refresh:disabled {
+.zenith-dashboard button.zenith-dashboard__action:disabled {
     opacity: 0.5;
     cursor: default;
 }
 
-.zenith-dashboard__actions {
-    display: flex;
-    align-items: center;
-    gap: var(--zenith-space-sm);
-    flex-shrink: 0;
+.zenith-dashboard button.zenith-dashboard__action:focus,
+.zenith-dashboard button.zenith-dashboard__action:focus-visible,
+.zenith-dashboard button.zenith-dashboard__action:active {
+    outline: none;
+    box-shadow: none;
 }
 
-/* Edit-layout toggle, while active. */
-.zenith-dashboard__actions .zenith-dashboard__refresh.is-active {
+/* Arranging is a mode, not a click, so the button stays lit for as long as the
+   dashboard is in it. */
+.zenith-dashboard button.zenith-dashboard__action.is-active {
     color: var(--zenith-accent);
-    border-color: var(--zenith-accent);
-    background: color-mix(in srgb, var(--zenith-accent) 14%, transparent);
+    background: color-mix(in srgb, var(--zenith-accent) 16%, transparent);
 }
 
 .zenith-dashboard__empty {

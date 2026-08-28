@@ -20,21 +20,26 @@ import { DashboardGrid } from './DashboardGrid';
 // ── Helpers ──────────────────────────────────────────
 
 /** Translation key for the time-of-day greeting. */
-function greetingKey(): string {
-    const hour = new Date().getHours();
+function greetingKey(hour: number): string {
     if (hour < 5) return 'dashboard.goodNight';
     if (hour < 12) return 'dashboard.goodMorning';
     if (hour < 18) return 'dashboard.goodAfternoon';
     return 'dashboard.goodEvening';
 }
 
-function formatDate(date: Date, locale: string): string {
-    return date.toLocaleDateString(locale, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
+/**
+ * Weekday apart from the rest, and no year suffix.
+ *
+ * Asking the locale for the whole date at once gets "пятница, 28 августа
+ * 2026 г." in Russian — right for prose, and three characters of boilerplate
+ * at the top of a dashboard. The two halves are also weighted differently, the
+ * same way the clock card weights them, so the two agree on what a date is.
+ */
+function formatDateParts(date: Date, locale: string): { weekday: string; dayMonth: string } {
+    return {
+        weekday: date.toLocaleDateString(locale, { weekday: 'long' }),
+        dayMonth: date.toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
+    };
 }
 
 // ── Component ────────────────────────────────────────
@@ -43,7 +48,8 @@ export const DashboardApp: React.FC = () => {
     const { app, plugin } = useApp();
     const savedGrid = useZenithStore((s) => s.settings.dashboardGrid);
     const grid = useMemo(() => normalizeGridConfig(savedGrid), [savedGrid]);
-    const showGreeting = useZenithStore((s) => s.settings.dashboardShowGreeting);
+    const heading = useZenithStore((s) => s.settings.dashboardHeading);
+    const headingText = useZenithStore((s) => s.settings.dashboardHeadingText);
     const showDate = useZenithStore((s) => s.settings.dashboardShowDate);
 
     const presets = useZenithStore((s) => s.settings.dashboardPresets);
@@ -55,8 +61,16 @@ export const DashboardApp: React.FC = () => {
     const hiddenWidgetIds = useZenithStore((s) => s.settings.hiddenWidgetIds);
 
     const t = useTranslation();
-    const greeting = useMemo(() => t(greetingKey()), [t]);
-    const dateStr = useMemo(() => formatDate(new Date(), t.locale), [t.locale]);
+    const { weekday, dayMonth } = useMemo(() => formatDateParts(new Date(), t.locale), [t.locale]);
+
+    /* An empty custom line is the same as no line — rendering the element
+       anyway would leave the header carrying the height of a heading nobody
+       wrote. */
+    const title = useMemo(() => {
+        if (heading === 'greeting') return t(greetingKey(new Date().getHours()));
+        if (heading === 'custom') return headingText.trim();
+        return '';
+    }, [heading, headingText, t]);
     const [refreshing, setRefreshing] = useState(false);
     const [editing, setEditing] = useState(false);
 
@@ -174,39 +188,43 @@ export const DashboardApp: React.FC = () => {
     }, [plugin]);
 
     return (
-        // The canvas width lives here rather than in CSS so the setting can
-        // reach it; `none` is how "run to the edges of the pane" is expressed.
-        <div
-            className="zenith-dashboard"
-            style={{ maxWidth: grid.maxWidth > 0 ? grid.maxWidth : 'none' }}
-        >
-            <header className="zenith-dashboard__header">
-                <div className="zenith-dashboard__greeting">
-                    {showGreeting && (
-                        <h1 className="zenith-dashboard__title zenith-serif">{greeting}</h1>
-                    )}
-                    {showDate && <p className="zenith-dashboard__date">{dateStr}</p>}
-                </div>
-                <div className="zenith-dashboard__actions">
+        <div className="zenith-dashboard">
+            {/* Before the board in the DOM, because on a narrow pane it goes
+                back into the flow and belongs above it. On a wide one it is
+                lifted out of the flow entirely — see the stylesheet. */}
+            <div className="zenith-dashboard__railwrap">
+                {/* A rail beside the board rather than a row above it. Above, the
+                buttons owned a full line of the dashboard's width to hold three
+                icons, and pushed the first row of cards down by it; beside it
+                they cost nothing at all — they are out of the flow, so the
+                canvas is centred as if they were not there. */}
+                <div className="zenith-dashboard__rail">
+                    {/* Layouts and arranging are the same errand, so they share one
+                    control; refreshing is a different one and stands apart.
+                    Three identical squares in a row said none of that. */}
+                    <div className="zenith-dashboard__group">
+                        <button
+                            className="zenith-dashboard__action"
+                            onClick={openPresets}
+                            aria-label={t('dashboard.presets')}
+                            title={t('dashboard.presets')}
+                        >
+                            <LayoutTemplate size={16} />
+                        </button>
+                        <button
+                            className={`zenith-dashboard__action ${editing ? 'is-active' : ''}`}
+                            onClick={() => setEditing((v) => !v)}
+                            aria-pressed={editing}
+                            aria-label={
+                                editing ? t('dashboard.doneEditing') : t('dashboard.editLayout')
+                            }
+                            title={editing ? t('dashboard.doneEditing') : t('dashboard.editLayout')}
+                        >
+                            {editing ? <Check size={16} /> : <LayoutGrid size={16} />}
+                        </button>
+                    </div>
                     <button
-                        className="zenith-dashboard__refresh"
-                        onClick={openPresets}
-                        aria-label={t('dashboard.presets')}
-                        title={t('dashboard.presets')}
-                    >
-                        <LayoutTemplate size={16} />
-                    </button>
-                    <button
-                        className={`zenith-dashboard__refresh ${editing ? 'is-active' : ''}`}
-                        onClick={() => setEditing((v) => !v)}
-                        aria-pressed={editing}
-                        aria-label={editing ? t('dashboard.doneEditing') : t('dashboard.editLayout')}
-                        title={editing ? t('dashboard.doneEditing') : t('dashboard.editLayout')}
-                    >
-                        {editing ? <Check size={16} /> : <LayoutGrid size={16} />}
-                    </button>
-                    <button
-                        className="zenith-dashboard__refresh"
+                        className="zenith-dashboard__action zenith-dashboard__action--lone"
                         onClick={loadData}
                         disabled={refreshing}
                         aria-label={t('common.refresh')}
@@ -215,9 +233,33 @@ export const DashboardApp: React.FC = () => {
                         <RotateCw size={16} className={refreshing ? 'zenith-spin' : ''} />
                     </button>
                 </div>
-            </header>
+            </div>
 
-            <DashboardGrid editing={editing} onEditingChange={setEditing} />
+            {/* The canvas width lives here rather than in CSS so the setting
+                can reach it; `none` is how "run to the edges of the pane" is
+                expressed. */}
+            <div
+                className="zenith-dashboard__main"
+                style={{ maxWidth: grid.maxWidth > 0 ? grid.maxWidth : 'none' }}
+            >
+                {/* Both halves are optional and by default neither is there — a
+                wall of cards says what it is without a caption — so the header
+                is not rendered at all rather than left holding its own
+                margin. */}
+                {(title || showDate) && (
+                    <header className={`zenith-dashboard__header ${title ? 'has-title' : ''}`}>
+                        {title && <h1 className="zenith-dashboard__title zenith-serif">{title}</h1>}
+                        {showDate && (
+                            <p className="zenith-dashboard__date">
+                                <span className="zenith-dashboard__weekday">{weekday}</span>
+                                <span className="zenith-dashboard__daymonth">{dayMonth}</span>
+                            </p>
+                        )}
+                    </header>
+                )}
+
+                <DashboardGrid editing={editing} onEditingChange={setEditing} />
+            </div>
         </div>
     );
 };
