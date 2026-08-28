@@ -150,6 +150,17 @@
     background: var(--zenith-bg-secondary);
 }
 
+/* Says what the pips are pips of. A rail of dots on its own reads as a carousel;
+   the folder says the card is a stack of widgets, which is the thing you have to
+   know before the dots mean anything. */
+.zenith-bundle__mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    color: var(--zenith-text-faint);
+}
+
 .zenith-bundle__pips {
     display: flex;
     align-items: center;
@@ -268,54 +279,20 @@
 }
 
 /* ── Bundle inspector (edit mode) ────────────────────
-   Part of the size panel, because the panel belongs to the *bundle*: a bundle
-   is one cell of the grid, and its members don't have cells of their own.
+   Part of the card's settings face, because it belongs to the *bundle*: a
+   bundle is one cell of the grid, and its members have no cells of their own.
 
-   The plain panel is a pill floating above the card's top-right corner. With a
-   member list inside it that pill grew sideways across the neighbouring widget,
-   so a panel that carries an inspector becomes a block pinned to the card's own
-   width instead.
-
-   Being that wide, it can no longer straddle the card's top edge: the rail sits
-   in that same corner with an opaque background and the same z-index, and being
-   later in the DOM it painted straight over the panel. So the block starts
-   *below* the header band instead. Nothing is lost by it — the header keeps
-   showing which member is on top, and the rail stays live, so a bundle can still
-   be flipped and expanded while the panel is open. */
-.zenith-grid__sizes-row {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-}
-
-.zenith-grid__sizes.has-extra {
-    top: var(--zenith-bundle-head);
-    left: 8px;
-    right: 8px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    padding: 8px 10px;
-    border-radius: var(--zenith-radius-md);
-    /* Hangs the same 10px past the bottom edge the pill used to hang past the
-       top one; taller member lists scroll rather than outgrow the cell. */
-    max-height: calc(100% - var(--zenith-bundle-head) + 10px);
-    overflow-y: auto;
-    scrollbar-width: thin;
-}
-
-.zenith-grid__sizes.has-extra .zenith-grid__sizes-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
+   It used to be appended to the floating size pill, which had to grow a second,
+   block-shaped variant of itself to hold a member list without stretching
+   across the neighbouring widget. The back of the card is already exactly as
+   wide as the bundle, so the variant is gone and this is a plain section. */
 .zenith-bundle-inspector {
     display: flex;
     flex-direction: column;
     gap: 6px;
     width: 100%;
-    padding-top: 7px;
+    margin-top: 2px;
+    padding-top: 8px;
     border-top: 1px solid var(--zenith-border);
 }
 

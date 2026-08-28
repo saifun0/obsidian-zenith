@@ -681,6 +681,13 @@ const EN: Dict = {
     'dashboard.widget.heightHint': 'Height in rows',
     'dashboard.widget.removeFromDashboard': 'Remove from dashboard',
     'dashboard.widget.arrangeHint': '{name} — arrow keys to move',
+    'dashboard.widget.settings': '{name} settings',
+    'dashboard.widget.settingsDone': 'Back to the widget',
+    'dashboard.widget.preset': 'Size',
+    'dashboard.widget.width': 'Width',
+    'dashboard.widget.height': 'Height',
+    'dashboard.widget.rows.one': '{count} row',
+    'dashboard.widget.rows.other': '{count} rows',
 
     // Navigation launcher
     'nav.dashboard': 'Dashboard',
@@ -2204,6 +2211,14 @@ const RU: Dict = {
     'dashboard.widget.heightHint': 'Высота в рядах',
     'dashboard.widget.removeFromDashboard': 'Убрать с дашборда',
     'dashboard.widget.arrangeHint': '{name} — двигайте стрелками',
+    'dashboard.widget.settings': 'Настройки: {name}',
+    'dashboard.widget.settingsDone': 'Вернуться к виджету',
+    'dashboard.widget.preset': 'Размер',
+    'dashboard.widget.width': 'Ширина',
+    'dashboard.widget.height': 'Высота',
+    'dashboard.widget.rows.one': '{count} ряд',
+    'dashboard.widget.rows.few': '{count} ряда',
+    'dashboard.widget.rows.many': '{count} рядов',
 
     // Навигация
     'nav.dashboard': 'Дашборд',

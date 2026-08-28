@@ -121,6 +121,10 @@ interface DashboardGridProps {
  * absolutely, which lets the same drag code serve each of them.
  */
 export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange }) => {
+    /* One card at a time: two open settings faces would be two panels
+       competing for the same attention, and the whole point of putting them
+       on the card is that there is only ever one. */
+    const [flippedId, setFlippedId] = useState<string | null>(null);
     const { app, plugin } = useApp();
     const ctx = useMemo<DashboardWidgetContext>(() => ({ app, plugin }), [app, plugin]);
 
@@ -386,6 +390,12 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
         [bundles, layout, cfg.columns, updateSettings]
     );
 
+    useEffect(() => {
+        // A card cannot show its settings on a dashboard that is not being
+        // arranged, and dragging one is a different intent from configuring it.
+        if (!editing) setFlippedId(null);
+    }, [editing]);
+
     const drag = useGridDrag({
         layout,
         stackItems,
@@ -509,7 +519,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                     editing ? 'is-editing' : ''
                 } ${drag.dragId ? 'is-dragging-any' : ''} ${
                     drag.mergeTargetId ? 'is-merging' : ''
-                }`}
+                } ${flippedId ? 'has-flipped' : ''}`}
                 style={{
                     height: stacked
                         ? liveStack.total
@@ -555,6 +565,8 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                     style={isDragging ? dragStyle(item) : cellStyle(item)}
                                     editing={editing}
                                     dragging={isDragging}
+                                    flipped={flippedId === item.id}
+                                    onFlip={(on) => setFlippedId(on ? item.id : null)}
                                     dragProps={{
                                         ...drag.getItemProps(item.id),
                                         tabIndex: editing && !stacked ? 0 : undefined,
@@ -644,6 +656,8 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                 style={isDragging ? dragStyle(item) : cellStyle(item)}
                                 editing={editing}
                                 dragging={isDragging}
+                                flipped={flippedId === item.id}
+                                onFlip={(on) => setFlippedId(on ? item.id : null)}
                                 dragProps={{
                                     ...drag.getItemProps(item.id),
                                     // Focusable only while arranging, so tab order
