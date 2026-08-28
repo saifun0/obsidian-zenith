@@ -10,6 +10,7 @@ import {
     X,
     Info,
     Brain,
+    Bug,
 } from 'lucide-react';
 import { useZenithStore } from '../../store';
 import { useApp } from '../../context/AppContext';
@@ -23,6 +24,7 @@ import { IconPickerModal } from '../../core/IconPickerModal';
 import { JournalSettings } from './JournalSettings';
 import { IconPacksSettings } from './IconPacksSettings';
 import { ModuleInstallerPanel } from './ModuleInstaller';
+import { DebugPanel } from './debug/DebugPanel';
 import { Toggle } from '../controls';
 import { configurableModules } from '../moduleMenu';
 import { CoreSettingsForm } from '../schema/CoreSettingsForm';
@@ -30,7 +32,7 @@ import { appearanceSchema, generalSchema } from '../schema/coreSchemas';
 import { ModuleSettingsForm } from '../schema/ModuleSettingsForm';
 import type { CoreSettingsSchema } from '../schema/types';
 
-type Category = 'general' | 'appearance' | 'vault' | 'modules' | 'about';
+type Category = 'general' | 'appearance' | 'vault' | 'modules' | 'about' | 'debug';
 
 export const SettingsApp: React.FC = () => {
     const { app, plugin } = useApp();
@@ -436,6 +438,18 @@ export const SettingsApp: React.FC = () => {
                 </div>
 
                 <div className="zenith-about__note">{t('settings.about.note')}</div>
+
+                {/* Debug tools hang off About rather than the front door: every
+                    page behind this button answers a question you only have
+                    while something is broken. */}
+                <div className="zenith-about__debug">
+                    <button
+                        className="zenith-settings__inline-btn"
+                        onClick={() => setActiveCategory('debug')}
+                    >
+                        <Bug size={13} /> {t('settings.about.debug')}
+                    </button>
+                </div>
             </div>
         );
     };
@@ -448,6 +462,7 @@ export const SettingsApp: React.FC = () => {
         vault: 'settings.vault',
         modules: 'settings.modules',
         about: 'settings.about',
+        debug: 'settings.about.debug',
     };
 
     return (
@@ -467,7 +482,14 @@ export const SettingsApp: React.FC = () => {
                         </span>
                     </button>
                 ) : activeCategory ? (
-                    <button className="zenith-settings__back-btn" onClick={() => setActiveCategory(null)}>
+                    <button
+                        className="zenith-settings__back-btn"
+                        // Debug is reached from About, so back goes there and
+                        // not to the root — the way in is the way out.
+                        onClick={() =>
+                            setActiveCategory(activeCategory === 'debug' ? 'about' : null)
+                        }
+                    >
                         <ArrowLeft size={16} />
                         <span className="zenith-settings__back-text">{t(CATEGORY_TITLE[activeCategory])}</span>
                     </button>
@@ -490,6 +512,7 @@ export const SettingsApp: React.FC = () => {
                         {activeCategory === 'vault' && renderVault()}
                         {activeCategory === 'modules' && renderModules()}
                         {activeCategory === 'about' && renderAbout()}
+                        {activeCategory === 'debug' && <DebugPanel />}
                     </>
                 )}
             </div>
