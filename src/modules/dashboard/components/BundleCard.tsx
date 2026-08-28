@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, type CSSProperties, type FC } from 'react';
+import { Folder } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { useTranslation } from '../../../core/i18n';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
@@ -175,9 +176,9 @@ export const BundleCard: FC<BundleCardProps> = ({
     // widget's own title can spare, and the full list is in the inspector.
     const shown = members.slice(0, BUNDLE_MAX_PIPS);
     const overflow = members.length - shown.length;
-    // A pip plus its gap, plus the rail's own padding. Generous on purpose: all
-    // it does is stop a long title running under the pips.
-    const railWidth = shown.length * 13 + 18 + (overflow > 0 ? 26 : 0);
+    // A pip plus its gap, the folder mark, and the rail's own padding.
+    // Generous on purpose: all it does is stop a long title running under it.
+    const railWidth = shown.length * 13 + 38 + (overflow > 0 ? 26 : 0);
 
     const label = (id: string) => defsById.get(id)?.title ?? prettifyWidgetId(id);
 
@@ -221,6 +222,14 @@ export const BundleCard: FC<BundleCardProps> = ({
                         bundle, not to whichever member is on top, so they hold
                         still while the cards cross-fade underneath them. */}
                     <div className="zenith-bundle__rail">
+                        {/* What the pips are pips OF. Without it a rail of
+                            dots is just a rail of dots — the shoulder behind the
+                            card says "there is more here" only to someone who
+                            already knows to look for it. */}
+                        <span className="zenith-bundle__mark" title={t('dashboard.bundle.role')}>
+                            <Folder size={12} />
+                        </span>
+
                         <div
                             className="zenith-bundle__pips"
                             role="tablist"

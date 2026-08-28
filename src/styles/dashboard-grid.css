@@ -21,11 +21,11 @@
 /* The card fills its cell exactly — that's what lines neighbours up. Both need
    border-box or the card's 1px border makes it 2px taller than its cell. */
 .zenith-grid__item,
-.zenith-grid__item > .zenith-widget-card {
+.zenith-widget-flip__front > .zenith-widget-card {
     box-sizing: border-box;
 }
 
-.zenith-grid__item > .zenith-widget-card {
+.zenith-widget-flip__front > .zenith-widget-card {
     height: 100%;
     min-height: 0;
     animation: none; /* placement is animated by the item, not the card */
@@ -66,17 +66,24 @@
     50% { transform: rotate(0.45deg); }
 }
 
-.zenith-grid.is-editing .zenith-grid__item > .zenith-widget-card {
+.zenith-grid.is-editing .zenith-widget-flip__front > .zenith-widget-card {
     animation: zenith-widget-wiggle 0.28s ease-in-out infinite;
     border-color: var(--zenith-border);
     cursor: grab;
 }
 
+/* Everything holds still while one card is showing its settings. A dashboard
+   wobbling behind an open panel is noise, and the wiggle owns the same
+   `transform` the flip needs on the way back. */
+.zenith-grid.is-editing.has-flipped .zenith-widget-flip__front > .zenith-widget-card {
+    animation: none;
+}
+
 /* Stagger so the cards don't wobble in lockstep. */
-.zenith-grid.is-editing .zenith-grid__item:nth-child(2n) > .zenith-widget-card {
+.zenith-grid.is-editing .zenith-grid__item:nth-child(2n) .zenith-widget-flip__front > .zenith-widget-card {
     animation-delay: -0.09s;
 }
-.zenith-grid.is-editing .zenith-grid__item:nth-child(3n) > .zenith-widget-card {
+.zenith-grid.is-editing .zenith-grid__item:nth-child(3n) .zenith-widget-flip__front > .zenith-widget-card {
     animation-delay: -0.17s;
 }
 
@@ -93,7 +100,7 @@
 }
 
 /* Keyboard focus while arranging — arrow keys move the focused widget. */
-.zenith-grid.is-editing .zenith-grid__item:focus-visible > .zenith-widget-card {
+.zenith-grid.is-editing .zenith-grid__item:focus-visible .zenith-widget-flip__front > .zenith-widget-card {
     border-color: var(--zenith-accent);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--zenith-accent) 45%, transparent);
 }
@@ -107,8 +114,8 @@
 
 /* Scoped through `.is-editing` so it out-specifies the wiggle rule above —
    otherwise the animation keeps running and overwrites the lift transform. */
-.zenith-grid.is-editing .zenith-grid__item.is-dragging > .zenith-widget-card,
-.zenith-grid__item.is-dragging > .zenith-widget-card {
+.zenith-grid.is-editing .zenith-grid__item.is-dragging .zenith-widget-flip__front > .zenith-widget-card,
+.zenith-grid__item.is-dragging .zenith-widget-flip__front > .zenith-widget-card {
     animation: none;
     transform: scale(1.02);
     box-shadow: var(--zenith-shadow-lg);
@@ -151,33 +158,164 @@
     outline: none;
 }
 
-/* ── Size picker (edit mode) ─────────────────────── */
-.zenith-grid__sizes {
-    position: absolute;
-    top: -10px;
-    right: 8px;
-    z-index: 3;
-    display: inline-flex;
-    gap: 2px;
-    padding: 3px;
-    border-radius: 999px;
-    background: var(--zenith-bg-primary);
-    border: 1px solid var(--zenith-border);
-    box-shadow: var(--zenith-shadow-sm);
+/* ── The cell has two faces ──────────────────────────
+   While arranging, the widget is the front of a card and its settings are the
+   back. The two rotate in opposite directions around the cell's own centre, so
+   there is no wrapper to rotate — which matters because the wiggle already owns
+   `transform` on the card itself, and two animations on one element overwrite
+   each other. */
+.zenith-grid.is-editing .zenith-grid__item {
+    perspective: 1400px;
 }
 
-/* Scoped with the tag so it out-specifies Obsidian's default button box. */
-.zenith-grid__sizes button.zenith-grid__size {
+.zenith-widget-flip__front {
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 0;
+}
+
+/* Scoped to edit mode rather than always on. A `transform` — even the identity
+   one that makes the front a face — becomes the containing block for any
+   `position: fixed` descendant, and forces a compositing layer per widget. Both
+   are fine for the seconds a dashboard is being arranged and pointless for the
+   rest of its life. */
+.zenith-grid.is-editing .zenith-widget-flip__front,
+.zenith-widget-settings {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transition: transform 460ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.zenith-grid.is-editing .zenith-widget-flip__front {
+    transform: rotateY(0deg);
+}
+
+.zenith-grid.is-editing .zenith-grid__item.is-flipped .zenith-widget-flip__front {
+    transform: rotateY(-180deg);
+}
+
+.zenith-widget-settings {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    transform: rotateY(180deg);
+    border: 1px solid var(--zenith-accent);
+    border-radius: var(--zenith-radius-lg);
+    background: var(--zenith-bg-secondary);
+    box-shadow: var(--zenith-shadow-sm);
+    overflow: hidden;
+    /* Belt and braces with `inert`: a face turned away must not be clickable
+       even where the attribute is unsupported. */
+    pointer-events: none;
+}
+
+.zenith-grid__item.is-flipped .zenith-widget-settings {
+    transform: rotateY(0deg);
+    pointer-events: auto;
+}
+
+/* The same band the widget wears, so turning the card over does not move the
+   line the eye is resting on. */
+.zenith-widget-settings__header {
+    display: flex;
+    align-items: center;
+    flex: none;
+    gap: var(--zenith-space-sm);
+    box-sizing: border-box;
+    height: var(--zenith-widget-head-h);
+    padding: 0 var(--zenith-space-sm) 0 var(--zenith-space-md);
+    border-bottom: 1px solid var(--zenith-border);
+    color: var(--zenith-text-muted);
+}
+
+.zenith-widget-settings__title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.zenith-root button.zenith-widget-settings__done {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    flex: none;
+    width: 24px;
+    height: 24px;
     padding: 0;
     border: none;
+    border-radius: var(--zenith-radius-xs);
+    background: none;
     box-shadow: none;
-    background: transparent;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-widget-settings__done:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+    box-shadow: none;
+}
+
+/* A long member list scrolls rather than outgrowing the cell — the back is
+   exactly the size of the front, which is the whole point of putting it there. */
+.zenith-widget-settings__body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: var(--zenith-space-sm) var(--zenith-space-md) var(--zenith-space-md);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
+.zenith-widget-settings__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 26px;
+}
+
+.zenith-widget-settings__label {
+    font-size: 0.74rem;
+    color: var(--zenith-text-muted);
+    white-space: nowrap;
+}
+
+.zenith-widget-settings__presets,
+.zenith-widget-settings__stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
     border-radius: 999px;
+    background: var(--zenith-bg-primary);
+    border: 1px solid var(--zenith-border);
+}
+
+/* Scoped with the tag so it out-specifies Obsidian's default button box. */
+.zenith-widget-settings button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
     color: var(--zenith-text-muted);
     font-size: 0.68rem;
     font-weight: 700;
@@ -186,22 +324,73 @@
     transition: color var(--zenith-transition-fast), background var(--zenith-transition-fast);
 }
 
-.zenith-grid__sizes button.zenith-grid__size:hover {
+.zenith-widget-settings button:hover:not(:disabled) {
     color: var(--zenith-text-normal);
     background: var(--zenith-bg-hover);
     box-shadow: none;
 }
 
-.zenith-grid__sizes button.zenith-grid__size:focus,
-.zenith-grid__sizes button.zenith-grid__size:focus-visible,
-.zenith-grid__sizes button.zenith-grid__size:active {
+.zenith-widget-settings button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.zenith-widget-settings button:focus,
+.zenith-widget-settings button:focus-visible,
+.zenith-widget-settings button:active {
     outline: none;
     box-shadow: none;
 }
 
-.zenith-grid__sizes button.zenith-grid__size.is-active {
+.zenith-widget-settings__presets button.is-active {
     background: var(--zenith-accent);
     color: #fff;
+}
+
+.zenith-widget-settings__value {
+    min-width: 34px;
+    text-align: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--zenith-text-normal);
+}
+
+/* ── Configure badge (edit mode) ─────────────────── */
+/* Mirrors the remove badge across the card: one corner takes the widget off the
+   dashboard, the other turns it over. */
+.zenith-grid__item button.zenith-grid__configure {
+    position: absolute;
+    top: -9px;
+    right: -9px;
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--zenith-border);
+    border-radius: 50%;
+    background: var(--zenith-bg-primary);
+    box-shadow: var(--zenith-shadow-sm);
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    transition: color var(--zenith-transition-fast), background var(--zenith-transition-fast),
+        border-color var(--zenith-transition-fast);
+}
+
+.zenith-grid__item button.zenith-grid__configure:hover {
+    background: var(--zenith-accent);
+    border-color: var(--zenith-accent);
+    color: #fff;
+    box-shadow: var(--zenith-shadow-sm);
+}
+
+.zenith-grid__item button.zenith-grid__configure:focus,
+.zenith-grid__item button.zenith-grid__configure:focus-visible,
+.zenith-grid__item button.zenith-grid__configure:active {
+    outline: none;
 }
 
 /* Landing spot for the dragged widget. */
@@ -219,8 +408,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .zenith-grid.is-editing .zenith-grid__item > .zenith-widget-card {
+    .zenith-grid.is-editing .zenith-widget-flip__front > .zenith-widget-card {
         animation: none;
+    }
+    /* The faces still swap; they just stop turning to do it. */
+    .zenith-widget-flip__front,
+    .zenith-widget-settings {
+        transition: none;
     }
     .zenith-grid__item,
     .zenith-grid__placeholder {
@@ -349,8 +543,10 @@
 
 /* ── Add-widget gallery (edit mode) ──────────────── */
 .zenith-add-sheet {
-    margin-top: var(--zenith-space-md);
-    padding: var(--zenith-space-md);
+    margin-top: var(--zenith-space-sm);
+    /* Sides and floor match the bars above; the ceiling is theirs too, so the
+       three panels' first lines sit on the same rhythm. */
+    padding: var(--zenith-space-sm) var(--zenith-space-md) var(--zenith-space-md);
     border: 1px dashed var(--zenith-border);
     border-radius: var(--zenith-radius-lg);
     background: color-mix(in srgb, var(--zenith-bg-secondary) 50%, transparent);
@@ -363,7 +559,7 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: var(--zenith-space-sm);
-    margin-bottom: var(--zenith-space-md);
+    margin-bottom: var(--zenith-space-sm);
 }
 
 .zenith-add-sheet__title {
@@ -432,11 +628,11 @@
 }
 
 .zenith-add-sheet__group + .zenith-add-sheet__group {
-    margin-top: var(--zenith-space-md);
+    margin-top: var(--zenith-space-sm);
 }
 
 .zenith-add-sheet__group-label {
-    margin-bottom: 6px;
+    margin-bottom: 3px;
     font-size: 0.68rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -473,7 +669,7 @@
     align-items: center;
     gap: 10px;
     width: 100%;
-    padding: var(--zenith-space-sm) var(--zenith-space-md);
+    padding: 6px var(--zenith-space-md);
     border: 1px solid var(--zenith-border);
     border-radius: var(--zenith-radius-md);
     background: var(--zenith-bg-primary);
@@ -534,6 +730,7 @@
 .zenith-add-sheet__name {
     font-size: 0.88rem;
     font-weight: 500;
+    line-height: 1.3;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -541,6 +738,7 @@
 
 .zenith-add-sheet__meta {
     font-size: 0.72rem;
+    line-height: 1.25;
     color: var(--zenith-text-faint);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -589,38 +787,6 @@
     width: 100%;
 }
 
-/* Width-in-columns stepper, alongside the S/M/L presets. The presets only offer
-   half-width and full-width — identical proportions at any column count — so
-   this is what actually gives the column setting something to do. */
-.zenith-grid__span {
-    display: inline-flex;
-    align-items: center;
-    gap: 1px;
-    padding-left: 3px;
-    margin-left: 2px;
-    border-left: 1px solid var(--zenith-border);
-}
-
-.zenith-grid__span-value {
-    min-width: 2.4em;
-    text-align: center;
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: var(--zenith-text-muted);
-    font-variant-numeric: tabular-nums;
-    cursor: default;
-}
-
-.zenith-grid__sizes button.zenith-grid__size:disabled {
-    opacity: 0.3;
-    cursor: default;
-}
-
-.zenith-grid__span-unit {
-    opacity: 0.6;
-    font-size: 0.9em;
-}
-
 /* ── Saved layouts (.zenith-presets) ─────────────────
    Sits under the grid controls while arranging, in the same quiet card so the
    two read as one row of tools rather than two competing panels. */
@@ -629,6 +795,8 @@
     align-items: center;
     flex-wrap: wrap;
     gap: var(--zenith-space-sm) var(--zenith-space-md);
+    /* One gap between the panels; the grid bar above carries the larger break
+       from the dashboard itself, so the three read as one block. */
     margin-top: var(--zenith-space-sm);
     padding: var(--zenith-space-sm) var(--zenith-space-md);
     border: 1px solid var(--zenith-border);
