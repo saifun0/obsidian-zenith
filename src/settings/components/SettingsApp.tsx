@@ -22,6 +22,7 @@ import { IconPickerModal } from '../../core/IconPickerModal';
 import { JournalSettings } from './JournalSettings';
 import { IconPacksSettings } from './IconPacksSettings';
 import { ModuleInstallerPanel } from './ModuleInstaller';
+import { Toggle } from '../controls';
 import { configurableModules } from '../moduleMenu';
 import { CoreSettingsForm } from '../schema/CoreSettingsForm';
 import { appearanceSchema, generalSchema } from '../schema/coreSchemas';
@@ -102,6 +103,13 @@ export const SettingsApp: React.FC = () => {
 
         return (
             <>
+                {/* The module list below announces itself with a label; the
+                    plugin's own settings sat above it unannounced, so the two
+                    groups read as one list with a caption stuck in the middle.
+                    Both are titled now, and the page is symmetric. */}
+                <div className="zenith-settings__menu-divider">
+                    {t('settings.pluginSettings')}
+                </div>
                 <div className="zenith-settings__menu">
                     {MENU.map((m) =>
                         menuRow(m.id, m.icon, t(m.titleKey), t(m.descKey), () =>
@@ -143,29 +151,6 @@ export const SettingsApp: React.FC = () => {
     const renderGeneral = () => (
         <div className="zenith-settings__content">
             <CoreSettingsForm schema={generalSchema} />
-        </div>
-    );
-
-    const renderToggle = (
-        nameKey: string,
-        descKey: string,
-        checked: boolean,
-        onChange: (v: boolean) => void
-    ) => (
-        <div className="zenith-settings__item">
-            <div className="zenith-settings__item-info">
-                <span className="zenith-settings__item-name">{t(nameKey)}</span>
-                <span className="zenith-settings__item-desc">{t(descKey)}</span>
-            </div>
-            <div className="zenith-settings__item-control">
-                <label className="zenith-settings__toggle-label">
-                    <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={(e) => onChange(e.target.checked)}
-                    />
-                </label>
-            </div>
         </div>
     );
 
@@ -302,10 +287,6 @@ export const SettingsApp: React.FC = () => {
 
         return (
             <div className="zenith-settings__content">
-                <div className="zenith-settings__hint zenith-settings__hint--info">
-                    {t('settings.moduleToggleHint')}
-                </div>
-
                 {builtIn.length > 0 && (
                     <div className="zenith-settings__module-group">
                         <h3 className="zenith-settings__group-title">{t('settings.builtInModules')}</h3>
@@ -316,19 +297,32 @@ export const SettingsApp: React.FC = () => {
                 <div className="zenith-settings__module-group">
                     <h3 className="zenith-settings__group-title">{t('settings.thirdPartyModules')}</h3>
 
-                    {/* Permanent, not just at install time. A module is plain
-                        JavaScript with the same reach as Obsidian itself, and
-                        the UI must never imply Zenith sandboxes it. */}
-                    <div className="zenith-settings__hint zenith-settings__hint--warn">
-                        {t('settings.thirdPartyWarning')}
+                    {/* The risk is stated permanently, not just at install
+                        time — a module is plain JavaScript with the same reach
+                        as Obsidian itself, and the UI must never imply Zenith
+                        sandboxes it. What that costs the page is one line; the
+                        paragraph spelling it out is a click away rather than a
+                        banner to scroll past on every visit. */}
+                    <div className="zenith-settings__item">
+                        <div className="zenith-settings__item-info">
+                            <span className="zenith-settings__item-name">
+                                {t('settings.allowThirdParty')}
+                            </span>
+                            <span className="zenith-settings__item-desc">
+                                {t('settings.thirdPartyWarning.short')}
+                            </span>
+                            <details className="zenith-settings__disclosure">
+                                <summary>{t('settings.thirdPartyWarning.more')}</summary>
+                                <p>{t('settings.thirdPartyWarning')}</p>
+                            </details>
+                        </div>
+                        <div className="zenith-settings__item-control">
+                            <Toggle
+                                checked={settings.allowThirdPartyModules}
+                                onChange={(v) => updateSettings({ allowThirdPartyModules: v })}
+                            />
+                        </div>
                     </div>
-
-                    {renderToggle(
-                        'settings.allowThirdParty',
-                        'settings.allowThirdParty.desc',
-                        settings.allowThirdPartyModules,
-                        (v) => updateSettings({ allowThirdPartyModules: v })
-                    )}
 
                     {thirdParty.length > 0 ? (
                         <>
@@ -465,7 +459,10 @@ export const SettingsApp: React.FC = () => {
                         <span className="zenith-settings__back-text">{t(CATEGORY_TITLE[activeCategory])}</span>
                     </button>
                 ) : (
-                    <h2 className="zenith-settings__title">{t('settings.title')}</h2>
+                    <h2 className="zenith-settings__title">
+                        <Brain size={20} className="zenith-settings__title-icon" />
+                        {t('settings.title')}
+                    </h2>
                 )}
             </div>
 

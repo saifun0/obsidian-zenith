@@ -104,7 +104,9 @@
 .zenith-checkbox-card.is-checked .zenith-checkbox-card__indicator {
     background: var(--interactive-accent);
     border-color: var(--interactive-accent);
-    color: var(--background-primary);
+    /* The colour meant for text sitting on the accent, not the page colour —
+       which in a dark theme drew a near-black tick on a bright square. */
+    color: var(--text-on-accent, #fff);
 }
 
 /* `margin-left: auto` pushes the pair to the right edge; the gear keeps its

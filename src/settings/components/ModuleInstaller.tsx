@@ -35,7 +35,6 @@ export const ModuleInstallerPanel: React.FC = () => {
     const t = useTranslation();
     const { plugin } = useApp();
     const installed = useZenithStore((s) => s.settings.installedModules);
-    const allowed = useZenithStore((s) => s.settings.allowThirdPartyModules);
 
     const installer = useMemo(() => new Installer(plugin), [plugin]);
 
@@ -79,9 +78,13 @@ export const ModuleInstallerPanel: React.FC = () => {
         kind === 'paste' ? pasteManifest.trim() !== '' && pasteCode.trim() !== '' : ref.trim() !== '';
 
     return (
-        <>
+        <div className="zenith-modinstall">
             <div className="zenith-settings__section-label">{t('modules.install')}</div>
 
+            {/* Source picker, field and button in one bordered box. Loose on the
+                page they read as three unrelated controls that happen to be
+                stacked, which is how the section grew a label per row. */}
+            <div className="zenith-modinstall__form">
             <Segmented
                 value={kind}
                 onChange={(v) => {
@@ -122,23 +125,26 @@ export const ModuleInstallerPanel: React.FC = () => {
                         onChange={setRef}
                     />
                 )}
-                <div className="zenith-settings__item-desc">{t(`modules.hint.${kind}`)}</div>
             </div>
 
-            <button
-                className="zenith-settings__inline-btn zenith-settings__inline-btn--cta"
-                disabled={!canInstall || status.kind === 'busy'}
-                onClick={install}
-            >
-                <Download size={13} /> {t('modules.installButton')}
-            </button>
+            {/* The button says what it is doing, so fetching needs no banner of
+                its own; only a failure gets one. */}
+            <div className="zenith-modinstall__foot">
+                <button
+                    className="zenith-settings__inline-btn zenith-settings__inline-btn--cta"
+                    disabled={!canInstall || status.kind === 'busy'}
+                    onClick={install}
+                >
+                    <Download size={13} />
+                    {status.kind === 'busy' ? t('modules.working') : t('modules.installButton')}
+                </button>
+                <span className="zenith-modinstall__note">{t(`modules.hint.${kind}`)}</span>
+            </div>
 
-            {status.kind === 'busy' && (
-                <div className="zenith-settings__hint">{status.text}</div>
-            )}
             {status.kind === 'error' && (
                 <div className="zenith-settings__hint zenith-settings__hint--warn">{status.text}</div>
             )}
+            </div>
 
             {installed.length > 0 && (
                 <>
@@ -193,10 +199,6 @@ export const ModuleInstallerPanel: React.FC = () => {
                     ))}
                 </>
             )}
-
-            {!allowed && installed.length > 0 && (
-                <div className="zenith-settings__hint">{t('settings.thirdPartyBlocked')}</div>
-            )}
-        </>
+        </div>
     );
 };
