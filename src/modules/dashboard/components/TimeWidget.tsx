@@ -1,10 +1,15 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays, Clock } from 'lucide-react';
-import { moment, TFile, type App } from 'obsidian';
+import { TFile, type App } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import type { DashboardWidgetProps } from '../widgets';
-import { useTranslation } from '../../../core/i18n';
+import {
+    JournalWriter,
+    journalConfig,
+    type JournalConfig,
+} from '../../journal/services/journalWriter';
+import { useTranslation, type Translator } from '../../../core/i18n';
 
 // ── Helpers ──────────────────────────────────────────
 
@@ -17,14 +22,31 @@ function dayProgress(date: Date): number {
     return (seconds / 86400) * 100;
 }
 
-/** Time left today, precise enough to be worth reading near the end of it. */
-function formatRemaining(date: Date): string {
+/**
+ * Time left today, precise enough to be worth reading near the end of it.
+ *
+ * Three phrasings rather than one with optional parts: an hour count and a
+ * minute count decline differently in Russian, and "0 h 12 m" is not something
+ * anyone says.
+ */
+function formatRemaining(t: Translator, date: Date): string {
     const mins = 24 * 60 - (date.getHours() * 60 + date.getMinutes());
     const h = Math.floor(mins / 60);
     const m = mins % 60;
-    if (h === 0) return `${m}m left`;
-    if (h < 2) return `${h}h ${m}m left`;
-    return `${h}h left`;
+    if (h === 0) return t('clock.dayLeft.m', { minutes: m });
+    if (h < 2) return t('clock.dayLeft.hm', { hours: h, minutes: m });
+    return t('clock.dayLeft.h', { hours: h });
+}
+
+/**
+ * The locale to format dates in.
+ *
+ * Zenith's own language, not the machine's. The widget used to pass `undefined`
+ * to `toLocaleDateString`, which follows the OS — so a Russian interface could
+ * show English weekday names, and nothing in settings would explain why.
+ */
+function dateLocale(t: Translator): string {
+    return t.locale === 'ru' ? 'ru-RU' : 'en-GB';
 }
 
 /** Local `yyyy-mm-dd` key (stable identity for "is this cell today?"). */
@@ -34,10 +56,29 @@ function ymd(d: Date): string {
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 
-/** Monday-first weekday labels, localized (Jan 1 2024 was a Monday). */
-const WEEKDAYS = Array.from({ length: 7 }, (_, i) =>
-    new Date(2024, 0, 1 + i).toLocaleDateString(undefined, { weekday: 'short' })
-);
+/**
+ * How brightly an hour that has already passed still burns.
+ *
+ * A flat fill tells you how much of the day is gone, which the percentage under
+ * the strip already says in words. Fading with distance says something the
+ * number cannot: where you have just been. The recent hours stay bright and the
+ * morning dims behind them, so the strip carries a tail pointing at now.
+ *
+ * It bottoms out rather than reaching zero — an hour that has passed is still
+ * an hour that happened, and a strip whose left end disappears reads as broken
+ * rather than as old.
+ */
+function hourGlow(hour: number, currentHour: number): number {
+    if (hour >= currentHour) return 1;
+    return Math.max(0.3, 1 - (currentHour - hour) * 0.055);
+}
+
+/** Monday-first weekday labels (Jan 1 2024 was a Monday). */
+function weekdayLabels(locale: string): string[] {
+    return Array.from({ length: 7 }, (_, i) =>
+        new Date(2024, 0, 1 + i).toLocaleDateString(locale, { weekday: 'short' })
+    );
+}
 
 /** 42 dates (6 weeks) covering `month`, Monday-aligned, with adjacent-month
  *  spill days so every row is full. */
@@ -49,57 +90,25 @@ function monthGrid(year: number, month: number): Date[] {
 
 // ── Daily notes ──────────────────────────────────────
 
-interface DailyNotesOptions {
-    folder?: string;
-    format?: string;
-}
-
-/** Read the core Daily Notes plugin's folder/format (untyped internal API);
- *  falls back to a sensible default when the plugin is off. */
-function dailyNotesOptions(app: App): DailyNotesOptions {
-    const internal = (
-        app as unknown as {
-            internalPlugins?: {
-                getPluginById?(id: string): { instance?: { options?: DailyNotesOptions } } | null;
-            };
-        }
-    ).internalPlugins;
-    return internal?.getPluginById?.('daily-notes')?.instance?.options ?? {};
-}
-
-/** Vault path of the daily note for `date`, honouring the configured format. */
-function dailyNotePath(opts: DailyNotesOptions, date: Date): string {
-    // Obsidian's exported `moment` is typed as a namespace; it's callable at
-    // runtime, so cast to the small function shape we need.
-    const m = moment as unknown as (inp?: Date) => { format(fmt: string): string };
-    const name = m(date).format(opts.format?.trim() || 'YYYY-MM-DD');
-    const dir = (opts.folder ?? '').replace(/^\/+|\/+$/g, '');
-    return `${dir ? `${dir}/` : ''}${name}.md`;
-}
-
-/** Open the daily note for `date`, creating it (and any parent folder) if it
- *  doesn't exist yet. Opens in a new tab so the dashboard stays put. */
-async function openDailyNote(app: App, date: Date): Promise<void> {
-    const path = dailyNotePath(dailyNotesOptions(app), date);
-    let file = app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof TFile)) {
-        const slash = path.lastIndexOf('/');
-        if (slash > 0) {
-            const parent = path.slice(0, slash);
-            if (!app.vault.getAbstractFileByPath(parent)) {
-                await app.vault.createFolder(parent).catch(() => undefined);
-            }
-        }
-        try {
-            file = await app.vault.create(path, '');
-        } catch {
-            // Lost a create race (or similar) — fall back to whatever's there now.
-            file = app.vault.getAbstractFileByPath(path);
-        }
-    }
-    if (file instanceof TFile) {
-        await app.workspace.getLeaf('tab').openFile(file);
-    }
+/**
+ * Opening a day from the calendar goes through the journal's own writer.
+ *
+ * It used to read the CORE Daily Notes plugin's folder and format instead,
+ * which is the wrong place twice over. Zenith's journal is deliberately
+ * independent of that plugin — its own folder, pattern and template — so even
+ * with the core plugin on and configured, the calendar could file a note
+ * somewhere the journal would never look for it. And with the core plugin off,
+ * its options object is simply empty: no folder, no format, so every day landed
+ * as `YYYY-MM-DD.md` in the vault root.
+ *
+ * `ensureNote` is the same call the journal view and the check-in widget use.
+ * It builds the note from the configured template, creates whatever folders the
+ * filename pattern implies, and survives two clicks racing each other.
+ */
+async function openDailyNote(app: App, writer: JournalWriter, config: JournalConfig, iso: string) {
+    const file = await writer.ensureNote(config, iso);
+    // A new tab, so the dashboard stays where it was.
+    await app.workspace.getLeaf('tab').openFile(file);
 }
 
 // ── Mini calendar ────────────────────────────────────
@@ -118,6 +127,7 @@ const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) =
     const t = useTranslation();
     const { app } = useApp();
     const tasks = useZenithStore((s) => s.tasks);
+    const settings = useZenithStore((s) => s.settings);
 
     const [view, setView] = useState(() => {
         const d = new Date();
@@ -126,11 +136,16 @@ const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) =
     // Bumped after creating a note so its dot appears without a full reload.
     const [tick, setTick] = useState(0);
 
+    const locale = dateLocale(t);
     const cells = useMemo(() => monthGrid(view.y, view.m), [view]);
-    const title = useMemo(
-        () => new Date(view.y, view.m, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }),
-        [view]
-    );
+    const weekdays = useMemo(() => weekdayLabels(locale), [locale]);
+    // Month and year formatted apart and joined by hand. Asking the locale for
+    // both at once gets "август 2026 г." in Russian — correct for prose, and
+    // three characters of legal boilerplate in a calendar header.
+    const title = useMemo(() => {
+        const first = new Date(view.y, view.m, 1);
+        return `${first.toLocaleDateString(locale, { month: 'long' })} ${view.y}`;
+    }, [view, locale]);
 
     // Set of `yyyy-mm-dd` that carry at least one task, for the day dots.
     const taskDays = useMemo(() => {
@@ -143,9 +158,11 @@ const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) =
         return set;
     }, [tasks]);
 
-    const dnOpts = useMemo(() => dailyNotesOptions(app), [app]);
-    const hasNote = (d: Date): boolean =>
-        app.vault.getAbstractFileByPath(dailyNotePath(dnOpts, d)) instanceof TFile;
+    const writer = useMemo(() => new JournalWriter(app), [app]);
+    // Rebuilt whenever the journal's folder, pattern or template changes, so a
+    // setting edited in another pane reaches the calendar without a reload.
+    const config = useMemo(() => journalConfig(settings), [settings]);
+    const hasNote = (d: Date): boolean => writer.find(config, ymd(d)) instanceof TFile;
     void tick; // `hasNote` reads the vault live; `tick` just forces a recheck.
 
     const shift = (delta: number) =>
@@ -158,29 +175,40 @@ const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) =
         setView({ y: d.getFullYear(), m: d.getMonth() });
     };
     const openDay = (d: Date) => {
-        void openDailyNote(app, d).then(() => setTick((n) => n + 1));
+        void openDailyNote(app, writer, config, ymd(d))
+            .then(() => setTick((n) => n + 1))
+            .catch((err) => console.error('Zenith: could not open the daily note', err));
     };
 
     return (
         <div className="zenith-cal">
+            {/* Title left, both arrows together on the right. Stranding the
+                title between them made two controls that do the same kind of
+                thing sit as far apart as the header allowed. */}
             <div className="zenith-cal__head">
-                <button
-                    className="zenith-cal__nav"
-                    onClick={() => shift(-1)}
-                    aria-label={t('clock.prevMonth')}
-                >
-                    <ChevronLeft size={15} />
-                </button>
                 <button className="zenith-cal__title" onClick={reset} title={t('clock.thisMonth')}>
                     {title}
                 </button>
-                <button className="zenith-cal__nav" onClick={() => shift(1)} aria-label={t('clock.nextMonth')}>
-                    <ChevronRight size={15} />
-                </button>
+                <span className="zenith-cal__nav-group">
+                    <button
+                        className="zenith-cal__nav"
+                        onClick={() => shift(-1)}
+                        aria-label={t('clock.prevMonth')}
+                    >
+                        <ChevronLeft size={15} />
+                    </button>
+                    <button
+                        className="zenith-cal__nav"
+                        onClick={() => shift(1)}
+                        aria-label={t('clock.nextMonth')}
+                    >
+                        <ChevronRight size={15} />
+                    </button>
+                </span>
             </div>
 
             <div className="zenith-cal__weekdays" aria-hidden="true">
-                {WEEKDAYS.map((w, i) => (
+                {weekdays.map((w, i) => (
                     <span key={i} className={`zenith-cal__wd ${i >= 5 ? 'is-weekend' : ''}`}>
                         {w}
                     </span>
@@ -207,7 +235,12 @@ const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) =
                             className={cls}
                             onClick={() => openDay(d)}
                             aria-current={key === todayStr ? 'date' : undefined}
-                            title={`Open daily note — ${key}`}
+                            title={t('clock.openDay', {
+                                date: d.toLocaleDateString(locale, {
+                                    day: 'numeric',
+                                    month: 'long',
+                                }),
+                            })}
                         >
                             <span className="zenith-cal__num">{d.getDate()}</span>
                             <span className="zenith-cal__dots">
@@ -237,6 +270,7 @@ const COMPACT_WIDTH = 400;
  * a single pane the user flips with a floating toggle on the right edge.
  */
 export const TimeWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
+    const t = useTranslation();
     const [now, setNow] = useState(() => new Date());
 
     useEffect(() => {
@@ -265,8 +299,9 @@ export const TimeWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
     const seconds = padTwo(now.getSeconds());
     const currentHour = now.getHours();
     const progress = dayProgress(now);
-    const weekday = now.toLocaleDateString(undefined, { weekday: 'long' });
-    const dayMonth = now.toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
+    const locale = dateLocale(t);
+    const weekday = now.toLocaleDateString(locale, { weekday: 'long' });
+    const dayMonth = now.toLocaleDateString(locale, { day: 'numeric', month: 'long' });
 
     const showClock = !compact || view === 'clock';
     const showCalendar = !compact || view === 'calendar';
@@ -282,29 +317,56 @@ export const TimeWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
                         <span>{hours}</span>
                         <span className="zenith-clock__colon">:</span>
                         <span>{minutes}</span>
+                        {/* Sits on the digits' own baseline. Raised like a
+                            footnote it read as an annotation on the time rather
+                            than as part of it. */}
                         <span className="zenith-clock__seconds">{seconds}</span>
                     </div>
-                    <div className="zenith-clock__weekday">{weekday}</div>
-                    <div className="zenith-clock__date">{dayMonth}</div>
+
+                    {/* One line, not two stacked labels: this is a date, and a
+                        date is read as a date. */}
+                    <div className="zenith-clock__date">
+                        <span className="zenith-clock__weekday">{weekday}</span>
+                        <span className="zenith-clock__daymonth">{dayMonth}</span>
+                    </div>
 
                     <div className="zenith-clock__day">
+                        {/* Two instruments, not one. The hours are the ruler —
+                            fixed, countable, with a taller mark every six so the
+                            day has landmarks to read against. The needle is the
+                            reading, and it moves every minute rather than once
+                            an hour, which is the whole difference between a
+                            clock and a progress bar. */}
                         <div
-                            className="zenith-clock__hours"
+                            className="zenith-clock__strip"
                             role="img"
-                            aria-label={`${Math.round(progress)} percent of the day elapsed`}
+                            aria-label={t('clock.dayLabel', { percent: Math.round(progress) })}
                         >
-                            {HOURS.map((h) => (
-                                <span
-                                    key={h}
-                                    className={`zenith-clock__tick ${h < currentHour ? 'is-past' : ''} ${
-                                        h === currentHour ? 'is-now' : ''
-                                    }`}
-                                />
-                            ))}
+                            <div className="zenith-clock__hours">
+                                {HOURS.map((h) => (
+                                    <span
+                                        key={h}
+                                        className={`zenith-clock__tick ${
+                                            h < currentHour ? 'is-past' : ''
+                                        } ${h % 6 === 0 ? 'is-mark' : ''}`}
+                                        style={
+                                            {
+                                                '--i': h,
+                                                '--glow': hourGlow(h, currentHour),
+                                            } as CSSProperties
+                                        }
+                                    />
+                                ))}
+                            </div>
+                            <span
+                                className="zenith-clock__needle"
+                                style={{ left: `${progress}%` }}
+                                aria-hidden="true"
+                            />
                         </div>
                         <div className="zenith-clock__meta">
-                            <span>{Math.round(progress)}% of day</span>
-                            <span>{formatRemaining(now)}</span>
+                            <span>{t('clock.dayElapsed', { percent: Math.round(progress) })}</span>
+                            <span>{formatRemaining(t, now)}</span>
                         </div>
                     </div>
                 </div>
@@ -316,8 +378,8 @@ export const TimeWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
                 <button
                     className="zenith-clock__toggle"
                     onClick={() => setView((v) => (v === 'clock' ? 'calendar' : 'clock'))}
-                    aria-label={view === 'clock' ? 'Show calendar' : 'Show clock'}
-                    title={view === 'clock' ? 'Show calendar' : 'Show clock'}
+                    aria-label={t(view === 'clock' ? 'clock.showCalendar' : 'clock.showClock')}
+                    title={t(view === 'clock' ? 'clock.showCalendar' : 'clock.showClock')}
                 >
                     {view === 'clock' ? <CalendarDays size={16} /> : <Clock size={16} />}
                 </button>

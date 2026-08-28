@@ -1097,6 +1097,14 @@ const EN: Dict = {
     'clock.prevMonth': 'Previous month',
     'clock.nextMonth': 'Next month',
     'clock.thisMonth': 'Back to current month',
+    'clock.showCalendar': 'Show the calendar',
+    'clock.showClock': 'Show the clock',
+    'clock.dayElapsed': '{percent}% of today',
+    'clock.dayLeft.h': '{hours} h left',
+    'clock.dayLeft.hm': '{hours} h {minutes} m left',
+    'clock.dayLeft.m': '{minutes} m left',
+    'clock.dayLabel': '{percent}% of the day has passed',
+    'clock.openDay': 'Open the note for {date}',
 
     // ── Journal ─────────────────────────────────────
     'journal.title': 'Journal',
@@ -2639,6 +2647,14 @@ const RU: Dict = {
     'clock.prevMonth': 'Предыдущий месяц',
     'clock.nextMonth': 'Следующий месяц',
     'clock.thisMonth': 'К текущему месяцу',
+    'clock.showCalendar': 'Показать календарь',
+    'clock.showClock': 'Показать часы',
+    'clock.dayElapsed': '{percent}% сегодняшнего дня',
+    'clock.dayLeft.h': 'осталось {hours} ч',
+    'clock.dayLeft.hm': 'осталось {hours} ч {minutes} мин',
+    'clock.dayLeft.m': 'осталось {minutes} мин',
+    'clock.dayLabel': 'Прошло {percent}% дня',
+    'clock.openDay': 'Открыть заметку за {date}',
 
     // ── Журнал ──────────────────────────────────────
     'journal.title': 'Журнал',
