@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Notice, TFolder } from 'obsidian';
 import { useApp } from '../../context/AppContext';
 import { useTranslation } from '../../core/i18n';
+import { translateNow } from '../../core/i18n';
 
 /**
  * A vault folder path, with the one affordance that makes it usable: telling
@@ -28,11 +29,11 @@ export const FolderInput: React.FC<{
     const create = async () => {
         try {
             await app.vault.createFolder(path);
-            new Notice(`Zenith: created folder "${path}".`);
+            new Notice(translateNow('notice.folderCreated', { path }));
             forceRepaint((n) => n + 1);
         } catch (err) {
             console.error('Zenith: Failed to create folder:', err);
-            new Notice('Zenith: could not create folder.');
+            new Notice(translateNow('notice.folderFailed'));
         }
     };
 

@@ -1,5 +1,6 @@
 import type { Command, MarkdownPostProcessorContext, ViewCreator } from 'obsidian';
 import type { SettingsSchema } from '../settings/schema/types';
+import type { TranslationTable } from './i18n';
 import type ZenithPlugin from '../main';
 
 export interface ModuleManifest {
@@ -65,6 +66,25 @@ export interface IModule {
      * therefore stay side-effect free: assign fields, register nothing.
      */
     getSettingsSchema?(): SettingsSchema;
+
+    /**
+     * Strings this module contributes to the dictionary, keyed by locale.
+     *
+     * Declared here rather than added to Zenith's own dictionary so that a
+     * module's translations are deleted along with the module, and so that a
+     * third-party one can be translated at all — there is no file in this repo
+     * for its strings to live in.
+     *
+     * Keys must sit under the module's own namespace: `<id>.…` or
+     * `module.<id>.…`. Anything else is dropped, because a module that could
+     * redefine `settings.title` could also redefine the sentence warning the
+     * user about third-party modules.
+     *
+     * Two keys are looked up by convention wherever a module is listed:
+     * `module.<id>.name` and `module.<id>.desc`. Without them the list falls
+     * back to the untranslated `name` and `description`.
+     */
+    getTranslations?(): TranslationTable;
 }
 
 /**

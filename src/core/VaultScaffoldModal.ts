@@ -1,6 +1,7 @@
 import { App, Modal, Notice } from 'obsidian';
 import { VaultScaffoldService, VAULT_STRUCTURE } from './VaultScaffoldService';
 import { applyIcon } from './icons/applyIcon';
+import { translateNow as t, translateNowPlural as tp } from './i18n';
 
 /**
  * VaultScaffoldModal — confirmation for the (destructive) "set up vault
@@ -18,13 +19,13 @@ export class VaultScaffoldModal extends Modal {
 
     onOpen(): void {
         const { contentEl, titleEl } = this;
-        titleEl.setText('Set up vault structure');
+        titleEl.setText(t('scaffold.title'));
         contentEl.addClass('zenith-scaffold');
 
         const items = this.service.itemsToArchive();
 
         contentEl.createEl('p', {
-            text: 'This creates the following folders at the vault root, each with its icon:',
+            text: t('scaffold.intro'),
         });
         const list = contentEl.createEl('div', { cls: 'zenith-scaffold__folders' });
         for (const { name, icon } of VAULT_STRUCTURE) {
@@ -37,27 +38,27 @@ export class VaultScaffoldModal extends Modal {
         if (items.length > 0) {
             const warn = contentEl.createEl('div', { cls: 'zenith-scaffold__warn' });
             warn.createEl('strong', {
-                text: `${items.length} existing top-level item${items.length === 1 ? '' : 's'} will be moved into “50 Archive”.`,
+                text: tp('scaffold.willArchive', items.length),
             });
             warn.createEl('div', {
                 cls: 'zenith-scaffold__warn-desc',
-                text: 'Nothing is deleted — items are moved into a dated subfolder, and internal links are updated.',
+                text: t('scaffold.willArchive.desc'),
             });
             const preview = items.slice(0, 12).join(', ') + (items.length > 12 ? '…' : '');
             warn.createEl('div', { cls: 'zenith-scaffold__preview', text: preview });
         } else {
             contentEl.createEl('p', {
                 cls: 'zenith-scaffold__note',
-                text: 'Your vault is empty — no existing files will be moved.',
+                text: t('scaffold.empty'),
             });
         }
 
         const actions = contentEl.createEl('div', { cls: 'zenith-scaffold__actions' });
-        const cancel = actions.createEl('button', { text: 'Cancel' });
+        const cancel = actions.createEl('button', { text: t('scaffold.cancel') });
         cancel.addEventListener('click', () => this.close());
 
         const confirm = actions.createEl('button', {
-            text: items.length > 0 ? 'Create & archive' : 'Create structure',
+            text: items.length > 0 ? t('scaffold.createAndArchive') : t('scaffold.create'),
             cls: 'mod-cta',
         });
         confirm.addEventListener('click', () => void this.run(confirm));
@@ -67,20 +68,20 @@ export class VaultScaffoldModal extends Modal {
         if (this.busy) return;
         this.busy = true;
         btn.disabled = true;
-        btn.setText('Working…');
+        btn.setText(t('scaffold.working'));
         try {
             const result = await this.service.scaffold();
-            const parts = [`created ${result.created.length} folder(s)`];
-            if (result.iconed > 0) parts.push(`set ${result.iconed} icon(s)`);
-            if (result.archived > 0) parts.push(`archived ${result.archived} item(s)`);
-            new Notice(`Zenith: ${parts.join(', ')}.`);
+            const parts = [tp('scaffold.done.created', result.created.length)];
+            if (result.iconed > 0) parts.push(tp('scaffold.done.iconed', result.iconed));
+            if (result.archived > 0) parts.push(tp('scaffold.done.archived', result.archived));
+            new Notice(t('scaffold.done', { parts: parts.join(', ') }));
             this.onDone?.();
             this.close();
         } catch (err) {
             console.error('Zenith: vault scaffold failed', err);
-            new Notice('Zenith: failed to set up the vault structure.');
+            new Notice(t('scaffold.failed'));
             btn.disabled = false;
-            btn.setText('Create & archive');
+            btn.setText(t('scaffold.createAndArchive'));
         } finally {
             this.busy = false;
         }

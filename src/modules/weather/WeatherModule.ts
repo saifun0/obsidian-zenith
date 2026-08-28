@@ -4,6 +4,8 @@ import { WeatherWidget } from './WeatherWidget';
 import { weatherSettingsSchema } from './settings.schema';
 import type { SettingsSchema } from '../../settings/schema/types';
 import type ZenithPlugin from '../../main';
+import { weatherTranslations } from './i18n';
+import type { TranslationTable } from '../../core/i18n';
 
 /**
  * WeatherModule — contributes the weather widget to the dashboard.
@@ -17,6 +19,10 @@ export class WeatherModule extends BaseModule {
     readonly name = 'Weather';
     readonly description = 'A weather widget with hourly, 10-day forecast, sunrise/sunset and °C/°F.';
     readonly icon = 'cloud-sun';
+
+    getTranslations(): TranslationTable {
+        return weatherTranslations;
+    }
 
     private disposers: Array<() => void> = [];
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { translateNow } from '../../core/i18n';
 
 interface ModalProps {
     /** Accessible name; rendered as the header title unless `header` is given. */
@@ -105,7 +106,7 @@ export const Modal: React.FC<ModalProps> = ({
                         type="button"
                         className="zenith-dialog__close zenith-dialog__close--floating"
                         onClick={onClose}
-                        aria-label="Close"
+                        aria-label={translateNow('a11y.close')}
                     >
                         <X size={18} />
                     </button>
@@ -116,7 +117,7 @@ export const Modal: React.FC<ModalProps> = ({
                             type="button"
                             className="zenith-dialog__close"
                             onClick={onClose}
-                            aria-label="Close"
+                            aria-label={translateNow('a11y.close')}
                         >
                             <X size={18} />
                         </button>

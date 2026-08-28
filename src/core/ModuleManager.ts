@@ -13,6 +13,8 @@ import {
     isCustomIconId,
     loadIconsFromFolder,
 } from './icons';
+import { clearTranslations, registerTranslations, translateNow } from './i18n';
+import { messageText, msg, type Message } from './message';
 import { useZenithStore } from '../store';
 import type ZenithPlugin from '../main';
 
@@ -45,7 +47,8 @@ export type ModuleProblemKind =
 export interface ModuleProblem {
     id: string;
     kind: ModuleProblemKind;
-    message: string;
+    /** The reason, unrendered — the settings row picks the language. */
+    reason: Message;
 }
 
 /**
@@ -101,9 +104,13 @@ export class ModuleManager {
         return next;
     }
 
-    private note(id: string, kind: ModuleProblemKind, message: string): void {
-        this.problems.set(id, { id, kind, message });
-        console.error(`Zenith: module "${id}" — ${message}`);
+    /**
+     * Record why a module is not usable. The console gets English, because a
+     * log someone will paste into an issue is more useful in one language.
+     */
+    private note(id: string, kind: ModuleProblemKind, reason: Message): void {
+        this.problems.set(id, { id, kind, reason });
+        console.error(`Zenith: module "${id}" — ${messageText(reason)}`);
     }
 
     /** Register a module instance directly (used for built-in modules). */
@@ -114,6 +121,10 @@ export class ModuleManager {
         }
         this.modules.set(module.id, module);
         this.availableManifests.set(module.id, module.getManifest());
+        // No disposer: a built-in that is switched off still has a row in
+        // settings, and that row is the thing its name and description are for.
+        const table = module.getTranslations?.();
+        if (table) registerTranslations(module.id, table);
     }
 
     /** The Zenith API object handed to a third-party module. */
@@ -167,7 +178,7 @@ export class ModuleManager {
             try {
                 raw = JSON.parse(await this.fs.read(manifestPath));
             } catch (err) {
-                this.note(name, 'bad-manifest', `manifest.json is not valid JSON (${String(err)})`);
+                this.note(name, 'bad-manifest', msg('modules.problem.badJson', { error: String(err) }));
                 continue;
             }
 
@@ -191,12 +202,20 @@ export class ModuleManager {
                 this.note(
                     name,
                     'bad-manifest',
-                    `manifest id "${checked.manifest.id}" does not match its folder "${name}".`
+                    msg('modules.problem.idMismatch', {
+                        claimed: checked.manifest.id,
+                        folder: name,
+                    })
                 );
                 continue;
             }
 
             this.problems.delete(name);
+            // Before any of the module's code has run — which is the only way a
+            // module the user has NOT enabled can name itself in their language.
+            if (checked.manifest.translations) {
+                registerTranslations(name, checked.manifest.translations, 'manifest');
+            }
             this.availableManifests.set(name, {
                 id: checked.manifest.id,
                 name: checked.manifest.name,
@@ -254,7 +273,9 @@ export class ModuleManager {
                     this.note(
                         id,
                         'bad-manifest',
-                        `icon.svg was not usable: ${describeSvgProblem(result.problem)}`
+                        msg('modules.problem.badIcon', {
+                            reason: describeSvgProblem(result.problem),
+                        })
                     );
                 }
             } catch {
@@ -270,7 +291,11 @@ export class ModuleManager {
             });
             if (report.loaded > 0) registered = true;
             for (const skip of report.skipped) {
-                this.note(id, 'bad-manifest', `icons/${skip.file} was not usable: ${skip.reason}`);
+                this.note(
+                    id,
+                    'bad-manifest',
+                    msg('modules.problem.badIconNamed', { file: skip.file, reason: skip.reason })
+                );
             }
         }
 
@@ -298,7 +323,7 @@ export class ModuleManager {
         // The master switch. Discovery still lists modules when it is off, so
         // the user can see what is there before deciding to run any of it.
         if (!useZenithStore.getState().settings.allowThirdPartyModules) {
-            this.note(id, 'blocked', 'Third-party modules are switched off in settings.');
+            this.note(id, 'blocked', msg('modules.problem.blocked'));
             return undefined;
         }
 
@@ -309,21 +334,23 @@ export class ModuleManager {
 
         const mainPath = this.paths.main(id);
         if (!(await this.fs.exists(mainPath))) {
-            this.note(id, 'eval-error', 'main.js is missing.');
+            this.note(id, 'eval-error', msg('modules.problem.noMain'));
             return undefined;
         }
 
         try {
             const code = await this.fs.read(mainPath);
             if (code.length > MAX_MODULE_BYTES) {
-                throw new Error(`main.js is ${Math.round(code.length / 1024)} KB — refusing to run it.`);
+                throw new Error(
+                    messageText(msg('modules.problem.tooBig', { kb: Math.round(code.length / 1024) }))
+                );
             }
 
             // Last gate before someone else's code runs. Catches a module whose
             // file no longer matches what was installed — edited by hand, or
             // changed by vault sync from another device.
             if (this.consentGate && !this.consentGate(id, code)) {
-                this.note(id, 'needs-consent', 'This module needs your approval before it can run.');
+                this.note(id, 'needs-consent', msg('modules.needsConsent'));
                 return undefined;
             }
 
@@ -333,15 +360,24 @@ export class ModuleManager {
             });
             const ModuleClass = extractModuleClass(exports);
             if (typeof ModuleClass !== 'function') {
-                throw new Error('main.js does not export a module class.');
+                throw new Error(messageText(msg('modules.problem.noClass')));
             }
 
             const instance = new (ModuleClass as new (plugin: ZenithPlugin) => IModule)(this.plugin);
             if (instance.id !== id) {
-                throw new Error(`class id "${instance.id}" does not match folder "${id}".`);
+                throw new Error(
+                    messageText(
+                        msg('modules.problem.classIdMismatch', { claimed: instance.id, folder: id })
+                    )
+                );
             }
 
             await this.injectStyles(id);
+            // Through the ledger, so unloading the module takes its strings with
+            // it. What the manifest declared survives — that channel is keyed
+            // separately and is what the settings row falls back to.
+            const table = instance.getTranslations?.();
+            if (table) this.ledger.addDisposer(id, registerTranslations(id, table));
             this.modules.set(id, instance);
             this.problems.delete(id);
             // Remembered rather than announced. Which modules came from outside
@@ -350,7 +386,13 @@ export class ModuleManager {
             this.thirdPartyIds.add(id);
             return instance;
         } catch (err) {
-            this.note(id, 'eval-error', err instanceof Error ? err.message : String(err));
+            this.note(
+                id,
+                'eval-error',
+                msg('modules.problem.evalError', {
+                    error: err instanceof Error ? err.message : String(err),
+                })
+            );
             return undefined;
         }
     }
@@ -383,7 +425,13 @@ export class ModuleManager {
             this.loadedIds.add(id);
             return true;
         } catch (error) {
-            this.note(id, 'onload-error', error instanceof Error ? error.message : String(error));
+            this.note(
+                id,
+                'onload-error',
+                msg('modules.problem.onloadError', {
+                    error: error instanceof Error ? error.message : String(error),
+                })
+            );
             // Reclaim whatever it managed to register before failing.
             try {
                 await module.onunload();
@@ -391,7 +439,7 @@ export class ModuleManager {
                 /* it already failed once; nothing more to do */
             }
             this.ledger.disposeAll(id);
-            new Notice(`Zenith: module "${id}" failed to start. See its settings row.`);
+            new Notice(translateNow('modules.startFailed', { id }));
             // Deliberately left in `activeModuleIds`: switching it off would
             // discard the user's intent over what may be a transient failure.
             return false;
@@ -469,6 +517,7 @@ export class ModuleManager {
             this.availableManifests.delete(id);
             this.problems.delete(id);
             this.ledger.forget(id);
+            clearTranslations(id);
             // Icons registered at DISCOVERY have no ledger disposer — nothing
             // was loaded, so nothing ran. Uninstall is what retires them, or a
             // removed module's logo would keep showing in the icon picker.

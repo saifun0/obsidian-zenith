@@ -10,6 +10,7 @@ import { getTodayString } from '../../../core/dateUtils';
 import { TaskStatusControl } from './taskStatusUi';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import { useTranslation } from '../../../core/i18n';
+import { translateNow } from '../../../core/i18n';
 import {
     FIGURE_GAP,
     METRICS,
@@ -92,7 +93,7 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
             const ok = await new TaskWriter(app).setStatusInFile(task.filePath, task.lineNumber, status);
             if (!ok) {
                 setTaskStatus(task.id, prev);
-                new Notice('Zenith: could not update task.');
+                new Notice(translateNow('notice.taskUpdateFailed'));
             } else if (status === 'done' && task.recurrence) {
                 void plugin.dataService.reloadTasks();
             }

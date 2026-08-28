@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Settings2 } from 'lucide-react';
 import { DynamicIcon } from '../shared/DynamicIcon';
+import { useTranslation } from '../../core/i18n';
 
 interface CheckboxCardProps {
     title: string;
@@ -28,7 +29,10 @@ export const CheckboxCard: React.FC<CheckboxCardProps> = ({
     checked,
     onChange,
     onSettings,
-}) => (
+}) => {
+    const t = useTranslation();
+
+    return (
     <label className={`zenith-checkbox-card ${checked ? 'is-checked' : ''}`}>
         <input
             type="checkbox"
@@ -48,8 +52,8 @@ export const CheckboxCard: React.FC<CheckboxCardProps> = ({
                 <button
                     type="button"
                     className="zenith-checkbox-card__settings"
-                    aria-label={`${title} settings`}
-                    title="Settings"
+                    aria-label={t('checkboxCard.settings', { name: title })}
+                    title={t('checkboxCard.settings', { name: title })}
                     onClick={(e) => {
                         // Don't let the click toggle the surrounding label.
                         e.preventDefault();
@@ -84,4 +88,5 @@ export const CheckboxCard: React.FC<CheckboxCardProps> = ({
         <div className="zenith-checkbox-card__title">{title}</div>
         <div className="zenith-checkbox-card__desc">{description}</div>
     </label>
-);
+    );
+};

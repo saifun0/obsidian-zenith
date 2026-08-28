@@ -75,17 +75,19 @@ export interface ContentFieldDef {
     id: ContentFieldId;
     /** Default label; a type may override `creator` via `creatorLabel`. */
     label: string;
+    /** Translated label. `label` is the fallback where no dictionary is at hand. */
+    labelKey: string;
 }
 
 /** Curated fields, in display order. */
 export const CONTENT_FIELDS: readonly ContentFieldDef[] = [
-    { id: 'year', label: 'Year' },
-    { id: 'creator', label: 'Creator' },
-    { id: 'genres', label: 'Genres' },
-    { id: 'rating', label: 'Rating' },
-    { id: 'progress', label: 'Progress' },
-    { id: 'tags', label: 'Tags' },
-    { id: 'description', label: 'Description' },
+    { id: 'year', label: 'Year', labelKey: 'content.field.year' },
+    { id: 'creator', label: 'Creator', labelKey: 'content.field.creator' },
+    { id: 'genres', label: 'Genres', labelKey: 'content.field.genres' },
+    { id: 'rating', label: 'Rating', labelKey: 'content.field.rating' },
+    { id: 'progress', label: 'Progress', labelKey: 'content.field.progress' },
+    { id: 'tags', label: 'Tags', labelKey: 'content.field.tags' },
+    { id: 'description', label: 'Description', labelKey: 'content.field.description' },
 ] as const;
 
 export const CONTENT_FIELD_IDS: readonly ContentFieldId[] = CONTENT_FIELDS.map((f) => f.id);

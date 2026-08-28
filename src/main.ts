@@ -27,6 +27,8 @@ import { ZenithSettingTab } from './settings/ZenithSettingTab';
 import { registerQuickAddTaskCommand } from './modules/tasks/commands';
 import { dashboardWidgets, type DashboardWidgetDefinition } from './modules/dashboard/widgets';
 import { navActions, type NavActionDefinition } from './modules/navigator/navigation';
+import { translateNow } from './core/i18n';
+import { moduleNameNow } from './core/moduleLabels';
 
 /**
  * ZenithPlugin — Main entry point.
@@ -341,7 +343,12 @@ export default class ZenithPlugin extends Plugin {
             const fallbackId = loadedIds[0];
             target = fallbackId ? this.moduleManager.get(fallbackId) : undefined;
             if (target) {
-                new Notice(`Zenith: default module "${defaultModuleId}" is inactive — opening "${target.name}".`);
+                new Notice(
+                    translateNow('notice.defaultModuleInactive', {
+                        id: defaultModuleId,
+                        name: moduleNameNow(target),
+                    })
+                );
             }
         }
 

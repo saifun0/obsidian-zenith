@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { useZenithStore } from '../store';
 import type { ZenithLanguage } from '../store/settingsSlice';
 
@@ -11,6 +11,9 @@ import type { ZenithLanguage } from '../store/settingsSlice';
  */
 
 export type Locale = 'en' | 'ru';
+
+/** Every locale Zenith ships. Contributed chunks are filtered against it. */
+export const LOCALES: readonly Locale[] = ['en', 'ru'];
 
 type Dict = Record<string, string>;
 
@@ -229,6 +232,57 @@ const EN: Dict = {
     'modules.uninstall': 'Uninstall',
     'modules.confirmUninstall': 'Remove "{name}"? Its files will be deleted.',
     'modules.notSandboxed': 'Not sandboxed',
+    'modules.origin.vault': 'vault: {path}',
+    'modules.origin.paste': 'pasted by you',
+    'modules.startFailed': 'Zenith: module "{id}" failed to start. See its settings row.',
+
+    // Why a module Zenith found is not running. Shown on its settings row.
+    'modules.problem.badJson': 'manifest.json is not valid JSON ({error}).',
+    'modules.problem.idMismatch':
+        'The manifest calls this module "{claimed}", but it is in a folder called "{folder}".',
+    'modules.problem.badIcon': 'icon.svg was not usable: {reason}',
+    'modules.problem.badIconNamed': 'icons/{file} was not usable: {reason}',
+    'modules.problem.blocked': 'Third-party modules are switched off in settings.',
+    'modules.problem.noMain': 'main.js is missing.',
+    'modules.problem.tooBig': 'main.js is {kb} KB — refusing to run it.',
+    'modules.problem.noClass': 'main.js does not export a module class.',
+    'modules.problem.classIdMismatch':
+        'The module class calls itself "{claimed}", but it is in a folder called "{folder}".',
+    'modules.problem.evalError': 'The module could not be started: {error}',
+    'modules.problem.onloadError': 'The module failed while starting: {error}',
+
+    // A manifest Zenith cannot accept.
+    'modules.manifest.badId': 'Invalid module id {id} — use letters, digits, "-" and "_".',
+    'modules.manifest.reservedId': '"{id}" is reserved by Zenith and cannot be used by a module.',
+    'modules.manifest.missingName': 'The manifest has no "name".',
+    'modules.manifest.incompatible': 'Needs Zenith {required} or newer; this is {actual}.',
+
+    // Fetching a module from wherever the user keeps it.
+    'modules.error.raw': '{error}',
+    'modules.error.githubRef':
+        'Expected "owner/repo", optionally "owner/repo@tag" or "@branch:subdir".',
+    'modules.error.githubMissing': 'Could not find manifest.json and main.js in {repo}.',
+    'modules.error.githubCheckedRef': 'Checked the "{ref}" ref.',
+    'modules.error.githubCheckedDefault':
+        'Checked the latest release, then the "main" and "master" branches. ' +
+        'GitHub also rate-limits anonymous requests to 60 per hour.',
+    'modules.error.httpsOnly': 'Only https:// URLs are supported.',
+    'modules.error.noManifestAt': 'No manifest.json at {url}',
+    'modules.error.noMainAt': 'No main.js at {url}',
+    'modules.error.notJs': 'Pick a .js file. Zip archives are not supported.',
+    'modules.error.noSuchFile': 'No such file: {path}',
+    'modules.error.siblingNotJson': '{path} is not valid JSON.',
+    'modules.error.noManifest': 'No manifest found.',
+    'modules.error.noManifestHow':
+        'Put a manifest.json next to the file, or start the file with a ' +
+        '/* zenith-module { … } */ header.',
+    'modules.error.nothingPasted': 'Nothing pasted.',
+    'modules.error.pasteBadManifest': 'The manifest is not valid JSON.',
+    'modules.error.pasteNoCode': 'The code box is empty.',
+    'modules.error.noRecord': 'Zenith has no record of where this module came from.',
+    'modules.error.pasteNoSource':
+        'This module was pasted in, so there is nothing to update from. Paste a new version instead.',
+    'modules.error.noPluginFolder': 'The plugin folder is unknown.',
     'modules.needsConsent':
         'This module has not been approved on this device, so it is not running. ' +
         'That is also the case when its file changed after you approved it.',
@@ -249,6 +303,98 @@ const EN: Dict = {
     'modules.hint.paste': 'The manifest JSON, then the module code.',
     'settings.noThirdParty': 'Nothing installed yet.',
     'settings.moduleNoSettings': 'This module has no configurable settings.',
+
+    // ── Running someone else's code ─────────────────
+    'consent.title': 'Run third-party module: {name}',
+    'consent.warning':
+        'Zenith modules are JavaScript that runs with the same permissions as Obsidian itself. ' +
+        'This module can read, change and delete any file in your vault, and can send data ' +
+        'anywhere on the internet. Zenith cannot sandbox it and does not review it.',
+    'consent.codeChanged':
+        'The code on disk no longer matches what Zenith installed. It may have been edited, or ' +
+        'changed by sync from another device.',
+    'consent.sourceChanged': 'The source changed: {from} → {to}',
+    'consent.fact.source': 'Source',
+    'consent.fact.size': 'Size',
+    'consent.size': '{kb} KB',
+    'consent.claimed': 'Claimed by the module, not verified by Zenith:',
+    'consent.fact.author': 'Author',
+    'consent.fact.version': 'Version',
+    'consent.fact.description': 'Description',
+    'consent.fact.notes': 'Notes',
+    'consent.viewCode': 'View code',
+    'consent.understood': 'I understand this code is not sandboxed.',
+    'consent.cancel': 'Cancel',
+    'consent.accept': 'Install and run',
+
+    // ── Vault structure ─────────────────────────────
+    'scaffold.title': 'Set up vault structure',
+    'scaffold.intro': 'This creates the following folders at the vault root, each with its icon:',
+    'scaffold.willArchive.one': '{count} existing top-level item will be moved into “50 Archive”.',
+    'scaffold.willArchive.other': '{count} existing top-level items will be moved into “50 Archive”.',
+    'scaffold.willArchive.desc':
+        'Nothing is deleted — items are moved into a dated subfolder, and internal links are updated.',
+    'scaffold.empty': 'Your vault is empty — no existing files will be moved.',
+    'scaffold.cancel': 'Cancel',
+    'scaffold.create': 'Create structure',
+    'scaffold.createAndArchive': 'Create & archive',
+    'scaffold.working': 'Working…',
+    'scaffold.done.created.one': 'created {count} folder',
+    'scaffold.done.created.other': 'created {count} folders',
+    'scaffold.done.iconed.one': 'set {count} icon',
+    'scaffold.done.iconed.other': 'set {count} icons',
+    'scaffold.done.archived.one': 'archived {count} item',
+    'scaffold.done.archived.other': 'archived {count} items',
+    'scaffold.done': 'Zenith: {parts}.',
+    'scaffold.failed': 'Zenith: failed to set up the vault structure.',
+
+    // ── Notices ─────────────────────────────────────
+    'notice.folderCreated': 'Zenith: created folder “{path}”.',
+    'notice.folderFailed': 'Zenith: could not create folder.',
+    'notice.bannerUpdated': 'Zenith: banner image updated.',
+    'notice.dropboxFailed': 'Zenith: could not connect to Dropbox — {error}',
+    'notice.dropboxConnected': 'Zenith: Dropbox connected.',
+    'notice.syncOff': 'Zenith: sync is switched off for this device.',
+    'notice.taskUpdateFailed': 'Zenith: could not update task.',
+    'notice.taskTitleRequired': 'Zenith: a task needs a title.',
+    'notice.taskAdded': 'Zenith: task added.',
+    'notice.taskAddFailed': 'Zenith: could not add the task. Check the tasks folder path.',
+    'notice.defaultModuleInactive':
+        'Zenith: the default module “{id}” is switched off — opening “{name}” instead.',
+
+    'checkboxCard.settings': '{name} settings',
+
+    // ── Labels a screen reader reads out ────────────
+    'a11y.changeIcon': 'Change icon',
+    'a11y.removeIcon': 'Remove icon',
+    'a11y.close': 'Close',
+    'a11y.clearRating': 'Clear rating',
+    'common.noData': 'No data',
+
+    // ── Content types ───────────────────────────────
+    'ctypes.hint':
+        'Types drive the library tabs, the add-form provider, and which fields each item shows.',
+    'ctypes.typeName': 'Type name',
+    'ctypes.colour': 'Colour',
+    'ctypes.removeType': 'Remove type',
+    'ctypes.metadataSource': 'Metadata source',
+    'ctypes.creatorLabel': 'Creator label',
+    'ctypes.progressUnit': 'Progress unit',
+    'ctypes.shownFields': 'Shown fields',
+    'ctypes.addType': 'Add type',
+    'ctypes.newType': 'New type',
+    'ctypes.defaultCreator': 'Creator',
+    'ctypes.defaultUnit': 'units',
+    'ctypes.unitExample': 'episodes',
+    'content.field.year': 'Year',
+    'content.field.creator': 'Creator',
+    'content.field.genres': 'Genres',
+    'content.field.rating': 'Rating',
+    'content.field.progress': 'Progress',
+    'content.field.tags': 'Tags',
+    'content.field.description': 'Description',
+    'content.provider.none': 'None (manual entry)',
+    'journal.templatePlaceholder': 'e.g. 40 Resources/Templates/Daily.md',
 
     // Settings — vault
     'settings.scaffold': 'Vault structure',
@@ -1538,6 +1684,58 @@ const RU: Dict = {
     'modules.uninstall': 'Удалить',
     'modules.confirmUninstall': 'Удалить «{name}»? Файлы модуля будут стёрты.',
     'modules.notSandboxed': 'Без изоляции',
+    'modules.origin.vault': 'хранилище: {path}',
+    'modules.origin.paste': 'вставлено вами',
+    'modules.startFailed': 'Zenith: модуль «{id}» не запустился. Подробности — в его строке настроек.',
+
+    // Почему найденный модуль не работает. Показывается в его строке настроек.
+    'modules.problem.badJson': 'manifest.json — не валидный JSON ({error}).',
+    'modules.problem.idMismatch':
+        'В манифесте модуль называется «{claimed}», а лежит в папке «{folder}».',
+    'modules.problem.badIcon': 'Не удалось использовать icon.svg: {reason}',
+    'modules.problem.badIconNamed': 'Не удалось использовать icons/{file}: {reason}',
+    'modules.problem.blocked': 'Сторонние модули выключены в настройках.',
+    'modules.problem.noMain': 'Файл main.js отсутствует.',
+    'modules.problem.tooBig': 'main.js весит {kb} КБ — запускать не будем.',
+    'modules.problem.noClass': 'main.js не экспортирует класс модуля.',
+    'modules.problem.classIdMismatch':
+        'Класс модуля называет себя «{claimed}», а лежит в папке «{folder}».',
+    'modules.problem.evalError': 'Не удалось запустить модуль: {error}',
+    'modules.problem.onloadError': 'Модуль упал при запуске: {error}',
+
+    // Манифест, который Zenith не может принять.
+    'modules.manifest.badId':
+        'Некорректный идентификатор модуля {id} — допустимы буквы, цифры, «-» и «_».',
+    'modules.manifest.reservedId': '«{id}» занято самим Zenith и не может использоваться модулем.',
+    'modules.manifest.missingName': 'В манифесте нет поля «name».',
+    'modules.manifest.incompatible': 'Нужен Zenith {required} или новее, а установлен {actual}.',
+
+    // Загрузка модуля оттуда, где он лежит у пользователя.
+    'modules.error.raw': '{error}',
+    'modules.error.githubRef':
+        'Ожидается «owner/repo», можно «owner/repo@tag» или «@branch:subdir».',
+    'modules.error.githubMissing': 'В {repo} не нашлись manifest.json и main.js.',
+    'modules.error.githubCheckedRef': 'Проверена ссылка «{ref}».',
+    'modules.error.githubCheckedDefault':
+        'Проверены последний релиз, затем ветки «main» и «master». ' +
+        'GitHub к тому же ограничивает анонимные запросы: 60 в час.',
+    'modules.error.httpsOnly': 'Поддерживаются только адреса https://.',
+    'modules.error.noManifestAt': 'По адресу {url} нет manifest.json',
+    'modules.error.noMainAt': 'По адресу {url} нет main.js',
+    'modules.error.notJs': 'Выберите файл .js. Zip-архивы не поддерживаются.',
+    'modules.error.noSuchFile': 'Файл не найден: {path}',
+    'modules.error.siblingNotJson': '{path} — не валидный JSON.',
+    'modules.error.noManifest': 'Манифест не найден.',
+    'modules.error.noManifestHow':
+        'Положите manifest.json рядом с файлом или начните файл заголовком ' +
+        '/* zenith-module { … } */.',
+    'modules.error.nothingPasted': 'Ничего не вставлено.',
+    'modules.error.pasteBadManifest': 'Манифест — не валидный JSON.',
+    'modules.error.pasteNoCode': 'Поле с кодом пустое.',
+    'modules.error.noRecord': 'Zenith не помнит, откуда взялся этот модуль.',
+    'modules.error.pasteNoSource':
+        'Этот модуль был вставлен вручную, обновлять его неоткуда — вставьте новую версию.',
+    'modules.error.noPluginFolder': 'Папка плагина неизвестна.',
     'modules.needsConsent':
         'Модуль не одобрен на этом устройстве и поэтому не запущен. ' +
         'То же самое происходит, если его файл изменился после одобрения.',
@@ -1558,6 +1756,102 @@ const RU: Dict = {
     'modules.hint.paste': 'Сначала JSON манифеста, затем код модуля.',
     'settings.noThirdParty': 'Пока ничего не установлено.',
     'settings.moduleNoSettings': 'У этого модуля нет настраиваемых параметров.',
+
+    // ── Запуск чужого кода ──────────────────────────
+    'consent.title': 'Запустить сторонний модуль: {name}',
+    'consent.warning':
+        'Модули Zenith — это JavaScript, работающий с теми же правами, что и сам Obsidian. ' +
+        'Этот модуль может читать, изменять и удалять любой файл вашего хранилища и отправлять ' +
+        'данные куда угодно в интернет. Zenith не изолирует его и не проверяет.',
+    'consent.codeChanged':
+        'Код на диске больше не совпадает с тем, что установил Zenith. Возможно, файл правили ' +
+        'вручную или его изменила синхронизация с другого устройства.',
+    'consent.sourceChanged': 'Источник изменился: {from} → {to}',
+    'consent.fact.source': 'Источник',
+    'consent.fact.size': 'Размер',
+    'consent.size': '{kb} КБ',
+    'consent.claimed': 'Заявлено самим модулем, Zenith это не проверял:',
+    'consent.fact.author': 'Автор',
+    'consent.fact.version': 'Версия',
+    'consent.fact.description': 'Описание',
+    'consent.fact.notes': 'Примечания',
+    'consent.viewCode': 'Посмотреть код',
+    'consent.understood': 'Я понимаю, что этот код работает без изоляции.',
+    'consent.cancel': 'Отмена',
+    'consent.accept': 'Установить и запустить',
+
+    // ── Структура хранилища ─────────────────────────
+    'scaffold.title': 'Создать структуру хранилища',
+    'scaffold.intro': 'В корне хранилища будут созданы эти папки, каждая со своей иконкой:',
+    'scaffold.willArchive.one': '{count} существующий элемент верхнего уровня переедет в «50 Archive».',
+    'scaffold.willArchive.few': '{count} существующих элемента верхнего уровня переедут в «50 Archive».',
+    'scaffold.willArchive.many': '{count} существующих элементов верхнего уровня переедут в «50 Archive».',
+    'scaffold.willArchive.desc':
+        'Ничего не удаляется — элементы переносятся в подпапку с датой, внутренние ссылки обновляются.',
+    'scaffold.empty': 'Хранилище пустое — переносить нечего.',
+    'scaffold.cancel': 'Отмена',
+    'scaffold.create': 'Создать структуру',
+    'scaffold.createAndArchive': 'Создать и заархивировать',
+    'scaffold.working': 'Работаем…',
+    'scaffold.done.created.one': 'создана {count} папка',
+    'scaffold.done.created.few': 'создано {count} папки',
+    'scaffold.done.created.many': 'создано {count} папок',
+    'scaffold.done.iconed.one': 'назначена {count} иконка',
+    'scaffold.done.iconed.few': 'назначено {count} иконки',
+    'scaffold.done.iconed.many': 'назначено {count} иконок',
+    'scaffold.done.archived.one': 'заархивирован {count} элемент',
+    'scaffold.done.archived.few': 'заархивировано {count} элемента',
+    'scaffold.done.archived.many': 'заархивировано {count} элементов',
+    'scaffold.done': 'Zenith: {parts}.',
+    'scaffold.failed': 'Zenith: не удалось создать структуру хранилища.',
+
+    // ── Уведомления ─────────────────────────────────
+    'notice.folderCreated': 'Zenith: создана папка «{path}».',
+    'notice.folderFailed': 'Zenith: не удалось создать папку.',
+    'notice.bannerUpdated': 'Zenith: баннер обновлён.',
+    'notice.dropboxFailed': 'Zenith: не удалось подключиться к Dropbox — {error}',
+    'notice.dropboxConnected': 'Zenith: Dropbox подключён.',
+    'notice.syncOff': 'Zenith: синхронизация выключена на этом устройстве.',
+    'notice.taskUpdateFailed': 'Zenith: не удалось обновить задачу.',
+    'notice.taskTitleRequired': 'Zenith: у задачи должно быть название.',
+    'notice.taskAdded': 'Zenith: задача добавлена.',
+    'notice.taskAddFailed': 'Zenith: не удалось добавить задачу. Проверьте путь к папке задач.',
+    'notice.defaultModuleInactive':
+        'Zenith: модуль по умолчанию «{id}» выключен — открываем «{name}».',
+
+    'checkboxCard.settings': 'Настройки: {name}',
+
+    // ── Что зачитает экранный диктор ────────────────
+    'a11y.changeIcon': 'Сменить иконку',
+    'a11y.removeIcon': 'Убрать иконку',
+    'a11y.close': 'Закрыть',
+    'a11y.clearRating': 'Сбросить оценку',
+    'common.noData': 'Нет данных',
+
+    // ── Типы контента ───────────────────────────────
+    'ctypes.hint':
+        'Типы задают вкладки библиотеки, источник метаданных в форме добавления и набор полей.',
+    'ctypes.typeName': 'Название типа',
+    'ctypes.colour': 'Цвет',
+    'ctypes.removeType': 'Удалить тип',
+    'ctypes.metadataSource': 'Источник метаданных',
+    'ctypes.creatorLabel': 'Название поля «автор»',
+    'ctypes.progressUnit': 'Единица прогресса',
+    'ctypes.shownFields': 'Показывать поля',
+    'ctypes.addType': 'Добавить тип',
+    'ctypes.newType': 'Новый тип',
+    'ctypes.defaultCreator': 'Автор',
+    'ctypes.defaultUnit': 'единиц',
+    'ctypes.unitExample': 'серий',
+    'content.field.year': 'Год',
+    'content.field.creator': 'Автор',
+    'content.field.genres': 'Жанры',
+    'content.field.rating': 'Оценка',
+    'content.field.progress': 'Прогресс',
+    'content.field.tags': 'Теги',
+    'content.field.description': 'Описание',
+    'content.provider.none': 'Без источника (вручную)',
+    'journal.templatePlaceholder': 'например 40 Resources/Templates/Daily.md',
 
     // Settings — vault
     'settings.scaffold': 'Структура хранилища',
@@ -2666,6 +2960,146 @@ const RU: Dict = {
  */
 export const DICTS: Record<Locale, Dict> = { en: EN, ru: RU };
 
+// ── Contributed dictionaries ────────────────────────────────────────────────
+
+/** A chunk of strings a module brings with it, keyed by locale. */
+export type TranslationTable = Partial<Record<Locale, Dict>>;
+
+/**
+ * Where a chunk came from. A module can supply strings twice over: its
+ * `manifest.json` is read at DISCOVERY, before any of its code runs, which is
+ * the only chance to translate the name and description of a module the user
+ * has not switched on — and its `getTranslations()` is read once an instance
+ * exists. Both are kept, so loading a module does not drop what its manifest
+ * already said.
+ */
+export type TranslationChannel = 'manifest' | 'module';
+
+const CONTRIBUTED = new Map<string, TranslationTable>();
+const listeners = new Set<() => void>();
+let revision = 0;
+
+function announce(): void {
+    revision += 1;
+    for (const listener of listeners) listener();
+}
+
+/** Subscribe to registrations, so anything already rendered can catch up. */
+export function subscribeTranslations(listener: () => void): () => void {
+    listeners.add(listener);
+    return () => {
+        listeners.delete(listener);
+    };
+}
+
+export function translationsRevision(): number {
+    return revision;
+}
+
+/**
+ * Whether `key` is one `moduleId` is allowed to define.
+ *
+ * A module may only speak for itself. Without this a third-party module could
+ * quietly redefine `settings.title`, or `modules.needsConsent` — which is the
+ * sentence warning the user about that very module.
+ */
+export function ownsTranslationKey(moduleId: string, key: string): boolean {
+    return key.startsWith(`${moduleId}.`) || key.startsWith(`module.${moduleId}.`);
+}
+
+/**
+ * Add a module's strings to the dictionary. Returns a function that removes
+ * them again — held by the module ledger, so an unloaded module's strings go
+ * with it.
+ *
+ * Registering the same module and channel twice replaces the earlier chunk,
+ * which is what makes a hot reload land.
+ */
+export function registerTranslations(
+    moduleId: string,
+    table: TranslationTable,
+    channel: TranslationChannel = 'module'
+): () => void {
+    const kept: TranslationTable = {};
+    const rejected: string[] = [];
+
+    for (const locale of LOCALES) {
+        const chunk = table[locale];
+        if (!chunk) continue;
+        for (const [key, value] of Object.entries(chunk)) {
+            if (typeof value !== 'string') continue;
+            if (!ownsTranslationKey(moduleId, key)) {
+                rejected.push(key);
+                continue;
+            }
+            (kept[locale] ??= {})[key] = value;
+        }
+    }
+
+    if (rejected.length > 0) {
+        console.warn(
+            `Zenith: module "${moduleId}" tried to define strings outside its own namespace — ` +
+                `ignored ${rejected.join(', ')}. Prefix keys with "${moduleId}." or ` +
+                `"module.${moduleId}.".`
+        );
+    }
+
+    const handle = `${moduleId}:${channel}`;
+    CONTRIBUTED.set(handle, kept);
+    announce();
+
+    return () => {
+        if (CONTRIBUTED.get(handle) !== kept) return;
+        CONTRIBUTED.delete(handle);
+        announce();
+    };
+}
+
+/** Drop everything a module contributed, on either channel. */
+export function clearTranslations(moduleId: string): void {
+    let removed = false;
+    for (const handle of Array.from(CONTRIBUTED.keys())) {
+        if (handle === `${moduleId}:manifest` || handle === `${moduleId}:module`) {
+            CONTRIBUTED.delete(handle);
+            removed = true;
+        }
+    }
+    if (removed) announce();
+}
+
+/** Exported for tests; nothing else should need the whole set. */
+export function contributedTranslations(): ReadonlyMap<string, TranslationTable> {
+    return CONTRIBUTED;
+}
+
+function contributedString(locale: Locale, key: string): string | undefined {
+    for (const table of CONTRIBUTED.values()) {
+        const hit = table[locale]?.[key];
+        if (hit !== undefined) return hit;
+    }
+    return undefined;
+}
+
+/**
+ * The one place the layers are ordered. Zenith's own string for the locale wins
+ * — a module cannot take a key the plugin already answers in that language —
+ * but a module CAN supply the Russian for a key Zenith only has in English,
+ * because falling back to English before asking would make that impossible.
+ */
+function lookup(locale: Locale, key: string): string | undefined {
+    return (
+        DICTS[locale][key] ??
+        contributedString(locale, key) ??
+        EN[key] ??
+        contributedString('en', key)
+    );
+}
+
+/** Whether anything answers `key` — for falling back to untranslated text. */
+export function hasTranslation(locale: Locale, key: string): boolean {
+    return lookup(locale, key) !== undefined;
+}
+
 /** Resolve the effective locale from an explicit language + Obsidian's setting. */
 export function resolveLocale(language: ZenithLanguage): Locale {
     if (language === 'en' || language === 'ru') return language;
@@ -2706,8 +3140,7 @@ export function pluralForm(locale: Locale, count: number): 'one' | 'few' | 'many
 
 /** Translate a key for a locale, falling back to English then the key itself. */
 export function translate(locale: Locale, key: string, params?: TParams): string {
-    const text = DICTS[locale][key] ?? EN[key] ?? key;
-    return interpolate(text, params);
+    return interpolate(lookup(locale, key) ?? key, params);
 }
 
 /**
@@ -2716,18 +3149,44 @@ export function translate(locale: Locale, key: string, params?: TParams): string
  */
 export function translatePlural(locale: Locale, key: string, count: number, params?: TParams): string {
     const form = pluralForm(locale, count);
-    const dict = DICTS[locale];
     const candidate = `${key}.${form}`;
     // `other` is the English catch-all; Russian keys that only define `many`
     // still resolve through the English fallback inside `translate`.
-    const resolved = dict[candidate] !== undefined ? candidate : `${key}.other`;
+    const resolved = hasTranslation(locale, candidate) ? candidate : `${key}.other`;
     return translate(locale, resolved, { count, ...params });
+}
+
+/**
+ * `t()` for code that runs far from React — modals, services, the loader.
+ *
+ * Resolves the language on every call rather than capturing it, because these
+ * live as long as the plugin does and the user can change language underneath
+ * them. Components use `useTranslation`, which also re-renders.
+ */
+export function translateNow(key: string, params?: TParams): string {
+    return translate(currentLocale(), key, params);
+}
+
+/** The locale in force right now, for the same code that uses `translateNow`. */
+export function currentLocale(): Locale {
+    return resolveLocale(useZenithStore.getState().settings.language);
+}
+
+/** The counted-noun form of `translateNow`. */
+export function translateNowPlural(key: string, count: number, params?: TParams): string {
+    return translatePlural(currentLocale(), key, count, params);
 }
 
 export interface Translator {
     (key: string, params?: TParams): string;
     /** Counted noun — picks the right plural form for the locale. */
     plural: (key: string, count: number, params?: TParams) => string;
+    /**
+     * Whether anything defines the key. For text with a perfectly good
+     * untranslated original to fall back on — a module's own name, say — where
+     * rendering the key itself would be worse than rendering English.
+     */
+    has: (key: string) => boolean;
     locale: Locale;
 }
 
@@ -2737,11 +3196,20 @@ export interface Translator {
  */
 export function useTranslation(): Translator {
     const language = useZenithStore((s) => s.settings.language);
+    // A module registering its strings has to reach what is already on screen:
+    // the settings page is open when a module is switched on, and its row is
+    // exactly what the new strings are for.
+    const revision = useSyncExternalStore(
+        subscribeTranslations,
+        translationsRevision,
+        translationsRevision
+    );
     const locale = resolveLocale(language);
     return useMemo(() => {
         const t = ((key: string, params?: TParams) => translate(locale, key, params)) as Translator;
         t.plural = (key, count, params) => translatePlural(locale, key, count, params);
+        t.has = (key) => hasTranslation(locale, key);
         t.locale = locale;
         return t;
-    }, [locale]);
+    }, [locale, revision]);
 }

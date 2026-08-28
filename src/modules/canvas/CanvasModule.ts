@@ -6,6 +6,8 @@ import { CanvasToolbar } from './ui/CanvasToolbar';
 import { canvasSettingsSchema } from './settings.schema';
 import type { SettingsSchema } from '../../settings/schema/types';
 import type ZenithPlugin from '../../main';
+import { canvasTranslations } from './i18n';
+import type { TranslationTable } from '../../core/i18n';
 
 /**
  * CanvasModule — enhancements for Obsidian's built-in Canvas.
@@ -28,6 +30,10 @@ export class CanvasModule extends BaseModule {
     readonly name = 'Canvas';
     readonly description = 'Tidy, generate and reshape Obsidian canvases.';
     readonly icon = 'workflow';
+
+    getTranslations(): TranslationTable {
+        return canvasTranslations;
+    }
 
     private toolbar: CanvasToolbar | null = null;
     private eventRefs: EventRef[] = [];

@@ -20,6 +20,7 @@ import type { JournalWeekStart } from '../../store/settingsSlice';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
 import { IconPickerModal } from '../../core/IconPickerModal';
 import { journalNotePath, isoToDate } from '../../modules/journal/services/journalDates';
+import { translateNow } from '../../core/i18n';
 import {
     readDailyNotesConfig,
     dailyNotesConflict,
@@ -78,11 +79,11 @@ export const JournalSettings: React.FC = () => {
                 current = current ? `${current}/${segment}` : segment;
                 if (!app.vault.getAbstractFileByPath(current)) await app.vault.createFolder(current);
             }
-            new Notice(`Zenith: created folder "${path}".`);
+            new Notice(translateNow('notice.folderCreated', { path }));
             forceRefresh((n) => n + 1);
         } catch (err) {
             console.error('Zenith: Failed to create folder:', err);
-            new Notice('Zenith: could not create folder.');
+            new Notice(translateNow('notice.folderFailed'));
         }
     };
 
@@ -133,7 +134,7 @@ export const JournalSettings: React.FC = () => {
                         type="button"
                         className="zenith-ctype__icon"
                         style={{ color: tracker.color }}
-                        aria-label="Change icon"
+                        aria-label={t('a11y.changeIcon')}
                         onClick={() =>
                             new IconPickerModal(app, tracker.icon, (icon) =>
                                 patch(index, { icon })
@@ -152,7 +153,7 @@ export const JournalSettings: React.FC = () => {
                         type="color"
                         className="zenith-ctype__color"
                         value={tracker.color}
-                        aria-label="Colour"
+                        aria-label={t('ctypes.colour')}
                         onChange={(e) => patch(index, { color: e.target.value })}
                     />
                     {/* Off, not gone: the id still names a frontmatter key in
@@ -360,7 +361,7 @@ export const JournalSettings: React.FC = () => {
                         type="text"
                         className="zenith-settings__input"
                         value={settings.journalTemplatePath}
-                        placeholder="e.g. 40 Resources/Templates/Daily.md"
+                        placeholder={t('journal.templatePlaceholder')}
                         onChange={(e) => updateSettings({ journalTemplatePath: e.target.value })}
                     />
                 </div>

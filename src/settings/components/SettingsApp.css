@@ -34,6 +34,11 @@
     margin-bottom: 8px;
 }
 
+/* Same specificity as the rule above, so the drill-down's own spacing wins. */
+.zenith-custom-settings-container.is-mobile-settings .zenith-settings__header--nested {
+    margin-bottom: 16px;
+}
+
 /* ── Header & Back Button ── */
 .zenith-settings__header {
     margin-bottom: 8px;
@@ -42,6 +47,14 @@
     justify-content: center; /* Center the title */
     position: relative; /* For absolutely positioning the back button */
     min-height: 32px;
+}
+
+/* The same 1px rule the group labels carry, so the two pages are drawn with
+   one line, not two that nearly match. */
+.zenith-settings__header--nested {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    margin-bottom: 20px;
 }
 
 .zenith-settings__title {

@@ -2,6 +2,7 @@ import { App, Modal, Notice } from 'obsidian';
 import { useZenithStore } from '../../store';
 import type { ZenithSettings } from '../../store';
 import { getVaultImages, resolveMediaSrc, mediaLabel } from './mediaService';
+import { translateNow } from '../../core/i18n';
 
 /**
  * MediaPickerModal — choose the banner image/GIF shown above the file explorer.
@@ -190,7 +191,7 @@ export class MediaPickerModal extends Modal {
             partial.mediaSaved = [...this.settings.mediaSaved, ref];
         }
         this.update(partial);
-        new Notice('Zenith: banner image updated.');
+        new Notice(translateNow('notice.bannerUpdated'));
         this.close();
     }
 }

@@ -6,6 +6,7 @@ import { booksProvider } from './providers/books';
 import { animangaProvider } from './providers/animanga';
 import { gameProvider } from './providers/steam';
 import { wikipediaProvider } from './providers/wikipedia';
+import { translateNow } from '../../../../core/i18n';
 
 /**
  * Metadata service — maps a content type's provider id to a keyless provider,
@@ -40,7 +41,7 @@ const PROVIDERS: Record<Exclude<MetadataProviderId, 'none'>, MetadataProvider> =
 
 /** Human-readable provider name for settings UI. */
 export function providerLabel(id: MetadataProviderId): string {
-    if (normalizeProviderId(id) === 'none') return 'None (manual entry)';
+    if (normalizeProviderId(id) === 'none') return translateNow('content.provider.none');
     return PROVIDERS[normalizeProviderId(id) as Exclude<MetadataProviderId, 'none'>]?.label ?? id;
 }
 

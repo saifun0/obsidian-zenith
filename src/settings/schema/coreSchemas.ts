@@ -1,4 +1,5 @@
 import { coreSchema, type CoreSettingsSchema } from './types';
+import { localizeModule } from '../../core/moduleLabels';
 
 /**
  * The three categories that are not modules.
@@ -22,10 +23,12 @@ export const generalSchema: CoreSettingsSchema = coreSchema({
                     default: 'dashboard',
                     // Derived at render time: which modules exist depends on
                     // what the user has installed.
-                    options: ({ plugin }) =>
+                    // The same translated name the modules list shows — a
+                    // picker naming them differently reads as a different set.
+                    options: ({ plugin, t }) =>
                         plugin.moduleManager
                             .getAvailableManifests()
-                            .map((m) => ({ value: m.id, label: m.name })),
+                            .map((m) => ({ value: m.id, label: localizeModule(t, m).name })),
                 },
                 {
                     type: 'select',

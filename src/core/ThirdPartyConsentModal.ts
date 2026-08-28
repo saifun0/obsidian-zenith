@@ -1,5 +1,6 @@
 import { Modal, type App } from 'obsidian';
 import type { ThirdPartyManifest } from './moduleManifestSchema';
+import { translateNow as t } from './i18n';
 
 /**
  * Asking before running someone else's code.
@@ -40,30 +41,27 @@ export class ThirdPartyConsentModal extends Modal {
         contentEl.empty();
         contentEl.addClass('zenith-consent');
 
-        contentEl.createEl('h3', { text: `Run third-party module: ${request.manifest.name}` });
+        contentEl.createEl('h3', { text: t('consent.title', { name: request.manifest.name }) });
 
         // The statement, unhedged and first.
         contentEl.createEl('p', {
             cls: 'zenith-consent__warning',
-            text:
-                'Zenith modules are JavaScript that runs with the same permissions as Obsidian ' +
-                'itself. This module can read, change and delete any file in your vault, and can ' +
-                'send data anywhere on the internet. Zenith cannot sandbox it and does not ' +
-                'review it.',
+            text: t('consent.warning'),
         });
 
         if (request.reason === 'code-changed') {
             contentEl.createEl('p', {
                 cls: 'zenith-consent__warning',
-                text:
-                    'The code on disk no longer matches what Zenith installed. It may have been ' +
-                    'edited, or changed by sync from another device.',
+                text: t('consent.codeChanged'),
             });
         }
         if (request.reason === 'source-changed' && request.previousOrigin) {
             contentEl.createEl('p', {
                 cls: 'zenith-consent__warning',
-                text: `The source changed: ${request.previousOrigin} → ${request.origin}`,
+                text: t('consent.sourceChanged', {
+                    from: request.previousOrigin,
+                    to: request.origin,
+                }),
             });
         }
 
@@ -77,35 +75,41 @@ export class ThirdPartyConsentModal extends Modal {
 
         // Source is the one fact Zenith actually knows, so it goes first and in
         // full — "from GitHub" would tell the user nothing worth knowing.
-        fact('Source', request.origin);
-        fact('Size', `${Math.max(1, Math.round(request.code.length / 1024))} KB`);
+        fact(t('consent.fact.source'), request.origin);
+        fact(
+            t('consent.fact.size'),
+            t('consent.size', { kb: Math.max(1, Math.round(request.code.length / 1024)) })
+        );
 
         facts.createEl('p', {
             cls: 'zenith-consent__claimed',
-            text: 'Claimed by the module, not verified by Zenith:',
+            text: t('consent.claimed'),
         });
-        fact('Author', request.manifest.author ?? '—');
-        fact('Version', request.manifest.version);
-        fact('Description', request.manifest.description || '—');
-        if (request.manifest.notes) fact('Notes', request.manifest.notes);
+        fact(t('consent.fact.author'), request.manifest.author ?? '—');
+        fact(t('consent.fact.version'), request.manifest.version);
+        fact(t('consent.fact.description'), request.manifest.description || '—');
+        if (request.manifest.notes) fact(t('consent.fact.notes'), request.manifest.notes);
 
         // Offering the code is the difference between informed consent and a
         // dialog people click through.
         const details = contentEl.createEl('details', { cls: 'zenith-consent__code' });
-        details.createEl('summary', { text: 'View code' });
+        details.createEl('summary', { text: t('consent.viewCode') });
         details.createEl('pre').createEl('code', { text: request.code });
 
         const confirmRow = contentEl.createDiv({ cls: 'zenith-consent__confirm' });
         const checkbox = confirmRow.createEl('input', { type: 'checkbox' });
         checkbox.id = 'zenith-consent-understood';
         confirmRow.createEl('label', {
-            text: 'I understand this code is not sandboxed.',
+            text: t('consent.understood'),
             attr: { for: checkbox.id },
         });
 
         const buttons = contentEl.createDiv({ cls: 'zenith-consent__buttons' });
-        const cancel = buttons.createEl('button', { text: 'Cancel' });
-        const accept = buttons.createEl('button', { text: 'Install and run', cls: 'mod-warning' });
+        const cancel = buttons.createEl('button', { text: t('consent.cancel') });
+        const accept = buttons.createEl('button', {
+            text: t('consent.accept'),
+            cls: 'mod-warning',
+        });
         accept.disabled = true;
 
         checkbox.addEventListener('change', () => {

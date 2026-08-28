@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from '../../core/i18n';
 
 interface PieChartData {
     label: string;
@@ -28,6 +29,7 @@ export const PieChart: React.FC<PieChartProps> = ({
     centerLabel,
     centerCaption,
 }) => {
+    const t = useTranslation();
     const total = useMemo(() => data.reduce((sum, d) => sum + d.value, 0), [data]);
 
     const radius = size / 2 - 4;
@@ -62,7 +64,7 @@ export const PieChart: React.FC<PieChartProps> = ({
                         strokeWidth={strokeWidth}
                     />
                 </svg>
-                {showLegend && <p className="zenith-pie-chart__empty-text">No data</p>}
+                {showLegend && <p className="zenith-pie-chart__empty-text">{t('common.noData')}</p>}
             </div>
         );
     }

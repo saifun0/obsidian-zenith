@@ -3,11 +3,17 @@ import { Download, ExternalLink, Github, Link2, RefreshCw, Trash2 } from 'lucide
 import { useApp } from '../../context/AppContext';
 import { useZenithStore } from '../../store';
 import { useTranslation } from '../../core/i18n';
-import { ModuleInstaller as Installer } from '../../core/moduleInstaller';
+import { ModuleInstaller as Installer, type InstallOutcome } from '../../core/moduleInstaller';
 import type { ModuleSourceKind } from '../../core/moduleSources';
 import { Segmented, TextArea, TextInput } from '../controls';
+import type { Message } from '../../core/message';
 
-type Status = { kind: 'idle' } | { kind: 'busy'; text: string } | { kind: 'error'; text: string };
+type Status =
+    | { kind: 'idle' }
+    | { kind: 'busy' }
+    // The reason arrives unrendered, so it is translated here — where the
+    // language is known — rather than wherever the fetch gave up.
+    | { kind: 'error'; reason: Message; detail?: Message };
 
 /** Short, human description of where a module came from. */
 function sourceLabel(kind: ModuleSourceKind, ref: string, t: ReturnType<typeof useTranslation>) {
@@ -44,8 +50,8 @@ export const ModuleInstallerPanel: React.FC = () => {
     const [pasteCode, setPasteCode] = useState('');
     const [status, setStatus] = useState<Status>({ kind: 'idle' });
 
-    const run = async (work: () => Promise<{ ok: boolean; error?: string; cancelled?: boolean }>) => {
-        setStatus({ kind: 'busy', text: t('modules.working') });
+    const run = async (work: () => Promise<InstallOutcome>) => {
+        setStatus({ kind: 'busy' });
         const outcome = await work();
         if (outcome.ok) {
             setStatus({ kind: 'idle' });
@@ -55,7 +61,11 @@ export const ModuleInstallerPanel: React.FC = () => {
         } else if (outcome.cancelled) {
             setStatus({ kind: 'idle' });
         } else {
-            setStatus({ kind: 'error', text: outcome.error ?? t('modules.failed') });
+            setStatus({
+                kind: 'error',
+                reason: outcome.error ?? { key: 'modules.failed' },
+                detail: outcome.errorDetail,
+            });
         }
     };
 
@@ -142,7 +152,12 @@ export const ModuleInstallerPanel: React.FC = () => {
             </div>
 
             {status.kind === 'error' && (
-                <div className="zenith-settings__hint zenith-settings__hint--warn">{status.text}</div>
+                <div className="zenith-settings__hint zenith-settings__hint--warn">
+                    <span>
+                        {t(status.reason.key, status.reason.params)}
+                        {status.detail && ` ${t(status.detail.key, status.detail.params)}`}
+                    </span>
+                </div>
             )}
             </div>
 
