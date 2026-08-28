@@ -71,19 +71,52 @@ export function toIsoDate(value: unknown): string | undefined {
  * Markdown files, frontmatter, and checkboxes.
  */
 export class VaultService {
+    /**
+     * Paths already complained about.
+     *
+     * Every one of these reads runs again whenever the setting it came from
+     * changes, whenever a note is written, and on every reload — so one
+     * misconfigured folder was filling the console with the same sentence and
+     * pushing everything else off the top. It is one fact; it gets said once.
+     */
+    private readonly reported = new Set<string>();
+
+    /** Notes whose frontmatter has already been complained about. Same reason. */
+    private readonly malformed = new Set<string>();
+
     constructor(private readonly app: App) {}
 
     /**
-     * Get all .md files from a vault-relative folder path.
-     * Returns empty array if folder doesn't exist.
+     * Every `.md` file under a vault-relative folder, or none.
+     *
+     * Three outcomes rather than two, because they mean different things. A
+     * folder with files gives files. A folder nobody has configured gives
+     * nothing and says nothing — an unset setting is not a problem to report.
+     * A folder that was configured and is not there gives nothing and says so
+     * once, because that one really is something the user has to fix and
+     * nothing will be read until they do.
      */
     getMarkdownFiles(folderPath: string): TFile[] {
-        const folder = this.app.vault.getAbstractFileByPath(folderPath);
+        const path = (folderPath ?? '').trim();
+        // Warning about `""` claimed a folder named nothing was missing, which
+        // is neither true nor anything anyone can act on.
+        if (!path) return [];
+
+        const folder = this.app.vault.getAbstractFileByPath(path);
 
         if (!folder || !(folder instanceof TFolder)) {
-            console.warn(`Zenith: Folder "${folderPath}" not found in vault.`);
+            if (!this.reported.has(path)) {
+                this.reported.add(path);
+                console.warn(
+                    `Zenith: the folder "${path}" is set in settings but is not in this vault, so nothing is being read from it. Create it, or point the setting somewhere else.`
+                );
+            }
             return [];
         }
+
+        // It exists after all — so the next disappearance is worth hearing
+        // about again rather than being swallowed by a stale record.
+        this.reported.delete(path);
 
         const files: TFile[] = [];
         this.collectMarkdownFiles(folder, files);
@@ -133,14 +166,14 @@ export class VaultService {
             return rest;
         }
         const content = await this.readFileContent(file);
-        return this.parseFrontmatter(content);
+        return this.parseFrontmatter(content, file.path);
     }
 
     /**
      * Parse YAML frontmatter from file content.
      * Returns an empty object if no frontmatter found.
      */
-    parseFrontmatter(content: string): Record<string, unknown> {
+    parseFrontmatter(content: string, path?: string): Record<string, unknown> {
         const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
         if (!match || !match[1]) {
             return {};
@@ -149,7 +182,17 @@ export class VaultService {
         try {
             return (parseYaml(match[1]) as Record<string, unknown>) ?? {};
         } catch (error) {
-            console.warn('Zenith: Failed to parse frontmatter:', error);
+            // Named, and said once. The old message reported neither which note
+            // was broken nor that the note had still been read — so it was both
+            // impossible to act on and repeated on every re-parse, which for a
+            // note in a watched folder is constantly.
+            const key = path ?? '<unnamed>';
+            if (!this.malformed.has(key)) {
+                this.malformed.add(key);
+                console.warn(
+                    `Zenith: could not read the frontmatter of "${key}" — ${describeError(error)}. The note itself was read; only its properties were skipped.`
+                );
+            }
             return {};
         }
     }
@@ -202,4 +245,8 @@ export class VaultService {
         const matches = text.match(/#[\w-]+/g);
         return matches ? matches.map((t) => t.slice(1)) : [];
     }
+}
+
+function describeError(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
 }

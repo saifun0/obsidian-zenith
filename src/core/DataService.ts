@@ -85,7 +85,18 @@ export class DataService {
         // `changed` fires after the re-index, so text and cache agree.
         this.plugin.registerEvent(metadataCache.on('changed', (f) => this.onChange(f)));
 
-        void this.reloadAll();
+        // The first parse waits for the workspace.
+        //
+        // A plugin's `onload` runs before Obsidian has finished indexing the
+        // vault, so `getAbstractFileByPath` answers null for folders that are
+        // sitting right there — and the parse then reports a perfectly good
+        // journal folder as missing and reads nothing out of it. Waiting costs
+        // nothing: `onLayoutReady` fires immediately when the layout is already
+        // up, which is the case whenever a module is switched on by hand.
+        //
+        // The listeners above are registered straight away regardless, so a
+        // change arriving during startup is still noticed.
+        this.plugin.app.workspace.onLayoutReady(() => void this.reloadAll());
     }
 
     /** Force a full reload of every collection (used by Refresh buttons). */

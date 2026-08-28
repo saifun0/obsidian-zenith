@@ -23,13 +23,34 @@ export class TAbstractFile {
     path = '';
 }
 
-/** A tiny YAML subset is enough for our tests; delegate to a naive parser. */
+/**
+ * A tiny YAML subset is enough for our tests; delegate to a naive parser.
+ *
+ * It does refuse a couple of things outright, which the naive version did not.
+ * The real `parseYaml` throws on malformed input, and code with a `catch` around
+ * it cannot be tested against a stand-in that never throws — the branch is not
+ * reachable at all, which is how such a branch comes to be wrong unnoticed.
+ */
 export function parseYaml(input: string): unknown {
     const out: Record<string, unknown> = {};
+
     for (const line of input.split('\n')) {
         const m = line.match(/^([\w-]+):\s*(.*)$/);
-        if (m) out[m[1]] = m[2];
+        if (!m) continue;
+
+        const value = m[2];
+        // A flow sequence or mapping that is opened and never closed, and a
+        // quote with no partner. Both are errors in real YAML.
+        if (/^[[{]/.test(value) && !/[\]}]\s*$/.test(value)) {
+            throw new Error('unexpected end of the stream within a flow collection');
+        }
+        if (/^["']/.test(value) && !value.slice(1).includes(value[0])) {
+            throw new Error('unexpected end of the stream within a quoted scalar');
+        }
+
+        out[m[1]] = value;
     }
+
     return out;
 }
 

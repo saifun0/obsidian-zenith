@@ -21,6 +21,9 @@ const EN: Dict = {
     'settings.general.desc': 'Core preferences and default views',
     'settings.storage': 'Storage Paths',
     'settings.storage.desc': 'Locations for your tasks and content',
+    'settings.pluginSettings': 'Plugin settings',
+    'settings.moduleSettings': 'Module settings',
+    'settings.thirdPartyBadge': 'third-party',
     'settings.modules': 'Active Modules',
     'settings.modules.desc': 'Enable or disable specific plugin features',
     'settings.appearance': 'Appearance',
@@ -205,12 +208,13 @@ const EN: Dict = {
     'settings.builtInModules': 'Built-in Modules',
     'settings.thirdPartyModules': 'Third-party Modules',
     'settings.allowThirdParty': 'Run third-party modules',
-    'settings.allowThirdParty.desc':
-        'Off by default. Installed modules are still listed while this is off — nothing runs.',
+    'settings.thirdPartyWarning.short':
+        'They run with Obsidian’s own access — your whole vault, and the internet.',
+    'settings.thirdPartyWarning.more': 'What that means',
     'settings.thirdPartyWarning':
-        'Third-party modules are JavaScript that runs with the same permissions as Obsidian ' +
-        'itself. A module can read, change and delete any file in your vault, and can send data ' +
-        'anywhere on the internet. Zenith cannot sandbox modules and does not review them.',
+        'A module is JavaScript with the same permissions as Obsidian itself. It can read, ' +
+        'change and delete any file in your vault, and send data anywhere on the internet. ' +
+        'Zenith cannot sandbox modules and does not review them.',
     'settings.thirdPartyBlocked':
         'These modules are installed but not running, because the switch above is off.',
 
@@ -237,16 +241,13 @@ const EN: Dict = {
     'modules.placeholder.url': 'https://example.com/my-module/manifest.json',
     'modules.placeholder.vault': 'Downloads/my-module.js',
     'modules.placeholder.paste': '',
-    'modules.hint.github':
-        'Takes the latest release, or the main/master branch if there are none. ' +
-        'Add @tag or @branch:subdir to be specific.',
+    'modules.hint.github': 'Latest release, or the default branch. Add @tag or @branch:subdir.',
     'modules.hint.url': 'https only. main.js is read from the same folder.',
     'modules.hint.vault':
-        'A .js file already in your vault — handy on a phone. Needs a manifest.json beside it, ' +
-        'or a /* zenith-module { … } */ header at the top of the file. Zip archives are not supported.',
+        'A .js file already in your vault. Needs a manifest.json beside it, or a ' +
+        '/* zenith-module { … } */ header. No zip archives.',
     'modules.hint.paste': 'The manifest JSON, then the module code.',
-    'settings.noThirdParty': 'No third-party modules installed. Place them in the modules/ folder.',
-    'settings.moduleToggleHint': 'Modules load and unload instantly — no restart required.',
+    'settings.noThirdParty': 'Nothing installed yet.',
     'settings.moduleNoSettings': 'This module has no configurable settings.',
 
     // Settings — vault
@@ -1335,6 +1336,9 @@ const RU: Dict = {
     'settings.general.desc': 'Базовые настройки и вид по умолчанию',
     'settings.storage': 'Пути хранения',
     'settings.storage.desc': 'Расположение задач и контента',
+    'settings.pluginSettings': 'Настройки плагина',
+    'settings.moduleSettings': 'Настройки модулей',
+    'settings.thirdPartyBadge': 'сторонний',
     'settings.modules': 'Активные модули',
     'settings.modules.desc': 'Включение и отключение возможностей плагина',
     'settings.appearance': 'Оформление',
@@ -1513,12 +1517,13 @@ const RU: Dict = {
     'settings.builtInModules': 'Встроенные модули',
     'settings.thirdPartyModules': 'Сторонние модули',
     'settings.allowThirdParty': 'Запускать сторонние модули',
-    'settings.allowThirdParty.desc':
-        'По умолчанию выключено. Пока выключено, установленные модули видны в списке, но не работают.',
+    'settings.thirdPartyWarning.short':
+        'Работают с правами самого Obsidian — всё хранилище и интернет.',
+    'settings.thirdPartyWarning.more': 'Что это значит',
     'settings.thirdPartyWarning':
-        'Сторонний модуль — это JavaScript, работающий с теми же правами, что и сам Obsidian. ' +
-        'Он может читать, изменять и удалять любой файл вашего хранилища и отправлять данные ' +
-        'куда угодно в интернет. Zenith не изолирует модули и не проверяет их.',
+        'Модуль — это JavaScript с теми же правами, что и сам Obsidian. Он может читать, ' +
+        'изменять и удалять любой файл хранилища и отправлять данные куда угодно в интернет. ' +
+        'Zenith не изолирует модули и не проверяет их.',
     'settings.thirdPartyBlocked':
         'Эти модули установлены, но не запущены — переключатель выше выключен.',
 
@@ -1545,16 +1550,13 @@ const RU: Dict = {
     'modules.placeholder.url': 'https://example.com/my-module/manifest.json',
     'modules.placeholder.vault': 'Downloads/my-module.js',
     'modules.placeholder.paste': '',
-    'modules.hint.github':
-        'Берётся последний релиз, а если релизов нет — ветка main или master. ' +
-        'Можно указать точнее: @tag или @branch:subdir.',
+    'modules.hint.github': 'Последний релиз или ветка по умолчанию. Можно @tag или @branch:subdir.',
     'modules.hint.url': 'Только https. main.js берётся из той же папки.',
     'modules.hint.vault':
-        'Файл .js, уже лежащий в хранилище — удобно на телефоне. Рядом нужен manifest.json ' +
-        'либо заголовок /* zenith-module { … } */ в начале файла. Zip-архивы не поддерживаются.',
+        'Файл .js, уже лежащий в хранилище. Рядом нужен manifest.json либо заголовок ' +
+        '/* zenith-module { … } */. Zip-архивы не поддерживаются.',
     'modules.hint.paste': 'Сначала JSON манифеста, затем код модуля.',
-    'settings.noThirdParty': 'Нет установленных сторонних модулей. Поместите их в папку modules/.',
-    'settings.moduleToggleHint': 'Модули включаются и выключаются мгновенно — перезапуск не нужен.',
+    'settings.noThirdParty': 'Пока ничего не установлено.',
     'settings.moduleNoSettings': 'У этого модуля нет настраиваемых параметров.',
 
     // Settings — vault

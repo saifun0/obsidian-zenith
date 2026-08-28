@@ -31,12 +31,12 @@
 /* Our own back/title row would otherwise stack a second header under
    Obsidian's; tighten it so the two don't read as a double heading. */
 .zenith-custom-settings-container.is-mobile-settings .zenith-settings__header {
-    margin-bottom: 20px;
+    margin-bottom: 8px;
 }
 
 /* ── Header & Back Button ── */
 .zenith-settings__header {
-    margin-bottom: 32px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     justify-content: center; /* Center the title */
@@ -51,7 +51,17 @@
     margin: 0;
     letter-spacing: -0.01em;
     color: var(--text-normal);
-    text-align: center;
+    /* Icon and wordmark travel together, and the pair is what gets centred. */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* The same mark the ribbon and the About page use, in the same accent every
+   other icon on this screen is drawn in. */
+.zenith-settings__title-icon {
+    color: var(--interactive-accent);
+    flex-shrink: 0;
 }
 
 .zenith-settings__back-btn {
@@ -89,6 +99,51 @@
     border: 1px solid var(--background-modifier-border);
     border-radius: 12px;
     overflow: hidden; /* Ensure rounded corners for children */
+}
+
+/* The line between "settings of the plugin" and "settings of its modules".
+   Labelled rather than a bare rule: two identical cards stacked with nothing
+   between them read as one list that happens to have a gap in it. */
+.zenith-settings__menu-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+}
+
+.zenith-settings__menu-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--background-modifier-border);
+}
+
+/* The topmost label already has the header's bottom margin above it; its own
+   would stack on top and push the first card an obvious notch further down
+   than the second group sits below its label. */
+.zenith-settings__body > .zenith-settings__menu-divider:first-child {
+    margin-top: 0;
+}
+
+/* Third-party rows say so. A module is plain JavaScript with the same reach as
+   Obsidian itself, and a list that renders one indistinguishably from a built-in
+   is quietly claiming otherwise. */
+.zenith-settings__menu-badge {
+    margin-left: 8px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--background-modifier-border);
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    vertical-align: middle;
 }
 
 .zenith-settings__menu-item {
@@ -250,12 +305,61 @@
     cursor: pointer;
 }
 
+/* Drawn here rather than left to the platform. `accent-color` hands the tick to
+   Chromium, which draws it for a ~13px box; forced to 20px the glyph stretches
+   and its tick sits visibly off-centre. This is the same square, border radius
+   and mark as the module tiles, so the two checkboxes on the modules page are
+   one control rather than two that nearly match. */
 .zenith-settings__toggle-label input[type="checkbox"] {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    box-sizing: border-box;
     cursor: pointer;
     width: 20px !important;
     height: 20px !important;
     margin: 0 !important;
-    accent-color: var(--interactive-accent);
+    padding: 0 !important;
+    border: 1px solid var(--text-muted) !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+/* The tick is a path with its bounding box centred on 10,10 of a 20-unit
+   square, so it lands dead centre whatever the box is scaled to. */
+.zenith-settings__toggle-label input[type="checkbox"]:checked {
+    border-color: var(--interactive-accent) !important;
+    background-color: var(--interactive-accent) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.2 8.6 13.3 14.5 6.7' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: 100% 100% !important;
+}
+
+/* Obsidian draws its own tick on a checked box with a masked `::after`. Ours is
+   a background-image, so without this the two stack slightly apart and the box
+   shows a doubled check. */
+.zenith-settings__toggle-label input[type="checkbox"]::before,
+.zenith-settings__toggle-label input[type="checkbox"]::after {
+    content: none !important;
+    display: none !important;
+}
+
+.zenith-settings__toggle-label input[type="checkbox"]:hover:not(:disabled) {
+    border-color: var(--interactive-accent) !important;
+}
+
+.zenith-settings__toggle-label input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+
+.zenith-settings__toggle-label input[type="checkbox"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* ── Stacked items (label above full-width control) ── */
@@ -447,6 +551,46 @@
     color: var(--text-muted);
     font-weight: 600;
     margin: 8px 0 4px;
+}
+
+/* Where a paragraph is worth keeping but not worth showing every time. Reads
+   as a quiet link until opened, so it costs the row one short line. */
+.zenith-settings__disclosure {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.zenith-settings__disclosure > summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    cursor: pointer;
+    color: var(--text-accent, var(--interactive-accent));
+    list-style: none;
+}
+
+.zenith-settings__disclosure > summary::-webkit-details-marker {
+    display: none;
+}
+
+.zenith-settings__disclosure > summary::after {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(-45deg) translate(-1px, 1px);
+    transition: transform 0.15s ease;
+}
+
+.zenith-settings__disclosure[open] > summary::after {
+    transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.zenith-settings__disclosure > p {
+    margin: 6px 0 0;
 }
 
 .zenith-settings__item-desc--block {
@@ -771,11 +915,42 @@
 }
 
 /* ━━━ Module installer ━━━ */
+.zenith-modinstall {
+    margin-top: 4px;
+}
+
+/* One box around the source picker, the field and the button. Loose on the page
+   they read as three unrelated controls that happen to be stacked. */
+.zenith-modinstall__form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
 .zenith-modinstall__input {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin: 12px 0;
+}
+
+/* Button first, the syntax note beside it — a footnote to the field rather than
+   another full-width band of grey text above the thing it explains. */
+.zenith-modinstall__foot {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.zenith-modinstall__note {
+    flex: 1 1 200px;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--text-faint);
 }
 
 .zenith-modinstall__input .zenith-settings__input,

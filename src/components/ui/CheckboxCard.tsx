@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Check, Settings2 } from 'lucide-react';
+import { Box, Settings2 } from 'lucide-react';
 import { DynamicIcon } from '../shared/DynamicIcon';
 
 interface CheckboxCardProps {
@@ -62,7 +62,22 @@ export const CheckboxCard: React.FC<CheckboxCardProps> = ({
             )}
 
             <span className="zenith-checkbox-card__indicator">
-                {checked && <Check size={13} strokeWidth={3} />}
+                {/* Drawn here rather than taken from the icon set: the path's
+                    bounding box is centred on 10,10 of a 20-unit square, so the
+                    tick lands dead centre of the box at any size — and it is
+                    the same mark the settings checkboxes draw in CSS. */}
+                {checked && (
+                    <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+                        <path
+                            d="M5.5 10.2 8.6 13.3 14.5 6.7"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
+                )}
             </span>
         </div>
 
