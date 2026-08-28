@@ -452,7 +452,13 @@ export const SettingsApp: React.FC = () => {
 
     return (
         <div className="zenith-settings">
-            <div className="zenith-settings__header">
+            {/* A drill-down's header IS the page title, and nothing under it
+                draws a line the way the root page's first group label does. */}
+            <div
+                className={`zenith-settings__header${
+                    activeCategory || activeModuleId ? ' zenith-settings__header--nested' : ''
+                }`}
+            >
                 {activeModuleId ? (
                     <button className="zenith-settings__back-btn" onClick={() => setActiveModuleId(null)}>
                         <ArrowLeft size={16} />
