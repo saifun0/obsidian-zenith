@@ -1,0 +1,151 @@
+# Journal
+
+[← Documentation](../../README.md) · **English** · [Русский](../ru/journal.md)
+
+A daily note is one `.md` file per day in the configured **Journal folder** (Settings →
+Journal), `11 Journal/Daily note` by default, named by a **filename pattern** —
+`YYYY-MM-DD`. The day's check-in lives in the note's own frontmatter, so it survives the
+plugin being uninstalled:
+
+````markdown
+---
+date: 2026-07-28
+mood: 4          # scale   — 1 to 5
+energy: 3        # scale
+sport: true      # check   — a habit that was done
+water: 6         # number  — a count, with its own unit and step
+tags: [work]
+---
+
+```zenith-daily
+```
+
+## Highlights
+
+- Shipped the parser rewrite
+
+## Tasks
+
+- [ ] Reply to the design review
+
+## Notes
+
+…
+````
+
+**What a day records is configurable**, in *Settings → Journal → What each day records*.
+A **tracker** is one thing the day measures, and comes in three kinds:
+
+| Kind | Value | Reads as | Counts as done when |
+| --- | --- | --- | --- |
+| **Check-box** | `true` | Did I exercise? | it's ticked |
+| **Scale 1–5** | `1`–`5` | How was my mood? | the score reaches its goal (4 by default) |
+| **Number** | any number | How many glasses of water? | it reaches its target — or, with no target set, anything above zero |
+
+Mood and energy are not special: they are two scale trackers that ship by default and can
+be renamed, re-typed or deleted like any other. Each tracker owns one frontmatter key, so a
+day reads as ordinary Obsidian properties — a check-box property for habits, a number for
+counts — and stays meaningful to every other plugin. Deleting every tracker is allowed and
+means what it says: a journal of pure prose.
+
+Values whose tracker was later renamed or removed are **kept** in the note and still parsed,
+so re-adding a tracker finds its history rather than a blank slate.
+
+## In the note itself
+
+A ` ```zenith-daily ` code block renders the day's check-in inside the note: every tracker
+as a control, plus **‹ ›** buttons that walk to the previous and next day (creating those
+notes on demand) and a jump back to today. The built-in template starts with one; add the
+block to your own template to get the same.
+
+The date comes from the note the block sits in, not from the clock — so opening last
+Tuesday and ticking a habit records it against last Tuesday.
+
+The controls **scroll sideways rather than wrap**, in the block and in the widgets. That is
+deliberate: controls that wrapped got dropped when a card was resized small, which silently
+made some habits un-tickable at some sizes. Scrolling keeps every one of them reachable at
+every width.
+
+Pattern tokens are `YYYY`, `YY`, `MMMM`, `MMM`, `MM`, `M`, `DD`, `D`, `dddd`, `ddd`, with
+`[…]` for literals; a `/` nests notes in subfolders (`YYYY/MM/DD`). Month and weekday names
+in a **filename** are always English — deriving them from the interface language would make
+every note written under one language unreachable under another. The calendar's own labels
+are localized.
+
+A note belongs to a day if its frontmatter says so, or if its filename matches the pattern.
+Anything else in the folder — an index note, a scratch file — is left alone rather than
+shown as an undated day.
+
+**The calendar** colours each day by the first scale tracker — normally the mood — so a
+month reads as a mood strip; a day journalled without one gets a neutral dot, and a second
+dot marks days with a task due. Click a day to select it, double-click to open its note.
+The day panel's controls work on days that have no note yet — they create it on first use —
+and **‹ ›** beside the date step a day at a time.
+
+**Statistics** are always on screen, above the calendar. They open with coverage over the
+last 30 days — current and longest streak, entries written, words. A day counts toward a
+streak only once it has words or a recorded value, so clicking through the calendar can't
+pad it.
+
+Words are counted from the **notes section only** — whatever sits under the `## Notes`
+heading, in any language Zenith ships, up to the next heading of the same level. The
+template's other sections hold a task list and a bullet for highlights, and counting those
+reported a productive day for a note nobody had written in yet. A note with no such heading
+is counted whole.
+
+Under it, **the habit month**: one row per tracker, one column per day, and a run of days
+that met their target drawn as a single bar across them. Each day's mark says which of four
+things happened — met its target, recorded something short of it, journalled without
+recording it, or no note at all — because a gap in the record is not the same as a failure.
+The month follows the calendar below, opens scrolled to today, and keeps the habit icons
+pinned while the days scroll past them.
+
+**Clicking a day records it**, any day of the month, writing into that day's own note
+through the same call the day panel uses. A check toggles where it stands; a scale or a
+number opens a small editor with its steps, a stepper and its target one button away —
+reaching "sixty reps, step five" by clicking one dot twelve times is not an interaction
+worth having.
+
+Three cards close the month: the strongest habit, the weakest one — named on purpose, it's
+the only one next month can act on — and the average, each with its longest run. Rates are
+over the days elapsed so far, not the whole month, so a good first week doesn't read as 20%.
+The note on what "done" means is behind the **i** button in the header.
+
+A tracker you've stopped keeping can be **switched off** rather than deleted (the eye beside
+it in settings). It leaves the check-in and the grid and keeps every value it ever recorded,
+so switching it back on finds its history intact — deleting it would orphan the frontmatter
+key those notes still carry.
+
+**Two dashboard widgets**, split by what they are for — one records the day, one reports on
+it. Keeping them apart is why neither has to compromise:
+
+| Widget | What it is |
+| --- | --- |
+| **Check-in** | Today's trackers as controls — the same strip the in-note block shows. |
+| **Journal stats** | Streak, entries, words and every tracker over the last 30 days. Read-only, with a button into the journal. |
+
+The statistics card is deliberately not editable: values are set in the check-in widget, in
+the note's own block, or in the journal view, and a card that both reported and edited
+would blur which of the two it was. Its three sizes are three different summaries rather
+than one truncated three ways — the small card drops the framing and keeps the bars, the
+large one earns headline figures and a per-day strip under each tracker.
+
+**Templates.** New notes are built from the note at **Settings → Journal → Template**,
+supporting `{{date}}`, `{{date:FORMAT}}`, `{{time}}` and `{{title}}` — the same placeholders
+Obsidian's own Daily Notes uses, so an existing template drops in unchanged. With no
+template configured, a short built-in body is used. A template that brings its own
+frontmatter is merged with, not duplicated.
+
+**Tasks land in the day.** With **Capture tasks in the daily note** on (the default), every
+task created from the Tasks view or the *Quick add task* command is written into today's
+note — creating it if the day hasn't been started — under the heading configured in
+**File tasks under**, or at the end of the note when there isn't one. The journal folder is
+then scanned for tasks as well, so those tasks still appear in the Tasks view, in the
+statistics, and everywhere else tasks appear. Nothing is ever rolled over between days:
+yesterday's unfinished work stays in yesterday's note, where it happened.
+
+> **Obsidian's own Daily notes.** Zenith's journal is deliberately independent — its own
+> folder, pattern and template. If the core plugin is enabled and points somewhere else,
+> Settings → Journal says so: with both running you'd get two sets of daily notes and half
+> your entries would land in the one you aren't looking at. Zenith never writes to the core
+> plugin's settings, and never silently adopts them.
