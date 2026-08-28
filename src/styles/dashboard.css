@@ -173,9 +173,18 @@
     padding: var(--zenith-space-xs) 0;
 }
 
-/* ── Compact (narrow card): one pane at a time + floating toggle ──── */
+/* ── Compact (narrow card): one pane at a time + a corner toggle ──── */
+/* The toggle used to float at the middle of the right edge, which put a button
+   beside the time on the clock and straight over the grid on the calendar. It
+   sits in the top-right corner now, out of both. */
 .zenith-clock.is-compact {
-    padding-right: 34px; /* reserve the strip the toggle floats in */
+    padding-top: 0;
+}
+
+/* The toggle stands where the month arrows stand, so the two do not sit a few
+   pixels apart on two different lines. The header gives up exactly its width. */
+.zenith-clock.is-compact .zenith-cal__head {
+    padding-right: 26px;
 }
 
 .zenith-clock.is-compact .zenith-clock__main {
@@ -194,38 +203,30 @@
     margin: 0 auto;
 }
 
-/* Floating toggle — right edge, vertically centered. */
 .zenith-clock button.zenith-clock__toggle {
     position: absolute;
-    top: 50%;
+    top: 0;
     right: 0;
-    transform: translateY(-50%);
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
     padding: 0;
-    border: 1px solid var(--zenith-border);
-    border-radius: 50%;
-    background: var(--zenith-bg-tertiary);
-    box-shadow: var(--zenith-shadow-sm);
-    color: var(--zenith-text-muted);
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
     cursor: pointer;
     z-index: 2;
-    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast),
-        transform var(--zenith-transition-fast);
+    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast);
 }
 
 .zenith-clock button.zenith-clock__toggle:hover {
     background: var(--zenith-bg-hover);
     color: var(--zenith-accent);
-    box-shadow: var(--zenith-shadow-sm);
-    transform: translateY(-50%) scale(1.06);
-}
-
-.zenith-clock button.zenith-clock__toggle:active {
-    transform: translateY(-50%) scale(0.96);
+    box-shadow: none;
 }
 
 /* ── Left pane: clock + date + day strip ──────────── */
@@ -255,11 +256,12 @@
     font-size: 3.4rem;
 }
 
-/* Seconds ride small and faint, superscript-style, so the hero stays HH:MM. */
+/* Small and faint so the hero stays HH:MM, but on the digits' own baseline.
+   Raised to the cap line it read as a footnote hung off the time rather than as
+   the seconds of it. */
 .zenith-clock__seconds {
-    align-self: flex-start;
-    margin-left: 4px;
-    font-size: 0.95rem;
+    margin-left: 5px;
+    font-size: 1.05rem;
     color: var(--zenith-text-faint);
     font-variant-numeric: tabular-nums;
 }
@@ -275,21 +277,39 @@
     animation: zenith-pulse 1.1s ease-in-out infinite;
 }
 
-.zenith-clock__weekday {
-    margin-top: 5px;
+/* One line: weekday, then the day and month behind a thin divider. Two
+   stacked labels made the card look like it was announcing two facts when it
+   was announcing one. */
+.zenith-clock__date {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    margin-top: 7px;
     max-width: 100%;
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-transform: capitalize;
-    color: var(--zenith-text-normal);
+    font-size: 0.88rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.zenith-clock__date {
-    font-size: 0.8rem;
+.zenith-clock__weekday {
+    font-weight: 600;
+    text-transform: capitalize;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-clock__daymonth {
     color: var(--zenith-text-muted);
+}
+
+.zenith-clock__daymonth::before {
+    content: '';
+    display: inline-block;
+    width: 1px;
+    height: 0.75em;
+    margin-right: 7px;
+    vertical-align: -0.06em;
+    background: var(--zenith-border);
 }
 
 /* ── Day strip ───────────────────────────────────── */
@@ -298,40 +318,116 @@
     margin-top: var(--zenith-space-sm);
 }
 
-/* One tick per hour, so the strip reads as a clock face unrolled — you can see
-   which hour you're in, not just how full a bar is. */
+/* An unrolled dial: twenty-four hour marks as the ruler, and a needle standing
+   on the current minute. Blocks packed edge to edge read as a battery, and a
+   battery has no hours in it. */
+.zenith-clock__strip {
+    position: relative;
+    height: 18px;
+}
+
 .zenith-clock__hours {
     display: flex;
     align-items: flex-end;
-    gap: 2px;
-    height: 14px;
+    justify-content: space-between;
+    height: 100%;
 }
 
 .zenith-clock__tick {
-    flex: 1;
-    height: 8px;
-    border-radius: 1.5px;
+    flex: 0 0 3px;
+    height: 7px;
+    border-radius: 999px;
     background: var(--zenith-bg-tertiary);
-    transition: background var(--zenith-transition), height var(--zenith-transition);
+    transform-origin: bottom center;
+    /* Rises in sequence on first paint — left to right, the way the day runs.
+       16ms a step puts the whole sweep under half a second, which is a flourish
+       rather than a wait. */
+    animation: zenith-tick-rise 420ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+    animation-delay: calc(var(--i, 0) * 16ms);
+    /* Slow on purpose: an hour turning over is not an event that needs to snap.
+       At this length it is only ever noticed in the corner of the eye. */
+    transition: background 700ms ease, opacity 700ms ease, height 350ms ease;
 }
 
+/* Midnight, six, noon, six — landmarks, so a glance can place the needle
+   without counting marks from the end. */
+.zenith-clock__tick.is-mark {
+    height: 12px;
+}
+
+/* Bright near the needle, dimming into the morning: the strip keeps a tail
+   pointing at now. `--glow` is set per tick — see `hourGlow`. */
 .zenith-clock__tick.is-past {
-    background: color-mix(in srgb, var(--zenith-accent) 38%, transparent);
+    background: var(--zenith-accent);
+    opacity: var(--glow, 1);
 }
 
-/* The hour you're actually in — the one piece of emphasis on the card. */
-.zenith-clock__tick.is-now {
-    height: 14px;
+/* Transform only. Fading in from the keyframe would leave the fill mode holding
+   an opacity, and opacity is what `--glow` sets as the hours turn over — the
+   rise would then be deciding how bright the morning stays. */
+@keyframes zenith-tick-rise {
+    from {
+        transform: scaleY(0.15);
+    }
+}
+
+/* The reading. It sits at the exact fraction of the day elapsed, so it moves
+   every minute — the hour marks only ever change once an hour, and a day strip
+   that stands still for fifty-nine of them is a picture, not an instrument. */
+.zenith-clock__needle {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 2px;
+    margin-left: -1px;
+    border-radius: 999px;
     background: var(--zenith-accent);
-    box-shadow: 0 0 8px color-mix(in srgb, var(--zenith-accent) 45%, transparent);
+    /* The slide is longer than a minute's travel needs, so the one time it is
+       really seen is when the widget mounts and the needle finds its place. */
+    transition: left 900ms cubic-bezier(0.4, 0, 0.2, 1);
+    animation: zenith-needle-breathe 2.8s ease-in-out infinite;
+}
+
+/* A cap on the needle, so it reads as an instrument rather than as a seam in
+   the strip. */
+.zenith-clock__needle::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    margin-left: -2.5px;
+    border-radius: 50%;
+    background: var(--zenith-accent);
+}
+
+@keyframes zenith-needle-breathe {
+    0%,
+    100% {
+        box-shadow: 0 0 5px color-mix(in srgb, var(--zenith-accent) 40%, transparent);
+    }
+    50% {
+        box-shadow: 0 0 13px color-mix(in srgb, var(--zenith-accent) 80%, transparent);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-clock__tick {
+        animation: none;
+    }
+    .zenith-clock__needle {
+        animation: none;
+        transition: none;
+    }
 }
 
 .zenith-clock__meta {
     display: flex;
     justify-content: space-between;
     gap: var(--zenith-space-sm);
-    margin-top: 6px;
-    font-size: 0.68rem;
+    margin-top: 7px;
+    font-size: 0.7rem;
     color: var(--zenith-text-faint);
     font-variant-numeric: tabular-nums;
 }
@@ -349,17 +445,29 @@
 }
 
 .zenith-cal__head {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    justify-content: space-between;
     gap: 4px;
+    /* The row is as tall as its buttons, so the title, the arrows and the
+       pane toggle all sit on one line. */
+    min-height: 22px;
+}
+
+.zenith-cal__nav-group {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    gap: 1px;
 }
 
 /* Scoped with parent + tag to out-specify Obsidian's default button box. */
 .zenith-cal button.zenith-cal__title {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 2px 4px;
+    justify-self: start;
+    max-width: 100%;
+    padding: 2px 6px 2px 4px;
     border: none;
     background: transparent;
     box-shadow: none;
@@ -367,7 +475,7 @@
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: capitalize;
-    text-align: center;
+    text-align: left;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -408,8 +516,16 @@
 .zenith-cal__weekdays,
 .zenith-cal__grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 2px;
+}
+
+/* A little air under the header, and a little more under the letters than
+   between the week rows — the letters caption the grid, they are not part of
+   it. */
+.zenith-cal__weekdays {
+    margin-top: 2px;
+    padding-bottom: 2px;
 }
 
 .zenith-cal__wd {
