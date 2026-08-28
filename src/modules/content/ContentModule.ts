@@ -5,6 +5,8 @@ import { VIEW_TYPE_CONTENT } from '../../core/constants';
 import { ContentView } from './ContentView';
 import { ContentWidget } from './components/ContentWidget';
 import type ZenithPlugin from '../../main';
+import { contentTranslations } from './i18n';
+import type { TranslationTable } from '../../core/i18n';
 
 /**
  * ContentModule — gallery-style content tracker.
@@ -15,6 +17,10 @@ export class ContentModule extends BaseModule {
     readonly name = 'Content';
     readonly description = 'Manage your articles, notes, and long-form content.';
     readonly icon = 'file-text';
+
+    getTranslations(): TranslationTable {
+        return contentTranslations;
+    }
 
     private disposers: Array<() => void> = [];
 

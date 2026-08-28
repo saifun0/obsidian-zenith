@@ -1,5 +1,7 @@
 import { requestUrl, type DataAdapter } from 'obsidian';
 import { validateManifest, type ThirdPartyManifest } from './moduleManifestSchema';
+import { messageText, msg, type Message } from './message';
+import { translateNow } from './i18n';
 
 /**
  * Getting a module's files from wherever the user keeps them.
@@ -33,15 +35,22 @@ export interface ModulePayload {
     resolvedRef?: string;
 }
 
+/**
+ * A reason the files could not be fetched, carried as keys rather than as
+ * finished text: this is thrown deep in the fetch and displayed by a React
+ * component, and only the component knows which language to use. The `Error`'s
+ * own `message` stays English, because that is what ends up in a stack trace.
+ */
 export class SourceError extends Error {
     constructor(
-        message: string,
-        readonly detail?: string
+        readonly reason: Message,
+        readonly detail?: Message
     ) {
-        super(message);
+        super(messageText(reason));
         this.name = 'SourceError';
     }
 }
+
 
 export interface GithubRef {
     owner: string;
@@ -148,7 +157,7 @@ async function fromGithubRaw(ref: GithubRef): Promise<ModulePayload | null> {
 async function resolveGithub(rawRef: string): Promise<ModulePayload> {
     const ref = parseGithubRef(rawRef);
     if (!ref) {
-        throw new SourceError('Expected "owner/repo", optionally "owner/repo@tag" or "@branch:subdir".');
+        throw new SourceError(msg('modules.error.githubRef'));
     }
 
     const release = await fromGithubRelease(ref);
@@ -158,11 +167,10 @@ async function resolveGithub(rawRef: string): Promise<ModulePayload> {
     if (raw) return raw;
 
     throw new SourceError(
-        `Could not find manifest.json and main.js in ${ref.owner}/${ref.repo}.`,
+        msg('modules.error.githubMissing', { repo: `${ref.owner}/${ref.repo}` }),
         ref.ref
-            ? `Checked the "${ref.ref}" ref.`
-            : 'Checked the latest release, then the "main" and "master" branches. ' +
-              'GitHub also rate-limits anonymous requests to 60 per hour.'
+            ? msg('modules.error.githubCheckedRef', { ref: ref.ref })
+            : msg('modules.error.githubCheckedDefault')
     );
 }
 
@@ -176,15 +184,15 @@ async function resolveUrl(rawUrl: string): Promise<ModulePayload> {
     // Only https: `http:` is interceptable, and `file:`/`data:` would let a
     // pasted string smuggle in code with no origin to show the user.
     if (!/^https:\/\//i.test(url)) {
-        throw new SourceError('Only https:// URLs are supported.');
+        throw new SourceError(msg('modules.error.httpsOnly'));
     }
 
     const manifestUrl = url.endsWith('.js') ? sibling(url, ASSET_NAMES.manifest) : url;
     const mainUrl = url.endsWith('.js') ? url : sibling(url, ASSET_NAMES.main);
 
     const [manifestText, code] = await Promise.all([fetchText(manifestUrl), fetchText(mainUrl)]);
-    if (!manifestText) throw new SourceError(`No manifest.json at ${manifestUrl}`);
-    if (!code) throw new SourceError(`No main.js at ${mainUrl}`);
+    if (!manifestText) throw new SourceError(msg('modules.error.noManifestAt', { url: manifestUrl }));
+    if (!code) throw new SourceError(msg('modules.error.noMainAt', { url: mainUrl }));
 
     return {
         manifest: JSON.parse(manifestText),
@@ -220,9 +228,11 @@ export function readEmbeddedManifest(code: string): unknown | null {
 async function resolveVault(path: string, adapter: DataAdapter): Promise<ModulePayload> {
     const file = path.trim();
     if (!file.toLowerCase().endsWith('.js')) {
-        throw new SourceError('Pick a .js file. Zip archives are not supported.');
+        throw new SourceError(msg('modules.error.notJs'));
     }
-    if (!(await adapter.exists(file))) throw new SourceError(`No such file: ${file}`);
+    if (!(await adapter.exists(file))) {
+        throw new SourceError(msg('modules.error.noSuchFile', { path: file }));
+    }
 
     const code = await adapter.read(file);
 
@@ -233,21 +243,21 @@ async function resolveVault(path: string, adapter: DataAdapter): Promise<ModuleP
         try {
             manifest = JSON.parse(await adapter.read(siblingPath));
         } catch {
-            throw new SourceError(`${siblingPath} is not valid JSON.`);
+            throw new SourceError(msg('modules.error.siblingNotJson', { path: siblingPath }));
         }
     } else {
         manifest = readEmbeddedManifest(code);
     }
 
     if (!manifest) {
-        throw new SourceError(
-            'No manifest found.',
-            'Put a manifest.json next to the file, or start the file with a ' +
-                '/* zenith-module { ... } */ header.'
-        );
+        throw new SourceError(msg('modules.error.noManifest'), msg('modules.error.noManifestHow'));
     }
 
-    return { manifest: manifest as ThirdPartyManifest, code, origin: `vault: ${file}` };
+    return {
+        manifest: manifest as ThirdPartyManifest,
+        code,
+        origin: translateNow('modules.origin.vault', { path: file }),
+    };
 }
 
 export interface ResolveContext {
@@ -275,18 +285,18 @@ export async function resolveSource(
             payload = await resolveVault(source.ref, ctx.adapter);
             break;
         case 'paste': {
-            if (!ctx.paste) throw new SourceError('Nothing pasted.');
+            if (!ctx.paste) throw new SourceError(msg('modules.error.nothingPasted'));
             let manifest: unknown;
             try {
                 manifest = JSON.parse(ctx.paste.manifest);
             } catch {
-                throw new SourceError('The manifest is not valid JSON.');
+                throw new SourceError(msg('modules.error.pasteBadManifest'));
             }
-            if (!ctx.paste.code.trim()) throw new SourceError('The code box is empty.');
+            if (!ctx.paste.code.trim()) throw new SourceError(msg('modules.error.pasteNoCode'));
             payload = {
                 manifest: manifest as ThirdPartyManifest,
                 code: ctx.paste.code,
-                origin: 'pasted by you',
+                origin: translateNow('modules.origin.paste'),
             };
             break;
         }

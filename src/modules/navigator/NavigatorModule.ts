@@ -4,6 +4,8 @@ import { navigatorSettingsSchema } from './settings.schema';
 import { NavWidget } from './components/NavWidget';
 import type { SettingsSchema } from '../../settings/schema/types';
 import type ZenithPlugin from '../../main';
+import { navigatorTranslations } from './i18n';
+import type { TranslationTable } from '../../core/i18n';
 
 /**
  * NavigatorModule — the launcher widget: one button per Zenith view.
@@ -21,6 +23,10 @@ export class NavigatorModule extends BaseModule {
     readonly name = 'Navigation';
     readonly description = 'A launcher on the dashboard with a button for every Zenith view.';
     readonly icon = 'compass';
+
+    getTranslations(): TranslationTable {
+        return navigatorTranslations;
+    }
 
     private disposers: Array<() => void> = [];
 

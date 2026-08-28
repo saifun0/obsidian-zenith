@@ -9,6 +9,9 @@ import { FileSyncService } from './services/fileSync';
 import { DROPBOX_PROTOCOL_ACTION } from './services/remotes/appIds';
 import { DropboxRemote } from './services/remotes/dropboxRemote';
 import type { SettingsSchema } from '../../settings/schema/types';
+import { syncTranslations } from './i18n';
+import type { TranslationTable } from '../../core/i18n';
+import { translateNow } from '../../core/i18n';
 
 /**
  * SyncModule — keeps Zenith's settings consistent across devices.
@@ -30,6 +33,10 @@ export class SyncModule extends BaseModule {
     readonly name = 'Sync';
     readonly description = 'Merge settings across your devices instead of overwriting them.';
     readonly icon = 'refresh-cw';
+
+    getTranslations(): TranslationTable {
+        return syncTranslations;
+    }
 
     private service: SettingsSyncService | null = null;
     private files: FileSyncService | null = null;
@@ -170,18 +177,18 @@ export class SyncModule extends BaseModule {
         });
 
         if (!result.ok) {
-            new Notice(`Zenith: could not connect to Dropbox — ${result.error.message}`);
+            new Notice(translateNow('notice.dropboxFailed', { error: result.error.message }));
             return;
         }
 
         useZenithStore.getState().updateSettings({ syncDropboxTokens: result.tokens });
         this.files?.refresh();
-        new Notice('Zenith: Dropbox connected.');
+        new Notice(translateNow('notice.dropboxConnected'));
     }
 
     private async syncNow(): Promise<void> {
         if (!this.service?.getStatus().enabled) {
-            new Notice('Zenith: sync is switched off for this device.');
+            new Notice(translateNow('notice.syncOff'));
             return;
         }
         await this.service.pull();

@@ -14,6 +14,7 @@ import {
 import { providerLabel } from '../../modules/content/services/metadata';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
 import { IconPickerModal } from '../../core/IconPickerModal';
+import { translateNow, useTranslation } from '../../core/i18n';
 
 /**
  * ContentTypesSettings — manage the content type catalogue: label, icon, colour,
@@ -23,27 +24,28 @@ import { IconPickerModal } from '../../core/IconPickerModal';
  */
 export const ContentTypesSettings: React.FC = () => {
     const { app } = useApp();
+    const t = useTranslation();
     const saved = useZenithStore((s) => s.settings.contentTypes);
     const updateSettings = useZenithStore((s) => s.updateSettings);
     const types = useMemo(() => effectiveContentTypes(saved), [saved]);
 
     const commit = (next: ContentTypeConfig[]) => updateSettings({ contentTypes: next });
     const patch = (id: string, partial: Partial<ContentTypeConfig>) =>
-        commit(types.map((t) => (t.id === id ? { ...t, ...partial } : t)));
-    const remove = (id: string) => commit(types.filter((t) => t.id !== id));
+        commit(types.map((type) => (type.id === id ? { ...type, ...partial } : type)));
+    const remove = (id: string) => commit(types.filter((type) => type.id !== id));
     const toggleField = (id: string, field: ContentFieldId) =>
         commit(
-            types.map((t) => {
-                if (t.id !== id) return t;
-                const has = t.fields.includes(field);
+            types.map((type) => {
+                if (type.id !== id) return type;
+                const has = type.fields.includes(field);
                 return {
-                    ...t,
-                    fields: has ? t.fields.filter((f) => f !== field) : [...t.fields, field],
+                    ...type,
+                    fields: has ? type.fields.filter((f) => f !== field) : [...type.fields, field],
                 };
             })
         );
     const addType = () => {
-        const ids = new Set(types.map((t) => t.id));
+        const ids = new Set(types.map((type) => type.id));
         let id = 'custom';
         let n = 1;
         while (ids.has(id)) id = `custom-${n++}`;
@@ -51,12 +53,14 @@ export const ContentTypesSettings: React.FC = () => {
             ...types,
             {
                 id,
-                label: 'New Type',
+                // Stored, so it is written in the language it was created
+                // in — renaming it later is a text field away.
+                label: translateNow('ctypes.newType'),
                 icon: 'package',
                 color: '#8b5cf6',
                 provider: 'wikipedia',
-                creatorLabel: 'Creator',
-                progressUnit: 'units',
+                creatorLabel: translateNow('ctypes.defaultCreator'),
+                progressUnit: translateNow('ctypes.defaultUnit'),
                 fields: CONTENT_FIELDS.map((f) => f.id),
             },
         ]);
@@ -65,41 +69,41 @@ export const ContentTypesSettings: React.FC = () => {
     return (
         <div className="zenith-ctypes">
             <div className="zenith-settings__hint zenith-settings__hint--info">
-                Types drive the library tabs, the add-form provider, and which fields each item shows.
+                {t('ctypes.hint')}
             </div>
 
-            {types.map((t) => (
-                <div key={t.id} className="zenith-ctype">
+            {types.map((type) => (
+                <div key={type.id} className="zenith-ctype">
                     <div className="zenith-ctype__head">
                         <button
                             type="button"
                             className="zenith-ctype__icon"
-                            style={{ color: t.color }}
-                            aria-label="Change icon"
+                            style={{ color: type.color }}
+                            aria-label={t('a11y.changeIcon')}
                             onClick={() =>
-                                new IconPickerModal(app, t.icon, (icon) => patch(t.id, { icon })).open()
+                                new IconPickerModal(app, type.icon, (icon) => patch(type.id, { icon })).open()
                             }
                         >
-                            <ObsidianIcon name={t.icon} size={18} />
+                            <ObsidianIcon name={type.icon} size={18} />
                         </button>
                         <input
                             className="zenith-ctype__label"
-                            value={t.label}
-                            aria-label="Type name"
-                            onChange={(e) => patch(t.id, { label: e.target.value })}
+                            value={type.label}
+                            aria-label={t('ctypes.typeName')}
+                            onChange={(e) => patch(type.id, { label: e.target.value })}
                         />
                         <input
                             type="color"
                             className="zenith-ctype__color"
-                            value={t.color}
-                            aria-label="Colour"
-                            onChange={(e) => patch(t.id, { color: e.target.value })}
+                            value={type.color}
+                            aria-label={t('ctypes.colour')}
+                            onChange={(e) => patch(type.id, { color: e.target.value })}
                         />
                         <button
                             type="button"
                             className="zenith-ctype__remove"
-                            aria-label="Remove type"
-                            onClick={() => remove(t.id)}
+                            aria-label={t('ctypes.removeType')}
+                            onClick={() => remove(type.id)}
                         >
                             <Trash2 size={15} />
                         </button>
@@ -107,10 +111,10 @@ export const ContentTypesSettings: React.FC = () => {
 
                     <div className="zenith-ctype__row">
                         <label className="zenith-ctype__field">
-                            <span>Metadata source</span>
+                            <span>{t('ctypes.metadataSource')}</span>
                             <select
-                                value={normalizeProviderId(t.provider)}
-                                onChange={(e) => patch(t.id, { provider: e.target.value as MetadataProviderId })}
+                                value={normalizeProviderId(type.provider)}
+                                onChange={(e) => patch(type.id, { provider: e.target.value as MetadataProviderId })}
                             >
                                 {METADATA_PROVIDER_IDS.map((p) => (
                                     <option key={p} value={p}>
@@ -120,36 +124,36 @@ export const ContentTypesSettings: React.FC = () => {
                             </select>
                         </label>
                         <label className="zenith-ctype__field">
-                            <span>Creator label</span>
+                            <span>{t('ctypes.creatorLabel')}</span>
                             <input
-                                value={t.creatorLabel ?? ''}
-                                placeholder="Creator"
-                                onChange={(e) => patch(t.id, { creatorLabel: e.target.value })}
+                                value={type.creatorLabel ?? ''}
+                                placeholder={t('ctypes.defaultCreator')}
+                                onChange={(e) => patch(type.id, { creatorLabel: e.target.value })}
                             />
                         </label>
-                        {t.fields.includes('progress') && (
+                        {type.fields.includes('progress') && (
                             <label className="zenith-ctype__field">
-                                <span>Progress unit</span>
+                                <span>{t('ctypes.progressUnit')}</span>
                                 <input
-                                    value={t.progressUnit ?? ''}
-                                    placeholder="episodes"
-                                    onChange={(e) => patch(t.id, { progressUnit: e.target.value })}
+                                    value={type.progressUnit ?? ''}
+                                    placeholder={t('ctypes.unitExample')}
+                                    onChange={(e) => patch(type.id, { progressUnit: e.target.value })}
                                 />
                             </label>
                         )}
                     </div>
 
                     <div className="zenith-ctype__fields">
-                        <span className="zenith-ctype__fields-label">Shown fields</span>
+                        <span className="zenith-ctype__fields-label">{t('ctypes.shownFields')}</span>
                         <div className="zenith-ctype__chips">
                             {CONTENT_FIELDS.map((f) => (
                                 <button
                                     key={f.id}
                                     type="button"
-                                    className={`zenith-ctype__chip ${t.fields.includes(f.id) ? 'is-on' : ''}`}
-                                    onClick={() => toggleField(t.id, f.id)}
+                                    className={`zenith-ctype__chip ${type.fields.includes(f.id) ? 'is-on' : ''}`}
+                                    onClick={() => toggleField(type.id, f.id)}
                                 >
-                                    {f.label}
+                                    {t(f.labelKey)}
                                 </button>
                             ))}
                         </div>
@@ -158,7 +162,7 @@ export const ContentTypesSettings: React.FC = () => {
             ))}
 
             <button type="button" className="zenith-ctype__add" onClick={addType}>
-                <Plus size={15} /> Add type
+                <Plus size={15} /> {t('ctypes.addType')}
             </button>
         </div>
     );

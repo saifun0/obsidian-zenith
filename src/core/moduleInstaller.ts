@@ -5,6 +5,7 @@ import { vaultModuleFs, type ModuleFs } from './moduleFs';
 import { modulePaths, type ModulePaths } from './modulePaths';
 import { askConsent } from './ThirdPartyConsentModal';
 import { resolveSource, SourceError, type ModulePayload, type ModuleSource } from './moduleSources';
+import { msg, type Message } from './message';
 import type ZenithPlugin from '../main';
 
 /**
@@ -23,7 +24,10 @@ export interface InstallOutcome {
     ok: boolean;
     id?: string;
     /** Already human-readable; the UI shows it verbatim. */
-    error?: string;
+    /** Why it failed, unrendered — the settings page picks the language. */
+    error?: Message;
+    /** A second line with more detail, when there is one worth showing. */
+    errorDetail?: Message;
     /** Set when the user declined at the consent screen. */
     cancelled?: boolean;
 }
@@ -137,18 +141,18 @@ export class ModuleInstaller {
             await this.plugin.moduleManager.refreshModule(id);
             return { ok: true, id };
         } catch (err) {
-            return { ok: false, error: describeError(err) };
+            return { ok: false, ...describeError(err) };
         }
     }
 
     /** Re-resolve the recorded source and install over the top. */
     async update(id: string): Promise<InstallOutcome> {
         const record = this.getRecord(id);
-        if (!record) return { ok: false, error: 'Zenith has no record of where this module came from.' };
+        if (!record) return { ok: false, error: msg('modules.error.noRecord') };
         if (record.source.kind === 'paste') {
             return {
                 ok: false,
-                error: 'This module was pasted in, so there is nothing to update from. Paste a new version instead.',
+                error: msg('modules.error.pasteNoSource'),
             };
         }
         return this.install(record.source);
@@ -172,7 +176,7 @@ export class ModuleInstaller {
             await this.plugin.refreshAvailableModules();
             return { ok: true, id };
         } catch (err) {
-            return { ok: false, error: describeError(err) };
+            return { ok: false, ...describeError(err) };
         }
     }
 
@@ -201,12 +205,12 @@ export class ModuleInstaller {
      * deliberate click, with the workspace up and the plugin fully loaded.
      */
     async approve(id: string): Promise<InstallOutcome> {
-        if (!this.paths) return { ok: false, error: 'Plugin folder is unknown.' };
+        if (!this.paths) return { ok: false, error: msg('modules.error.noPluginFolder') };
 
         try {
             const mainPath = this.paths.main(id);
             if (!(await this.fs.exists(mainPath))) {
-                return { ok: false, error: 'main.js is missing.' };
+                return { ok: false, error: msg('modules.problem.noMain') };
             }
             const code = await this.fs.read(mainPath);
             const record = this.getRecord(id);
@@ -248,14 +252,16 @@ export class ModuleInstaller {
             await this.plugin.moduleManager.refreshModule(id);
             return { ok: true, id };
         } catch (err) {
-            return { ok: false, error: describeError(err) };
+            return { ok: false, ...describeError(err) };
         }
     }
 }
 
-function describeError(err: unknown): string {
+function describeError(err: unknown): { error: Message; errorDetail?: Message } {
     if (err instanceof SourceError) {
-        return err.detail ? `${err.message} ${err.detail}` : err.message;
+        return { error: err.reason, errorDetail: err.detail };
     }
-    return err instanceof Error ? err.message : String(err);
+    // Anything else came out of a `throw` we did not write, so its text is
+    // whatever the runtime said — passed through rather than invented.
+    return { error: msg('modules.error.raw', { error: err instanceof Error ? err.message : String(err) }) };
 }

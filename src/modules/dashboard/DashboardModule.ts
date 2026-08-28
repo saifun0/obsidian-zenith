@@ -5,6 +5,8 @@ import { VIEW_TYPE_DASHBOARD } from '../../core/constants';
 import { DashboardView } from './DashboardView';
 import { TimeWidget } from './components/TimeWidget';
 import type ZenithPlugin from '../../main';
+import { dashboardTranslations } from './i18n';
+import type { TranslationTable } from '../../core/i18n';
 
 /**
  * DashboardModule — Entry point for the Dashboard feature.
@@ -17,6 +19,10 @@ export class DashboardModule extends BaseModule {
     readonly name = 'Dashboard';
     readonly description = 'Central hub for an overview of your Zenith data.';
     readonly icon = 'layout-dashboard';
+
+    getTranslations(): TranslationTable {
+        return dashboardTranslations;
+    }
 
     private disposers: Array<() => void> = [];
 

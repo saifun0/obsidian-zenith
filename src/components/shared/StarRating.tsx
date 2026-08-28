@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Star, X } from 'lucide-react';
+import { useTranslation } from '../../core/i18n';
 
 interface StarRatingProps {
     /** Current rating on the 0–10 scale. */
@@ -36,6 +37,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
     readOnly = false,
     ariaLabel = 'Rating',
 }) => {
+    const t = useTranslation();
     const [hover, setHover] = useState<number | null>(null);
     const interactive = !readOnly && !!onChange;
     const shown = hover ?? value;
@@ -128,8 +130,8 @@ export const StarRating: React.FC<StarRatingProps> = ({
                 <button
                     type="button"
                     className="zenith-stars__clear"
-                    aria-label="Clear rating"
-                    title="Clear rating"
+                    aria-label={t('a11y.clearRating')}
+                    title={t('a11y.clearRating')}
                     onClick={() => onChange?.(0)}
                 >
                     <X size={12} />

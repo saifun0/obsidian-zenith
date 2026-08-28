@@ -7,6 +7,8 @@ import { JournalBlockRenderer } from './JournalCodeBlock';
 import { JournalCheckinWidget } from './components/JournalCheckinWidget';
 import { JournalStatsWidget } from './components/JournalStatsWidget';
 import { openDailyNote } from './services/journalActions';
+import { journalTranslations } from './i18n';
+import type { TranslationTable } from '../../core/i18n';
 
 /**
  * JournalModule — daily notes: a calendar of the year, a check-in for the day
@@ -17,6 +19,10 @@ export class JournalModule extends BaseModule {
     readonly name = 'Journal';
     readonly description = 'Daily notes with a calendar, habit, scale and number tracking.';
     readonly icon = 'calendar-days';
+
+    getTranslations(): TranslationTable {
+        return journalTranslations;
+    }
 
     private disposers: Array<() => void> = [];
 

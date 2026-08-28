@@ -5,6 +5,8 @@ import { TasksWidget } from './components/TasksWidget';
 import { TimerService } from './services/timerService';
 import { tasksSettingsSchema } from './settings.schema';
 import type { SettingsSchema } from '../../settings/schema/types';
+import { tasksTranslations } from './i18n';
+import type { TranslationTable } from '../../core/i18n';
 
 /**
  * TasksModule — manages the Tasks view and related commands.
@@ -14,6 +16,10 @@ export class TasksModule extends BaseModule {
     readonly name = 'Tasks';
     readonly description = 'Manage your tasks, projects, and daily to-dos.';
     readonly icon = 'check-square';
+
+    getTranslations(): TranslationTable {
+        return tasksTranslations;
+    }
 
     private disposers: Array<() => void> = [];
     private timer: TimerService | null = null;

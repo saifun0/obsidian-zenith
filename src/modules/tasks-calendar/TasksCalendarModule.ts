@@ -4,6 +4,8 @@ import type { SettingsSchema } from '../../settings/schema/types';
 import { VIEW_TYPE_TASKS_CALENDAR } from '../../core/constants';
 import { TasksCalendarView } from './TasksCalendarView';
 import { CalendarWidget } from './components/CalendarWidget';
+import { tasksCalendarTranslations } from './i18n';
+import type { TranslationTable } from '../../core/i18n';
 
 /**
  * TasksCalendarModule — the tasks you already track, laid out on a calendar.
@@ -18,6 +20,10 @@ export class TasksCalendarModule extends BaseModule {
     readonly name = 'Tasks Calendar';
     readonly description = 'See your tasks on a month, week or agenda calendar.';
     readonly icon = 'calendar-days';
+
+    getTranslations(): TranslationTable {
+        return tasksCalendarTranslations;
+    }
 
     private disposers: Array<() => void> = [];
 

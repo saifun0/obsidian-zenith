@@ -16,6 +16,8 @@ import { prayerCalcOptions, prayerPlaceOf } from './prayerOptions';
 import { PRAYERS } from './prayerConfig';
 import { currentPrayer, formatClock, minutesOfDay, prayerTimes } from './prayerTimes';
 import type ZenithPlugin from '../../main';
+import { prayerTranslations } from './i18n';
+import type { TranslationTable } from '../../core/i18n';
 
 /**
  * PrayerModule — prayer times and a record of what was prayed.
@@ -30,6 +32,10 @@ export class PrayerModule extends BaseModule {
     readonly name = 'Prayer';
     readonly description = 'Prayer times, computed locally, and a record of what you prayed.';
     readonly icon = 'moon-star';
+
+    getTranslations(): TranslationTable {
+        return prayerTranslations;
+    }
 
     private disposers: Array<() => void> = [];
     private reminders: PrayerReminderService | null = null;

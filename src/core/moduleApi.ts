@@ -1,7 +1,13 @@
 import { Notice } from 'obsidian';
 import type { App, Command, MarkdownPostProcessorContext, ViewCreator } from 'obsidian';
 import { useZenithStore } from '../store';
-import { translate, resolveLocale, type TParams } from './i18n';
+import {
+    registerTranslations,
+    resolveLocale,
+    translate,
+    type TParams,
+    type TranslationTable,
+} from './i18n';
 import { createModuleSettings, type ModuleSettingsAccessor } from './moduleSettings';
 import { iconRegistry, describeSvgProblem } from './icons';
 import type { ModuleRegistrationLedger } from './moduleLedger';
@@ -67,6 +73,16 @@ export interface ZenithModuleApi {
 
     /** Translate a key, resolving the user's language at call time. */
     t(key: string, params?: TParams): string;
+    /**
+     * Add strings to the dictionary, keyed by locale. Removed on unload.
+     *
+     * Keys must sit under this module's namespace — `<id>.…` or
+     * `module.<id>.…`; anything else is ignored with a warning. Declaring them
+     * in `getTranslations()` (or in `manifest.json`, which is read before your
+     * code runs) is usually better. Reach for this when the strings are
+     * generated or fetched rather than shipped.
+     */
+    registerTranslations(table: TranslationTable): () => void;
     /** The Zenith store: hook, `.getState()` and `.subscribe()`. */
     readonly store: typeof useZenithStore;
     /** This module's own settings bucket. */
@@ -141,6 +157,12 @@ export function createModuleApi(
 
         register(dispose) {
             ledger.addDisposer(moduleId, dispose);
+        },
+
+        registerTranslations(table) {
+            const dispose = registerTranslations(moduleId, table);
+            ledger.addDisposer(moduleId, dispose);
+            return dispose;
         },
 
         t: (key, params) =>

@@ -4,6 +4,8 @@ import type { SettingsSchema } from '../../settings/schema/types';
 import { MediaBannerService } from './MediaBannerService';
 import { MediaPickerModal } from './MediaPickerModal';
 import type ZenithPlugin from '../../main';
+import { mediaTranslations } from './i18n';
+import type { TranslationTable } from '../../core/i18n';
 
 /**
  * MediaModule — shows a chosen image/GIF as a banner above the file-explorer
@@ -17,6 +19,10 @@ export class MediaModule extends BaseModule {
     readonly name = 'Media Banner';
     readonly description = 'Show a GIF or image above the file explorer, with an easy picker.';
     readonly icon = 'image';
+
+    getTranslations(): TranslationTable {
+        return mediaTranslations;
+    }
 
     private banner: MediaBannerService | null = null;
     private disposers: Array<() => void> = [];

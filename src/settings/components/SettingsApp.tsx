@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     ChevronRight,
     ArrowLeft,
@@ -14,6 +14,7 @@ import {
 import { useZenithStore } from '../../store';
 import { useApp } from '../../context/AppContext';
 import { useTranslation } from '../../core/i18n';
+import { localizeModules } from '../../core/moduleLabels';
 import { CheckboxCard } from '../../components/ui/CheckboxCard';
 import { DynamicIcon } from '../../components/shared/DynamicIcon';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
@@ -36,8 +37,16 @@ export const SettingsApp: React.FC = () => {
     const t = useTranslation();
 
     const settings = useZenithStore((state) => state.settings);
-    const availableModules = useZenithStore((state) => state.availableModules) || [];
+    const discovered = useZenithStore((state) => state.availableModules) || [];
     const updateSettings = useZenithStore((state) => state.updateSettings);
+
+    // Every list on this page reads the translated name, including the one that
+    // sorts alphabetically — sorting on the English original would order the
+    // rows by text nobody on screen can see.
+    const availableModules = useMemo(
+        () => localizeModules(t, discovered),
+        [t, discovered]
+    );
 
     const [activeCategory, setActiveCategory] = useState<Category | null>(null);
     const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
@@ -203,7 +212,7 @@ export const SettingsApp: React.FC = () => {
                                 <div className="zenith-settings__widget-actions">
                                     <button
                                         className="zenith-settings__icon-btn"
-                                        aria-label="Change icon"
+                                        aria-label={t('a11y.changeIcon')}
                                         onClick={() =>
                                             new IconPickerModal(app, iconId, (id) =>
                                                 plugin.folderIconService.setIcon(path, id)
@@ -214,7 +223,7 @@ export const SettingsApp: React.FC = () => {
                                     </button>
                                     <button
                                         className="zenith-settings__icon-btn"
-                                        aria-label="Remove icon"
+                                        aria-label={t('a11y.removeIcon')}
                                         onClick={() => plugin.folderIconService.removeIcon(path)}
                                     >
                                         <X size={14} />
@@ -352,9 +361,7 @@ export const SettingsApp: React.FC = () => {
                                         {problem && (
                                             <div className="zenith-settings__hint zenith-settings__hint--warn">
                                                 <span>
-                                                    {problem.kind === 'needs-consent'
-                                                        ? t('modules.needsConsent')
-                                                        : problem.message}
+                                                    {t(problem.reason.key, problem.reason.params)}
                                                 </span>
                                                 {/* Consent is asked HERE, on a
                                                     deliberate click, and never

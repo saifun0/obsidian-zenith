@@ -4,6 +4,7 @@ import type { Priority } from '../../core/constants';
 import type { ZenithSettings } from '../../store/settingsSlice';
 import { TaskWriter } from './services/taskWriter';
 import { resolveTaskTarget } from './services/taskTarget';
+import { translateNow } from '../../core/i18n';
 
 /**
  * QuickAddTaskModal — a native Obsidian modal for quickly capturing a task
@@ -83,7 +84,7 @@ export class QuickAddTaskModal extends Modal {
         if (this.submitting) return;
         const title = this.titleValue.trim();
         if (!title) {
-            new Notice('Zenith: task title is required.');
+            new Notice(translateNow('notice.taskTitleRequired'));
             return;
         }
 
@@ -105,12 +106,12 @@ export class QuickAddTaskModal extends Modal {
                 },
                 target
             );
-            new Notice('Zenith: task added.');
+            new Notice(translateNow('notice.taskAdded'));
             this.onSubmitted?.();
             this.close();
         } catch (err) {
             console.error('Zenith: Failed to quick-add task:', err);
-            new Notice('Zenith: could not add task. Check the tasks folder path.');
+            new Notice(translateNow('notice.taskAddFailed'));
         } finally {
             this.submitting = false;
         }
