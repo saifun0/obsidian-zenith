@@ -1,0 +1,280 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Debug tools
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.zenith-debug {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* The five facts a bug report always wants, on one line. */
+.zenith-debug__env {
+    font-size: 0.75rem;
+    font-family: var(--font-monospace, monospace);
+    color: var(--text-faint);
+}
+
+.zenith-debug__pane,
+.zenith-debug__gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.zenith-debug__section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ── The gallery ──
+   Each demo is boxed and labelled, because a page of loose controls reads as a
+   broken settings page rather than as a catalogue. `auto-fill` keeps the wide
+   ones (rows, textareas) full width without a second grid. */
+.zenith-debug__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+    align-items: start;
+}
+
+.zenith-debug__demo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    min-width: 0;
+}
+
+.zenith-debug__demo--wide {
+    grid-column: 1 / -1;
+}
+
+/* Names the prop, so it is monospaced and quiet — it is a label on the
+   specimen, not a heading. */
+.zenith-debug__demo-label {
+    font-family: var(--font-monospace, monospace);
+    font-size: 0.7rem;
+    letter-spacing: 0.02em;
+    color: var(--text-faint);
+}
+
+.zenith-debug__demo-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* A row inside a demo can hold a disabled control, whose cursor and opacity are
+   the point — so nothing here suppresses pointer events. */
+.zenith-debug__strip {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.zenith-debug__stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.zenith-debug__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+}
+
+/* The settings row demos bring their own bottom border; inside a box that reads
+   as a stray line under the last one. */
+.zenith-debug__demo .zenith-settings__item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* ── State ── */
+.zenith-debug__toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.zenith-debug__toolbar .zenith-settings__input {
+    flex: 1 1 180px;
+}
+
+.zenith-debug__switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.zenith-debug__note {
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    line-height: 1.4;
+}
+
+.zenith-debug__dump {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.zenith-debug__dump-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.zenith-debug__dump-head .zenith-settings__section-label {
+    margin: 0;
+}
+
+/* Scrolls in both directions inside its own box: a deep settings object would
+   otherwise stretch the settings pane sideways, and the pane is the thing that
+   has to stay usable while you read this. */
+.zenith-debug__json {
+    margin: 0;
+    max-height: 320px;
+    overflow: auto;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    font-family: var(--font-monospace, monospace);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    white-space: pre;
+    color: var(--text-normal);
+}
+
+/* ── Tables of facts ── */
+.zenith-debug__table {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.zenith-debug__row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+}
+
+.zenith-debug__row-main {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.zenith-debug__row-title {
+    font-size: 0.92rem;
+    color: var(--text-normal);
+}
+
+/* The untranslated original, kept beside the shown name. */
+.zenith-debug__row-alt {
+    margin-left: 6px;
+    font-style: normal;
+    font-size: 0.76rem;
+    color: var(--text-faint);
+}
+
+.zenith-debug__row-id,
+.zenith-debug__row-key {
+    font-family: var(--font-monospace, monospace);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    word-break: break-all;
+}
+
+.zenith-debug__row-key {
+    color: var(--text-faint);
+}
+
+.zenith-debug__row-problem {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text-normal);
+}
+
+.zenith-debug__row-tags {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.zenith-debug__row-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.zenith-debug__facts {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.zenith-debug__fact {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 9px 12px;
+    border-bottom: 1px solid
+        color-mix(in srgb, var(--background-modifier-border) 60%, transparent);
+}
+
+.zenith-debug__fact:last-child {
+    border-bottom: none;
+}
+
+.zenith-debug__fact-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+/* Ids and comma-joined lists live here, so it wraps rather than pushing the
+   key off the row. */
+.zenith-debug__fact-val {
+    font-size: 0.82rem;
+    color: var(--text-normal);
+    text-align: right;
+    word-break: break-word;
+    min-width: 0;
+}
+
+/* ── The About button that leads here ── */
+.zenith-about__debug {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 4px;
+}
