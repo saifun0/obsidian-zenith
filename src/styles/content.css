@@ -988,6 +988,16 @@
     background: var(--background-primary);
 }
 
+/* Hovering lifts the hairline and nothing else.
+   Whatever the theme or Obsidian wanted to do to the input on hover is already
+   neutralised below, so without this the box had no hover state of its own —
+   it had one borrowed from somewhere else, which is why it flashed a filled
+   background at a field that is not a button. A border a shade brighter says
+   "you can type here" without repainting the box. */
+.zenith-content-gallery__search:hover:not(:focus-within) {
+    border-color: var(--background-modifier-border-hover, var(--text-faint));
+}
+
 .zenith-content-gallery__search:focus-within {
     border-color: var(--interactive-accent);
 }
@@ -997,7 +1007,18 @@
     flex-shrink: 0;
 }
 
-.zenith-content-gallery__search input {
+/* Obsidian styles bare inputs with a box-shadow — an inset hairline normally,
+   an accent ring on focus — and it survives resetting `border` and `outline`,
+   which is all this rule used to do. The wrapper already draws the border and
+   lights it on `:focus-within`, so the two stacked: a lit rounded rectangle
+   inside a lit rounded rectangle. Every state is named because Obsidian's
+   focus rule is as specific as ours, and losing the inner ring costs no focus
+   indication — the wrapper is the indicator. */
+.zenith-content-gallery__search input,
+.zenith-content-gallery__search input:hover,
+.zenith-content-gallery__search input:focus,
+.zenith-content-gallery__search input:focus-visible,
+.zenith-content-gallery__search input:active {
     flex: 1;
     min-width: 0;
     border: none;
@@ -1005,6 +1026,7 @@
     color: var(--text-normal);
     font-size: 0.9rem;
     outline: none;
+    box-shadow: none;
 }
 
 .zenith-content-gallery__search button.zenith-content-gallery__search-clear {

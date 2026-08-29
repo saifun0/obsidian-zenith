@@ -1,0 +1,93 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Picture widget
+   ──────────────────────────────────────────────────────
+   The card is the frame. It already carries the header band every widget
+   wears, so the picture takes the whole body and draws nothing of its own —
+   no border, no backing, no caption. A photograph chosen by the person
+   looking at it needs none of them, and a backing would show as a grey slab
+   around anything fitted rather than filled.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.zenith-picture {
+    height: 100%;
+    /* The card's own corner, one step in. Square corners inside a rounded card
+       is the one detail that makes a picture read as pasted on rather than set
+       in. */
+    border-radius: var(--zenith-radius-md);
+    overflow: hidden;
+}
+
+/* `object-fit` is set inline, from the setting: a picture in a cell that is not
+   its shape is either cropped or letterboxed, and which of the two is wrong
+   depends on the picture. */
+.zenith-picture__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Nothing chosen, or something chosen that cannot be shown. One quiet line —
+   a widget is not the place to explain the settings page. */
+.zenith-picture__note {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--zenith-text-faint);
+    font-size: 0.78rem;
+    text-wrap: pretty;
+}
+
+/* ── Choosing the picture, on the back of the card ──
+   Which picture a card shows belongs to that card, so the controls are on its
+   settings face rather than on a settings page — a page can only ever say
+   "the picture", and a board is allowed to hold three.
+
+   The address gets a line of its own instead of a row's right-hand half: a URL
+   and a vault path are both far longer than the twenty-odd pixels a label
+   leaves over, and a field you cannot read the end of is a field you cannot
+   check. */
+.zenith-picture-settings__field {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.zenith-root input.zenith-picture-settings__input {
+    flex: 1;
+    min-width: 0;
+    height: 26px;
+    padding: 0 8px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-bg-primary);
+    color: var(--zenith-text-normal);
+    font-family: var(--zenith-font-mono);
+    font-size: 0.7rem;
+}
+
+.zenith-root input.zenith-picture-settings__input:focus {
+    border-color: var(--zenith-accent);
+    outline: none;
+    box-shadow: none;
+}
+
+/* A path that names nothing. Said on the field rather than in a line of its own
+   because the field is both the report and the repair. */
+.zenith-root input.zenith-picture-settings__input.is-bad {
+    border-color: var(--zenith-danger);
+}
+
+/* The panel styles every button as a pill in a group; this one stands alone
+   beside a field and takes the field's shape instead. */
+.zenith-widget-settings button.zenith-picture-settings__browse {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    min-width: 0;
+    padding: 0;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-bg-primary);
+}

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { CalendarDays, Clock, Cloud, Gauge, MapPin, RotateCw, Sun, Wind } from 'lucide-react';
+import { CalendarDays, Clock, Gauge, MapPin, RotateCw, Sun, Wind } from 'lucide-react';
 import { Modal } from '../../../components/shared/Modal';
 import { Tabs } from '../../../components/shared/Tabs';
-import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import type { Translator } from '../../../core/i18n';
 import type { WeatherUnit } from '../../../store/settingsSlice';
 import { describeWeather } from '../weatherService';
 import { temperature } from '../weatherFormat';
 import { locationNowMs } from '../sun';
 import type { WeatherData } from '../weatherTypes';
+import { WeatherGlyph } from './WeatherGlyph';
 import { MetricGrid } from './MetricGrid';
 import { SunPanel } from './SunPanel';
 import { AirPanel } from './AirPanel';
@@ -71,17 +71,17 @@ export const WeatherExpanded: React.FC<Props> = ({
 
     const header = (
         <div className="zenith-weather-modal__head">
-            <DynamicIcon
-                name={look.icon}
-                fallback={Cloud}
-                size={56}
+            <WeatherGlyph
+                kind={look.glyph}
+                size={64}
                 className="zenith-weather__icon"
+                label={t(look.labelKey)}
             />
             <div className="zenith-weather-modal__head-text zenith-weather__temp-group">
                 <span className="zenith-weather__temp zenith-serif">
                     {temperature(data.tempC, unit)}°
                 </span>
-                <span className="zenith-weather__condition">{look.label}</span>
+                <span className="zenith-weather__condition">{t(look.labelKey)}</span>
                 <span className="zenith-weather__location">
                     <MapPin size={13} />
                     <span>{data.location}</span>

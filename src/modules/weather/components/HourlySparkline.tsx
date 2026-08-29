@@ -106,6 +106,7 @@ export const HourlySparkline: React.FC<Props> = React.memo(({ hourly, daily, uni
     const uid = useId().replace(/:/g, '');
     const gradId = `zenith-spark${uid}`;
     const skyId = `zenith-sky${uid}`;
+    const wipeId = `zenith-wipe${uid}`;
 
     // The spline, the gradient and the sky band are pure functions of the
     // forecast, but the whole dashboard re-renders on any grid interaction —
@@ -234,6 +235,18 @@ export const HourlySparkline: React.FC<Props> = React.memo(({ hourly, daily, uni
                                 />
                             ))}
                         </linearGradient>
+                        {/* The sweep. A clip rect widened past the viewBox on
+                            every side, so scaling it to nothing and back can
+                            never shave the curve's own stroke off the edges. */}
+                        <clipPath id={wipeId}>
+                            <rect
+                                className="zenith-weather__spark-wipe"
+                                x={-4}
+                                y={-6}
+                                width={SPARK.w + 8}
+                                height={H + 12}
+                            />
+                        </clipPath>
                     </defs>
 
                     {geo.sky.length > 0 && (
@@ -260,7 +273,6 @@ export const HourlySparkline: React.FC<Props> = React.memo(({ hourly, daily, uni
                         />
                     ))}
 
-                    <path className="zenith-weather__spark-fill" d={geo.area} fill={`url(#${gradId})`} />
                     <line
                         className="zenith-weather__spark-baseline"
                         x1={0}
@@ -268,11 +280,53 @@ export const HourlySparkline: React.FC<Props> = React.memo(({ hourly, daily, uni
                         x2={SPARK.w}
                         y2={SPARK.base}
                     />
-                    <path
-                        className="zenith-weather__spark-line"
-                        d={geo.curve}
-                        stroke={`url(#${gradId})`}
-                        vectorEffect="non-scaling-stroke"
+
+                    {/* Everything read off the forecast is drawn by one sweep
+                        from left to right, so the chart arrives the way the
+                        hours in it do. A clip rather than a dashed stroke:
+                        one animation then covers the curve, its fill and the
+                        rain bars together, and none of them has to know how
+                        long the path is. */}
+                    <g className="zenith-weather__spark-draw" clipPath={`url(#${wipeId})`}>
+                        <path
+                            className="zenith-weather__spark-fill"
+                            d={geo.area}
+                            fill={`url(#${gradId})`}
+                        />
+                        <path
+                            className="zenith-weather__spark-line"
+                            d={geo.curve}
+                            stroke={`url(#${gradId})`}
+                            vectorEffect="non-scaling-stroke"
+                        />
+
+                        {wet && (
+                            <g className="zenith-weather__spark-rain">
+                                {pts.map((h, i) =>
+                                    h.precipProb >= SPARK_DRY ? (
+                                        <rect
+                                            key={h.time}
+                                            x={x(i) - geo.barW / 2}
+                                            y={SPARK.rainBot - rainH(h.precipProb)}
+                                            width={geo.barW}
+                                            height={rainH(h.precipProb)}
+                                            rx={1}
+                                        />
+                                    ) : null
+                                )}
+                            </g>
+                        )}
+                    </g>
+
+                    {/* Now, pinged like a radar contact — the card ticks every
+                        minute and this is the one point on the chart that is
+                        the present rather than the forecast. */}
+                    <circle
+                        className="zenith-weather__spark-ping"
+                        cx={x(0)}
+                        cy={y(temps[0])}
+                        r={3}
+                        fill={absTempColor(pts[0].tempC)}
                     />
                     <circle
                         className="zenith-weather__spark-dot"
@@ -281,23 +335,6 @@ export const HourlySparkline: React.FC<Props> = React.memo(({ hourly, daily, uni
                         r={3}
                         fill={absTempColor(pts[0].tempC)}
                     />
-
-                    {wet && (
-                        <g className="zenith-weather__spark-rain">
-                            {pts.map((h, i) =>
-                                h.precipProb >= SPARK_DRY ? (
-                                    <rect
-                                        key={h.time}
-                                        x={x(i) - geo.barW / 2}
-                                        y={SPARK.rainBot - rainH(h.precipProb)}
-                                        width={geo.barW}
-                                        height={rainH(h.precipProb)}
-                                        rx={1}
-                                    />
-                                ) : null
-                            )}
-                        </g>
-                    )}
 
                     {/* Invisible per-hour hit areas — hover for exact numbers. */}
                     {pts.map((h, i) => (

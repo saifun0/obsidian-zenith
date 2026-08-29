@@ -94,8 +94,30 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     dashboardShowDate: { scope: 'shared' },
     dashboardPresets: { scope: 'shared', merge: 'byId' },
 
+    // ── Dashboard wallpaper ──
+    // Shared, the mobile switch included: "don't load this on a phone" is a
+    // decision about the picture, and the phone is the device that would never
+    // get to make it.
+    dashboardBgSource: { scope: 'shared' },
+    dashboardBgUrl: { scope: 'shared' },
+    dashboardBgPath: { scope: 'shared' },
+    dashboardBgFit: { scope: 'shared' },
+    dashboardBgDim: { scope: 'shared' },
+    dashboardBgBlur: { scope: 'shared' },
+    dashboardCardOpacity: { scope: 'shared' },
+    dashboardBgMobile: { scope: 'shared' },
+
+    // ── Per-copy widget settings ──
+    // Merged key by key, like every other bag of buckets: two devices each
+    // configuring a different card must not overwrite one another, and a
+    // last-writer-wins whole-object copy is exactly how they would.
+    widgetConfig: { scope: 'shared', merge: 'record' },
+
     // ── Prayer ──
+    location: { scope: 'shared' },
     prayerPlace: { scope: 'shared' },
+    prayerSource: { scope: 'shared' },
+    prayerApiMidnight: { scope: 'shared' },
     prayerMethod: { scope: 'shared' },
     prayerFajrAngle: { scope: 'shared' },
     prayerIshaAngle: { scope: 'shared' },

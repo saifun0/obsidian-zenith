@@ -1,7 +1,11 @@
+import { Notice } from 'obsidian';
 import { coreSchema } from '../../settings/schema/types';
+import { useZenithStore } from '../../store';
 import { createPlaceField } from '../../settings/components/PlaceField';
 import { PrayerAdjustField } from './components/PrayerAdjustField';
-import { EXTRA_PRAYERS, HIGH_LAT_RULES, PRAYER_METHODS } from './prayerConfig';
+import { EXTRA_PRAYERS, HIGH_LAT_RULES, PRAYER_METHODS, PRAYER_SOURCES } from './prayerConfig';
+import { prayerPlaceOf } from './prayerOptions';
+import { refreshPrayerTimes } from './prayerSource';
 
 /**
  * Prayer settings.
@@ -26,6 +30,7 @@ export const prayerSettingsSchema = coreSchema({
                         settingsKey: 'prayerPlace',
                         labelKey: 'settings.prayerPlace',
                         descKey: 'settings.prayerPlace.desc',
+                        inheritsGlobal: true,
                     }),
                 },
             ],
@@ -35,6 +40,51 @@ export const prayerSettingsSchema = coreSchema({
             titleKey: 'settings.prayerCalcGroup',
             descKey: 'settings.prayerCalcGroup.desc',
             fields: [
+                {
+                    type: 'segmented',
+                    key: 'prayerSource',
+                    labelKey: 'settings.prayerSource',
+                    descKey: 'settings.prayerSource.desc',
+                    default: 'api',
+                    options: PRAYER_SOURCES.map((id) => ({
+                        value: id,
+                        labelKey: `prayer.source.${id}`,
+                    })),
+                },
+                {
+                    type: 'select',
+                    key: 'prayerApiMidnight',
+                    labelKey: 'settings.prayerApiMidnight',
+                    descKey: 'settings.prayerApiMidnight.desc',
+                    default: 'toFajr',
+                    options: [
+                        { value: 'toFajr', labelKey: 'prayer.midnight.toFajr' },
+                        { value: 'toSunrise', labelKey: 'prayer.midnight.toSunrise' },
+                    ],
+                    showIf: (v) => v.prayerSource === 'api',
+                },
+                {
+                    type: 'action',
+                    key: 'prayerApiRefresh',
+                    labelKey: 'settings.prayerApiRefresh',
+                    descKey: 'settings.prayerApiRefresh.desc',
+                    buttonKey: 'settings.prayerApiRefresh.button',
+                    showIf: (v) => v.prayerSource === 'api',
+                    run: async ({ t }) => {
+                        // Read the live settings rather than the form's bag: the
+                        // bag holds only what this page declares, and the place
+                        // may be the weather module's.
+                        const settings = useZenithStore.getState().settings;
+                        const ok = await refreshPrayerTimes(
+                            prayerPlaceOf(settings),
+                            new Date(),
+                            settings
+                        );
+                        new Notice(
+                            t(ok ? 'prayer.api.refreshed' : 'prayer.api.unreachable')
+                        );
+                    },
+                },
                 {
                     type: 'select',
                     key: 'prayerMethod',

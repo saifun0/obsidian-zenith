@@ -1,4 +1,4 @@
-import type { GeoPlace } from '../../services/geocode';
+import { preferredPlace, type GeoPlace } from '../../services/geocode';
 import type { ZenithSettings } from '../../store/settingsSlice';
 import { isRamadan } from './hijri';
 import type { PrayerCalcOptions } from './prayerTimes';
@@ -12,14 +12,18 @@ import type { PrayerCalcOptions } from './prayerTimes';
  */
 
 /**
- * Where to compute for: the prayer module's own place, else whatever the
- * weather module already resolved. Null means the user hasn't said yet, and
- * every surface then asks rather than guessing.
+ * Where to compute for: the module's own override, else the plugin-wide
+ * location. Null means the user hasn't said yet, and every surface then asks
+ * rather than guessing.
+ *
+ * This used to fall through to the *weather* module's place, which was a
+ * stand-in for a setting that did not exist yet — and meant a prayer tracker
+ * could only find your city when the weather widget happened to be configured.
  */
 export function prayerPlaceOf(
-    settings: Pick<ZenithSettings, 'prayerPlace' | 'weatherPlace'>
+    settings: Pick<ZenithSettings, 'prayerPlace' | 'location'>
 ): GeoPlace | null {
-    return settings.prayerPlace ?? settings.weatherPlace ?? null;
+    return preferredPlace(settings.prayerPlace, settings.location);
 }
 
 /**

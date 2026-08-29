@@ -54,6 +54,8 @@ import { GridWidget } from './GridWidget';
 import { BundleCard } from './BundleCard';
 import { BundleInspector } from './BundleInspector';
 import { AddWidgetSheet, type AddableWidget } from './AddWidgetSheet';
+import { isCopyId, newCopyId, widgetIdOf } from '../grid/widgetInstances';
+import { withoutWidgetConfig } from '../widgetConfig';
 import { GridSettingsBar } from './GridSettingsBar';
 import { LayoutPresetsBar } from './LayoutPresetsBar';
 
@@ -136,6 +138,9 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     const hiddenWidgetIds = useZenithStore((s) => s.settings.hiddenWidgetIds);
     const widgetOrder = useZenithStore((s) => s.settings.widgetOrder);
     const savedGrid = useZenithStore((s) => s.settings.dashboardGrid);
+    // Read here only so a deleted copy can take its bucket with it; the cards
+    // themselves subscribe to their own bucket and to nothing else.
+    const widgetConfig = useZenithStore((s) => s.settings.widgetConfig);
     const updateSettings = useZenithStore((s) => s.updateSettings);
 
     // Normalised on read as well as on load: settings can be replaced by any
@@ -145,14 +150,6 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     const containerRef = useRef<HTMLDivElement>(null);
     const width = useElementWidth(containerRef);
     const stacked = shouldStack(width, cfg.columns, cfg.gap);
-
-    const defsById = useMemo(() => new Map(registered.map((def) => [def.id, def])), [registered]);
-    /** Presets per placeable item — widgets by their own, bundles by the
-     *  intersection of their members'. */
-    const sizesById = useMemo(() => {
-        const map = new Map(registered.map((def) => [def.id, widgetSizes(def)]));
-        return map;
-    }, [registered]);
 
     /**
      * Bundles, repaired against the registry: members whose module was disabled
@@ -165,6 +162,44 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     );
 
     const inBundles = useMemo(() => bundledWidgetIds(bundles), [bundles]);
+
+    /**
+     * Copies beyond the first, wherever they are standing.
+     *
+     * They come from the saved board rather than from the registry, because
+     * that is the only record that they exist: the registry knows the widget
+     * may be copied, not how many times the user did it.
+     */
+    const copyIds = useMemo(() => {
+        const ids = new Set<string>();
+        for (const item of savedLayout) if (isCopyId(item.id)) ids.add(item.id);
+        for (const id of inBundles) if (isCopyId(id)) ids.add(id);
+        return ids;
+    }, [savedLayout, inBundles]);
+
+    /**
+     * Everything the grid can be asked about, keyed by *layout* id.
+     *
+     * A copy answers to the definition it was copied from, so it is entered
+     * here under its own id. That is what lets the rest of this component — and
+     * the bundles, and the drag — go on doing a plain map lookup instead of
+     * each learning to strip a copy number.
+     */
+    const defsById = useMemo(() => {
+        const map = new Map(registered.map((def) => [def.id, def]));
+        for (const id of copyIds) {
+            const def = map.get(widgetIdOf(id));
+            if (def) map.set(id, def);
+        }
+        return map;
+    }, [registered, copyIds]);
+
+    /** Presets per placeable item — widgets by their own, bundles by the
+     *  intersection of their members'. */
+    const sizesById = useMemo(
+        () => new Map([...defsById].map(([id, def]) => [id, widgetSizes(def)])),
+        [defsById]
+    );
 
     /**
      * Widgets available for placement, in the user's preferred order. Widgets
@@ -182,14 +217,23 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
             const rb = rank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
             return ra - rb;
         });
-        const sizes = new Map(registered.map((def) => [def.id, widgetSizes(def)]));
         return [
-            ...bundles.map((b) => ({ id: b.id, ...bundleSizes(b.members, sizes) })),
+            ...bundles.map((b) => ({ id: b.id, ...bundleSizes(b.members, sizesById) })),
             ...ordered
                 .filter((def) => !inBundles.has(def.id))
                 .map((def) => ({ id: def.id, ...widgetSizes(def) })),
+            // Copies are never auto-placed — they exist only because someone
+            // asked for them — so they enter the list from the board they are
+            // already on rather than from the registry.
+            ...[...copyIds]
+                .filter((id) => !inBundles.has(id))
+                .map((id) => {
+                    const def = defsById.get(id);
+                    return def ? { id, ...widgetSizes(def) } : null;
+                })
+                .filter((info): info is WidgetSizeInfo => !!info),
         ];
-    }, [registered, widgetOrder, bundles, inBundles]);
+    }, [registered, widgetOrder, bundles, inBundles, copyIds, defsById, sizesById]);
 
     const layout = useMemo(
         () => reconcileLayout(savedLayout, available, hiddenWidgetIds, cfg.columns),
@@ -261,6 +305,18 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                 });
                 return;
             }
+            // A further copy has nowhere to be put back to — it is not in the
+            // registry and the add panel offers the widget, not this one of it
+            // — so taking it off the board deletes it, settings and all. Hiding
+            // it instead would leave a bucket behind for whichever copy was
+            // next given the same number to inherit.
+            if (isCopyId(id)) {
+                updateSettings({
+                    dashboardLayout: removeItem(layout, id, cfg.columns),
+                    widgetConfig: withoutWidgetConfig(widgetConfig, id),
+                });
+                return;
+            }
             updateSettings({
                 hiddenWidgetIds: hiddenWidgetIds.includes(id)
                     ? hiddenWidgetIds
@@ -268,18 +324,27 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                 dashboardLayout: removeItem(layout, id, cfg.columns),
             });
         },
-        [bundles, hiddenWidgetIds, layout, updateSettings, cfg.columns]
+        [bundles, hiddenWidgetIds, layout, updateSettings, cfg.columns, widgetConfig]
     );
 
     const addWidget = useCallback(
         (id: string) => {
-            const size = presetsFor(id)?.defaultSize ?? 'sm';
+            // Asking again for a widget that is already standing there means one
+            // more of it, not "put it back" — and only for the widgets that say
+            // they can be copied. For everything else the id is already free,
+            // because the panel only offers what is off the board.
+            const onBoard = layout.some((i) => i.id === id) || inBundles.has(id);
+            const target =
+                defsById.get(id)?.multiple && onBoard
+                    ? newCopyId(id, [...layout.map((i) => i.id), ...inBundles])
+                    : id;
+            const size = presetsFor(target)?.defaultSize ?? presetsFor(id)?.defaultSize ?? 'sm';
             updateSettings({
-                hiddenWidgetIds: hiddenWidgetIds.filter((h) => h !== id),
-                dashboardLayout: addItem(layout, id, size, cfg.columns),
+                hiddenWidgetIds: hiddenWidgetIds.filter((h) => h !== target),
+                dashboardLayout: addItem(layout, target, size, cfg.columns),
             });
         },
-        [hiddenWidgetIds, layout, presetsFor, updateSettings, cfg.columns]
+        [hiddenWidgetIds, layout, inBundles, defsById, presetsFor, updateSettings, cfg.columns]
     );
 
     // ── Bundle operations ────────────────────────────
@@ -333,14 +398,18 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     /** Registered widgets that aren't currently on the grid. */
     const addable = useMemo<AddableWidget[]>(() => {
         const placed = new Set(layout.map((i) => i.id));
-        return registered.filter((def) => !placed.has(def.id)).map(describe);
+        // A widget that can be copied never leaves the offer: its button means
+        // "one more", and there is no state in which that stops making sense.
+        return registered.filter((def) => def.multiple || !placed.has(def.id)).map(describe);
     }, [registered, layout, describe]);
 
     /** Widgets already on the grid — listed as "added" so the sheet shows the
         whole catalogue rather than looking empty once everything is placed. */
     const placedWidgets = useMemo<AddableWidget[]>(() => {
         const placed = new Set(layout.map((i) => i.id));
-        return registered.filter((def) => placed.has(def.id)).map(describe);
+        // Copyable widgets are left out: a tick that removes "the" picture says
+        // nothing about which of three, and the card's own × does say it.
+        return registered.filter((def) => !def.multiple && placed.has(def.id)).map(describe);
     }, [registered, layout, describe]);
 
     // Committed one-column order and its geometry (what a drag measures against).
@@ -561,6 +630,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                         title: bundle.name,
                                         icon: 'layers',
                                     }}
+                                    instanceId={bundle.id}
                                     ctx={ctx}
                                     style={isDragging ? dragStyle(item) : cellStyle(item)}
                                     editing={editing}
@@ -652,6 +722,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                             <GridWidget
                                 key={item.id}
                                 def={def}
+                                instanceId={item.id}
                                 ctx={ctx}
                                 style={isDragging ? dragStyle(item) : cellStyle(item)}
                                 editing={editing}

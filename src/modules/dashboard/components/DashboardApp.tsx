@@ -16,6 +16,7 @@ import {
     type LayoutSnapshot,
 } from '../dashboardPresets';
 import { DashboardGrid } from './DashboardGrid';
+import { backgroundClasses, backgroundStyle } from '../dashboardBackground';
 
 // ── Helpers ──────────────────────────────────────────
 
@@ -187,8 +188,51 @@ export const DashboardApp: React.FC = () => {
         }
     }, [plugin]);
 
+    /**
+     * The wallpaper.
+     *
+     * Selected field by field rather than as one object: this sits in a
+     * component that re-renders on every drag frame while arranging, and
+     * subscribing to `settings` whole would rebuild the layer's style for each
+     * of them.
+     */
+    const bg = {
+        dashboardBgSource: useZenithStore((s) => s.settings.dashboardBgSource),
+        dashboardBgUrl: useZenithStore((s) => s.settings.dashboardBgUrl),
+        dashboardBgPath: useZenithStore((s) => s.settings.dashboardBgPath),
+        dashboardBgFit: useZenithStore((s) => s.settings.dashboardBgFit),
+        dashboardBgDim: useZenithStore((s) => s.settings.dashboardBgDim),
+        dashboardBgBlur: useZenithStore((s) => s.settings.dashboardBgBlur),
+        dashboardCardOpacity: useZenithStore((s) => s.settings.dashboardCardOpacity),
+        dashboardBgMobile: useZenithStore((s) => s.settings.dashboardBgMobile),
+    };
+    const bgStyle = useMemo(
+        () => backgroundStyle(bg, (path) => app.vault.adapter.getResourcePath(path)),
+        // Every field of `bg` is read; the object itself is new each render.
+        [
+            app,
+            bg.dashboardBgSource,
+            bg.dashboardBgUrl,
+            bg.dashboardBgPath,
+            bg.dashboardBgFit,
+            bg.dashboardBgDim,
+            bg.dashboardBgBlur,
+            bg.dashboardCardOpacity,
+        ]
+    );
+    const bgClasses = backgroundClasses(bg, bgStyle !== null);
+
     return (
-        <div className="zenith-dashboard">
+        <div className={`zenith-dashboard ${bgClasses}`}>
+            {/* The wallpaper, as a layer of its own rather than a background on
+                the board: it has to sit under the cards and over nothing, and
+                it carries a scrim the board is read through. `aria-hidden`
+                because it is decoration — a screen reader announcing a
+                photograph would be announcing furniture. */}
+            {bgStyle && (
+                <div className="zenith-dashboard__bg" style={bgStyle} aria-hidden="true" />
+            )}
+
             {/* Before the board in the DOM, because on a narrow pane it goes
                 back into the flow and belongs above it. On a wide one it is
                 lifted out of the flow entirely — see the stylesheet. */}

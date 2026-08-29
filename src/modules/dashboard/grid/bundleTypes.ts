@@ -14,6 +14,7 @@
  */
 
 import type { WidgetSize } from './gridTypes';
+import { widgetIdOf } from './widgetInstances';
 
 /** Marks a layout id as a bundle. Widget ids are `module.widget`, never this. */
 export const BUNDLE_PREFIX = 'bundle:';
@@ -116,9 +117,12 @@ export function normalizeBundles(
 
         // A widget belongs to at most one bundle: two bundles claiming the same
         // one would each render it, and the grid would show it twice.
+        // `widgetIdOf` because a member may be a further copy of a widget —
+        // `picture.frame#2` — and the registry only knows the widget it is a
+        // copy of. Checked for the bare id, kept under its own.
         const kept = members.filter(
             (m): m is string =>
-                typeof m === 'string' && registeredIds.has(m) && !claimed.has(m)
+                typeof m === 'string' && registeredIds.has(widgetIdOf(m)) && !claimed.has(m)
         );
         const unique = [...new Set(kept)].slice(0, BUNDLE_MAX_MEMBERS);
 

@@ -181,3 +181,68 @@ export function sunArc(data: WeatherData, nowMs: number): SunArc | null {
         next: 'sunset',
     };
 }
+
+/**
+ * Solar noon, on the location's wall clock.
+ *
+ * The midpoint between sunrise and sunset *is* solar noon — the sun's path is
+ * symmetric about it, and the only thing that breaks the symmetry is the
+ * declination drifting over the course of one day, which moves the midpoint by
+ * a few seconds. So this needs no ephemeris, and it is exact enough that the
+ * minute it prints is the minute the sun is highest.
+ */
+export function solarNoonMs(day: DailyForecast | undefined): number | null {
+    const rise = wallClockMs(day?.sunrise ?? '');
+    const set = wallClockMs(day?.sunset ?? '');
+    if (!Number.isFinite(rise) || !Number.isFinite(set) || set <= rise) return null;
+    return rise + (set - rise) / 2;
+}
+
+/** `HH:MM` for a wall-clock instant, the round trip of `wallClockMs`. */
+export function clockFromMs(ms: number): string {
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return '';
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/** Which sky the location is under right now. */
+export type SkyPhase = 'night' | 'dawn' | 'day' | 'dusk';
+
+export interface SkyLook {
+    phase: SkyPhase;
+    /**
+     * How dark it is, 0–1. Full day is 0, deep night is 1, and the horizon
+     * crossing is exactly halfway — so the stars can fade in over twilight
+     * rather than switching on at sunset.
+     */
+    nightness: number;
+}
+
+/**
+ * The colour of the sky over the location, as a phase and a continuous darkness.
+ *
+ * Both come off one number: the signed distance to the nearer horizon crossing,
+ * positive while the sun is up. `Math.min` of "since sunrise" and "until
+ * sunset" gives it for free — during the day both are positive and the smaller
+ * one is the nearer crossing; outside it exactly one is negative, and that one
+ * is the distance to the horizon.
+ */
+export function skyLook(data: WeatherData, nowMs: number): SkyLook {
+    const today = data.daily[0];
+    const rise = wallClockMs(today?.sunrise ?? '');
+    const set = wallClockMs(today?.sunset ?? '');
+    // No sun times at all — polar, or a truncated response. Draw a plain day
+    // rather than a night the data never claimed.
+    if (!Number.isFinite(rise) || !Number.isFinite(set)) return { phase: 'day', nightness: 0 };
+
+    const sinceRise = nowMs - rise;
+    const untilSet = set - nowMs;
+    const toHorizon = Math.min(sinceRise, untilSet);
+
+    const nightness = clamp01(0.5 - toHorizon / (2 * TWILIGHT_MS));
+    if (nightness <= 0) return { phase: 'day', nightness: 0 };
+    if (nightness >= 1) return { phase: 'night', nightness: 1 };
+    // Mid-twilight: whichever crossing is nearer names it.
+    const dawn = Math.abs(sinceRise) <= Math.abs(untilSet);
+    return { phase: dawn ? 'dawn' : 'dusk', nightness };
+}

@@ -272,6 +272,10 @@
 .zenith-settings__item-control {
     flex: 0 0 auto;
     display: flex;
+    align-items: center;
+    /* The place picker puts a search field and a Detect button in here side by
+       side, and with no gap they touched. */
+    gap: 8px;
     justify-content: flex-end;
 }
 
@@ -522,7 +526,16 @@
     border: 1px solid color-mix(in srgb, var(--interactive-accent) 30%, transparent);
 }
 
+/* Half of these buttons carry an icon before their label, and the class never
+   said how the two should sit — so the glyph landed on the text's baseline with
+   nothing between them, reading as one smudged word. A flex row with a gap is
+   the fix, and it costs the icon-only ones nothing: centring is what they
+   wanted anyway. */
 .zenith-settings__inline-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     padding: 4px 10px !important;
     font-size: 0.8rem !important;
     border-radius: 6px !important;
@@ -533,8 +546,27 @@
     white-space: nowrap;
 }
 
+/* Standing next to an input or a select, it matches their height. A 26px
+   button beside a 32px field is the kind of half-pixel mismatch that reads as
+   broken without anyone being able to say why. Scoped to the control cell so
+   the small clear buttons tucked inside other rows stay small. */
+.zenith-settings__item-control > .zenith-settings__inline-btn {
+    min-height: 32px;
+}
+
 .zenith-settings__inline-btn:hover {
     background: var(--background-modifier-hover) !important;
+}
+
+/* Several of these disable themselves while they work — locating, reloading,
+   installing — and looked exactly as clickable as before. */
+.zenith-settings__inline-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.zenith-settings__inline-btn:disabled:hover {
+    background: var(--background-primary) !important;
 }
 
 /* ── Color control ── */
@@ -1116,6 +1148,63 @@
     text-overflow: ellipsis;
     font-size: 0.88rem;
     color: var(--text-normal);
+}
+
+/* ── Vault picture picker ──
+   The one kind of setting whose result is invisible from the settings page: you
+   change it, go back, and find out. The thumbnail answers "is this the right
+   picture" here instead. */
+.zenith-imgpreview {
+    width: 100%;
+    aspect-ratio: 16 / 6;
+    margin-top: 8px;
+    overflow: hidden;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-secondary);
+}
+
+.zenith-imgpreview img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Rows of the vault picker. */
+.zenith-imgpick__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.zenith-imgpick__thumb {
+    flex: none;
+    width: 40px;
+    height: 28px;
+    border-radius: 4px;
+    object-fit: cover;
+    background: var(--background-modifier-form-field);
+}
+
+.zenith-imgpick__text {
+    min-width: 0;
+}
+
+.zenith-imgpick__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* An override sitting empty shows the place it is inheriting, and this says
+   where that came from — otherwise the row reads as a choice made here. */
+.zenith-wplace__from {
+    flex: none;
+    font-size: 0.74rem;
+    color: var(--text-faint);
+    white-space: nowrap;
 }
 
 .zenith-wplace__hits {

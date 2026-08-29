@@ -268,23 +268,68 @@ export function getCachedWeather(place: WeatherPlace | null): WeatherData | null
     return existing ?? null;
 }
 
-interface WeatherLook {
-    label: string;
-    icon: string; // lucide name
+/** Which animated hero glyph a condition draws. */
+export type WeatherGlyphKind =
+    | 'sun'
+    | 'moon'
+    | 'cloud-sun'
+    | 'cloud-moon'
+    | 'cloud'
+    | 'fog'
+    | 'drizzle'
+    | 'rain'
+    | 'showers'
+    | 'snow'
+    | 'thunder';
+
+export interface WeatherLook {
+    /**
+     * Translation key for the condition. A key rather than the word itself,
+     * because this used to hand back English prose and the card then printed
+     * "Overcast" in the middle of an otherwise Russian interface.
+     */
+    labelKey: string;
+    /** Lucide name — the small icons in the hourly strip and the day list. */
+    icon: string;
+    /** The moving one, drawn by `WeatherGlyph` for the hero. */
+    glyph: WeatherGlyphKind;
 }
 
-/** Map a WMO weather code to a human label + lucide icon name. */
+/** Map a WMO weather code to a label key, a lucide icon and a hero glyph. */
 export function describeWeather(code: number, isDay: boolean): WeatherLook {
-    if (code === 0) return { label: 'Clear', icon: isDay ? 'sun' : 'moon' };
-    if (code === 1) return { label: 'Mainly clear', icon: isDay ? 'sun' : 'moon' };
-    if (code === 2) return { label: 'Partly cloudy', icon: isDay ? 'cloud-sun' : 'cloud-moon' };
-    if (code === 3) return { label: 'Overcast', icon: 'cloud' };
-    if (code === 45 || code === 48) return { label: 'Fog', icon: 'cloud-fog' };
-    if (code >= 51 && code <= 57) return { label: 'Drizzle', icon: 'cloud-drizzle' };
-    if (code >= 61 && code <= 67) return { label: 'Rain', icon: 'cloud-rain' };
-    if (code >= 71 && code <= 77) return { label: 'Snow', icon: 'cloud-snow' };
-    if (code >= 80 && code <= 82) return { label: 'Rain showers', icon: 'cloud-rain-wind' };
-    if (code === 85 || code === 86) return { label: 'Snow showers', icon: 'cloud-snow' };
-    if (code >= 95) return { label: 'Thunderstorm', icon: 'cloud-lightning' };
-    return { label: 'Weather', icon: 'cloud' };
+    const key = (name: string) => `weather.code.${name}`;
+    if (code === 0)
+        return {
+            labelKey: key('clear'),
+            icon: isDay ? 'sun' : 'moon',
+            glyph: isDay ? 'sun' : 'moon',
+        };
+    if (code === 1)
+        return {
+            labelKey: key('mainlyClear'),
+            icon: isDay ? 'sun' : 'moon',
+            glyph: isDay ? 'sun' : 'moon',
+        };
+    if (code === 2)
+        return {
+            labelKey: key('partlyCloudy'),
+            icon: isDay ? 'cloud-sun' : 'cloud-moon',
+            glyph: isDay ? 'cloud-sun' : 'cloud-moon',
+        };
+    if (code === 3) return { labelKey: key('overcast'), icon: 'cloud', glyph: 'cloud' };
+    if (code === 45 || code === 48)
+        return { labelKey: key('fog'), icon: 'cloud-fog', glyph: 'fog' };
+    if (code >= 51 && code <= 57)
+        return { labelKey: key('drizzle'), icon: 'cloud-drizzle', glyph: 'drizzle' };
+    if (code >= 61 && code <= 67)
+        return { labelKey: key('rain'), icon: 'cloud-rain', glyph: 'rain' };
+    if (code >= 71 && code <= 77)
+        return { labelKey: key('snow'), icon: 'cloud-snow', glyph: 'snow' };
+    if (code >= 80 && code <= 82)
+        return { labelKey: key('showers'), icon: 'cloud-rain-wind', glyph: 'showers' };
+    if (code === 85 || code === 86)
+        return { labelKey: key('snowShowers'), icon: 'cloud-snow', glyph: 'snow' };
+    if (code >= 95)
+        return { labelKey: key('thunderstorm'), icon: 'cloud-lightning', glyph: 'thunder' };
+    return { labelKey: key('unknown'), icon: 'cloud', glyph: 'cloud' };
 }

@@ -82,6 +82,37 @@
     min-height: 0;
 }
 
+/* The members' own window, notched where the rail sits.
+
+   The notch is what lets the rail paint nothing at all. On a wallpapered board
+   the rail sits ON the card, so anything it lays down — a fill of its own, or
+   the blurred copy of the card that a `backdrop-filter` paints — lands on top
+   of the card's fill and comes out denser than the glass around it: a dark
+   chip stamped on the picture. No colour fixes that, because two translucent
+   fills stacked are always more opaque than one. So the rail stops covering
+   the members, and this stops the members reaching the rail.
+
+   The clip is here rather than on the stage because the rail is the stage's
+   child and would be clipped along with them; and rather than on the layers
+   because `clip-path` travels with an element's own transform — a notch on a
+   sliding layer slides with it, which is the one place it must not be.
+
+   It stops a pixel short of the header's full height for the same reason the
+   rail does: the card's hairline runs along that pixel, and it belongs to the
+   whole header, not to the part of it the rail is not standing on. */
+.zenith-bundle__layers {
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(
+        0 0,
+        calc(100% - var(--zenith-bundle-rail, 0px)) 0,
+        calc(100% - var(--zenith-bundle-rail, 0px)) calc(var(--zenith-bundle-head) - 1px),
+        100% calc(var(--zenith-bundle-head) - 1px),
+        100% 100%,
+        0 100%
+    );
+}
+
 .zenith-bundle__layer {
     position: absolute;
     inset: 0;
@@ -146,8 +177,10 @@
     gap: 4px;
     box-sizing: border-box;
     padding: 0 var(--zenith-space-md) 0 8px;
-    /* Opaque, because it floats over the cards cross-fading beneath it. */
-    background: var(--zenith-bg-secondary);
+    /* No fill. It used to be opaque so the members cross-fading beneath it had
+       something to disappear behind; they are clipped out of its box instead,
+       which is the only version that also works on glass — see
+       `.zenith-bundle__layers`. */
 }
 
 /* Says what the pips are pips of. A rail of dots on its own reads as a carousel;

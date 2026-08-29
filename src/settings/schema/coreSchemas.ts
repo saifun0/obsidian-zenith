@@ -1,5 +1,6 @@
 import { coreSchema, type CoreSettingsSchema } from './types';
 import { localizeModule } from '../../core/moduleLabels';
+import { createPlaceField } from '../components/PlaceField';
 
 /**
  * The three categories that are not modules.
@@ -15,6 +16,18 @@ export const generalSchema: CoreSettingsSchema = coreSchema({
         {
             id: 'general',
             fields: [
+                // First, because two modules read it and neither owns it. A
+                // picker that lives inside Weather is one a person looking for
+                // prayer times has no reason to open.
+                {
+                    type: 'custom',
+                    key: 'location',
+                    render: createPlaceField({
+                        settingsKey: 'location',
+                        labelKey: 'settings.location',
+                        descKey: 'settings.location.desc',
+                    }),
+                },
                 {
                     type: 'select',
                     key: 'defaultModuleId',

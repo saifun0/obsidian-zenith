@@ -13,10 +13,10 @@ import type { TranslationTable } from '../../core/i18n';
 export const prayerTranslations: TranslationTable = {
     en: {
         'module.prayer.name': 'Prayer',
-        'module.prayer.desc': 'Prayer times, computed locally, and a record of what you prayed.',
+        'module.prayer.desc': 'Prayer times, from a published calendar or computed here, and a record of what you prayed.',
     },
     ru: {
         'module.prayer.name': 'Намаз',
-        'module.prayer.desc': 'Время намаза, рассчитанное на устройстве, и учёт прочитанного.',
+        'module.prayer.desc': 'Время намаза — из календаря или расчётом на устройстве — и учёт прочитанного.',
     },
 };

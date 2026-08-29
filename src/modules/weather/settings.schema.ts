@@ -29,6 +29,7 @@ export const weatherSettingsSchema = coreSchema({
                         // migration from re-resolving the old free-text city
                         // over this choice.
                         extraPatch: { weatherCity: '' },
+                        inheritsGlobal: true,
                     }),
                 },
                 {

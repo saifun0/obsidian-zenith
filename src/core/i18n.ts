@@ -42,6 +42,9 @@ const EN: Dict = {
     'settings.language': 'Language',
     'settings.language.desc': "Language for Zenith's own interface.",
     'settings.language.auto': 'Automatic (Obsidian)',
+    'settings.location': 'Location',
+    'settings.location.desc':
+        'Where you are, once, for the whole plugin — weather and prayer times both read it. Type in any language. Left empty, the device is asked.',
 
     // Settings — storage
     'settings.taskCapture': 'Capture into the daily note',
@@ -76,9 +79,9 @@ const EN: Dict = {
         'Put every widget back on the dashboard at its default position and size.',
 
     // Settings — weather
-    'settings.weatherPlace': 'Location',
+    'settings.weatherPlace': 'Location for the forecast',
     'settings.weatherPlace.desc':
-        'Search for a place, or let the device say where you are. Stored as coordinates.',
+        'Only if the forecast should be somewhere other than the general location. Empty follows that one.',
     // Shared by every place picker (weather, prayer times).
     'settings.place.search': 'Search for a city…',
     'settings.place.searching': 'Searching…',
@@ -90,6 +93,8 @@ const EN: Dict = {
     'settings.place.auto': 'Automatic',
     'settings.place.clear': 'Use automatic location',
     'settings.place.here': 'Current location',
+    'settings.place.fromGlobal': 'from General',
+    'settings.place.useGlobal': 'Use the general location',
     'settings.weatherIpLookup': 'Fall back to IP lookup',
     'settings.weatherIpLookup.desc':
         'When the device declines to share its location, ask ipapi.co instead.',
@@ -113,6 +118,57 @@ const EN: Dict = {
         'Turn off to remove transitions and dialog motion. Already off when your system asks for reduced motion.',
 
     // Dashboard
+    'settings.dashBgGroup': 'Background',
+    'settings.dashBgGroup.desc':
+        'A picture behind the board. The cards stay readable over it — that is what the dimming is for.',
+    'settings.dashBgSource': 'Picture',
+    'settings.dashBgSource.desc': 'From the web, or a file in the vault.',
+    'settings.dashBgUrl': 'Address',
+    'settings.dashBgUrl.desc': 'A direct link to an image or a GIF.',
+    'settings.dashBgUrl.note':
+        'The board fetches this from its host every time it opens, which tells that host your address.',
+    'settings.dashBgPath': 'File',
+    'settings.dashBgPath.desc': 'A picture in the vault. Works offline and syncs with it.',
+    'settings.dashBgFit': 'Fit',
+    'settings.dashBgFit.desc': 'Fill the board, fit the whole picture in, or repeat it.',
+    'settings.dashBgDim': 'Dimming',
+    'settings.dashBgDim.desc': 'Black over the picture. Too little and the labels disappear into it.',
+    'settings.dashBgBlur': 'Blur',
+    'settings.dashBgBlur.desc': 'Softens a busy picture so the cards stand off it.',
+    'settings.dashCardOpacity': 'Card solidity',
+    'settings.dashCardOpacity.desc':
+        'How much of the picture the cards let through. A hundred is solid, and it shows only between them.',
+    'settings.dashBgMobile': 'Show on phone',
+    'settings.dashBgMobile.desc': 'Off keeps a heavy picture off a metered, battery-powered device.',
+    'settings.percentUnit': '%',
+    'settings.pxUnit': 'px',
+    'dashboard.bg.source.none': 'None',
+    'dashboard.bg.source.url': 'Link',
+    'dashboard.bg.source.vault': 'Vault',
+    'dashboard.bg.fit.cover': 'Fill',
+    'dashboard.bg.fit.contain': 'Fit',
+    'dashboard.bg.fit.tile': 'Tile',
+
+    // The vault picture picker, shared by every setting that names one.
+    'settings.vaultImage.placeholder': 'Attachments/wallpaper.jpg',
+    'settings.vaultImage.pick': 'Choose',
+    'settings.vaultImage.search': 'Search pictures in the vault…',
+    'settings.vaultImage.missing': 'No such file in the vault.',
+    'settings.vaultImage.notImage': 'That file is not a picture.',
+
+    // Picture widget. Every card carries its own picture, so these are the words
+    // on the back of a card rather than on a settings page.
+    'picture.source': 'From',
+    'picture.source.url': 'Link',
+    'picture.source.vault': 'Vault',
+    'picture.fit': 'Fit',
+    'picture.fit.cover': 'Fill',
+    'picture.fit.contain': 'Whole',
+    'picture.url.placeholder': 'https://…',
+    'picture.path.placeholder': 'Attachments/photo.jpg',
+    'picture.empty': 'No picture yet. Arrange the board and turn this card over.',
+    'picture.unusable': 'That is not a picture this can show.',
+    'picture.failed': 'The picture could not be loaded.',
     'settings.dashHeading': 'Heading',
     'settings.dashHeading.desc': 'What stands at the top of the dashboard.',
     'settings.dashHeading.none': 'None',
@@ -124,12 +180,22 @@ const EN: Dict = {
     'settings.dashDate.desc': 'Show today\u2019s date at the top of the dashboard.',
 
     // Prayer times
-    'settings.prayerPlace': 'Location',
+    'settings.prayerPlace': 'Location for prayer times',
     'settings.prayerPlace.desc':
-        'Prayer times are a function of where you are. Falls back to the weather location, then to the device.',
+        'Only if you pray somewhere other than the general location. Empty follows that one.',
     'settings.prayerCalcGroup': 'Calculation',
     'settings.prayerCalcGroup.desc':
-        'Authorities differ on the twilight angles and on when asr begins. Pick what your local calendar uses.',
+        'Where the times come from, and — for the calculation — the points authorities differ on: twilight angles, and when asr begins.',
+    'settings.prayerSource': 'Times from',
+    'settings.prayerSource.desc':
+        'A published calendar, or this device working the sun out for itself. Without a network the calculation answers either way.',
+    'settings.prayerApiMidnight': 'Middle of the night',
+    'settings.prayerApiMidnight.desc':
+        'What the service measures midnight and the last third to. The local calculation always divides sunset to fajr.',
+    'settings.prayerApiRefresh': 'Published times',
+    'settings.prayerApiRefresh.desc':
+        'Fetched a month at a time and kept offline. Refresh after changing the method, or if the mosque has corrected its table.',
+    'settings.prayerApiRefresh.button': 'Refresh',
     'settings.prayerMethod': 'Method',
     'settings.prayerMethod.desc': 'Sets the fajr and isha angles.',
     'settings.prayerFajrAngle': 'Fajr angle',
@@ -566,6 +632,18 @@ const EN: Dict = {
     'weather.forecastDays': '{count}-day forecast',
     'weather.rainChance': '{pct}% rain',
     'weather.spark.aria': 'Next {hours} hours: {low}° to {high}°',
+    'weather.code.clear': 'Clear',
+    'weather.code.mainlyClear': 'Mainly clear',
+    'weather.code.partlyCloudy': 'Partly cloudy',
+    'weather.code.overcast': 'Overcast',
+    'weather.code.fog': 'Fog',
+    'weather.code.drizzle': 'Drizzle',
+    'weather.code.rain': 'Rain',
+    'weather.code.snow': 'Snow',
+    'weather.code.showers': 'Rain showers',
+    'weather.code.snowShowers': 'Snow showers',
+    'weather.code.thunderstorm': 'Thunderstorm',
+    'weather.code.unknown': 'Weather',
     'weather.sunrise': 'Sunrise',
     'weather.sunset': 'Sunset',
     'common.hourShort': 'h',
@@ -601,6 +679,12 @@ const EN: Dict = {
     'weather.untilSunrise': '{time} until sunrise',
     'weather.dayLength': 'Day length',
     'weather.sunshine': 'Sunshine',
+    'weather.sunshineOf': '{pct}% of the daylight',
+    'weather.solarNoon': 'Solar noon',
+    'weather.tomorrow': 'Tomorrow',
+    'weather.dayLonger': 'longer',
+    'weather.dayShorter': 'shorter',
+    'weather.daySame': 'same as today',
     'weather.moon.new': 'New moon',
     'weather.moon.waxingCrescent': 'Waxing crescent',
     'weather.moon.firstQuarter': 'First quarter',
@@ -611,6 +695,12 @@ const EN: Dict = {
     'weather.moon.waningCrescent': 'Waning crescent',
     'weather.moon.illuminated': '{pct}% illuminated',
     'weather.moon.age': 'Day {days} of the lunar month',
+    'weather.moon.lunation': 'The lunar month',
+    'weather.moon.untilFull': 'Until full moon',
+    'weather.moon.untilNew': 'Until new moon',
+    'weather.moon.today': 'today',
+    'weather.moon.days.one': '{count} day',
+    'weather.moon.days.other': '{count} days',
     'weather.moon.note':
         'Phase is computed locally. Moonrise and moonset are not shown — the forecast ' +
         'provides no lunar times, and they cannot be derived from the phase alone.',
@@ -737,6 +827,13 @@ const EN: Dict = {
     'prayer.status.clear': 'Not recorded',
     'prayer.status.none': 'Not recorded yet',
 
+    'prayer.source.api': 'Calendar',
+    'prayer.source.local': 'Calculated',
+    'prayer.midnight.toFajr': 'Sunset to fajr',
+    'prayer.midnight.toSunrise': 'Sunset to sunrise',
+    'prayer.api.refreshed': 'Prayer times updated.',
+    'prayer.api.unreachable': 'The times service is unreachable — showing calculated times.',
+    'prayer.api.fallback': 'Calculated on this device: the times service is unreachable.',
     'prayer.madhab.standard': 'Standard',
     'prayer.madhab.hanafi': 'Hanafi',
     'prayer.highLat.none': "Don't substitute",
@@ -1581,6 +1678,9 @@ const RU: Dict = {
     'settings.language': 'Язык',
     'settings.language.desc': 'Язык интерфейса Zenith.',
     'settings.language.auto': 'Автоматически (Obsidian)',
+    'settings.location': 'Местоположение',
+    'settings.location.desc':
+        'Место один раз на весь плагин — его читают и погода, и намаз. Вводить можно на любом языке. Пусто — спросим устройство.',
 
     'settings.taskCapture': 'Писать в ежедневную заметку',
     'settings.taskCapture.desc': 'Новые задачи попадают в заметку сегодняшнего дня. Если выключить — в папку задач; читаются в любом случае обе.',
@@ -1612,9 +1712,9 @@ const RU: Dict = {
     'settings.widgets.reset.desc':
         'Вернуть все виджеты на дашборд в положение и размер по умолчанию.',
 
-    'settings.weatherPlace': 'Местоположение',
+    'settings.weatherPlace': 'Место для погоды',
     'settings.weatherPlace.desc':
-        'Найдите город или дайте устройству определить место. Сохраняется как координаты.',
+        'Только если погода нужна не там, где вы. Пусто — берётся место из «Основных».',
     'settings.place.search': 'Поиск города…',
     'settings.place.searching': 'Ищем…',
     'settings.place.none': 'Ничего не найдено.',
@@ -1625,6 +1725,8 @@ const RU: Dict = {
     'settings.place.auto': 'Автоматически',
     'settings.place.clear': 'Определять автоматически',
     'settings.place.here': 'Текущее место',
+    'settings.place.fromGlobal': 'из «Основных»',
+    'settings.place.useGlobal': 'Брать место из «Основных»',
     'settings.weatherIpLookup': 'Запасной вариант — по IP',
     'settings.weatherIpLookup.desc':
         'Если устройство не сообщает местоположение, спросить ipapi.co.',
@@ -1648,6 +1750,57 @@ const RU: Dict = {
         'Выключите, чтобы убрать переходы и движение диалогов. И так выключены, если система просит уменьшить движение.',
 
     // Дашборд
+    'settings.dashBgGroup': 'Фон',
+    'settings.dashBgGroup.desc':
+        'Картинка за доской. Карточки над ней остаются читаемыми — для этого и нужно затемнение.',
+    'settings.dashBgSource': 'Картинка',
+    'settings.dashBgSource.desc': 'Из сети или файлом из хранилища.',
+    'settings.dashBgUrl': 'Адрес',
+    'settings.dashBgUrl.desc': 'Прямая ссылка на картинку или GIF.',
+    'settings.dashBgUrl.note':
+        'Доска тянет её с чужого сервера при каждом открытии — сервер видит ваш адрес.',
+    'settings.dashBgPath': 'Файл',
+    'settings.dashBgPath.desc': 'Картинка из хранилища. Работает оффлайн и ездит с ним.',
+    'settings.dashBgFit': 'Заполнение',
+    'settings.dashBgFit.desc': 'Заполнить доску, вместить целиком или повторять плиткой.',
+    'settings.dashBgDim': 'Затемнение',
+    'settings.dashBgDim.desc': 'Чёрный поверх картинки. Мало — и подписи в ней тонут.',
+    'settings.dashBgBlur': 'Размытие',
+    'settings.dashBgBlur.desc': 'Смягчает пеструю картинку, чтобы карточки от неё отделялись.',
+    'settings.dashCardOpacity': 'Плотность карточек',
+    'settings.dashCardOpacity.desc':
+        'Сколько картинки карточки пропускают сквозь себя. Сто — непрозрачны, и фон виден только между ними.',
+    'settings.dashBgMobile': 'Показывать на телефоне',
+    'settings.dashBgMobile.desc': 'Выключено — тяжёлая картинка не грузится на мобильном трафике.',
+    'settings.percentUnit': '%',
+    'settings.pxUnit': 'px',
+    'dashboard.bg.source.none': 'Нет',
+    'dashboard.bg.source.url': 'Ссылка',
+    'dashboard.bg.source.vault': 'Хранилище',
+    'dashboard.bg.fit.cover': 'Заполнить',
+    'dashboard.bg.fit.contain': 'Целиком',
+    'dashboard.bg.fit.tile': 'Плиткой',
+
+    // Выбор картинки из хранилища — общий для всех настроек, где она нужна.
+    'settings.vaultImage.placeholder': 'Attachments/wallpaper.jpg',
+    'settings.vaultImage.pick': 'Выбрать',
+    'settings.vaultImage.search': 'Поиск картинок в хранилище…',
+    'settings.vaultImage.missing': 'Такого файла в хранилище нет.',
+    'settings.vaultImage.notImage': 'Этот файл не картинка.',
+
+    // Виджет «Картинка». У каждой карточки картинка своя, поэтому это
+    // слова с оборота карточки, а не со страницы настроек.
+    'picture.source': 'Откуда',
+    'picture.source.url': 'Ссылка',
+    'picture.source.vault': 'Хранилище',
+    'picture.fit': 'Заполнение',
+    'picture.fit.cover': 'Заполнить',
+    'picture.fit.contain': 'Целиком',
+    'picture.url.placeholder': 'https://…',
+    'picture.path.placeholder': 'Attachments/photo.jpg',
+    'picture.empty': 'Картинки пока нет. Включите режим раскладки и переверните карточку.',
+    'picture.unusable': 'Это не та картинка, которую можно показать.',
+    'picture.failed': 'Картинку не удалось загрузить.',
     'settings.dashHeading': 'Заголовок',
     'settings.dashHeading.desc': 'Что стоит в шапке дашборда.',
     'settings.dashHeading.none': 'Нет',
@@ -1659,12 +1812,22 @@ const RU: Dict = {
     'settings.dashDate.desc': 'Показывать сегодняшнюю дату в шапке дашборда.',
 
     // Намаз
-    'settings.prayerPlace': 'Место',
+    'settings.prayerPlace': 'Место для намаза',
     'settings.prayerPlace.desc':
-        'Времена намаза зависят от координат. Если не выбрано — берётся место из погоды, затем с устройства.',
+        'Только если намаз не там, где вы. Пусто — берётся место из «Основных».',
     'settings.prayerCalcGroup': 'Расчёт',
     'settings.prayerCalcGroup.desc':
-        'Мнения расходятся и об углах сумерек, и о начале аср-намаза. Выберите то, по чему считает ваш календарь.',
+        'Откуда берутся времена и — для расчёта — то, в чём мнения расходятся: углы сумерек и начало аср-намаза.',
+    'settings.prayerSource': 'Времена',
+    'settings.prayerSource.desc':
+        'Из готового календаря или расчётом на устройстве. Без сети в обоих случаях отвечает расчёт.',
+    'settings.prayerApiMidnight': 'Середина ночи',
+    'settings.prayerApiMidnight.desc':
+        'До чего сервис считает полночь и последнюю треть. Локальный расчёт всегда делит от заката до фаджра.',
+    'settings.prayerApiRefresh': 'Готовые времена',
+    'settings.prayerApiRefresh.desc':
+        'Забираются помесячно и хранятся оффлайн. Обновите после смены метода или если мечеть поправила таблицу.',
+    'settings.prayerApiRefresh.button': 'Обновить',
     'settings.prayerMethod': 'Метод',
     'settings.prayerMethod.desc': 'Задаёт углы для фаджра и иши.',
     'settings.prayerFajrAngle': 'Угол фаджра',
@@ -2109,6 +2272,18 @@ const RU: Dict = {
     'weather.forecastDays': 'Прогноз на {count} дн.',
     'weather.rainChance': 'осадки {pct}%',
     'weather.spark.aria': 'Ближайшие {hours} ч: от {low}° до {high}°',
+    'weather.code.clear': 'Ясно',
+    'weather.code.mainlyClear': 'Малооблачно',
+    'weather.code.partlyCloudy': 'Переменная облачность',
+    'weather.code.overcast': 'Пасмурно',
+    'weather.code.fog': 'Туман',
+    'weather.code.drizzle': 'Морось',
+    'weather.code.rain': 'Дождь',
+    'weather.code.snow': 'Снег',
+    'weather.code.showers': 'Ливень',
+    'weather.code.snowShowers': 'Снегопад',
+    'weather.code.thunderstorm': 'Гроза',
+    'weather.code.unknown': 'Погода',
     'weather.sunrise': 'Восход',
     'weather.sunset': 'Закат',
     'common.hourShort': ' ч',
@@ -2144,6 +2319,12 @@ const RU: Dict = {
     'weather.untilSunrise': 'до восхода {time}',
     'weather.dayLength': 'Длина дня',
     'weather.sunshine': 'Солнце',
+    'weather.sunshineOf': '{pct}% светового дня',
+    'weather.solarNoon': 'Полдень',
+    'weather.tomorrow': 'Завтра',
+    'weather.dayLonger': 'длиннее',
+    'weather.dayShorter': 'короче',
+    'weather.daySame': 'как сегодня',
     'weather.moon.new': 'Новолуние',
     'weather.moon.waxingCrescent': 'Растущий серп',
     'weather.moon.firstQuarter': 'Первая четверть',
@@ -2154,6 +2335,13 @@ const RU: Dict = {
     'weather.moon.waningCrescent': 'Убывающий серп',
     'weather.moon.illuminated': 'освещено {pct}%',
     'weather.moon.age': '{days}-й день лунного месяца',
+    'weather.moon.lunation': 'Лунный месяц',
+    'weather.moon.untilFull': 'До полнолуния',
+    'weather.moon.untilNew': 'До новолуния',
+    'weather.moon.today': 'сегодня',
+    'weather.moon.days.one': '{count} день',
+    'weather.moon.days.few': '{count} дня',
+    'weather.moon.days.many': '{count} дней',
     'weather.moon.note':
         'Фаза считается локально. Восход и заход луны не показаны: провайдер не даёт ' +
         'лунных времён, а из одной фазы их вывести нельзя.',
@@ -2281,6 +2469,13 @@ const RU: Dict = {
     'prayer.status.clear': 'Не отмечено',
     'prayer.status.none': 'Пока не отмечено',
 
+    'prayer.source.api': 'Календарь',
+    'prayer.source.local': 'Расчёт',
+    'prayer.midnight.toFajr': 'От заката до фаджра',
+    'prayer.midnight.toSunrise': 'От заката до восхода',
+    'prayer.api.refreshed': 'Времена намаза обновлены.',
+    'prayer.api.unreachable': 'Сервис времён недоступен — показан локальный расчёт.',
+    'prayer.api.fallback': 'Посчитано на устройстве: сервис времён недоступен.',
     'prayer.madhab.standard': 'Обычный',
     'prayer.madhab.hanafi': 'Ханафи',
     'prayer.highLat.none': 'Не заменять',

@@ -180,6 +180,18 @@ export const PRAYER_METHODS: readonly PrayerMethod[] = [
 
 export const DEFAULT_METHOD_ID = 'russia';
 
+/**
+ * Which engine produces the times.
+ *
+ * `api` asks a published calendar service; `local` does the astronomy here. The
+ * service is the default — see the settings field for why — and the local
+ * calculation remains the fallback whichever is chosen, so the module never
+ * needs a network to be useful.
+ */
+export type PrayerSource = 'api' | 'local';
+
+export const PRAYER_SOURCES: readonly PrayerSource[] = ['api', 'local'] as const;
+
 export function findMethod(id: string): PrayerMethod {
     return PRAYER_METHODS.find((m) => m.id === id) ?? PRAYER_METHODS[0];
 }

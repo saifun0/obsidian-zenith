@@ -87,9 +87,10 @@ describe('loadSettings — versioning', () => {
     });
 
     it('runs every ordered step a config has not seen yet', () => {
-        // v2 → v3 → v4 → v5. The ordered migrations must run for a config that
-        // is past the sentinel-based ones, which used to return early — and a
-        // config several versions behind has to collect all of them, in order.
+        // v2 → v3 → v4 → v5 → v7. The ordered migrations must run for a config
+        // that is past the sentinel-based ones, which used to return early —
+        // and a config several versions behind has to collect all of them, in
+        // order.
         const s = load({ settingsVersion: 2, activeModuleIds: ['dashboard', 'tasks'] });
         expect(s.activeModuleIds).toEqual([
             'dashboard',
@@ -97,6 +98,7 @@ describe('loadSettings — versioning', () => {
             'navigator',
             'prayer',
             'sync',
+            'picture',
         ]);
     });
 
@@ -105,7 +107,18 @@ describe('loadSettings — versioning', () => {
             settingsVersion: 3,
             activeModuleIds: ['dashboard', 'navigator'],
         });
-        expect(s.activeModuleIds).toEqual(['dashboard', 'navigator', 'prayer', 'sync']);
+        expect(s.activeModuleIds).toEqual(['dashboard', 'navigator', 'prayer', 'sync', 'picture']);
+    });
+
+    it('switches the picture widget on for an existing config', () => {
+        // It costs a board nothing — one more entry in the widget gallery, and
+        // nothing on the board until the user puts it there — and a built-in
+        // module nobody can see is a module nobody switches on.
+        const fresh = load({ settingsVersion: 6, activeModuleIds: ['dashboard'] });
+        expect(fresh.activeModuleIds).toContain('picture');
+
+        const already = load({ settingsVersion: 7, activeModuleIds: ['dashboard'] });
+        expect(already.activeModuleIds).not.toContain('picture');
     });
 
     it('switches sync on for an existing config, because it fixes a bug that config has', () => {
@@ -207,5 +220,46 @@ describe('loadSettings — saved dashboard layouts', () => {
             dashboardPresetId: 'layout-1',
         } as never);
         expect(s.dashboardPresetId).toBe('layout-1');
+    });
+});
+
+describe('loadSettings — v5 → v6: one location for the whole plugin', () => {
+    const stavropol = { lat: 45.03, lon: 41.96, name: 'Stavropol' };
+    const istanbul = { lat: 41.01, lon: 28.98, name: 'Istanbul' };
+
+    it('promotes the weather place and stops it shadowing the new setting', () => {
+        // Leaving the module copy behind would make it an override that wins
+        // for ever, so changing the city in the obvious place would silently
+        // do nothing.
+        const s = load({ settingsVersion: 5, weatherPlace: stavropol });
+        expect(s.location).toEqual(stavropol);
+        expect(s.weatherPlace).toBeNull();
+    });
+
+    it('promotes the prayer place when that is the one that was set', () => {
+        const s = load({ settingsVersion: 5, prayerPlace: stavropol });
+        expect(s.location).toEqual(stavropol);
+        expect(s.prayerPlace).toBeNull();
+    });
+
+    it('keeps a genuine difference between the two as an override', () => {
+        const s = load({ settingsVersion: 5, weatherPlace: istanbul, prayerPlace: stavropol });
+        expect(s.location).toEqual(istanbul);
+        expect(s.weatherPlace).toBeNull();
+        // Praying where you are while watching a forecast somewhere else is the
+        // case the overrides exist for, so this one survives.
+        expect(s.prayerPlace).toEqual(stavropol);
+    });
+
+    it('leaves a config that already has a location alone', () => {
+        const s = load({ settingsVersion: 6, location: istanbul, weatherPlace: stavropol });
+        expect(s.location).toEqual(istanbul);
+        expect(s.weatherPlace).toEqual(stavropol);
+    });
+
+    it('has nothing to promote when no module ever had a place', () => {
+        const s = load({ settingsVersion: 5 });
+        expect(s.location).toBeNull();
+        expect(s.settingsVersion).toBe(CURRENT_SETTINGS_VERSION);
     });
 });

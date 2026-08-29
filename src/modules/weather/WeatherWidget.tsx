@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
     ArrowDown,
     ArrowUp,
-    Cloud,
     CloudOff,
     Droplets,
     MapPin,
@@ -11,14 +10,14 @@ import {
     Thermometer,
     Wind,
 } from 'lucide-react';
-import { DynamicIcon } from '../../components/shared/DynamicIcon';
 import { useZenithStore } from '../../store';
 import { resolveLocale, useTranslation } from '../../core/i18n';
 import { useNow } from '../../core/useNow';
 import type { DashboardWidgetProps } from '../dashboard/widgets';
-import { searchPlaces } from '../../services/geocode';
+import { preferredPlace, searchPlaces } from '../../services/geocode';
 import { getCachedWeather, getWeather, describeWeather, type WeatherData } from './weatherService';
 import { temperature, unitSystem, wind as windOf } from './weatherFormat';
+import { WeatherGlyph } from './components/WeatherGlyph';
 import { HourlySparkline, SunLine } from './components/HourlySparkline';
 import { HourlyStrip } from './components/HourlyStrip';
 import { DailyForecastList } from './components/DailyForecastList';
@@ -105,6 +104,33 @@ const SmallStats: React.FC<{ data: WeatherData; unit: 'c' | 'f' }> = ({ data, un
 };
 
 /**
+ * The card's own shape while it waits.
+ *
+ * A lone spinner in an empty cell made the dashboard jump on every refresh: the
+ * card lost its height, the neighbours reflowed, and the data came back into a
+ * different layout than it left. Holding the shape and shimmering makes a
+ * refresh look like the card thinking rather than the grid rearranging itself.
+ */
+const WeatherSkeleton: React.FC<{ size: string; label: string }> = ({ size, label }) => (
+    <div
+        className={`zenith-weather zenith-weather--${size} zenith-weather--loading`}
+        role="status"
+        aria-busy="true"
+        aria-label={label}
+    >
+        <div className="zenith-weather__main">
+            <span className="zenith-weather__sk zenith-weather__sk-icon" />
+            <div className="zenith-weather__sk-lines">
+                <span className="zenith-weather__sk zenith-weather__sk-temp" />
+                <span className="zenith-weather__sk zenith-weather__sk-cond" />
+                <span className="zenith-weather__sk zenith-weather__sk-place" />
+            </div>
+        </div>
+        <span className="zenith-weather__sk zenith-weather__sk-chart" />
+    </div>
+);
+
+/**
  * The card renders a different amount of detail per size preset, and each
  * variant is built to fit its cell without scrolling:
  *
@@ -117,7 +143,9 @@ const SmallStats: React.FC<{ data: WeatherData; unit: 'c' | 'f' }> = ({ data, un
  */
 export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
     const t = useTranslation();
-    const place = useZenithStore((s) => s.settings.weatherPlace);
+    const override = useZenithStore((s) => s.settings.weatherPlace);
+    const location = useZenithStore((s) => s.settings.location);
+    const place = preferredPlace(override, location);
     const legacyCity = useZenithStore((s) => s.settings.weatherCity);
     const allowIpLookup = useZenithStore((s) => s.settings.weatherAllowIpLookup);
     const includeAir = useZenithStore((s) => s.settings.weatherShowAir);
@@ -162,12 +190,16 @@ export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) =
     // One-time upgrade from the old free-text city field: geocode what the user
     // typed, store real coordinates, and clear the legacy key so this never runs
     // again. Failing to match simply leaves it for the next attempt.
+    //
+    // It lands in the plugin-wide location rather than the weather override:
+    // the old field was the only place anyone ever named, so it is the answer
+    // to "where are you", not to "where do you want the forecast instead".
     useEffect(() => {
         if (place || !legacyCity.trim()) return;
         let cancelled = false;
         void searchPlaces(legacyCity, lang).then((hits) => {
             if (!cancelled && hits[0]) {
-                updateSettings({ weatherPlace: hits[0], weatherCity: '' });
+                updateSettings({ location: hits[0], weatherCity: '' });
             }
         });
         return () => {
@@ -180,11 +212,7 @@ export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) =
     // show just a centered spinner. Suppressed while the panel is open so a
     // refresh from inside it doesn't yank the whole card out.
     if ((refreshing || (!data && loading)) && !expanded) {
-        return (
-            <div className="zenith-weather zenith-weather--empty">
-                <RotateCw size={22} className="zenith-spin" />
-            </div>
-        );
+        return <WeatherSkeleton size={size} label={t('weather.loading')} />;
     }
 
     if (!data) {
@@ -237,17 +265,17 @@ export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) =
 
             <div className="zenith-weather__top">
                 <div className="zenith-weather__main">
-                    <DynamicIcon
-                        name={look.icon}
-                        fallback={Cloud}
-                        size={size === 'sm' ? 40 : 52}
+                    <WeatherGlyph
+                        kind={look.glyph}
+                        size={size === 'sm' ? 52 : 62}
                         className="zenith-weather__icon"
+                        label={t(look.labelKey)}
                     />
                     <div className="zenith-weather__temp-group">
                         <span className="zenith-weather__temp zenith-serif">
                             {temperature(data.tempC, unit)}°
                         </span>
-                        <span className="zenith-weather__condition">{look.label}</span>
+                        <span className="zenith-weather__condition">{t(look.labelKey)}</span>
                         <LocationLine
                             location={data.location}
                             loading={loading}

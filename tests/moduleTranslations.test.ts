@@ -17,6 +17,7 @@ import { dashboardTranslations } from '../src/modules/dashboard/i18n';
 import { journalTranslations } from '../src/modules/journal/i18n';
 import { mediaTranslations } from '../src/modules/media/i18n';
 import { navigatorTranslations } from '../src/modules/navigator/i18n';
+import { pictureTranslations } from '../src/modules/picture/i18n';
 import { prayerTranslations } from '../src/modules/prayer/i18n';
 import { syncTranslations } from '../src/modules/sync/i18n';
 import { tasksTranslations } from '../src/modules/tasks/i18n';
@@ -30,6 +31,7 @@ const BUILT_IN: Array<[string, TranslationTable]> = [
     ['journal', journalTranslations],
     ['media', mediaTranslations],
     ['navigator', navigatorTranslations],
+    ['picture', pictureTranslations],
     ['prayer', prayerTranslations],
     ['sync', syncTranslations],
     ['tasks', tasksTranslations],

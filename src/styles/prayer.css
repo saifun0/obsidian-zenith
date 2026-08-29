@@ -792,6 +792,17 @@
     flex-wrap: wrap;
 }
 
+/* The service was asked for and did not answer, so these are calculated times.
+   The only mark in the head, because it is the only live failure here — and it
+   stays a glyph with a tooltip rather than a banner, since nothing about the
+   day is wrong, only its provenance. */
+.zenith-prayer__offline {
+    display: inline-flex;
+    align-items: center;
+    color: var(--zenith-text-faint);
+    cursor: help;
+}
+
 /* ── What's next ─────────────────────────────────── */
 .zenith-prayer__next {
     display: flex;

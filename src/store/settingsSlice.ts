@@ -19,7 +19,12 @@ import { normalizeSession, type TimerSession } from '../modules/tasks/services/t
 import type { ContentTypeConfig } from '../core/contentTypes';
 import type { WeatherPlace } from '../modules/weather/weatherTypes';
 import type { GeoPlace } from '../services/geocode';
-import { DEFAULT_METHOD_ID, type AsrMadhab, type HighLatRule } from '../modules/prayer/prayerConfig';
+import { DEFAULT_METHOD_ID, type AsrMadhab, type HighLatRule, type PrayerSource } from '../modules/prayer/prayerConfig';
+import type { ApiMidnight } from '../modules/prayer/prayerApi';
+import type {
+    DashboardBgFit,
+    DashboardBgSource,
+} from '../modules/dashboard/dashboardBackground';
 import type { ModuleSource } from '../core/moduleSources';
 import type { ZenithSliceCreator } from './types';
 
@@ -153,6 +158,23 @@ export interface ZenithSettings {
      * its coordinates, so an explicit choice is worth asking for.
      */
     prayerPlace: GeoPlace | null;
+    /**
+     * Where the times come from: a published calendar (`api`) or this device's
+     * own arithmetic (`local`).
+     *
+     * The service is the default because a prayer tracker whose times disagree
+     * with the mosque down the road is worse than no tracker, and every
+     * muftiate rounds and pads its printed table in its own way. The
+     * calculation stays as the floor — offline, or against a service having a
+     * bad day, it answers instead.
+     */
+    prayerSource: PrayerSource;
+    /**
+     * What the middle of the night — and so the last third — is measured to.
+     * Only the service reads it; the local calculation always divides the night
+     * that is actually prayed through, sunset to fajr.
+     */
+    prayerApiMidnight: ApiMidnight;
     /** Calculation method id from `PRAYER_METHODS`. */
     prayerMethod: string;
     /** Twilight angles for the `custom` method; ignored by every other one. */
@@ -177,6 +199,43 @@ export interface ZenithSettings {
     prayerNotify: boolean;
     /** Minutes of warning before the time itself. */
     prayerNotifyBefore: number;
+
+    /**
+     * The board's wallpaper. `none`, an address on the web, or a picture in
+     * the vault. See `dashboardBackground.ts` for why it is a layer rather
+     * than a `background` on the board.
+     */
+    dashboardBgSource: DashboardBgSource;
+    /** Used when the source is `url`. Fetched from the web on every open. */
+    dashboardBgUrl: string;
+    /** Vault-relative path, used when the source is `vault`. */
+    dashboardBgPath: string;
+    /** Fill the board, fit inside it, or repeat as a tile. */
+    dashboardBgFit: DashboardBgFit;
+    /** Percent of black over the picture, so the board stays readable. */
+    dashboardBgDim: number;
+    /** Pixels of blur on the picture. */
+    dashboardBgBlur: number;
+    /**
+     * How solid the widget cards and bundles stay over the wallpaper, 30–100.
+     * A hundred is opaque, so the picture shows only between the cards.
+     */
+    dashboardCardOpacity: number;
+    /** Show it on a phone. Off keeps a heavy picture off a metered device. */
+    dashboardBgMobile: boolean;
+
+    /**
+     * Settings that belong to one copy of a widget, keyed by its layout id.
+     *
+     * Opaque here on purpose: the shape is the widget's business, and a widget
+     * that arrives with a third-party module has a shape this file cannot know.
+     * Each widget normalises its own bucket on read — see `widgetConfig.ts`.
+     *
+     * Keyed by layout id rather than by widget id because that is the only
+     * thing that tells two copies of the same widget apart, and two pictures
+     * forced to show the same photograph would be one picture rendered twice.
+     */
+    widgetConfig: Record<string, Record<string, unknown>>;
 
     /** Navigation launcher: button grid, or a labelled list. */
     navigatorLayout: NavigatorLayout;
@@ -209,6 +268,19 @@ export interface ZenithSettings {
     defaultModuleId: string;
     /** UI language for Zenith's own interface */
     language: ZenithLanguage;
+    /**
+     * Where the user is, once, for the whole plugin.
+     *
+     * Weather and prayer both need coordinates and both need the *same* ones,
+     * and asking per module meant setting the same city twice and keeping the
+     * two in step by hand. Each module keeps an override for the case that is
+     * genuinely different — watching a forecast somewhere you are not, while
+     * praying where you are — but nothing has to be set twice to agree.
+     *
+     * Null means "work it out": the device's own position, then, only with
+     * consent, the IP.
+     */
+    location: GeoPlace | null;
     /**
      * Legacy free-text city. Superseded by `weatherPlace`, and kept only so a
      * config written before the picker existed can be geocoded once and
@@ -505,7 +577,7 @@ export interface SettingsSlice {
  * Bump when a migration is added, and gate that migration on the value below.
  * Version 1 is "everything written before versioning existed".
  */
-export const CURRENT_SETTINGS_VERSION = 5;
+export const CURRENT_SETTINGS_VERSION = 7;
 
 /**
  * Object-valued settings that must be merged field-by-field rather than
@@ -516,7 +588,7 @@ export const CURRENT_SETTINGS_VERSION = 5;
  * Listed rather than detected, because ARRAY-valued settings must NOT be merged
  * — `journalTrackers: []` means "no trackers", not "use the defaults".
  */
-const NESTED_KEYS = ['contentView', 'taskView', 'calendarView', 'moduleSettings'] as const;
+const NESTED_KEYS = ['contentView', 'taskView', 'calendarView', 'moduleSettings', 'widgetConfig'] as const;
 
 /**
  * Drop keys explicitly set to `undefined` before merging.
@@ -557,7 +629,21 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     // in Obsidian's own status bar; a dashboard that opens with a bare wall of
     // cards is the point of it.
     dashboardShowDate: false,
+    dashboardBgSource: 'none',
+    dashboardBgUrl: '',
+    dashboardBgPath: '',
+    dashboardBgFit: 'cover',
+    // Enough to read white-on-anything without hiding the picture. A wallpaper
+    // nobody can see is the same as no wallpaper; a board nobody can read is
+    // worse than one.
+    dashboardBgDim: 45,
+    dashboardBgBlur: 0,
+    dashboardCardOpacity: 72,
+    dashboardBgMobile: true,
+    widgetConfig: {},
     prayerPlace: null,
+    prayerSource: 'api',
+    prayerApiMidnight: 'toFajr',
     prayerMethod: DEFAULT_METHOD_ID,
     prayerFajrAngle: 16,
     prayerIshaAngle: 15,
@@ -588,10 +674,12 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
         'prayer',
         'media',
         'sync',
+        'picture',
     ],
     accentColor: '',
     defaultModuleId: 'dashboard',
     language: 'auto',
+    location: null,
     weatherCity: '',
     weatherPlace: null,
     weatherAllowIpLookup: false,
@@ -721,6 +809,31 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             // changed, and nobody opted into that.
             if (from < 5 && !merged.activeModuleIds.includes('sync')) {
                 merged.activeModuleIds = [...merged.activeModuleIds, 'sync'];
+            }
+
+            // ── v5 → v6 ──
+            // Location became one plugin-wide setting. Whichever module had a
+            // place set is promoted to it, and that module's own copy is
+            // cleared — left behind it would be an override that shadows the
+            // global one for ever, so changing the city in the obvious place
+            // would silently do nothing.
+            if (from < 6 && !merged.location) {
+                const adopted = merged.weatherPlace ?? merged.prayerPlace;
+                if (adopted) {
+                    merged.location = adopted;
+                    if (merged.weatherPlace === adopted) merged.weatherPlace = null;
+                    if (merged.prayerPlace === adopted) merged.prayerPlace = null;
+                }
+            }
+
+            // ── v6 → v7 ──
+            // The picture widget arrived as its own module. Switched on for the
+            // same reason the navigator was — a built-in module nobody can see
+            // is a module nobody switches on — and it costs an existing board
+            // nothing, because it only adds an entry to the widget gallery and
+            // shows nothing at all until a picture is chosen for it.
+            if (from < 7 && !merged.activeModuleIds.includes('picture')) {
+                merged.activeModuleIds = [...merged.activeModuleIds, 'picture'];
             }
 
             return { settings: merged };

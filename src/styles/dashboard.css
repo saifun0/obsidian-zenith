@@ -29,6 +29,197 @@
     animation: zenith-fade-in var(--zenith-transition-slow);
 }
 
+/* ── Bleed ─────────────────────────────────────────
+   The board is flush with the pane, not inset inside it.
+
+   Obsidian gives every `.view-content` a 12/12/32 inset. Under a plain board
+   it is invisible — pane colour against pane colour — but a wallpaper stops
+   where the board does, and the inset turns into a frame of bare pane drawn
+   round the picture. The board carries its own padding above, so the host's is
+   only ever a second one.
+
+   The height goes the same way. The board is as tall as its cards; a board
+   shorter than the pane left the wallpaper ending in a band of pane colour
+   across the bottom. The mount point is given the pane's height to pass down
+   and the board stretches into it, so the picture reaches the bottom edge
+   whether or not there is enough on the board to get there. */
+.zenith-root.zenith-dash-host {
+    padding: 0;
+}
+
+.zenith-dash-mount {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.zenith-dash-mount > .zenith-dashboard {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ── Wallpaper ─────────────────────────────────────
+   One layer over the board's padding box, so it covers the whole scroll height
+   including the inset. Not `background-attachment: fixed`, which is the obvious
+   way to get a wallpaper that holds still and is broken on iOS — Obsidian runs
+   on phones, and an effect that only works on a desktop is not the effect to
+   build.
+
+   Three elements where one looks like it would do, and each earns its place:
+
+   • the layer itself only clips. A blur samples past the element's own edges,
+     finds nothing, and leaves a pale rim all the way round; the picture is
+     therefore grown beyond the board and this crops it back. Without the crop
+     the blur bleeds out over the pane around the board.
+   • `::before` carries the picture and the blur.
+   • `::after` carries the scrim, on top and sharp. Painting it on the same
+     element as the picture would blur the scrim too, which turns an even veil
+     into a smudge that is lighter at the edges — exactly where the board's
+     text sits.
+
+   Clipping lives here rather than on `.zenith-dashboard` because that would
+   also clip the rail, and the rail is `position: sticky`. */
+.zenith-dashboard__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    animation: zenith-fade-in var(--zenith-transition-slow) ease both;
+}
+
+.zenith-dashboard__bg::before,
+.zenith-dashboard__bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+}
+
+.zenith-dashboard__bg::before {
+    background-image: var(--zenith-dash-bg);
+    background-size: var(--zenith-dash-bg-size, cover);
+    background-repeat: var(--zenith-dash-bg-repeat, no-repeat);
+    background-position: center;
+}
+
+/* The scrim the board is read through. Without one a bright photograph makes
+   every muted label disappear, and muted labels are most of what a dashboard
+   is. */
+.zenith-dashboard__bg::after {
+    background: rgb(0 0 0 / var(--zenith-dash-bg-dim, 0.45));
+}
+
+/* Only when asked for: a filter costs a compositor layer whether or not it
+   blurs anything, so zero is the class being absent rather than `blur(0)`. */
+.zenith-dashboard.has-bg-blur .zenith-dashboard__bg::before {
+    filter: blur(var(--zenith-dash-bg-blur, 0));
+    inset: calc(var(--zenith-dash-bg-blur, 0px) * -2);
+}
+
+/* The board above its own wallpaper. Each needs a stacking position of its
+   own, or the layer paints over the cards. */
+.zenith-dashboard.has-bg .zenith-dashboard__main,
+.zenith-dashboard.has-bg .zenith-dashboard__header {
+    position: relative;
+    z-index: 1;
+}
+
+/* The rail is already out of the flow, so it only needs telling which layer it
+   is on. Giving it `position: relative` alongside the two above put it back in
+   the flow and dropped the buttons in the board's top-left corner — its
+   `top`/`right` had nothing left to resolve against. */
+.zenith-dashboard.has-bg .zenith-dashboard__railwrap {
+    z-index: 1;
+}
+
+/* Glass. What makes a wallpaper worth having: opaque cards would show it only
+   in the gutters, which reads as a picture behind a wall rather than as a board
+   on a picture. The backdrop blur is what keeps text legible over a busy
+   photograph — translucency alone is unreadable. */
+@supports (backdrop-filter: blur(1px)) {
+    /* `:not(.zenith-bundle__member)` is the whole ballgame inside a bundle.
+       A bundle's active widget IS a `.zenith-widget-card`, and the bundle
+       stylesheet gives it `background: none` on purpose — the frame around it
+       does the painting. This rule out-specified that, so the member started
+       tinting itself on top of the frame: two 72% fills stacked into one dark
+       panel. */
+    .zenith-dashboard.has-bg-glass .zenith-widget-card:not(.zenith-bundle__member),
+    .zenith-dashboard.has-bg-glass .zenith-bundle__card,
+    .zenith-dashboard.has-bg-glass .zenith-gridbar,
+    .zenith-dashboard.has-bg-glass .zenith-add-sheet {
+        background: color-mix(
+            in srgb,
+            var(--zenith-bg-secondary) var(--zenith-card-opacity, 72%),
+            transparent
+        );
+        backdrop-filter: blur(14px) saturate(1.1);
+    }
+
+    /* The paper edges peeking out under a bundle. They are the same object as
+       the card, so they take the same fill — left solid they read as a shadow
+       the card is not casting. */
+    .zenith-dashboard.has-bg-glass .zenith-bundle__shoulder {
+        background: color-mix(
+            in srgb,
+            var(--zenith-bg-tertiary) var(--zenith-card-opacity, 72%),
+            transparent
+        );
+        backdrop-filter: blur(14px) saturate(1.1);
+    }
+}
+
+/* The bundle's pip rail is deliberately absent from all of this. It sits on the
+   card rather than on the picture, so every treatment that suits a card turns
+   it into a chip: a fill of its own stacks with the card's and comes out about
+   92% opaque against a 72% card, and a `backdrop-filter` paints a blurred copy
+   of that same fill to exactly the same effect. It carries no surface at all —
+   the members are clipped out of its box instead, so there is nothing for it to
+   have to cover. See `.zenith-bundle__layers`. */
+
+/* Without backdrop-filter the translucency is a legibility bug rather than a
+   style, so those surfaces stay nearly solid and simply sit on the picture. */
+@supports not (backdrop-filter: blur(1px)) {
+    .zenith-dashboard.has-bg-glass .zenith-widget-card:not(.zenith-bundle__member),
+    .zenith-dashboard.has-bg-glass .zenith-bundle__card {
+        background: color-mix(in srgb, var(--zenith-bg-secondary) 94%, transparent);
+    }
+}
+
+/* ── On a phone ──
+   Two things change. The wallpaper is dropped entirely when the setting says so
+   — a full-screen animated GIF is a real cost on a metered, battery-powered
+   device, and it is the owner's call. And the glass loses its backdrop blur: a
+   blur behind every card is the most expensive thing on this screen, and a
+   phone lays the board out in one column, where the cards cover nearly all of
+   the picture anyway. */
+body.is-mobile .zenith-dashboard.no-bg-mobile .zenith-dashboard__bg {
+    display: none;
+}
+
+@supports (backdrop-filter: blur(1px)) {
+    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-widget-card:not(.zenith-bundle__member),
+    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-bundle__card,
+    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-bundle__shoulder,
+    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-gridbar,
+    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-add-sheet {
+        backdrop-filter: none;
+        /* Denser than on a desktop, because nothing is blurring the picture
+           behind them any more and the text still has to win. */
+        background: color-mix(
+            in srgb,
+            var(--zenith-bg-secondary) min(100%, var(--zenith-card-opacity, 72%) + 18%),
+            transparent
+        );
+    }
+}
+
+/* A picture cropped to a phone's proportions loses its middle, so the fill is
+   pinned to the top — which is where a photograph's subject usually is, and
+   where the board's first row of cards is not. */
+body.is-phone .zenith-dashboard__bg::before {
+    background-position: center top;
+}
+
 /* The canvas. Its `max-width` is set inline, from the setting. */
 .zenith-dashboard__main {
     margin: 0 auto;
@@ -847,8 +1038,12 @@
 }
 
 .zenith-weather__icon {
-    color: var(--zenith-accent);
     flex-shrink: 0;
+    transition: transform var(--zenith-transition);
+}
+
+.zenith-weather--interactive:hover .zenith-weather__icon {
+    transform: scale(1.05);
 }
 
 .zenith-weather__temp-group {
@@ -950,10 +1145,32 @@
 
 /* ── Size variants ───────────────────────────────── */
 /* sm shows only the essentials, so it can afford to breathe: bigger type,
-   centred in the card. Details and forecasts start at md. */
+   centred in the card. Details and forecasts start at md.
+
+   "Afford" is the whole question, though, and `sm` is a preset rather than a
+   size: the cell it lands in is two rows of a row height the user sets, as many
+   columns wide as they gave it, at a density that scales every token in here.
+   The generous version of this card fits some of those cells and not others,
+   and the ones it did not fit scrolled — a scrollbar inside a 250px card, over
+   about ten pixels of overflow.
+
+   So the card reads its own cell and cuts its cloth. It is a size container,
+   and the steps below are the order things give way in: the type and the air
+   around it first, because that costs nothing but generosity; then the chart,
+   because a chart is the biggest single thing here and a cell that cannot hold
+   it cannot hold it; then the stat strip; then the sunrise line. Each step is
+   a whole element leaving, never a squashed one — a temperature curve flattened
+   to fit says something the forecast does not.
+
+   Where `@container` is not supported the card simply keeps its roomiest form
+   and scrolls, which is exactly where it stood before. */
 .zenith-weather--sm {
     justify-content: center;
     gap: var(--zenith-space-sm);
+    /* Safe because the height comes from the cell, never from the contents:
+       `height: 100%` inside a card body that the grid has already sized. */
+    container-type: size;
+    container-name: zenith-wcard;
 }
 
 .zenith-weather--sm .zenith-weather__temp {
@@ -966,6 +1183,73 @@
 
 .zenith-weather--sm .zenith-weather__main {
     gap: var(--zenith-space-lg);
+}
+
+/* ── Step one: the same card, tighter ──
+   Roughly thirty pixels, all of it air and display type, which is what the
+   default two-row cell was over by. Nothing leaves. */
+@container zenith-wcard (max-height: 215px) {
+    .zenith-weather--sm {
+        gap: 5px;
+    }
+
+    .zenith-weather--sm .zenith-weather__temp {
+        font-size: 2.1rem;
+    }
+
+    .zenith-weather--sm .zenith-weather__condition {
+        font-size: 0.82rem;
+    }
+
+    .zenith-weather--sm .zenith-weather__main {
+        gap: var(--zenith-space-md);
+    }
+
+    /* The glyph carries its size as an attribute, from the component. CSS wins
+       over that, so the one place that knows how much room there is gets to
+       say — no prop threading a measurement back up the tree. */
+    .zenith-weather--sm .zenith-weather__icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    .zenith-weather--sm .zenith-weather__sm-stats {
+        padding-top: 5px;
+        margin-top: 0;
+    }
+}
+
+/* ── Step two: the chart goes ──
+   Two ways to be too small for it, because the chart is sized by the card's
+   width and paid for out of its height. Short is the obvious one. Short AND
+   wide is the other: the wider the cell, the taller the chart, so past about
+   five hundred pixels a two-row cell is buying a chart it has no room for. */
+@container zenith-wcard (max-height: 150px) {
+    .zenith-weather--sm .zenith-weather__spark {
+        display: none;
+    }
+}
+
+@container zenith-wcard (max-height: 215px) and (min-width: 500px) {
+    .zenith-weather--sm .zenith-weather__spark {
+        display: none;
+    }
+}
+
+/* ── Step three: the strip, then the sunrise line ──
+   What is left is the reading itself — a temperature, a word for the sky, and
+   where it is being measured. That is the widget; everything above this point
+   was the widget being generous. */
+@container zenith-wcard (max-height: 115px) {
+    .zenith-weather--sm .zenith-weather__sm-stats {
+        display: none;
+    }
+}
+
+@container zenith-wcard (max-height: 90px) {
+    .zenith-weather--sm .zenith-weather__sunline {
+        display: none;
+    }
 }
 
 /* Compact stat strip that fills the sm card (high/low, feels, humidity). */
@@ -990,6 +1274,382 @@
 
 .zenith-weather__sm-stat svg {
     color: var(--zenith-text-faint);
+}
+
+/* ── The condition, drawn and moving ─────────────────
+   The card's biggest element used to be a flat accent-coloured outline: the
+   same cloud whether it was overcast, pouring or snowing — the one thing on a
+   weather card that said nothing about the weather. It now paints real sky
+   colours rather than Zenith's accent, because the accent belongs to the
+   chrome and this is data. */
+.zenith-wglyph {
+    display: block;
+}
+
+.zenith-wglyph__cloud {
+    fill: var(--zenith-glyph-cloud);
+    animation: zenith-glyph-bob 7.5s ease-in-out infinite;
+}
+
+/* A second cloud further off, so an overcast sky has some depth rather than one
+   flat shape. `translate`/`scale` place it as their own properties, leaving
+   `transform` free for the drift — two rules on one property would fight. */
+.zenith-wglyph__cloud-back {
+    fill: var(--zenith-glyph-cloud-far);
+    translate: -7px 5px;
+    scale: 0.68;
+    animation: zenith-glyph-drift 17s ease-in-out infinite;
+}
+
+@keyframes zenith-glyph-bob {
+    0%,
+    100% {
+        transform: translateX(-0.8px);
+    }
+    50% {
+        transform: translateX(0.8px);
+    }
+}
+
+@keyframes zenith-glyph-drift {
+    0%,
+    100% {
+        transform: translateX(-2.5px);
+    }
+    50% {
+        transform: translateX(3px);
+    }
+}
+
+/* A kind with nothing falling under it has an empty third of the box to fill,
+   so the scene drops and grows into it. Anything with rain, snow or fog below
+   is already using that room. */
+.zenith-wglyph.is-cloud .zenith-wglyph__stage {
+    translate: 0 3px;
+    scale: 1.14;
+}
+
+.zenith-wglyph.is-cloud-sun .zenith-wglyph__stage,
+.zenith-wglyph.is-cloud-moon .zenith-wglyph__stage {
+    translate: 0 4px;
+    scale: 1.06;
+}
+
+/* Behind a cloud the light source is smaller and higher, and the cloud steps
+   down out of its way. */
+.zenith-wglyph.is-cloud-sun .zenith-wglyph__cloud,
+.zenith-wglyph.is-cloud-moon .zenith-wglyph__cloud {
+    translate: -2px 5px;
+    scale: 0.88;
+}
+
+.zenith-wglyph.is-cloud-sun .zenith-wglyph__cloud-back,
+.zenith-wglyph.is-cloud-moon .zenith-wglyph__cloud-back {
+    display: none;
+}
+
+.zenith-wglyph__sun {
+    fill: #fbbf24;
+}
+
+.zenith-wglyph__rays {
+    stroke: #fbbf24;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    transform-box: fill-box;
+    transform-origin: center;
+    /* Slow enough never to be caught turning, fast enough that a second glance
+       finds it somewhere else. */
+    animation: zenith-spin 34s linear infinite;
+}
+
+.zenith-wglyph__glow {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: zenith-glyph-glow 4.4s ease-in-out infinite;
+}
+
+@keyframes zenith-glyph-glow {
+    0%,
+    100% {
+        opacity: 0.7;
+        transform: scale(0.9);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.08);
+    }
+}
+
+.zenith-wglyph__glow-in {
+    stop-color: #fbbf24;
+    stop-opacity: 0.32;
+}
+
+.zenith-wglyph__glow-out {
+    stop-color: #fbbf24;
+    stop-opacity: 0;
+}
+
+.zenith-wglyph__moon {
+    fill: var(--zenith-glyph-moon);
+}
+
+.zenith-wglyph__stars circle {
+    fill: var(--zenith-star);
+    animation: zenith-glyph-twinkle 3.6s ease-in-out infinite;
+}
+
+@keyframes zenith-glyph-twinkle {
+    0%,
+    100% {
+        opacity: 0.25;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* ── Precipitation ── */
+.zenith-wglyph__drop {
+    stroke: var(--zenith-info);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    animation: zenith-glyph-fall 1.35s linear infinite;
+}
+
+.zenith-wglyph__rain.is-fast .zenith-wglyph__drop {
+    animation-duration: 0.95s;
+}
+
+/* Drizzle is the same rain, taking its time. */
+.zenith-wglyph.is-drizzle .zenith-wglyph__drop {
+    animation-duration: 2s;
+    opacity: 0.8;
+}
+
+@keyframes zenith-glyph-fall {
+    0% {
+        transform: translateY(-5px);
+        opacity: 0;
+    }
+    22% {
+        opacity: 1;
+    }
+    72% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(9px);
+        opacity: 0;
+    }
+}
+
+.zenith-wglyph__flake {
+    fill: var(--zenith-glyph-snow);
+    animation: zenith-glyph-flake 3.6s linear infinite;
+}
+
+/* Snow does not fall straight down, and drawing it that way is the tell that a
+   weather icon was made by someone who had only seen rain. */
+@keyframes zenith-glyph-flake {
+    0% {
+        transform: translate(0, -5px);
+        opacity: 0;
+    }
+    12% {
+        opacity: 1;
+    }
+    50% {
+        transform: translate(2.5px, 2px);
+    }
+    86% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-1.5px, 9px);
+        opacity: 0;
+    }
+}
+
+.zenith-wglyph__fog line {
+    stroke: var(--zenith-glyph-cloud);
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    opacity: 0.7;
+    animation: zenith-glyph-fog 4.4s ease-in-out infinite;
+}
+
+/* The cloud loses its edge too — that is what fog is. */
+.zenith-wglyph.is-fog .zenith-wglyph__cloud {
+    opacity: 0.5;
+}
+
+@keyframes zenith-glyph-fog {
+    0%,
+    100% {
+        transform: translateX(-2.5px);
+    }
+    50% {
+        transform: translateX(2.5px);
+    }
+}
+
+/* Long dark, short bright — the way a strike actually arrives, rather than a
+   bolt blinking on a metronome. */
+.zenith-wglyph__bolt {
+    fill: none;
+    stroke: #fbbf24;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    animation: zenith-glyph-flash 4.2s ease-out infinite;
+}
+
+@keyframes zenith-glyph-flash {
+    0%,
+    100% {
+        opacity: 0.28;
+    }
+    3% {
+        opacity: 1;
+    }
+    7% {
+        opacity: 0.35;
+    }
+    11% {
+        opacity: 1;
+    }
+    18% {
+        opacity: 0.28;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-wglyph__cloud,
+    .zenith-wglyph__cloud-back,
+    .zenith-wglyph__rays,
+    .zenith-wglyph__glow,
+    .zenith-wglyph__stars circle,
+    .zenith-wglyph__drop,
+    .zenith-wglyph__flake,
+    .zenith-wglyph__fog line,
+    .zenith-wglyph__bolt {
+        animation: none;
+    }
+
+    .zenith-wglyph__bolt {
+        opacity: 1;
+    }
+}
+
+/* ── The card arriving ───────────────────────────────
+   Short and staggered rather than one block fading in: the eye lands on the
+   temperature first, which is what the card is for. It replays on a refresh,
+   because the card really does unmount into its skeleton and back — so the new
+   reading arrives rather than swapping in place. */
+@keyframes zenith-weather-in {
+    from {
+        opacity: 0;
+        transform: translateY(7px);
+    }
+}
+
+.zenith-weather__main {
+    animation: zenith-weather-in 460ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.zenith-weather__sm-stats > *,
+.zenith-weather__details > * {
+    animation: zenith-weather-in 400ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.zenith-weather__sm-stats > :nth-child(1),
+.zenith-weather__details > :nth-child(1) {
+    animation-delay: 110ms;
+}
+.zenith-weather__sm-stats > :nth-child(2),
+.zenith-weather__details > :nth-child(2) {
+    animation-delay: 160ms;
+}
+.zenith-weather__sm-stats > :nth-child(3),
+.zenith-weather__details > :nth-child(3) {
+    animation-delay: 210ms;
+}
+.zenith-weather__sm-stats > :nth-child(4) {
+    animation-delay: 260ms;
+}
+
+.zenith-weather__sunline {
+    animation: zenith-weather-in 460ms cubic-bezier(0.2, 0.8, 0.3, 1) 320ms both;
+}
+
+/* ── Waiting ─────────────────────────────────────────
+   The card's own shape, shimmering. A bare spinner cost the card its height, so
+   every refresh reflowed the grid around it. */
+.zenith-weather--loading {
+    justify-content: center;
+    gap: var(--zenith-space-md);
+    pointer-events: none;
+}
+
+.zenith-weather__sk {
+    display: block;
+    border-radius: var(--zenith-radius-sm);
+    background: linear-gradient(
+        90deg,
+        var(--zenith-bg-secondary) 25%,
+        var(--zenith-bg-hover) 37%,
+        var(--zenith-bg-secondary) 63%
+    );
+    background-size: 300% 100%;
+    animation: zenith-shimmer 1.7s ease-in-out infinite;
+}
+
+.zenith-weather__sk-icon {
+    flex: none;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+}
+
+.zenith-weather__sk-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.zenith-weather__sk-temp {
+    width: 88px;
+    height: 28px;
+}
+
+.zenith-weather__sk-cond {
+    width: 60%;
+    height: 12px;
+}
+
+.zenith-weather__sk-place {
+    width: 44%;
+    height: 10px;
+}
+
+.zenith-weather__sk-chart {
+    width: 100%;
+    height: 56px;
+    border-radius: var(--zenith-radius-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-weather__main,
+    .zenith-weather__sm-stats > *,
+    .zenith-weather__details > *,
+    .zenith-weather__sunline,
+    .zenith-weather__sk {
+        animation: none;
+    }
 }
 
 /* Coming-hours temperature sparkline (sm card).
@@ -1096,9 +1756,54 @@
     vector-effect: non-scaling-stroke;
 }
 
+/* The chart, swept in left to right — the way the hours in it run. The clip
+   rect is what moves, so the curve, its fill and the rain bars all arrive under
+   one animation and none of them has to know how long the path is. */
+.zenith-weather__spark-wipe {
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: zenith-spark-wipe 950ms cubic-bezier(0.33, 0, 0.2, 1) backwards;
+}
+
+@keyframes zenith-spark-wipe {
+    from {
+        transform: scaleX(0);
+    }
+}
+
 .zenith-weather__spark-dot {
     stroke: var(--zenith-bg-primary);
     stroke-width: 1.5;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: zenith-spark-pop 420ms cubic-bezier(0.2, 1.5, 0.4, 1) 800ms backwards;
+}
+
+@keyframes zenith-spark-pop {
+    from {
+        transform: scale(0);
+    }
+}
+
+/* Now, pinged like a radar contact. The card ticks every minute; this is the
+   one point on the chart that is the present rather than the forecast. */
+.zenith-weather__spark-ping {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: zenith-spark-ping 2.9s cubic-bezier(0.2, 0.6, 0.3, 1) 1s infinite;
+}
+
+@keyframes zenith-spark-ping {
+    0% {
+        opacity: 0.45;
+        transform: scale(1);
+    }
+    70%,
+    100% {
+        opacity: 0;
+        transform: scale(3.4);
+    }
 }
 
 .zenith-weather__spark-rain rect {
@@ -1152,6 +1857,25 @@
 .zenith-weather__spark-axis span {
     position: absolute;
     top: 0;
+}
+
+.zenith-weather__spark-mark,
+.zenith-weather__spark-tag,
+.zenith-weather__spark-peak,
+.zenith-weather__spark-axis span {
+    animation: zenith-fade-in 520ms ease 880ms backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-weather__spark-wipe,
+    .zenith-weather__spark-dot,
+    .zenith-weather__spark-ping,
+    .zenith-weather__spark-mark,
+    .zenith-weather__spark-tag,
+    .zenith-weather__spark-peak,
+    .zenith-weather__spark-axis span {
+        animation: none;
+    }
 }
 
 /* Hourly — horizontal scroll strip that bleeds to the card edges. No
@@ -1447,11 +2171,113 @@
     gap: var(--zenith-space-md);
 }
 
-.zenith-weather__arc svg {
+/* ── The sky ──
+   A stage rather than a chart. The arc is only one of the things it says: the
+   wash, the stars and the drifting cloud all come off numbers the panel already
+   holds, so what is drawn is *this* sky rather than a sky in general.
+
+   Every colour here is a translucent tint laid over the card's own surface, not
+   an opaque sky. That is what lets one palette serve both themes and keeps the
+   labels underneath legible without a second set of text colours. */
+@property --sky-top {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: transparent;
+}
+
+@property --sky-bot {
+    syntax: '<color>';
+    inherits: false;
+    initial-value: transparent;
+}
+
+.zenith-weather__sky {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-lg);
+    background: linear-gradient(180deg, var(--sky-top), var(--sky-bot)),
+        var(--zenith-bg-secondary);
+    /* Registered above precisely so this works: the wash crossfades as the
+       phase turns over instead of switching at the horizon crossing. */
+    transition: --sky-top 1.4s ease, --sky-bot 1.4s ease;
+    animation: zenith-sky-in 520ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes zenith-sky-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+}
+
+.zenith-weather__sky.is-day {
+    --sky-top: rgba(96, 165, 250, 0.26);
+    --sky-bot: rgba(253, 224, 171, 0.1);
+}
+
+.zenith-weather__sky.is-dawn {
+    --sky-top: rgba(129, 140, 248, 0.24);
+    --sky-bot: rgba(251, 146, 60, 0.2);
+}
+
+.zenith-weather__sky.is-dusk {
+    --sky-top: rgba(76, 66, 190, 0.26);
+    --sky-bot: rgba(249, 115, 22, 0.2);
+}
+
+.zenith-weather__sky.is-night {
+    --sky-top: rgba(41, 52, 140, 0.32);
+    --sky-bot: rgba(17, 24, 66, 0.14);
+}
+
+.zenith-weather__sky-svg {
     display: block;
     width: 100%;
     height: auto;
-    overflow: visible;
+}
+
+/* ── Stars ──
+   The group carries the night — 0 by day, 1 after dusk, and every value between
+   across twilight — while each star keeps its own brightness and its own beat.
+   Multiplied together, the field comes up the way a real one does: slowly, and
+   the bright ones first. */
+.zenith-weather__sky-stars {
+    opacity: var(--night, 0);
+    transition: opacity 1.4s ease;
+}
+
+.zenith-weather__sky-stars circle {
+    fill: var(--zenith-star);
+    opacity: var(--star, 0.6);
+    animation: zenith-star-twinkle 4.5s ease-in-out infinite;
+}
+
+@keyframes zenith-star-twinkle {
+    0%,
+    100% {
+        opacity: calc(var(--star, 0.6) * 0.3);
+    }
+    50% {
+        opacity: var(--star, 0.6);
+    }
+}
+
+/* Drifting because it is weather, not decoration: how many there are is read
+   off the current cloud cover — the same number the sunshine hours underneath
+   are missing. */
+.zenith-weather__sky-cloud {
+    fill: var(--zenith-cloud);
+    animation: zenith-cloud-drift 120s linear infinite;
+}
+
+@keyframes zenith-cloud-drift {
+    from {
+        transform: translateX(-90px);
+    }
+    to {
+        transform: translateX(510px);
+    }
 }
 
 .zenith-weather__arc-horizon {
@@ -1460,121 +2286,458 @@
     vector-effect: non-scaling-stroke;
 }
 
+.zenith-weather__ground-stop-in {
+    stop-color: var(--zenith-text-normal);
+    stop-opacity: 0.09;
+}
+
+.zenith-weather__ground-stop-out {
+    stop-color: var(--zenith-text-normal);
+    stop-opacity: 0;
+}
+
+/* Widths in user units, not device pixels: a non-scaling stroke measures its
+   dashes in pixels while the path keeps its own units, so the pattern and the
+   curve disagree by the scale factor — which on the arc below is the whole
+   difference between drawing the day so far and drawing four fifths of it. */
 .zenith-weather__arc-track {
     fill: none;
-    stroke: var(--zenith-border);
-    stroke-width: 2;
-    stroke-dasharray: 3 4;
+    stroke: var(--zenith-text-faint);
+    stroke-width: 1.2;
+    stroke-dasharray: 2 5;
+    opacity: 0.4;
+    stroke-linecap: round;
+}
+
+/* Solar noon and the two crossings — landmarks, so the arc can be read at a
+   glance rather than measured. */
+.zenith-weather__arc-noon {
+    stroke: var(--zenith-text-faint);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    opacity: 0.5;
     vector-effect: non-scaling-stroke;
+}
+
+.zenith-weather__arc-end {
+    fill: var(--zenith-text-faint);
+    opacity: 0.45;
+}
+
+/* The part of the day already spent. Warm at the ends and bright in the middle,
+   because that is what the light does. */
+.zenith-weather__arc-stop-low {
+    stop-color: #fb923c;
+}
+
+.zenith-weather__arc-stop-high {
+    stop-color: #fbbf24;
 }
 
 .zenith-weather__arc-done {
     fill: none;
-    stroke: var(--zenith-warning);
-    stroke-width: 2.5;
+    stroke-width: 2;
     stroke-linecap: round;
+    /* Drawn from sunrise forward on open. `--p` is the same fraction the dash
+       array uses, handed to the keyframe so the reveal starts where the day
+       did. */
+    animation: zenith-arc-draw 1500ms cubic-bezier(0.33, 0, 0.2, 1) backwards;
+}
+
+@keyframes zenith-arc-draw {
+    from {
+        stroke-dashoffset: var(--p, 1);
+    }
+}
+
+/* Where the sun stands over the horizon. Late, so it appears once the sun has
+   arrived rather than pointing at a place it has not reached. */
+.zenith-weather__arc-drop {
+    stroke: var(--zenith-warning);
+    stroke-width: 0.8;
+    stroke-dasharray: 1.5 3;
+    opacity: 0.3;
+    animation: zenith-drop-in 500ms ease 1300ms backwards;
+}
+
+@keyframes zenith-drop-in {
+    from {
+        opacity: 0;
+    }
+}
+
+/* ── The sun ──
+   Rides the arc: `offset-path` puts it on the curve, so the minute tick slides
+   it along the real path instead of across the chord, and the entrance is the
+   morning replayed in a second and a half. */
+.zenith-weather__sun {
+    transition: offset-distance 1200ms cubic-bezier(0.4, 0, 0.2, 1),
+        transform 1200ms cubic-bezier(0.4, 0, 0.2, 1);
+    animation: zenith-sun-travel 1600ms cubic-bezier(0.33, 0, 0.2, 1) backwards;
+}
+
+/* Fading as well as travelling, so the browsers that cannot follow a path still
+   get an entrance rather than a sun that blinks into existence. */
+@keyframes zenith-sun-travel {
+    from {
+        offset-distance: 0%;
+        opacity: 0;
+    }
+}
+
+.zenith-weather__sun-glow {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: zenith-sun-breathe 4.6s ease-in-out infinite;
+}
+
+@keyframes zenith-sun-breathe {
+    0%,
+    100% {
+        opacity: 0.72;
+        transform: scale(0.9);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.08);
+    }
+}
+
+.zenith-weather__glow-stop-in {
+    stop-color: #fbbf24;
+    stop-opacity: 0.5;
+}
+
+.zenith-weather__glow-stop-out {
+    stop-color: #fbbf24;
+    stop-opacity: 0;
+}
+
+.zenith-weather__sun-rays {
+    stroke: #fbbf24;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    opacity: 0.85;
+    transform-box: fill-box;
+    transform-origin: center;
+    /* Slow enough that it is never caught moving, fast enough that a second
+       glance finds it somewhere else. */
+    animation: zenith-spin 48s linear infinite;
+}
+
+.zenith-weather__sun-core {
+    fill: #fde68a;
+    stroke: #f59e0b;
+    stroke-width: 1.4;
     vector-effect: non-scaling-stroke;
 }
 
-.zenith-weather__arc-sun {
-    fill: var(--zenith-warning);
-    stroke: var(--zenith-bg-primary);
-    stroke-width: 2;
+/* Below the horizon: hollow and unlit, so "the sun is not up" is visible at a
+   glance rather than inferred from its position. */
+.zenith-weather__sun.is-down .zenith-weather__sun-rays {
+    display: none;
 }
 
-/* Below the horizon: hollow, so "the sun is not up" is visible at a glance
-   rather than inferred from its position. */
-.zenith-weather__arc-sun.is-down {
+.zenith-weather__sun.is-down .zenith-weather__sun-core {
     fill: var(--zenith-bg-primary);
     stroke: var(--zenith-text-faint);
 }
 
-.zenith-weather__arc-ends {
+.zenith-weather__sun.is-down .zenith-weather__sun-glow {
+    opacity: 0.2;
+    animation: none;
+}
+
+/* ── The ground: today's two crossings, and the wait for the next one ── */
+.zenith-weather__sky-foot {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--zenith-space-sm);
-    margin-top: 4px;
-    font-size: 0.78rem;
-    color: var(--zenith-text-muted);
+    padding: 6px 14px 12px;
     font-variant-numeric: tabular-nums;
 }
 
-.zenith-weather__arc-ends span {
+.zenith-weather__sky-end {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 7px;
+    color: var(--zenith-text-muted);
 }
 
-.zenith-weather__arc-until {
-    color: var(--zenith-text-normal);
-    font-weight: 600;
-}
-
-.zenith-weather__sunfacts {
+.zenith-weather__sky-end > span {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--zenith-space-md);
-    font-size: 0.8rem;
-    color: var(--zenith-text-muted);
+    flex-direction: column;
+    line-height: 1.15;
 }
 
-.zenith-weather__sunfacts span {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.zenith-weather__sunfacts b {
+.zenith-weather__sky-end b {
+    font-size: 0.95rem;
+    font-weight: 600;
     color: var(--zenith-text-normal);
-    font-variant-numeric: tabular-nums;
 }
 
+.zenith-weather__sky-end small {
+    font-size: 0.66rem;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-weather__sky-end.is-right > span {
+    align-items: flex-end;
+}
+
+.zenith-weather__sky-count {
+    padding: 5px 13px;
+    border-radius: 999px;
+    border: 1px solid var(--zenith-border);
+    background: color-mix(in srgb, var(--zenith-bg-primary) 55%, transparent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--zenith-text-normal);
+    white-space: nowrap;
+    animation: zenith-fade-in 600ms ease 900ms backwards;
+}
+
+/* ── Today's numbers ──
+   The same tile as the Now tab, on purpose: two tile designs across two tabs of
+   one panel would read as two panels. */
+.zenith-weather__sunfacts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-weather__sunfacts > * {
+    animation: zenith-fact-in 440ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.zenith-weather__sunfacts > :nth-child(1) {
+    animation-delay: 90ms;
+}
+.zenith-weather__sunfacts > :nth-child(2) {
+    animation-delay: 150ms;
+}
+.zenith-weather__sunfacts > :nth-child(3) {
+    animation-delay: 210ms;
+}
+.zenith-weather__sunfacts > :nth-child(4) {
+    animation-delay: 270ms;
+}
+
+@keyframes zenith-fact-in {
+    from {
+        opacity: 0;
+        transform: translateY(7px);
+    }
+}
+
+/* ── The moon ──────────────────────────────────── */
 .zenith-weather__moon {
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--zenith-space-md);
     padding: var(--zenith-space-md);
-    border-radius: var(--zenith-radius-md);
-    background: var(--zenith-bg-secondary);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-lg);
+    background: radial-gradient(130% 170% at 10% 0%, rgba(148, 163, 255, 0.11), transparent 62%),
+        var(--zenith-bg-secondary);
+    animation: zenith-fact-in 520ms cubic-bezier(0.2, 0.8, 0.3, 1) 340ms both;
 }
 
-.zenith-weather__moon svg {
+.zenith-weather__moon-disc {
     flex: none;
-    width: 56px;
-    height: 56px;
+    width: 78px;
+    height: 78px;
 }
 
+.zenith-weather__moon-disc svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.zenith-weather__moon-halo {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: zenith-moon-breathe 6.5s ease-in-out infinite;
+}
+
+@keyframes zenith-moon-breathe {
+    0%,
+    100% {
+        transform: scale(0.94);
+    }
+    50% {
+        transform: scale(1.06);
+    }
+}
+
+.zenith-weather__halo-stop-in {
+    stop-color: #dbeafe;
+    stop-opacity: 0.3;
+}
+
+.zenith-weather__halo-stop-out {
+    stop-color: #dbeafe;
+    stop-opacity: 0;
+}
+
+/* The unlit disc is not black: earthshine puts a little of the Earth's own
+   light on it, which is why the dark limb is visible on a clear night. */
 .zenith-weather__moon-dark {
-    fill: var(--zenith-bg-tertiary);
+    fill: var(--zenith-moon-shadow);
+}
+
+.zenith-weather__moon-stop-in {
+    stop-color: #fdfcf5;
+}
+
+.zenith-weather__moon-stop-out {
+    stop-color: #b3ae9e;
+}
+
+.zenith-weather__moon-craters circle {
+    fill: #6f6857;
+}
+
+.zenith-weather__moon-limb {
+    fill: none;
     stroke: var(--zenith-border);
     stroke-width: 1;
-}
-
-.zenith-weather__moon-lit {
-    fill: #e8e6df;
+    vector-effect: non-scaling-stroke;
 }
 
 .zenith-weather__moon-text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
+    flex: 1 1 auto;
     min-width: 0;
 }
 
 .zenith-weather__moon-name {
-    font-size: 0.95rem;
+    font-size: 1.02rem;
     color: var(--zenith-text-normal);
 }
 
 .zenith-weather__moon-illum {
-    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.79rem;
     color: var(--zenith-text-muted);
 }
 
-.zenith-weather__moon-age {
+.zenith-weather__moon-illum i {
+    font-style: normal;
+    color: var(--zenith-text-faint);
+}
+
+/* ── The month as a track ──
+   Dark at both ends and pale in the middle, so the ribbon itself is the moon
+   waxing and waning; the marker only has to say where in it tonight falls. */
+.zenith-weather__lunation {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    margin-top: 7px;
+}
+
+.zenith-weather__lunation-track {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 70px;
+    height: 4px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #3b4152, #ece9dd 50%, #3b4152);
+}
+
+.zenith-weather__lunation-tick {
+    position: absolute;
+    top: -3px;
+    width: 1px;
+    height: 10px;
+    margin-left: -0.5px;
+    background: var(--zenith-border);
+}
+
+.zenith-weather__lunation-tick.is-full {
+    top: -4px;
+    height: 12px;
+    background: var(--zenith-text-faint);
+}
+
+.zenith-weather__lunation-now {
+    position: absolute;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    margin: -4.5px 0 0 -4.5px;
+    border-radius: 50%;
+    background: #f6f4ea;
+    /* Rimmed, because it crosses its own track: cream on cream at the full moon
+       is where an unrimmed dot disappears. */
+    box-shadow: 0 0 0 1.5px rgba(20, 24, 38, 0.7), 0 0 9px rgba(232, 230, 223, 0.45);
+    /* Walks the month from the last new moon to tonight. */
+    animation: zenith-lunation-in 950ms cubic-bezier(0.4, 0, 0.2, 1) 420ms backwards;
+}
+
+@keyframes zenith-lunation-in {
+    from {
+        left: 0%;
+    }
+}
+
+.zenith-weather__lunation-next {
+    display: inline-flex;
+    gap: 5px;
+    white-space: nowrap;
     font-size: 0.72rem;
     color: var(--zenith-text-faint);
+}
+
+.zenith-weather__lunation-next b {
+    font-weight: 600;
+    color: var(--zenith-text-muted);
+}
+
+/* Why there are no moonrise times. Worth having, not worth a paragraph. */
+.zenith-weather__moon-note {
+    position: absolute;
+    top: 9px;
+    right: 11px;
+    display: inline-flex;
+    color: var(--zenith-text-faint);
+    opacity: 0.4;
+    cursor: help;
+    transition: opacity var(--zenith-transition);
+}
+
+.zenith-weather__moon-note:hover {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-weather__sky,
+    .zenith-weather__sky-cloud,
+    .zenith-weather__sky-stars circle,
+    .zenith-weather__arc-done,
+    .zenith-weather__arc-drop,
+    .zenith-weather__sun,
+    .zenith-weather__sun-glow,
+    .zenith-weather__sun-rays,
+    .zenith-weather__sky-count,
+    .zenith-weather__sunfacts > *,
+    .zenith-weather__moon,
+    .zenith-weather__moon-halo,
+    .zenith-weather__lunation-now {
+        animation: none;
+    }
+
+    .zenith-weather__sun {
+        transition: none;
+    }
 }
 
 /* ── Air quality tab ─────────────────────────────── */
@@ -1766,8 +2929,19 @@
         gap: var(--zenith-space-md);
     }
 
-    .zenith-weather__metrics {
+    .zenith-weather__metrics,
+    .zenith-weather__sunfacts {
         grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+    }
+
+    /* The icons already say which end of the day each time belongs to. */
+    .zenith-weather__sky-end small {
+        display: none;
+    }
+
+    .zenith-weather__moon-disc {
+        width: 62px;
+        height: 62px;
     }
 }
 

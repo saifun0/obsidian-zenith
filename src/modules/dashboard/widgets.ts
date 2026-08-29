@@ -43,6 +43,25 @@ export interface DashboardWidgetProps {
      * the grid always passes a concrete value.
      */
     size?: WidgetSize;
+    /**
+     * This copy's layout id — the same string its settings are stored under.
+     *
+     * Only widgets that can be placed more than once have any use for it; for
+     * every other widget it is simply the widget's own id. See
+     * `grid/widgetInstances.ts`.
+     */
+    instanceId?: string;
+}
+
+/**
+ * Props the panel on the back of a widget's card receives.
+ *
+ * A widget's settings are per copy, never per widget: two pictures on one board
+ * that had to show the same photograph would be one picture rendered twice.
+ */
+export interface WidgetSettingsProps {
+    /** The copy being configured — the key its settings are stored under. */
+    instanceId: string;
 }
 
 export interface DashboardWidgetDefinition {
@@ -74,6 +93,24 @@ export interface DashboardWidgetDefinition {
     span?: 1 | 2 | 'full';
     /** Sort order (ascending). Defaults to 100. */
     order?: number;
+    /**
+     * May be placed more than once, each copy configured on its own.
+     *
+     * Off by default, because most widgets are singular — two clocks tell the
+     * same time. A widget that says yes is one whose content the user supplies,
+     * so two of them are genuinely two different things.
+     */
+    multiple?: boolean;
+    /**
+     * A form for this copy, drawn on the back of the card beneath the size
+     * controls.
+     *
+     * Settings that belong to a copy rather than to the widget live here rather
+     * than on the module's settings page: the page has no way to say *which*
+     * copy, and a board with three pictures on it needs to say that three
+     * times. See `widgetConfig.ts` for where the values are kept.
+     */
+    settings?: ComponentType<WidgetSettingsProps>;
     /** React render path (bundled widgets). */
     component?: ComponentType<DashboardWidgetProps>;
     /**

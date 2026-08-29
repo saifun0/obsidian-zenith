@@ -9,6 +9,7 @@ import { vaultModuleFs } from './core/moduleFs';
 import { iconRegistry, loadIconPacks, type IconPackReport } from './core/icons';
 import { DashboardModule } from './modules/dashboard/DashboardModule';
 import { NavigatorModule } from './modules/navigator/NavigatorModule';
+import { PictureModule } from './modules/picture/PictureModule';
 import { WeatherModule } from './modules/weather/WeatherModule';
 import { TasksModule } from './modules/tasks/TasksModule';
 import { TasksCalendarModule } from './modules/tasks-calendar/TasksCalendarModule';
@@ -135,6 +136,7 @@ export default class ZenithPlugin extends Plugin {
         this.moduleManager.init(this);
         this.moduleManager.register(new DashboardModule(this));
         this.moduleManager.register(new NavigatorModule(this));
+        this.moduleManager.register(new PictureModule(this));
         this.moduleManager.register(new WeatherModule(this));
         this.moduleManager.register(new TasksModule(this));
         this.moduleManager.register(new TasksCalendarModule(this));

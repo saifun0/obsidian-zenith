@@ -1,4 +1,6 @@
 import { coreSchema } from '../../settings/schema/types';
+import { DASHBOARD_BG_FITS, DASHBOARD_BG_SOURCES } from './dashboardBackground';
+import { vaultImageField } from '../../settings/controls/VaultImageField';
 
 export const dashboardSettingsSchema = coreSchema({
     moduleId: 'dashboard',
@@ -34,6 +36,103 @@ export const dashboardSettingsSchema = coreSchema({
                     labelKey: 'settings.dashDate',
                     descKey: 'settings.dashDate.desc',
                     default: false,
+                },
+            ],
+        },
+        {
+            id: 'background',
+            titleKey: 'settings.dashBgGroup',
+            descKey: 'settings.dashBgGroup.desc',
+            fields: [
+                {
+                    type: 'segmented',
+                    key: 'dashboardBgSource',
+                    labelKey: 'settings.dashBgSource',
+                    descKey: 'settings.dashBgSource.desc',
+                    default: 'none',
+                    options: DASHBOARD_BG_SOURCES.map((id) => ({
+                        value: id,
+                        labelKey: `dashboard.bg.source.${id}`,
+                    })),
+                },
+                {
+                    type: 'text',
+                    key: 'dashboardBgUrl',
+                    labelKey: 'settings.dashBgUrl',
+                    descKey: 'settings.dashBgUrl.desc',
+                    default: '',
+                    layout: 'stack',
+                    placeholder: 'https://…',
+                    // Said plainly on the row itself: this is the one setting
+                    // here that makes the vault talk to somebody else.
+                    noteKey: 'settings.dashBgUrl.note',
+                    showIf: (v) => v.dashboardBgSource === 'url',
+                },
+                {
+                    type: 'custom',
+                    key: 'dashboardBgPath',
+                    render: vaultImageField(
+                        'dashboardBgPath',
+                        'settings.dashBgPath',
+                        'settings.dashBgPath.desc'
+                    ),
+                    showIf: (v) => v.dashboardBgSource === 'vault',
+                },
+                {
+                    type: 'segmented',
+                    key: 'dashboardBgFit',
+                    labelKey: 'settings.dashBgFit',
+                    descKey: 'settings.dashBgFit.desc',
+                    default: 'cover',
+                    options: DASHBOARD_BG_FITS.map((id) => ({
+                        value: id,
+                        labelKey: `dashboard.bg.fit.${id}`,
+                    })),
+                    showIf: (v) => v.dashboardBgSource !== 'none',
+                },
+                {
+                    type: 'slider',
+                    key: 'dashboardBgDim',
+                    labelKey: 'settings.dashBgDim',
+                    descKey: 'settings.dashBgDim.desc',
+                    default: 45,
+                    min: 0,
+                    max: 90,
+                    step: 5,
+                    unitKey: 'settings.percentUnit',
+                    showIf: (v) => v.dashboardBgSource !== 'none',
+                },
+                {
+                    type: 'slider',
+                    key: 'dashboardBgBlur',
+                    labelKey: 'settings.dashBgBlur',
+                    descKey: 'settings.dashBgBlur.desc',
+                    default: 0,
+                    min: 0,
+                    max: 24,
+                    step: 1,
+                    unitKey: 'settings.pxUnit',
+                    showIf: (v) => v.dashboardBgSource !== 'none',
+                },
+                {
+                    type: 'slider',
+                    key: 'dashboardCardOpacity',
+                    labelKey: 'settings.dashCardOpacity',
+                    descKey: 'settings.dashCardOpacity.desc',
+                    default: 72,
+                    min: 30,
+                    max: 100,
+                    step: 2,
+                    unitKey: 'settings.percentUnit',
+                    showIf: (v) => v.dashboardBgSource !== 'none',
+                },
+                {
+                    type: 'toggle',
+                    key: 'dashboardBgMobile',
+                    labelKey: 'settings.dashBgMobile',
+                    descKey: 'settings.dashBgMobile.desc',
+                    default: true,
+                    showIf: (v) => v.dashboardBgSource !== 'none',
                 },
             ],
         },
