@@ -116,8 +116,13 @@
 .zenith-bundle__layer {
     position: absolute;
     inset: 0;
-    /* Transform-driven cross-fade; the layer is composited on its own. */
-    will-change: transform, opacity;
+    /* No `will-change`. It said "the layer is composited on its own", which is
+       true and is `useCrossFade`'s doing: the Web Animations API promotes an
+       element for the length of its animation and releases it afterwards.
+       Declared here the promotion never ends — and on a wallpapered board a
+       separately composited child is one the card's `backdrop-filter` cannot
+       read through, so the layer's box stops showing the picture and becomes a
+       flat rectangle across the widget. Same fault as the journal dial had. */
 }
 
 /* The widget on its way out must not swallow clicks meant for the new one. */

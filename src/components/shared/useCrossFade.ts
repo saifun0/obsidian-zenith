@@ -1,13 +1,19 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 /**
- * Cross-fading between the widgets of a bundle.
+ * Cross-fading between the members of a set, one at a time.
+ *
+ * Written for a bundle's widgets and shared because the journal's dial wants
+ * exactly the same thing: a set of things, one of them showing, and a swap
+ * that reads as a swap. Nothing in here knows what a member is — it is a
+ * string, and the caller renders one layer per id.
  *
  * Driven by the Web Animations API rather than CSS classes, for one reason: a
  * class-based transition can't be *interrupted* cleanly. Tap the rail twice
- * quickly and the second transition has to start from wherever the first one
- * got to, not snap to zero first. WAAPI gives us the running animations to
- * cancel and the computed values to resume from; CSS gives us neither.
+ * quickly — or let a dial advance on its own while someone is steering it —
+ * and the second transition has to start from wherever the first one got to,
+ * not snap to zero first. WAAPI gives us the running animations to cancel and
+ * the computed values to resume from; CSS gives us neither.
  *
  * Timings come from the design's motion table:
  *   outgoing  translateX 0 → ∓10px, opacity → 0   150ms  in
@@ -56,15 +62,15 @@ interface Transition {
     dir: 1 | -1;
 }
 
-interface UseBundleSwitchOptions {
-    members: string[];
-    /** The committed active member, from settings. */
+interface UseCrossFadeOptions {
+    items: string[];
+    /** The member showing now — committed state, wherever the caller keeps it. */
     activeId: string;
     /** Called once the transition lands, to persist the new active member. */
     onCommit: (id: string) => void;
 }
 
-export interface BundleSwitch {
+export interface CrossFade {
     /**
      * Widget ids that must be mounted right now — one at rest, two mid-switch.
      *
@@ -84,11 +90,7 @@ export interface BundleSwitch {
     step: (delta: 1 | -1) => void;
 }
 
-export function useBundleSwitch({
-    members,
-    activeId,
-    onCommit,
-}: UseBundleSwitchOptions): BundleSwitch {
+export function useCrossFade({ items, activeId, onCommit }: UseCrossFadeOptions): CrossFade {
     const reduced = useReducedMotion();
 
     const [transition, setTransition] = useState<Transition | null>(null);
@@ -120,12 +122,12 @@ export function useBundleSwitch({
         return fn;
     }, []);
 
-    // A bundle edited elsewhere (a member extracted, say) can change the active
+    // The set can change under a running transition — a bundle member extracted,
     // widget under us; drop any in-flight transition rather than animating to
     // something that no longer exists.
     useEffect(() => {
-        if (transition && !members.includes(transition.to)) setTransition(null);
-    }, [members, transition]);
+        if (transition && !items.includes(transition.to)) setTransition(null);
+    }, [items, transition]);
 
     useEffect(
         () => () => {
@@ -137,24 +139,24 @@ export function useBundleSwitch({
     const switchTo = useCallback(
         (id: string) => {
             const current = transitionRef.current?.to ?? activeId;
-            if (id === current || !members.includes(id)) return;
-            const dir: 1 | -1 = members.indexOf(id) > members.indexOf(current) ? 1 : -1;
+            if (id === current || !items.includes(id)) return;
+            const dir: 1 | -1 = items.indexOf(id) > items.indexOf(current) ? 1 : -1;
             // The queue is never longer than one: a third request replaces the
             // second rather than joining it, so holding the arrow key doesn't
             // build a backlog of transitions to sit through.
             setTransition({ from: transitionRef.current?.from ?? activeId, to: id, dir });
         },
-        [activeId, members]
+        [activeId, items]
     );
 
     const step = useCallback(
         (delta: 1 | -1) => {
             const current = transitionRef.current?.to ?? activeId;
-            const index = members.indexOf(current);
-            if (index === -1 || members.length === 0) return;
-            switchTo(members[(index + delta + members.length) % members.length]);
+            const index = items.indexOf(current);
+            if (index === -1 || items.length === 0) return;
+            switchTo(items[(index + delta + items.length) % items.length]);
         },
-        [activeId, members, switchTo]
+        [activeId, items, switchTo]
     );
 
     useLayoutEffect(() => {
@@ -176,7 +178,10 @@ export function useBundleSwitch({
             // animation's final frame; clearing it lets the layer fall back to
             // its resting style without a flash.
             unmountTimer.current = window.setTimeout(() => {
-                layerEls.current.get(transition.to)?.getAnimations().forEach((a) => a.cancel());
+                layerEls.current
+                    .get(transition.to)
+                    ?.getAnimations()
+                    .forEach((a) => a.cancel());
             }, UNMOUNT_DELAY_MS);
         };
 

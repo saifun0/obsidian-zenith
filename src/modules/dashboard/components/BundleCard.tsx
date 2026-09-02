@@ -7,7 +7,7 @@ import type { DashboardWidgetContext, DashboardWidgetDefinition } from '../widge
 import { prettifyWidgetId } from '../widgets';
 import { DomWidgetHost } from './GridWidget';
 import { BUNDLE_MAX_PIPS, type WidgetBundle } from '../grid/bundleTypes';
-import { useBundleSwitch } from '../grid/useBundleSwitch';
+import { useCrossFade } from '../../../components/shared/useCrossFade';
 
 /** Horizontal travel that counts as a swipe rather than a tap. */
 const SWIPE_THRESHOLD_PX = 40;
@@ -103,8 +103,8 @@ export const BundleCard: FC<BundleCardProps> = ({
     const t = useTranslation();
     const members = bundle.members;
 
-    const { layers, targetId, layerRef, switchTo, step } = useBundleSwitch({
-        members,
+    const { layers, targetId, layerRef, switchTo, step } = useCrossFade({
+        items: members,
         activeId: bundle.activeId,
         onCommit: onSetActive,
     });
@@ -238,7 +238,7 @@ export const BundleCard: FC<BundleCardProps> = ({
                         carry the notch themselves: `clip-path` travels with an
                         element's transform, and these slide. */}
                     <div className="zenith-bundle__layers">
-                        {/* Keyed by widget id, never by slot — see `BundleSwitch.layers`. */}
+                        {/* Keyed by widget id, never by slot — see `CrossFade.layers`. */}
                         {layers.map((id) => (
                             <div
                                 className={`zenith-bundle__layer ${id === targetId ? '' : 'is-leaving'}`}

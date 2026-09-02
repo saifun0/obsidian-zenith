@@ -39,6 +39,18 @@ const Cloud: React.FC<{ className: string }> = ({ className }) => (
     </g>
 );
 
+/**
+ * How far the lit air reaches, as a multiple of the disc.
+ *
+ * Two rather than something more generous because the glow has to finish
+ * inside the viewBox. An `<svg>` clips at its viewport, so a halo that reaches
+ * past it does not fade out — it stops dead along a straight line, and the
+ * glyph comes out standing in a visible square. Behind a cloud the sun sits at
+ * (33.5, 15.5) with r 6.5, which leaves 14.5 to the nearest edge; the breathing
+ * animation scales it to 1.08, so 6.5 × 2 × 1.08 = 14.04 is the whole budget.
+ */
+const GLOW_R = 2;
+
 /** The sun: a disc, a crown of eight spokes, and the air lit around it. */
 const SunFace: React.FC<{ cx: number; cy: number; r: number; glowId: string }> = ({
     cx,
@@ -47,7 +59,7 @@ const SunFace: React.FC<{ cx: number; cy: number; r: number; glowId: string }> =
     glowId,
 }) => (
     <g transform={`translate(${cx},${cy})`}>
-        <circle className="zenith-wglyph__glow" r={r * 2.6} fill={`url(#${glowId})`} />
+        <circle className="zenith-wglyph__glow" r={r * GLOW_R} fill={`url(#${glowId})`} />
         <g className="zenith-wglyph__rays">
             {Array.from({ length: 8 }, (_, i) => {
                 const a = (i * Math.PI) / 4;

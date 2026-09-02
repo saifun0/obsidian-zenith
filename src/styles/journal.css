@@ -23,15 +23,27 @@
     justify-content: space-between;
     gap: var(--zenith-space-md);
 }
-.zenith-journal__header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.zenith-journal__header-icon { color: var(--zenith-accent); flex-shrink: 0; }
+.zenith-journal__header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+.zenith-journal__header-icon {
+    color: var(--zenith-accent);
+    flex-shrink: 0;
+}
 .zenith-journal__title {
     margin: 0;
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--zenith-text-normal);
 }
-.zenith-journal__header-actions { display: flex; align-items: center; gap: 6px; }
+.zenith-journal__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 
 /* Two columns when the pane allows it, stacked when it doesn't. `auto-fit`
    rather than a media query: what matters is the pane's width, and a viewport
@@ -56,7 +68,12 @@
     box-shadow: var(--zenith-shadow-xs);
 }
 
-.zenith-jcal__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.zenith-jcal__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
 
 .zenith-root button.zenith-jcal__nav,
 .zenith-root button.zenith-jcal__month {
@@ -92,7 +109,10 @@
 }
 /* Takes the slack so the footer sits at the bottom of the card rather than
    directly under the last week. */
-.zenith-jcal__grid { flex: 1; align-content: start; }
+.zenith-jcal__grid {
+    flex: 1;
+    align-content: start;
+}
 .zenith-jcal__weekday {
     text-align: center;
     font-size: 0.68rem;
@@ -121,17 +141,26 @@
     color: var(--zenith-text-normal);
     font-size: 0.82rem;
     cursor: pointer;
-    transition: background var(--zenith-transition-fast), box-shadow var(--zenith-transition-fast);
+    transition:
+        background var(--zenith-transition-fast),
+        box-shadow var(--zenith-transition-fast);
 }
 .zenith-root button.zenith-jcal__day:hover {
     background: var(--zenith-bg-hover);
     box-shadow: none;
 }
-.zenith-jcal__day.is-outside { opacity: 0.4; }
+.zenith-jcal__day.is-outside {
+    opacity: 0.4;
+}
 /* A day that hasn't happened yet is reachable — planning ahead is fair — but
    it shouldn't read as a day you skipped. */
-.zenith-jcal__day.is-future .zenith-jcal__num { color: var(--zenith-text-faint); }
-.zenith-jcal__day.is-today .zenith-jcal__num { font-weight: 800; color: var(--zenith-accent); }
+.zenith-jcal__day.is-future .zenith-jcal__num {
+    color: var(--zenith-text-faint);
+}
+.zenith-jcal__day.is-today .zenith-jcal__num {
+    font-weight: 800;
+    color: var(--zenith-accent);
+}
 .zenith-root button.zenith-jcal__day.is-selected {
     background: color-mix(in srgb, var(--zenith-accent) 15%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--zenith-accent) 55%, transparent);
@@ -156,7 +185,11 @@
     pointer-events: none;
 }
 
-.zenith-jcal__num { position: relative; line-height: 1; font-variant-numeric: tabular-nums; }
+.zenith-jcal__num {
+    position: relative;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
 
 /* Journalled without a mood to colour it by — the day still happened. */
 .zenith-jcal__dot {
@@ -193,7 +226,12 @@
     font-size: 0.7rem;
 }
 
-.zenith-jcal__legend { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.zenith-jcal__legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
 .zenith-jcal__legend i {
     width: 12px;
     height: 12px;
@@ -216,8 +254,18 @@
     box-shadow: var(--zenith-shadow-xs);
 }
 
-.zenith-jday__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.zenith-jday__heading { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.zenith-jday__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+.zenith-jday__heading {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
 .zenith-jday__title {
     margin: 0;
     font-size: 1rem;
@@ -266,7 +314,11 @@
     box-shadow: none;
 }
 
-.zenith-jday__title-row { display: flex; align-items: center; gap: 4px; }
+.zenith-jday__title-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
 .zenith-root button.zenith-jday__step {
     display: inline-flex;
     align-items: center;
@@ -288,7 +340,11 @@
     box-shadow: none;
 }
 
-.zenith-jday__section { display: flex; flex-direction: column; gap: 8px; }
+.zenith-jday__section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 .zenith-jday__section-title {
     display: flex;
     align-items: center;
@@ -307,10 +363,26 @@
     font-size: 0.7rem;
     letter-spacing: 0;
 }
-.zenith-jday__empty { margin: 0; font-size: 0.82rem; color: var(--zenith-text-faint); }
+.zenith-jday__empty {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--zenith-text-faint);
+}
 
-.zenith-jday__tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.zenith-jday__task { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.zenith-jday__tasks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.zenith-jday__task {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
 .zenith-jday__task-title {
     font-size: 0.86rem;
     color: var(--zenith-text-normal);
@@ -318,7 +390,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.zenith-jday__task-title.is-done { color: var(--zenith-text-faint); text-decoration: line-through; }
+.zenith-jday__task-title.is-done {
+    color: var(--zenith-text-faint);
+    text-decoration: line-through;
+}
 
 /* ── The day's figures, its trackers and its note ──── */
 
@@ -332,7 +407,12 @@
     color: var(--zenith-text-muted);
     font-size: 0.74rem;
 }
-.zenith-jday__strip-figure { flex: none; color: var(--zenith-text-normal); font-weight: 600; font-variant-numeric: tabular-nums; }
+.zenith-jday__strip-figure {
+    flex: none;
+    color: var(--zenith-text-normal);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
 .zenith-jday__strip-bar {
     flex: 1;
     min-width: 40px;
@@ -348,12 +428,20 @@
     background: var(--zenith-accent);
     transition: width var(--zenith-transition);
 }
-.zenith-jday__strip-done { flex: none; color: var(--zenith-accent); font-weight: 600; }
+.zenith-jday__strip-done {
+    flex: none;
+    color: var(--zenith-accent);
+    font-weight: 600;
+}
 
 /* One row per tracker: name on the left, control on the right, everything on a
    single axis. The wrapping rail this replaced interleaved the two differently
    at every width, so no two panes read alike. */
-.zenith-jday__trackers { display: flex; flex-direction: column; gap: 2px; }
+.zenith-jday__trackers {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
 .zenith-jday__tracker {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -363,7 +451,9 @@
     border-radius: var(--zenith-radius-sm);
     transition: background var(--zenith-transition-fast);
 }
-.zenith-jday__tracker:hover { background: var(--zenith-bg-hover); }
+.zenith-jday__tracker:hover {
+    background: var(--zenith-bg-hover);
+}
 .zenith-jday__tracker-name {
     display: flex;
     align-items: center;
@@ -371,8 +461,15 @@
     min-width: 0;
     font-size: 0.82rem;
 }
-.zenith-jday__tracker-name svg { flex: none; color: var(--jday-color); }
-.zenith-jday__tracker-name span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.zenith-jday__tracker-name svg {
+    flex: none;
+    color: var(--jday-color);
+}
+.zenith-jday__tracker-name span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 
 /* The note, as prose. */
 .zenith-jday__note {
@@ -392,7 +489,9 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-.zenith-jday__note:hover { color: var(--zenith-text-normal); }
+.zenith-jday__note:hover {
+    color: var(--zenith-text-normal);
+}
 
 .zenith-root button.zenith-jday__note--empty {
     display: flex;
@@ -409,7 +508,10 @@
     box-shadow: none;
     color: var(--zenith-text-muted);
 }
-.zenith-jday__note--empty svg { flex: none; color: var(--zenith-accent); }
+.zenith-jday__note--empty svg {
+    flex: none;
+    color: var(--zenith-accent);
+}
 
 .zenith-jw__preview {
     margin: 0;
@@ -426,14 +528,19 @@
     word-break: break-word;
     cursor: pointer;
 }
-.zenith-jw__preview:hover { color: var(--zenith-text-normal); }
+.zenith-jw__preview:hover {
+    color: var(--zenith-text-normal);
+}
 
 /* ── Tracker rail ──────────────────────────────────────
    `rail` scrolls sideways and never shrinks its children, so every control
    stays clickable at every card size; `wrap` flows onto more lines, for the
    day panel where vertical room is not in question. */
 
-.zenith-trail { display: flex; gap: 8px; }
+.zenith-trail {
+    display: flex;
+    gap: 8px;
+}
 .zenith-trail--rail {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -444,12 +551,26 @@
     scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
 }
-.zenith-trail--wrap { flex-wrap: wrap; align-items: center; }
-.zenith-trail--rail .zenith-trail__item { flex: 0 0 auto; scroll-snap-align: start; }
-.zenith-trail--wrap .zenith-trail__item { flex: 0 1 auto; }
-.zenith-trail__empty { margin: 0; font-size: 0.8rem; color: var(--zenith-text-faint); }
+.zenith-trail--wrap {
+    flex-wrap: wrap;
+    align-items: center;
+}
+.zenith-trail--rail .zenith-trail__item {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+}
+.zenith-trail--wrap .zenith-trail__item {
+    flex: 0 1 auto;
+}
+.zenith-trail__empty {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--zenith-text-faint);
+}
 
-.zenith-trail--rail::-webkit-scrollbar { height: 6px; }
+.zenith-trail--rail::-webkit-scrollbar {
+    height: 6px;
+}
 .zenith-trail--rail::-webkit-scrollbar-thumb {
     background: var(--zenith-border);
     border-radius: 999px;
@@ -470,7 +591,9 @@
     font-size: 0.8rem;
     color: var(--zenith-text-muted);
 }
-.zenith-tracker__label { white-space: nowrap; }
+.zenith-tracker__label {
+    white-space: nowrap;
+}
 
 /* check → a chip that toggles */
 .zenith-root button.zenith-tracker__chip {
@@ -485,13 +608,23 @@
     color: var(--zenith-text-muted);
     font-size: 0.8rem;
     cursor: pointer;
-    transition: border-color var(--zenith-transition-fast), color var(--zenith-transition-fast);
+    transition:
+        border-color var(--zenith-transition-fast),
+        color var(--zenith-transition-fast);
 }
-.zenith-root button.zenith-tracker__chip:hover { border-color: var(--zenith-accent); box-shadow: none; }
-.zenith-tracker__chip.is-compact { padding: 5px 8px; }
+.zenith-root button.zenith-tracker__chip:hover {
+    border-color: var(--zenith-accent);
+    box-shadow: none;
+}
+.zenith-tracker__chip.is-compact {
+    padding: 5px 8px;
+}
 
 /* scale → five steps */
-.zenith-tracker__steps { display: flex; gap: 4px; }
+.zenith-tracker__steps {
+    display: flex;
+    gap: 4px;
+}
 .zenith-root button.zenith-tracker__step {
     /* A circle, like the marks in the habit grid: a 4 recorded here and a
        filled dot up there are the same statement, and should look it. */
@@ -503,7 +636,9 @@
     background: transparent;
     box-shadow: none;
     cursor: pointer;
-    transition: transform var(--zenith-transition-fast), background var(--zenith-transition-fast),
+    transition:
+        transform var(--zenith-transition-fast),
+        background var(--zenith-transition-fast),
         border-color var(--zenith-transition-fast);
 }
 .zenith-root button.zenith-tracker__step:hover {
@@ -514,13 +649,24 @@
 /* A filled step is the tracker's colour through and through, not a tinted box:
    `is-active` carries the scale colour inline, so the border has to follow it
    rather than stay grey around a coloured middle. */
-.zenith-root button.zenith-tracker__step.is-active { border-color: transparent; }
-.zenith-tracker--scale.is-compact .zenith-tracker__step { width: 13px; height: 13px; }
-.zenith-tracker__steps { gap: 5px; }
+.zenith-root button.zenith-tracker__step.is-active {
+    border-color: transparent;
+}
+.zenith-tracker--scale.is-compact .zenith-tracker__step {
+    width: 13px;
+    height: 13px;
+}
+.zenith-tracker__steps {
+    gap: 5px;
+}
 /* In the wrapping layout a scale may stretch; in the rail it must not. Round
    marks never stretch — a squashed circle is just a mistake. */
-.zenith-trail--wrap .zenith-tracker--scale { flex: 1 1 220px; }
-.zenith-trail--wrap .zenith-tracker--scale .zenith-tracker__steps { flex: none; }
+.zenith-trail--wrap .zenith-tracker--scale {
+    flex: 1 1 220px;
+}
+.zenith-trail--wrap .zenith-tracker--scale .zenith-tracker__steps {
+    flex: none;
+}
 
 /* number → a −/+ stepper */
 .zenith-tracker__stepper {
@@ -559,45 +705,13 @@
     font-variant-numeric: tabular-nums;
     color: var(--zenith-text-normal);
 }
-.zenith-tracker__amount.is-empty { color: var(--zenith-text-faint); }
-.zenith-tracker__unit { margin-left: 3px; font-size: 0.72rem; color: var(--zenith-text-muted); }
-
-/* ── Tracker statistic rows ───────────────────────── */
-
-.zenith-jrows {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--zenith-space-sm);
+.zenith-tracker__amount.is-empty {
+    color: var(--zenith-text-faint);
 }
-
-/* Name, history, figure — one line each. Stacking the history under the name
-   doubled the row and three of those stopped fitting the card they were drawn
-   in; the chain now occupies exactly the middle the old plot did. */
-/* The side columns are FIXED, not sized to their contents. Content-sized ones
-   made every row its own grid — "Efficiency" is wider than "Mood", "30 reps."
-   wider than "3.0 of 5" — so each plot got a different middle and the columns
-   fell on different pixels row to row. Fixed sides mean one shared axis: the
-   14th of the month sits at the same x in every row. */
-.zenith-jrow {
-    display: grid;
-    grid-template-columns: var(--jw-name-w, 88px) minmax(30px, 1fr) var(--jw-fig-w, 76px);
-    align-items: center;
-    column-gap: var(--zenith-space-sm);
-    min-width: 0;
-    padding: 2px 4px;
-    border-radius: var(--zenith-radius-sm);
-}
-.zenith-jrow__name { display: flex; align-items: center; gap: 7px; min-width: 0; }
-.zenith-jrow__name svg { flex: none; color: var(--hmon-color); }
-.zenith-jrow__label {
-    font-size: 0.8rem;
-    color: var(--zenith-text-normal);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.zenith-tracker__unit {
+    margin-left: 3px;
+    font-size: 0.72rem;
+    color: var(--zenith-text-muted);
 }
 
 /* ── The plot ─────────────────────────────────────────
@@ -631,24 +745,6 @@
     background: color-mix(in srgb, var(--zenith-text-faint) 30%, transparent);
 }
 
-.zenith-jrow__figure {
-    display: flex;
-    flex: none;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1px;
-    text-align: right;
-}
-.zenith-jrow__unit { font-size: 0.7rem; font-weight: 500; color: var(--zenith-text-muted); }
-/* The n behind the figure. Without it an average over three days and one over
-   thirty look equally confident. */
-.zenith-jrow__basis {
-    font-size: 0.65rem;
-    color: var(--zenith-text-faint);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-}
-
 /* ── Per-day plot ─────────────────────────────────── */
 /* Drawn against the tracker's OWN scale, so a count of reps is a count of reps
    rather than a share of some shared denominator. */
@@ -659,19 +755,30 @@
 /* ── Coverage strip ───────────────────────────────── */
 /* Where the entries are, not just how many. Also absorbs the streak, which used
    to float in a corner with nothing to relate to. */
-.zenith-jcov { display: flex; align-items: stretch; gap: 1px; min-width: 0; }
+.zenith-jcov {
+    display: flex;
+    align-items: stretch;
+    gap: 1px;
+    min-width: 0;
+}
 .zenith-jcov__cell {
     flex: 1;
     min-width: 0;
     border-radius: 1px;
     background: var(--zenith-bg-tertiary);
 }
-.zenith-jcov__cell.is-filled { background: var(--zenith-text-faint); }
-.zenith-jcov__cell.is-streak { background: var(--zenith-accent); }
+.zenith-jcov__cell.is-filled {
+    background: var(--zenith-text-faint);
+}
+.zenith-jcov__cell.is-streak {
+    background: var(--zenith-accent);
+}
 
 /* ── In-note code block (```zenith-daily```) ──────── */
 
-.zenith-dblock-host { margin: 0.6em 0; }
+.zenith-dblock-host {
+    margin: 0.6em 0;
+}
 .zenith-dblock {
     display: flex;
     flex-direction: column;
@@ -681,8 +788,18 @@
     border-radius: var(--zenith-radius-lg);
     background: var(--zenith-bg-secondary);
 }
-.zenith-dblock__head { display: flex; align-items: center; gap: 6px; }
-.zenith-dblock__title { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.zenith-dblock__head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.zenith-dblock__title {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
 .zenith-dblock__date {
     font-size: 0.9rem;
     font-weight: 600;
@@ -735,7 +852,10 @@
     color: var(--zenith-accent);
     box-shadow: none;
 }
-.zenith-root button.zenith-dblock__nav:disabled { opacity: 0.4; cursor: default; }
+.zenith-root button.zenith-dblock__nav:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
 
 /* ── Statistics ───────────────────────────────────── */
 
@@ -764,7 +884,12 @@
     justify-content: space-between;
     gap: var(--zenith-space-md);
 }
-.zenith-jstats__coverage { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.zenith-jstats__coverage {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
 .zenith-jstats__eyebrow {
     font-size: 0.68rem;
     letter-spacing: 0.09em;
@@ -783,7 +908,10 @@
     color: var(--zenith-text-normal);
     font-variant-numeric: tabular-nums;
 }
-.zenith-jstats__figure-of { color: var(--zenith-text-faint); font-weight: 500; }
+.zenith-jstats__figure-of {
+    color: var(--zenith-text-faint);
+    font-weight: 500;
+}
 .zenith-jstats__figure-label {
     font-size: 0.85rem;
     font-weight: 400;
@@ -791,8 +919,17 @@
     color: var(--zenith-text-muted);
 }
 
-.zenith-jstats__metrics { display: flex; flex-wrap: wrap; gap: var(--zenith-space-lg); }
-.zenith-jstats__metric { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.zenith-jstats__metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-lg);
+}
+.zenith-jstats__metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
 .zenith-jstats__metric-value {
     font-size: 1.15rem;
     font-weight: 600;
@@ -800,16 +937,26 @@
     color: var(--zenith-text-normal);
     font-variant-numeric: tabular-nums;
 }
-.zenith-jstats__metric-label { font-size: 0.7rem; color: var(--zenith-text-muted); }
+.zenith-jstats__metric-label {
+    font-size: 0.7rem;
+    color: var(--zenith-text-muted);
+}
 
 /* Narrow, the head stops trying to be a row. Flex-wrap alone left the three
    metrics dangling under a 2.4rem figure at ragged widths — one wrapped, two
    didn't, and the block read as a mistake. A grid puts them on an even footing
    and the figure loses the size it only had room for on a wide pane. */
 @container zenith-jstats (max-width: 620px) {
-    .zenith-jstats__head { display: block; }
-    .zenith-jstats__figure { font-size: 1.8rem; gap: 6px; }
-    .zenith-jstats__figure-label { flex-basis: 100%; }
+    .zenith-jstats__head {
+        display: block;
+    }
+    .zenith-jstats__figure {
+        font-size: 1.8rem;
+        gap: 6px;
+    }
+    .zenith-jstats__figure-label {
+        flex-basis: 100%;
+    }
     .zenith-jstats__metrics {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
@@ -818,13 +965,26 @@
         padding-top: var(--zenith-space-sm);
         border-top: 1px solid var(--zenith-border);
     }
-    .zenith-jstats__metric-value { font-size: 1rem; }
-    .zenith-jstats__metric-label { font-size: 0.66rem; line-height: 1.25; }
+    .zenith-jstats__metric-value {
+        font-size: 1rem;
+    }
+    .zenith-jstats__metric-label {
+        font-size: 0.66rem;
+        line-height: 1.25;
+    }
 }
 
-.zenith-jstats__coverage-block { display: flex; flex-direction: column; gap: 4px; }
-.zenith-jstats__coverage-block .zenith-jcov { gap: 2px; }
-.zenith-jstats__coverage-block .zenith-jcov__cell { border-radius: 2px; }
+.zenith-jstats__coverage-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.zenith-jstats__coverage-block .zenith-jcov {
+    gap: 2px;
+}
+.zenith-jstats__coverage-block .zenith-jcov__cell {
+    border-radius: 2px;
+}
 .zenith-jstats__axis-row {
     display: flex;
     justify-content: space-between;
@@ -836,7 +996,11 @@
 /* The per-tracker blocks that used to live here went with the plots they held:
    the habit month answers the same question, with dates on it. */
 
-.zenith-jstats__note { margin: 0; font-size: 0.75rem; color: var(--zenith-text-faint); }
+.zenith-jstats__note {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--zenith-text-faint);
+}
 /* States what "done" means, since it differs by tracker kind. */
 .zenith-jstats__legend {
     margin: 0;
@@ -873,9 +1037,18 @@
     gap: 10px;
 }
 
-.zenith-hmon__head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.zenith-hmon__head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
 
-.zenith-hmon__title { margin: 0; font-size: 0.92rem; font-weight: 600; }
+.zenith-hmon__title {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
 
 .zenith-hmon__month {
     color: var(--zenith-text-muted);
@@ -922,10 +1095,19 @@
     font-variant-numeric: tabular-nums;
 }
 
-.zenith-hmon__daynum { color: var(--zenith-text-muted); font-size: 0.66rem; font-weight: 600; }
-.zenith-hmon__day.is-weekend .zenith-hmon__daynum { color: var(--zenith-text-faint); }
+.zenith-hmon__daynum {
+    color: var(--zenith-text-muted);
+    font-size: 0.66rem;
+    font-weight: 600;
+}
+.zenith-hmon__day.is-weekend .zenith-hmon__daynum {
+    color: var(--zenith-text-faint);
+}
 .zenith-hmon__day.is-today .zenith-hmon__daynum,
-.zenith-hmon__day.is-today .zenith-hmon__weekday { color: var(--zenith-accent); font-weight: 700; }
+.zenith-hmon__day.is-today .zenith-hmon__weekday {
+    color: var(--zenith-accent);
+    font-weight: 700;
+}
 
 /* The label column stays put while the days scroll under it. Without this a
    month scrolled to the 20th is a grid of anonymous dots — the one column that
@@ -960,7 +1142,11 @@
     font-size: 0.76rem;
 }
 
-.zenith-hmon__label-icon { display: inline-flex; flex: none; color: var(--hmon-color); }
+.zenith-hmon__label-icon {
+    display: inline-flex;
+    flex: none;
+    color: var(--hmon-color);
+}
 
 .zenith-hmon__label-text {
     min-width: 0;
@@ -998,7 +1184,11 @@
 }
 
 /* The SVG that carries the filter — present, sized to nothing. */
-.zenith-hmon__defs { position: absolute; width: 0; height: 0; }
+.zenith-hmon__defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+}
 
 .zenith-hmon__run {
     position: absolute;
@@ -1043,7 +1233,9 @@
     transition: transform var(--zenith-transition-fast);
 }
 
-.zenith-hmon__cell[role='img'] { cursor: default; }
+.zenith-hmon__cell[role='img'] {
+    cursor: default;
+}
 
 .zenith-root button.zenith-hmon__cell:hover {
     background: transparent;
@@ -1096,7 +1288,10 @@
     font-variant-numeric: tabular-nums;
 }
 
-.zenith-hmon__total.is-full { color: var(--zenith-accent); font-weight: 700; }
+.zenith-hmon__total.is-full {
+    color: var(--zenith-accent);
+    font-weight: 700;
+}
 
 /* ── Value picker ─────────────────────────────────────
    Anchored to the grid rather than to the cell: the grid scrolls sideways, and
@@ -1122,9 +1317,15 @@
     transform-origin: top center;
 }
 
-.zenith-hpick:focus { outline: none; }
+.zenith-hpick:focus {
+    outline: none;
+}
 
-.zenith-hpick__head { display: flex; align-items: baseline; gap: 8px; }
+.zenith-hpick__head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
 
 .zenith-hpick__label {
     color: var(--hmon-color);
@@ -1140,7 +1341,10 @@
     font-variant-numeric: tabular-nums;
 }
 
-.zenith-hpick__steps { display: flex; gap: 4px; }
+.zenith-hpick__steps {
+    display: flex;
+    gap: 4px;
+}
 
 .zenith-root button.zenith-hpick__step {
     width: 26px;
@@ -1154,7 +1358,9 @@
     font-size: 0.72rem;
     font-variant-numeric: tabular-nums;
     cursor: pointer;
-    transition: transform var(--zenith-transition-fast), background var(--zenith-transition-fast);
+    transition:
+        transform var(--zenith-transition-fast),
+        background var(--zenith-transition-fast);
 }
 
 .zenith-root button.zenith-hpick__step:hover {
@@ -1174,7 +1380,11 @@
     font-weight: 700;
 }
 
-.zenith-hpick__stepper { display: flex; align-items: center; gap: 6px; }
+.zenith-hpick__stepper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 
 .zenith-root button.zenith-hpick__round {
     display: inline-flex;
@@ -1209,9 +1419,16 @@
     font-variant-numeric: tabular-nums;
 }
 
-.zenith-hpick__unit { color: var(--zenith-text-faint); font-size: 0.66rem; font-weight: 400; }
+.zenith-hpick__unit {
+    color: var(--zenith-text-faint);
+    font-size: 0.66rem;
+    font-weight: 400;
+}
 
-.zenith-hpick__foot { display: flex; gap: 6px; }
+.zenith-hpick__foot {
+    display: flex;
+    gap: 6px;
+}
 
 .zenith-root button.zenith-hpick__action {
     display: inline-flex;
@@ -1234,7 +1451,10 @@
     box-shadow: none;
 }
 
-.zenith-root button.zenith-hpick__action:disabled { opacity: 0.4; cursor: default; }
+.zenith-root button.zenith-hpick__action:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
 
 /* ── Summary cards ────────────────────────────────── */
 
@@ -1251,9 +1471,17 @@
     background: var(--zenith-bg-secondary);
 }
 
-.zenith-hcard__label { color: var(--zenith-text-muted); font-size: 0.72rem; }
+.zenith-hcard__label {
+    color: var(--zenith-text-muted);
+    font-size: 0.72rem;
+}
 
-.zenith-hcard__figure { display: flex; align-items: center; gap: 8px; margin: 2px 0 6px; }
+.zenith-hcard__figure {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 6px;
+}
 
 .zenith-hcard__value {
     font-size: 1.75rem;
@@ -1289,7 +1517,12 @@
     font-weight: 600;
 }
 
-.zenith-hcard__pill-text { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.zenith-hcard__pill-text {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 
 .zenith-hcard__foot {
     margin: 7px 0 0;
@@ -1317,8 +1550,14 @@
    entrance's motion at the scale of one row, which a stylesheet cannot express
    because the bar and the days on it have to be staged from the same clock. */
 @keyframes zenith-hmon-ripple {
-    from { opacity: 0.45; transform: scale(1); }
-    to { opacity: 0; transform: scale(2.6); }
+    from {
+        opacity: 0.45;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(2.6);
+    }
 }
 
 body:not(.zenith-no-motion) .zenith-hmon__cell.is-pulsing::after {
@@ -1334,13 +1573,25 @@ body:not(.zenith-no-motion) .zenith-hmon__cell.is-pulsing::after {
 /* The picker scales out of the cell it belongs to rather than fading in over
    it, so it reads as that day opening up. */
 @keyframes zenith-hpick-in {
-    from { opacity: 0; transform: translate(-50%, calc(-100% - 10px)) scale(0.9); }
-    to { opacity: 1; transform: translate(-50%, calc(-100% - 10px)) scale(1); }
+    from {
+        opacity: 0;
+        transform: translate(-50%, calc(-100% - 10px)) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, calc(-100% - 10px)) scale(1);
+    }
 }
 
 @keyframes zenith-hpick-in-below {
-    from { opacity: 0; transform: translate(-50%, 10px) scale(0.9); }
-    to { opacity: 1; transform: translate(-50%, 10px) scale(1); }
+    from {
+        opacity: 0;
+        transform: translate(-50%, 10px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 10px) scale(1);
+    }
 }
 
 body:not(.zenith-no-motion) .zenith-hpick {
@@ -1371,18 +1622,54 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
         --hmon-label-w: 34px;
     }
 
-    .zenith-hmon__label { gap: 0; padding-right: 6px; justify-content: center; }
+    .zenith-hmon__label {
+        gap: 0;
+        padding-right: 6px;
+        justify-content: center;
+    }
     .zenith-hmon__label-text,
-    .zenith-hmon__label-rate { display: none; }
-    .zenith-hmon__hint { margin-left: 0; flex-basis: 100%; }
+    .zenith-hmon__label-rate {
+        display: none;
+    }
+    .zenith-hmon__hint {
+        margin-left: 0;
+        flex-basis: 100%;
+    }
     .zenith-hmon__cell,
-    .zenith-hmon__blob { width: 16px; height: 16px; margin: -8px 0 0 -8px; }
-    .zenith-hmon__run { height: 9px; margin-top: -4.5px; }
-    .zenith-hcards { grid-template-columns: 1fr; }
+    .zenith-hmon__blob {
+        width: 16px;
+        height: 16px;
+        margin: -8px 0 0 -8px;
+    }
+    .zenith-hmon__run {
+        height: 9px;
+        margin-top: -4.5px;
+    }
+    .zenith-hcards {
+        grid-template-columns: 1fr;
+    }
 }
 /* ── Dashboard widget ─────────────────────────────── */
 
-.zenith-jw { display: flex; flex-direction: column; gap: 12px; }
+.zenith-jw {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* The stats card fills its cell; the check-in card beside it is as tall as its
+   own content, which is why this is not on `.zenith-jw`.
+
+   The difference is the dial. It is a ring, a ring is square, and a square has
+   to be measured against something — so the dial reads its own height, and
+   without one here it had nothing to read: its `flex: 1` had no free space to
+   grow into, its size container reported zero, and the card fell straight
+   through to the no-room-for-a-ring layout with the centre, which is
+   absolutely positioned, landing on top of the header. */
+.zenith-jw--stats {
+    height: 100%;
+    min-height: 0;
+}
 /* Coverage leads. "3 / 30" used to be a 10px footnote under an eyebrow, which
    set the caveat to every average below it in the smallest type on the card. */
 .zenith-jw__head {
@@ -1409,13 +1696,25 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     font-weight: 600;
     color: var(--zenith-accent);
 }
-.zenith-jw__summary { font-size: 0.85rem; color: var(--zenith-text-muted); }
+.zenith-jw__summary {
+    font-size: 0.85rem;
+    color: var(--zenith-text-muted);
+}
 /* How much room each size gives the two fixed side columns. Fixed rather than
    sized to content so every row's plot is the same width — see the row below
    for why that matters. */
-.zenith-jw--sm { --jw-name-w: 74px; --jw-fig-w: 58px; }
-.zenith-jw--md { --jw-name-w: 88px; --jw-fig-w: 78px; }
-.zenith-jw--lg { --jw-name-w: 100px; --jw-fig-w: 82px; }
+.zenith-jw--sm {
+    --jw-name-w: 74px;
+    --jw-fig-w: 58px;
+}
+.zenith-jw--md {
+    --jw-name-w: 88px;
+    --jw-fig-w: 78px;
+}
+.zenith-jw--lg {
+    --jw-name-w: 100px;
+    --jw-fig-w: 82px;
+}
 
 /* ── Stats card head ──────────────────────────────────
    The ring is the coverage and the count sits inside it: the share reads at a
@@ -1458,7 +1757,9 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
 }
 
 /* Takes the slack, so the chip and the corner button stay pinned right. */
-.zenith-jw--stats .zenith-jw__head-text { flex: 1; }
+.zenith-jw--stats .zenith-jw__head-text {
+    flex: 1;
+}
 
 /* The way out of the card: an icon in the corner. */
 .zenith-root button.zenith-jw__open {
@@ -1476,7 +1777,9 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     box-shadow: none;
     color: var(--zenith-text-muted);
     cursor: pointer;
-    transition: border-color var(--zenith-transition-fast), color var(--zenith-transition-fast);
+    transition:
+        border-color var(--zenith-transition-fast),
+        color var(--zenith-transition-fast);
 }
 .zenith-root button.zenith-jw__open:hover {
     border-color: var(--zenith-accent);
@@ -1490,7 +1793,10 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     font-weight: 600;
     color: var(--zenith-text-normal);
 }
-.zenith-jw__head-sub { font-size: 0.72rem; color: var(--zenith-text-muted); }
+.zenith-jw__head-sub {
+    font-size: 0.72rem;
+    color: var(--zenith-text-muted);
+}
 
 /* A chip of its own: the streak is a different quantity from the coverage, and
    sharing a line with it is what buried it. */
@@ -1508,13 +1814,10 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     font-variant-numeric: tabular-nums;
 }
 
-/* Clipped, not spilling: a dashboard card is a fixed box, and a row escaping
-   it landed on top of the button below. */
-.zenith-jw--stats .zenith-jrows { flex: 1; min-height: 0; overflow: hidden; }
-
 /* Three figures that earn their place on a tall card: how long the run is,
-   how stale the journal is, and how much was actually written. */
-.zenith-jw__metrics {
+   how stale the journal is, and how much was actually written. They are the
+   JOURNAL's, not any tracker's — the panel beside the ring holds that. */
+.zenith-jw--stats .zenith-jw__metrics {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--zenith-space-sm);
@@ -1522,7 +1825,12 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     border-top: 1px solid var(--zenith-border);
     border-bottom: 1px solid var(--zenith-border);
 }
-.zenith-jw__metric { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.zenith-jw__metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
 .zenith-jw__metric-value {
     font-size: 1.05rem;
     font-weight: 600;
@@ -1547,7 +1855,10 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     text-align: center;
     font-size: 0.82rem;
 }
-.zenith-jw__more { font-size: 0.75rem; color: var(--zenith-text-faint); }
+.zenith-jw__more {
+    font-size: 0.75rem;
+    color: var(--zenith-text-faint);
+}
 
 /* Headline figures — only the large card has the height to earn them; the
    smaller ones carry the streak in the header instead. */
@@ -1570,4 +1881,481 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     border-color: var(--zenith-accent);
     color: var(--zenith-accent);
     box-shadow: none;
+}
+
+/* ══════════════════════════════════════════════════════
+   The tracker dial — one tracker at the centre, the rest around it
+   ──────────────────────────────────────────────────────
+   The card was a list of rows and is now a composition with a middle. What
+   made the list worth replacing: a row sets the figure it exists to report in
+   the smallest type on it, and four rows set four of them.
+
+   Three things move, and they are three views of one event rather than three
+   effects: the arc sweeps to the new tracker's coverage, the mark travels
+   round the ring to its icon, and the centre cross-fades while its number
+   counts up. Only the mark moves along the ring — the icons stay where they
+   were put, because a click target that walks away every seven seconds is not
+   one.
+
+   `--jdial-r` is the ring's radius as a share of the stage. The arc is drawn
+   in a 100×100 viewBox, so the number is the same on both sides of the
+   language barrier and lives here once.
+   ══════════════════════════════════════════════════════ */
+.zenith-jdial {
+    /* Thirty-four rather than forty, and the six points are the room the ring's
+       furniture needs to finish drawing inside the clip below. Nothing on the
+       ring is as thin as the ring: a slot icon is 26px centred on the line, and
+       the travelling mark is a 30px halo with 12px of glow — 27px from its own
+       centre. At forty a 148px stage left 14.8px, so the mark arrived at the
+       top of the dial with its glow sliced flat along the clip and the whole
+       composition read as standing in a square. Thirty-four leaves 23.7px,
+       which the icon and the mark's ring clear outright and the glow's last
+       soft inch does not miss. `RING_R` in `TrackerDial.tsx` is this same
+       number and has to move with it. */
+    --jdial-r: 34%;
+
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 0;
+    /* The dial reads its own card: a ring is square, and a card two rows tall
+       has a very different amount of room for one than a card four rows tall.
+       Safe because the height comes from the cell, never from the contents. */
+    container-type: size;
+    container-name: zenith-jdial;
+    /* The travelling mark is a full-size square turned about its centre, and a
+       turned square reports a bigger box than it occupies — at 45° a 155px
+       stage claims 219px. Nothing shows there, but the card counts it as
+       something to scroll to, so a scrollbar appeared for the length of every
+       switch. With four trackers the resting angles are all multiples of a
+       quarter turn and it went away again; with three or five it would not
+       have. Clipped here rather than on the stage because the icons stand ON
+       the ring, flush with the stage's own edge.
+
+       This clip used to cut the ring's own furniture. `overflow-clip-margin`
+       is the obvious way to let a halo finish drawing through a clip, and it
+       is the wrong one here: the margin is scrollable overflow like any other,
+       so the card's body — which does scroll — grew a scrollbar for the length
+       of every switch, which is the exact fault this rule was written to stop.
+       The room is made by the radius instead. See `--jdial-r`. */
+    overflow: hidden;
+}
+
+/* Ring and panel side by side.
+
+   The ring keeps the height and the panel takes what is left of the width, so
+   the composition is a square and a column rather than a square with a caption
+   under it. On a card too narrow to seat both the panel is dropped entirely
+   (see the query near the bottom of this file) and the ring re-centres, which
+   is exactly where it stood before there was a panel. */
+.zenith-jdial__body {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: var(--zenith-space-md);
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+}
+
+/* Square, and as large as the shorter side allows. The ring is the
+   composition; the panel beside it is the reading. */
+.zenith-jdial__stage {
+    position: relative;
+    /* Sized by the height, not by the share of the row it can grab: `flex: 1`
+       against a panel makes the ring as wide as the leftover space and the
+       aspect ratio then takes that back out of the height, so the ring shrank
+       as the card got wider. */
+    flex: 0 1 auto;
+    height: 100%;
+    aspect-ratio: 1;
+    min-height: 0;
+    max-width: 100%;
+    /* Capped, because a ring that keeps growing stops being a composition: on
+       a four-row card the untethered version was a four-hundred-pixel circle
+       with a small number adrift in the middle of it. Past this the height
+       goes to the things that wanted it — the tracker's own window, and the
+       journal's figures under it. */
+    max-height: 260px;
+}
+
+.zenith-jdial__ring-layer {
+    position: absolute;
+    inset: 0;
+}
+
+.zenith-jdial__ring {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* Zero at twelve o'clock, like the slots. An arc that starts at three and
+       a ring of icons that starts at twelve are two different clocks. */
+    transform: rotate(-90deg);
+    overflow: visible;
+}
+
+/* The line the trackers stand on, and nothing more. A second circle used to
+   run on top of it for the active tracker's coverage, which is a share of a
+   window — a quantity with a denominator, drawn as a length with no scale
+   beside it. It reads as a figure and it is one now; see `.zenith-jdial__panel`
+   for what took its place, and for the three things it could not say. */
+.zenith-jdial__track {
+    fill: none;
+    stroke-linecap: round;
+    stroke-width: 2;
+    stroke: color-mix(in srgb, var(--zenith-text-faint) 22%, transparent);
+}
+
+/* The travelling mark: one element turned about the centre with the halo held
+   out at the ring's radius, so the transition animates a single angle and the
+   halo lands exactly on a slot. */
+.zenith-jdial__mark {
+    position: absolute;
+    inset: 0;
+    transform: rotate(var(--jdial-turn, -90deg));
+    transition: transform 520ms cubic-bezier(0.34, 1.28, 0.64, 1);
+    pointer-events: none;
+}
+
+.zenith-jdial__mark-dot {
+    position: absolute;
+    top: 50%;
+    left: calc(50% + var(--jdial-r));
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border-radius: 50%;
+    /* A ring and a glow rather than a filled disc. The disc was the tracker's
+       own colour and so is the icon standing on it, so the mark was drowning
+       the thing it was pointing at — most of all for a pale tracker, where a
+       yellow glyph sat on a yellow wash. Nothing is painted behind the icon
+       now; the ring says which one, and the icon is read against the card. */
+    background: none;
+    box-shadow:
+        0 0 0 1.5px color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 62%, transparent),
+        0 0 12px 2px color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 22%, transparent);
+}
+
+/* A slot: the tracker's own icon, in its own colour, standing on the ring. */
+.zenith-jdial .zenith-jdial__slot {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    transform: translate(-50%, -50%);
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    /* Muted, not faint. Faint is Zenith's quietest ink and it was chosen for
+       text on a solid card; on glass, over a photograph, it stopped being
+       quiet and started being absent. */
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    transition:
+        color var(--zenith-transition),
+        transform var(--zenith-transition);
+}
+
+.zenith-jdial .zenith-jdial__slot:hover {
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    transform: translate(-50%, -50%) scale(1.15);
+}
+
+.zenith-jdial .zenith-jdial__slot.is-active {
+    color: var(--hmon-color);
+    transform: translate(-50%, -50%) scale(1.2);
+}
+
+.zenith-jdial .zenith-jdial__slot:focus-visible {
+    outline: 2px solid var(--zenith-accent);
+    outline-offset: 2px;
+}
+
+/* The middle. Absolutely positioned so the two cross-fading faces stand in the
+   same place rather than pushing each other around. */
+.zenith-jdial__centre {
+    position: absolute;
+    /* Inside the ring, not under it: a face must never reach the icons. */
+    inset: 22%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zenith-jdial__layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* No `will-change` here, deliberately. It used to say "the cross-fade
+       composites each face on its own", which the cross-fade does for itself:
+       it runs on the Web Animations API, which promotes an element for the
+       length of its animation and lets the layer go afterwards. Declared in the
+       stylesheet the promotion is permanent instead — a compositing layer held
+       for ever for two hundred milliseconds of movement every seven seconds.
+
+       On a wallpapered board that is not merely wasteful. The card is glass,
+       and a `backdrop-filter` does not read through a separately composited
+       child: the layer's box stopped showing the picture and became a flat
+       rectangle laid over the middle of the dial. */
+}
+
+.zenith-jdial__face {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    text-align: center;
+}
+
+/* Large enough to read across a room, which is the point of giving one tracker
+   the middle instead of giving four of them a line each. */
+.zenith-jdial__value {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-jdial__unit {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-jdial__name {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.78rem;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-jdial__name svg {
+    flex: none;
+    color: var(--jdial-color, var(--zenith-accent));
+}
+
+/* The n behind the figure. Without it an average over three days and one over
+   thirty look equally confident. */
+.zenith-jdial__basis {
+    font-size: 0.65rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ── The panel ──
+   What the arc used to claim, said in words, with the things it could not say
+   underneath. Hidden by default and switched on by width: a column of figures
+   squeezed beside a ring is worse than no column at all. */
+.zenith-jdial__panel {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--zenith-space-sm);
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+}
+
+.zenith-jstat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.zenith-jstat__value {
+    font-size: 1.05rem;
+    font-weight: 650;
+    line-height: 1.15;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+/* The coverage carries the tracker's own colour, because it is the reading the
+   ring used to draw in it. One coloured figure, not three: a panel where every
+   line is accented has no lead line. */
+.zenith-jstat--lead .zenith-jstat__value {
+    font-size: 1.5rem;
+    color: var(--jdial-color, var(--zenith-accent));
+}
+
+.zenith-jstat__label {
+    font-size: 0.68rem;
+    line-height: 1.3;
+    color: var(--zenith-text-muted);
+    overflow-wrap: break-word;
+}
+
+.zenith-jstat__plot {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+/* ── The pips ──
+   The same three things the ring says — how many, which one, how to reach
+   another — for a card with no room for a ring. Both are in the markup and the
+   query below picks; `display: none` keeps the unused one out of the
+   accessibility tree as well, so there is never a second set of tab stops for
+   the same choice. */
+.zenith-jdial__pips {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex: none;
+}
+
+.zenith-jdial .zenith-jdial__pip {
+    display: flex;
+    align-items: center;
+    /* Generous vertically so the tap target survives on a phone while the dot
+       it draws stays small. The padding is the target; the dot is the mark. */
+    padding: 6px 2px;
+    border: none;
+    border-radius: var(--zenith-radius-xs);
+    background: none;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.zenith-jdial__pip-dot {
+    display: block;
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--zenith-text-muted);
+    transition:
+        width 200ms cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.zenith-jdial .zenith-jdial__pip.is-active .zenith-jdial__pip-dot {
+    width: 14px;
+    background: var(--hmon-color);
+}
+
+/* ── Too short for a ring ──
+   Below this the ring is smaller than the figure standing inside it, which is
+   a frame rather than a composition. The middle stays — it is what the card is
+   for — and the trackers become a row of pips under it. */
+@container zenith-jdial (max-height: 132px) {
+    .zenith-jdial__ring-layer {
+        display: none;
+    }
+
+    .zenith-jdial__stage {
+        aspect-ratio: auto;
+        flex: 1;
+        height: auto;
+        width: 100%;
+    }
+
+    .zenith-jdial__centre {
+        inset: 0;
+    }
+
+    /* The figure comes down with the card. Two faces cross-fade in the middle,
+       so they have to be stacked and out of the flow — which means nothing
+       stops them growing over the header when the card runs out of room. The
+       floor below keeps the stage as tall as a face: a card too small even for
+       that scrolls, which is honest, where text over text is not. */
+    .zenith-jdial__value {
+        font-size: 1.6rem;
+    }
+
+    .zenith-jdial__basis {
+        display: none;
+    }
+
+    .zenith-jdial__stage {
+        min-height: 44px;
+    }
+
+    .zenith-jdial__pips {
+        display: flex;
+    }
+}
+
+/* ── Room for the panel ──
+   Two conditions, and each rules out a card the panel would spoil. Narrow: the
+   ring is square and takes the height, so on anything under this the column
+   beside it is two words wide and wraps every label into three lines. Short: a
+   card this flat has already dropped the ring for pips, and a panel beside a
+   bare number is a table with one row in it.
+
+   Stated as the condition for showing rather than for hiding, because the
+   panel is the addition — a card that cannot take it must land exactly where
+   it stood before there was one. */
+@container zenith-jdial (min-width: 320px) and (min-height: 150px) {
+    .zenith-jdial__panel {
+        display: flex;
+    }
+
+    /* Left, not centred: the ring and the panel are one composition now, and a
+       row that centres its own contents leaves the ring drifting whenever the
+       panel's labels happen to be short. */
+    .zenith-jdial__body {
+        justify-content: flex-start;
+    }
+}
+
+/* The plot is the first thing out of the panel. Three figures and a chart in
+   the height of a paragraph makes the chart four pixels tall, which is a
+   decoration of a chart rather than one — and the figures are the reading. */
+@container zenith-jdial (max-height: 210px) {
+    .zenith-jstat__plot {
+        display: none;
+    }
+}
+
+/* A tall card can afford a larger figure; a short one cannot, and the ring is
+   already as small as it goes. */
+@container zenith-jdial (min-height: 240px) {
+    .zenith-jdial__value {
+        font-size: 2.6rem;
+    }
+
+    .zenith-jdial__name {
+        font-size: 0.86rem;
+    }
+
+    .zenith-jdial .zenith-jdial__slot {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* Motion off means off. The dial also stops advancing on its own — that part
+   is the hook's, and it reads the same two switches this does. */
+@media (prefers-reduced-motion: reduce) {
+    .zenith-jdial__mark,
+    .zenith-jdial .zenith-jdial__slot,
+    .zenith-jdial__pip-dot {
+        transition: none;
+    }
 }

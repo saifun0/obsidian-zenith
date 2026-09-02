@@ -1231,6 +1231,8 @@ const EN: Dict = {
 
     'journal.trackers': 'Check-in',
     'journal.noTrackers': 'No trackers configured. Add one in Settings → Journal.',
+    // The dial: one tracker at the centre of the card, the rest on the ring.
+    'journal.dial.aria': 'Trackers — choose which one the card shows',
     'journal.clearValue': 'Clear {name}',
     'journal.kind.check': 'Check-box',
     'journal.kind.scale': 'Scale 1–5',
@@ -1244,7 +1246,6 @@ const EN: Dict = {
     'journal.widget.blank': 'Not written yet',
     'journal.widget.lastDays': 'Last {days} days',
     'journal.widget.entriesOf': '{count} of {days} days written',
-    'journal.widget.more': '+{count} more in the journal',
     'journal.widget.coverage': '{count} of {days} days',
     'journal.widget.openJournal': 'Open journal',
 
@@ -1277,6 +1278,12 @@ const EN: Dict = {
     'journal.stats.axisStart': '{days} days ago',
     'journal.stats.axisToday': 'today',
     'journal.stats.noEntry': 'no entry',
+    // The panel beside the ring — one tracker's window, in words.
+    'journal.stats.coverageDays': '{count} of {days} days',
+    'journal.stats.runLabel': 'run · best {count}',
+    'journal.stats.lastMark': 'last mark',
+    'journal.stats.daysAgo': '{count} d ago',
+    'journal.stats.panelAria': 'Window statistics for {name}',
     'journal.stats.legend':
         'Tracker kinds are summarised differently: a scale is an average over recorded days, a number is a window sum, a check is a frequency. They are not comparable to each other.',
 
@@ -2884,6 +2891,8 @@ const RU: Dict = {
 
     'journal.trackers': 'Отметки дня',
     'journal.noTrackers': 'Отметок нет. Добавьте их в Настройках → Журнал.',
+    // Циферблат: один трекер в центре карточки, остальные на кольце.
+    'journal.dial.aria': 'Отметки — выберите, какую показывает карточка',
     'journal.clearValue': 'Сбросить: {name}',
     'journal.kind.check': 'Галочка',
     'journal.kind.scale': 'Шкала 1–5',
@@ -2899,7 +2908,6 @@ const RU: Dict = {
     'journal.widget.lastDays': 'Последние {days} дней',
     'journal.widget.entriesOf': 'заполнено дней: {count} из {days}',
     'journal.widget.coverage': '{count} из {days} дней',
-    'journal.widget.more': 'ещё {count} — в журнале',
     'journal.widget.openJournal': 'Открыть журнал',
 
     // ── Tasks calendar ──────────────────────────────
@@ -2981,6 +2989,11 @@ const RU: Dict = {
     'journal.stats.axisStart': '{days} дней назад',
     'journal.stats.axisToday': 'сегодня',
     'journal.stats.noEntry': 'нет записи',
+    'journal.stats.coverageDays': '{count} из {days} дней',
+    'journal.stats.runLabel': 'серия · рекорд {count}',
+    'journal.stats.lastMark': 'последняя отметка',
+    'journal.stats.daysAgo': '{count} д назад',
+    'journal.stats.panelAria': 'Статистика окна: {name}',
     'journal.stats.legend':
         'Виды трекеров считаются по-разному: шкала — среднее по записанным дням, число — сумма за окно, отметка — частота. Между собой они не сравниваются.',
 

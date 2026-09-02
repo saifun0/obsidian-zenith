@@ -5,7 +5,9 @@ import {
     currentStreak,
     longestStreak,
     journalStats,
+    trackerHistory,
 } from '../src/modules/journal/services/journalStats';
+import type { TrackerPoint } from '../src/modules/journal/services/journalStats';
 import type { JournalTracker } from '../src/core/journalConfig';
 import type { JournalEntry } from '../src/store/journalSlice';
 
@@ -272,5 +274,43 @@ describe('journalStats', () => {
         it('is null when nothing has been written', () => {
             expect(journalStats([], ALL, today, 30).lastEntryDate).toBeNull();
         });
+    });
+});
+
+describe('trackerHistory', () => {
+    /** "1" is a recorded day, "." a blank one, oldest first. */
+    const series = (shape: string): TrackerPoint[] =>
+        [...shape].map((c, i) => ({ date: `d${i}`, value: c === '.' ? null : 1 }));
+
+    it('counts the run ending at the last day', () => {
+        expect(trackerHistory(series('..111')).currentRun).toBe(3);
+    });
+
+    it('forgives an unwritten today, because the day is not over', () => {
+        expect(trackerHistory(series('.111.')).currentRun).toBe(3);
+    });
+
+    it('ends a run on two blank days in a row', () => {
+        expect(trackerHistory(series('111..')).currentRun).toBe(0);
+    });
+
+    it('finds the longest run anywhere in the window', () => {
+        expect(trackerHistory(series('11.1111.11')).bestRun).toBe(4);
+    });
+
+    it('reports how long ago the last mark was', () => {
+        expect(trackerHistory(series('11...')).sinceLast).toBe(3);
+        expect(trackerHistory(series('...11')).sinceLast).toBe(0);
+    });
+
+    it('reports never when nothing was recorded', () => {
+        const empty = trackerHistory(series('.....'));
+        expect(empty.sinceLast).toBeNull();
+        expect(empty.currentRun).toBe(0);
+        expect(empty.bestRun).toBe(0);
+    });
+
+    it('survives an empty window', () => {
+        expect(trackerHistory([])).toEqual({ currentRun: 0, bestRun: 0, sinceLast: null });
     });
 });

@@ -137,16 +137,49 @@
    on a picture. The backdrop blur is what keeps text legible over a busy
    photograph — translucency alone is unreadable. */
 @supports (backdrop-filter: blur(1px)) {
-    /* `:not(.zenith-bundle__member)` is the whole ballgame inside a bundle.
-       A bundle's active widget IS a `.zenith-widget-card`, and the bundle
+    /* The glass is a layer under the card, not a property of the card.
+
+       It was a property of the card, and that put every one of the card's
+       children inside its backdrop root. A `backdrop-filter` does not read
+       through a child the compositor has given a layer of its own, and an
+       `<svg>` is exactly such a child: the journal dial and the weather glyph
+       each came out standing in a flat rectangle the size of their own svg
+       box, showing the fill over the raw picture while the rest of the card
+       showed it blurred. Which child gets promoted is the compositor's
+       business and changes between versions, so the fix is not to find them —
+       it is to leave nothing inside the backdrop root at all.
+
+       So a pseudo-element carries the blur and the fill, sits behind the
+       content as a sibling of it, and the card itself paints nothing. Anything
+       the card holds now composites *over* finished glass.
+
+       `:not(.zenith-bundle__member)` is the other thing going on here. A
+       bundle's active widget IS a `.zenith-widget-card`, and the bundle
        stylesheet gives it `background: none` on purpose — the frame around it
-       does the painting. This rule out-specified that, so the member started
-       tinting itself on top of the frame: two 72% fills stacked into one dark
-       panel. */
+       does the painting. Without the exclusion the member tints itself on top
+       of the frame: two 72% fills stacked into one dark panel. */
     .zenith-dashboard.has-bg-glass .zenith-widget-card:not(.zenith-bundle__member),
     .zenith-dashboard.has-bg-glass .zenith-bundle__card,
     .zenith-dashboard.has-bg-glass .zenith-gridbar,
-    .zenith-dashboard.has-bg-glass .zenith-add-sheet {
+    .zenith-dashboard.has-bg-glass .zenith-add-sheet,
+    .zenith-dashboard.has-bg-glass .zenith-bundle__shoulder {
+        background: none;
+        /* The layer below is behind the content, and `isolate` is what keeps it
+           there rather than letting it fall out behind the board itself. */
+        isolation: isolate;
+    }
+
+    .zenith-dashboard.has-bg-glass .zenith-widget-card:not(.zenith-bundle__member)::before,
+    .zenith-dashboard.has-bg-glass .zenith-bundle__card::before,
+    .zenith-dashboard.has-bg-glass .zenith-gridbar::before,
+    .zenith-dashboard.has-bg-glass .zenith-add-sheet::before,
+    .zenith-dashboard.has-bg-glass .zenith-bundle__shoulder::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        border-radius: inherit;
         background: color-mix(
             in srgb,
             var(--zenith-bg-secondary) var(--zenith-card-opacity, 72%),
@@ -158,14 +191,24 @@
     /* The paper edges peeking out under a bundle. They are the same object as
        the card, so they take the same fill — left solid they read as a shadow
        the card is not casting. */
-    .zenith-dashboard.has-bg-glass .zenith-bundle__shoulder {
+    .zenith-dashboard.has-bg-glass .zenith-bundle__shoulder::before {
         background: color-mix(
             in srgb,
             var(--zenith-bg-tertiary) var(--zenith-card-opacity, 72%),
             transparent
         );
-        backdrop-filter: blur(14px) saturate(1.1);
     }
+}
+
+/* The glass layer is absolutely positioned, so the surfaces that carry one have
+   to be a containing block. Declared outside the wallpaper's rules on purpose:
+   a card that is a containing block only when a picture is set would move its
+   own absolutely positioned children by a pixel the moment somebody chose one,
+   and a layout that depends on a setting is a bug waiting for a bug report. */
+.zenith-widget-card,
+.zenith-gridbar,
+.zenith-add-sheet {
+    position: relative;
 }
 
 /* The bundle's pip rail is deliberately absent from all of this. It sits on the
@@ -197,11 +240,11 @@ body.is-mobile .zenith-dashboard.no-bg-mobile .zenith-dashboard__bg {
 }
 
 @supports (backdrop-filter: blur(1px)) {
-    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-widget-card:not(.zenith-bundle__member),
-    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-bundle__card,
-    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-bundle__shoulder,
-    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-gridbar,
-    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-add-sheet {
+    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-widget-card:not(.zenith-bundle__member)::before,
+    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-bundle__card::before,
+    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-bundle__shoulder::before,
+    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-gridbar::before,
+    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-add-sheet::before {
         backdrop-filter: none;
         /* Denser than on a desktop, because nothing is blurring the picture
            behind them any more and the text still has to win. */
