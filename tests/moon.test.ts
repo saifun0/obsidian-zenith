@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { litOnRight, moonPhase, terminatorRatio } from '../src/modules/weather/moon';
+import {
+    daysUntilPhase,
+    litOnRight,
+    moonPhase,
+    nextNamedPhase,
+    terminatorRatio,
+} from '../src/modules/weather/moon';
 
 /** A known new moon, used as the reference point by the implementation. */
 const NEW_MOON = new Date(Date.UTC(2000, 0, 6, 18, 14));
@@ -78,5 +84,34 @@ describe('litOnRight', () => {
 
     it('treats the equator as northern rather than undefined', () => {
         expect(litOnRight(true, 0)).toBe(true);
+    });
+});
+
+describe('daysUntilPhase / nextNamedPhase', () => {
+    it('always counts forwards, wrapping past the end of the month', () => {
+        // Three days after full, the next full moon is a whole month away.
+        const justAfterFull = 0.5 + 3 / 29.530588853;
+        expect(daysUntilPhase(justAfterFull, 0.5)).toBeCloseTo(29.530588853 - 3, 6);
+        expect(daysUntilPhase(justAfterFull, 0)).toBeCloseTo(29.530588853 / 2 - 3, 6);
+    });
+
+    it('is zero at the phase itself, not a full month', () => {
+        expect(daysUntilPhase(0, 0)).toBeCloseTo(0, 9);
+        expect(daysUntilPhase(0.5, 0.5)).toBeCloseTo(0, 9);
+    });
+
+    it('names whichever of new or full comes first', () => {
+        // Waxing crescent: full is ahead, new is most of a month behind.
+        expect(nextNamedPhase(0.15).phase).toBe('full');
+        // Waning gibbous: full has just gone, new is next.
+        expect(nextNamedPhase(0.65).phase).toBe('new');
+    });
+
+    it('never looks further ahead than half a lunation', () => {
+        for (let i = 0; i < 40; i++) {
+            const next = nextNamedPhase(i / 40);
+            expect(next.days).toBeGreaterThanOrEqual(0);
+            expect(next.days).toBeLessThanOrEqual(29.530588853 / 2 + 1e-9);
+        }
     });
 });

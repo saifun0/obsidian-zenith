@@ -59,6 +59,22 @@ export function placeLabel(place: GeoPlace): string {
 }
 
 /**
+ * Which place a module should use: its own override, else the one set once for
+ * the whole plugin, else nothing.
+ *
+ * Every module that needs coordinates needs the same coordinates, and asking
+ * for them per module meant setting the same city twice and keeping the two in
+ * step by hand. The override survives because it answers a real question —
+ * watching the forecast somewhere you are not, while praying where you are.
+ */
+export function preferredPlace(
+    override: GeoPlace | null | undefined,
+    global: GeoPlace | null | undefined
+): GeoPlace | null {
+    return override ?? global ?? null;
+}
+
+/**
  * A stable cache key for a place. Rounded to ~100 m: a GPS fix jitters between
  * calls, and without rounding every refresh would miss the cache and refetch.
  */
@@ -80,13 +96,34 @@ function toPlace(hit: GeocodeHit): GeoPlace | null {
 }
 
 /**
- * Search for a place by name. `lang` localises the results, so a Russian UI
- * gets "Ставрополь" rather than "Stavropol" — the old call hardcoded `en`,
- * which also made Cyrillic queries match poorly.
+ * Which script a query is written in, mapped to the language that indexes it.
+ *
+ * The provider matches names within one language at a time, and it is the
+ * *query* that decides which one is right — not the interface. Typing
+ * "Махачкала" with `language=en` returns nothing at all, while the same query
+ * with `language=ru` finds it immediately; so a person whose Obsidian is in
+ * English simply could not type a Russian city name, which is exactly the
+ * complaint. Only scripts that are unambiguous about their language are listed:
+ * Latin is shared by too many to guess from, so it defers to the interface.
  */
-export async function searchPlaces(query: string, lang = 'en'): Promise<GeoPlace[]> {
-    const name = query.trim();
-    if (!name) return [];
+const SCRIPT_LANGUAGES: ReadonlyArray<{ test: RegExp; lang: string }> = [
+    { test: /[\u0400-\u04FF]/, lang: 'ru' },
+    { test: /[\u4E00-\u9FFF]/, lang: 'zh' },
+    { test: /[\u3040-\u30FF]/, lang: 'ja' },
+    { test: /[\uAC00-\uD7AF]/, lang: 'ko' },
+    { test: /[\u0900-\u097F]/, lang: 'hi' },
+];
+
+/**
+ * The language to search a query in: the one its script implies, else the
+ * interface's.
+ */
+export function searchLanguage(query: string, uiLang = 'en'): string {
+    return SCRIPT_LANGUAGES.find((s) => s.test.test(query))?.lang ?? uiLang;
+}
+
+/** One request. Separated so the retry below is a second call, not a branch. */
+async function searchIn(name: string, lang: string): Promise<GeoPlace[]> {
     try {
         const res = await requestUrl({
             url:
@@ -98,6 +135,25 @@ export async function searchPlaces(query: string, lang = 'en'): Promise<GeoPlace
     } catch {
         return [];
     }
+}
+
+/**
+ * Search for a place by name, in whatever language it was typed in.
+ *
+ * The script decides which index to ask; `lang` only localises the answers and
+ * settles the Latin case. A query that comes back empty is tried once more in
+ * the interface's language, which covers the reverse mistake — a Latin
+ * transliteration of a name the local index only holds in its own script, and
+ * anything the script table is too coarse for.
+ */
+export async function searchPlaces(query: string, lang = 'en'): Promise<GeoPlace[]> {
+    const name = query.trim();
+    if (!name) return [];
+
+    const byScript = searchLanguage(name, lang);
+    const hits = await searchIn(name, byScript);
+    if (hits.length || byScript === lang) return hits;
+    return searchIn(name, lang);
 }
 
 /**

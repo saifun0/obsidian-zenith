@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
+    clockFromMs,
     clockLabel,
     formatDuration,
     locationNowMs,
+    skyLook,
     skyStops,
+    solarNoonMs,
     sunArc,
     wallClockMs,
     windowOffset,
@@ -166,5 +169,58 @@ describe('clockLabel / formatDuration', () => {
         expect(formatDuration(2400, 'h', 'm')).toBe('40m');
         expect(formatDuration(0, 'h', 'm')).toBe('0m');
         expect(formatDuration(-5, 'h', 'm')).toBe('0m');
+    });
+});
+
+describe('solarNoonMs / clockFromMs', () => {
+    it('puts noon exactly between the two crossings', () => {
+        // 05:05 → 19:30 is 14h25m; half of that past sunrise is 12:17:30.
+        expect(clockFromMs(solarNoonMs(JUN15)!)).toBe('12:17');
+    });
+
+    it('has no noon to give without both crossings', () => {
+        expect(solarNoonMs(undefined)).toBeNull();
+        expect(solarNoonMs(day('2025-06-15', '', ''))).toBeNull();
+        expect(solarNoonMs(day('2025-06-15', '2025-06-15T19:30', '2025-06-15T05:05'))).toBeNull();
+    });
+
+    it('round-trips the wall clock it was parsed from', () => {
+        expect(clockFromMs(at('2025-06-15T05:05'))).toBe('05:05');
+        expect(clockFromMs(NaN)).toBe('');
+    });
+});
+
+describe('skyLook', () => {
+    const data = { daily: [JUN15, JUN16] } as WeatherData;
+    const look = (iso: string) => skyLook(data, at(iso));
+
+    it('is full day at midday and full night at three in the morning', () => {
+        expect(look('2025-06-15T12:00')).toEqual({ phase: 'day', nightness: 0 });
+        expect(look('2025-06-15T03:00')).toEqual({ phase: 'night', nightness: 1 });
+        expect(look('2025-06-15T23:00')).toEqual({ phase: 'night', nightness: 1 });
+    });
+
+    it('sits halfway through twilight at the horizon crossings', () => {
+        const dawn = look('2025-06-15T05:05');
+        expect(dawn.phase).toBe('dawn');
+        near(dawn.nightness, 0.5);
+
+        const dusk = look('2025-06-15T19:30');
+        expect(dusk.phase).toBe('dusk');
+        near(dusk.nightness, 0.5);
+    });
+
+    it('darkens across dusk rather than switching at sunset', () => {
+        const before = look('2025-06-15T19:15').nightness;
+        const after = look('2025-06-15T19:45').nightness;
+        expect(before).toBeGreaterThan(0);
+        expect(before).toBeLessThan(0.5);
+        expect(after).toBeGreaterThan(0.5);
+        expect(after).toBeLessThan(1);
+    });
+
+    it('draws a plain day when the location has no sun times at all', () => {
+        const polar = { daily: [day('2025-06-15', '', '')] } as WeatherData;
+        expect(skyLook(polar, at('2025-06-15T03:00'))).toEqual({ phase: 'day', nightness: 0 });
     });
 });

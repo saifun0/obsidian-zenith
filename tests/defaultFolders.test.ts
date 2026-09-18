@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
     DEFAULT_CONTENT_FOLDER,
+    DEFAULT_PROJECTS_FOLDER,
     DEFAULT_JOURNAL_FOLDER,
     DEFAULT_TASKS_FOLDER,
 } from '../src/core/constants';
@@ -29,6 +30,7 @@ describe('every default folder is one the scaffold creates', () => {
     for (const [name, path] of [
         ['tasks', DEFAULT_TASKS_FOLDER],
         ['content', DEFAULT_CONTENT_FOLDER],
+        ['projects', DEFAULT_PROJECTS_FOLDER],
         ['journal', DEFAULT_JOURNAL_FOLDER],
     ] as const) {
         it(`${name} sits inside the scaffolded structure`, () => {
@@ -41,6 +43,7 @@ describe('every default folder is one the scaffold creates', () => {
         // than a constant that is wrong.
         expect(DEFAULT_SETTINGS.tasksFolderPath).toBe(DEFAULT_TASKS_FOLDER);
         expect(DEFAULT_SETTINGS.contentFolderPath).toBe(DEFAULT_CONTENT_FOLDER);
+        expect(DEFAULT_SETTINGS.projectsFolderPath).toBe(DEFAULT_PROJECTS_FOLDER);
         expect(DEFAULT_SETTINGS.journalFolderPath).toBe(DEFAULT_JOURNAL_FOLDER);
     });
 });

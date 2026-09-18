@@ -27,6 +27,14 @@ export interface PlaceFieldConfig {
      * migration that re-resolves it.
      */
     extraPatch?: Partial<ZenithSettings>;
+    /**
+     * This picker is a module's override of the plugin-wide location, so an
+     * empty value means "the global one" rather than "work it out". Saying
+     * which place that actually is matters: an override left empty is the
+     * normal state, and a row reading "Automatic" under a city set two screens
+     * away describes nothing.
+     */
+    inheritsGlobal?: boolean;
 }
 
 /**
@@ -46,9 +54,13 @@ export function createPlaceField(config: PlaceFieldConfig): React.FC {
     const PlaceField: React.FC = () => {
         const t = useTranslation();
         const place = useZenithStore((s) => s.settings[config.settingsKey]) as GeoPlace | null;
+        const global = useZenithStore((s) => s.settings.location);
         const language = useZenithStore((s) => s.settings.language);
         const updateSettings = useZenithStore((s) => s.updateSettings);
         const lang = resolveLocale(language);
+
+        /** The place this picker falls back to when it holds nothing itself. */
+        const inherited = config.inheritsGlobal ? global : null;
 
         const [query, setQuery] = useState('');
         const [hits, setHits] = useState<GeoPlace[]>([]);
@@ -74,6 +86,10 @@ export function createPlaceField(config: PlaceFieldConfig): React.FC {
             }, DEBOUNCE_MS);
             return () => window.clearTimeout(timer);
         }, [query, lang]);
+
+        const clearKey = config.inheritsGlobal
+            ? 'settings.place.useGlobal'
+            : 'settings.place.clear';
 
         const choose = (next: GeoPlace | null) => {
             updateSettings({ [config.settingsKey]: next, ...config.extraPatch } as Partial<ZenithSettings>);
@@ -106,14 +122,21 @@ export function createPlaceField(config: PlaceFieldConfig): React.FC {
                 <div className="zenith-wplace__current">
                     <MapPin size={13} />
                     <span className="zenith-wplace__name">
-                        {place ? placeLabel(place) : t('settings.place.auto')}
+                        {place
+                            ? placeLabel(place)
+                            : inherited
+                              ? placeLabel(inherited)
+                              : t('settings.place.auto')}
                     </span>
+                    {!place && inherited && (
+                        <span className="zenith-wplace__from">{t('settings.place.fromGlobal')}</span>
+                    )}
                     {place && (
                         <button
                             className="zenith-settings__inline-btn"
                             onClick={() => choose(null)}
-                            aria-label={t('settings.place.clear')}
-                            title={t('settings.place.clear')}
+                            aria-label={t(clearKey)}
+                            title={t(clearKey)}
                         >
                             <X size={13} />
                         </button>

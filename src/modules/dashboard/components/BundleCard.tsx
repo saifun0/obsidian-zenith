@@ -1,19 +1,21 @@
-import React, { useCallback, useRef, type CSSProperties, type FC } from 'react';
+import React, { useCallback, useEffect, useRef, useState, type CSSProperties, type FC } from 'react';
 import { Folder } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { useTranslation } from '../../../core/i18n';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
 import type { DashboardWidgetContext, DashboardWidgetDefinition } from '../widgets';
-import { prettifyWidgetId } from '../widgets';
+import { prettifyWidgetId, widgetLabel } from '../widgets';
 import { DomWidgetHost } from './GridWidget';
 import { BUNDLE_MAX_PIPS, type WidgetBundle } from '../grid/bundleTypes';
-import { useBundleSwitch } from '../grid/useBundleSwitch';
+import { useCrossFade } from '../../../components/shared/useCrossFade';
 
 /** Horizontal travel that counts as a swipe rather than a tap. */
 const SWIPE_THRESHOLD_PX = 40;
 
 interface MemberViewProps {
     def: DashboardWidgetDefinition;
+    /** The member's layout id — the same string its own settings live under. */
+    instanceId: string;
     ctx: DashboardWidgetContext;
     size: WidgetSize;
     /** Reserve space in the header so the title can't run under the rail. */
@@ -29,10 +31,10 @@ interface MemberViewProps {
  * that's how you get a clock rendered as a billboard. It gets a compact strip
  * instead: header, one line saying why, and nothing pretending to be data.
  */
-const MemberView: FC<MemberViewProps> = ({ def, ctx, size, railReserve, compact }) => {
+const MemberView: FC<MemberViewProps> = ({ def, instanceId, ctx, size, railReserve, compact }) => {
     const t = useTranslation();
     const Body = def.component;
-    const label = def.title ?? prettifyWidgetId(def.id);
+    const label = widgetLabel(def, t);
 
     return (
         <div className="zenith-widget-card zenith-bundle__member">
@@ -53,7 +55,7 @@ const MemberView: FC<MemberViewProps> = ({ def, ctx, size, railReserve, compact 
                         {t('dashboard.bundle.compact', { name: label, size: SIZE_LABEL[size] })}
                     </div>
                 ) : Body ? (
-                    <Body size={size} />
+                    <Body size={size} instanceId={instanceId} />
                 ) : (
                     <DomWidgetHost def={def} ctx={ctx} />
                 )}
@@ -101,8 +103,8 @@ export const BundleCard: FC<BundleCardProps> = ({
     const t = useTranslation();
     const members = bundle.members;
 
-    const { layers, targetId, layerRef, switchTo, step } = useBundleSwitch({
-        members,
+    const { layers, targetId, layerRef, switchTo, step } = useCrossFade({
+        items: members,
         activeId: bundle.activeId,
         onCommit: onSetActive,
     });
@@ -162,6 +164,7 @@ export const BundleCard: FC<BundleCardProps> = ({
             return (
                 <MemberView
                     def={def}
+                    instanceId={id}
                     ctx={ctx}
                     size={size}
                     railReserve={railReserve}
@@ -176,11 +179,37 @@ export const BundleCard: FC<BundleCardProps> = ({
     // widget's own title can spare, and the full list is in the inspector.
     const shown = members.slice(0, BUNDLE_MAX_PIPS);
     const overflow = members.length - shown.length;
-    // A pip plus its gap, the folder mark, and the rail's own padding.
-    // Generous on purpose: all it does is stop a long title running under it.
-    const railWidth = shown.length * 13 + 38 + (overflow > 0 ? 26 : 0);
+    // How wide the rail actually is, measured rather than reckoned.
+    //
+    // Two things are cut to this width and neither survives being a few pixels
+    // out: the spacer that keeps a member's title clear of the rail, and the
+    // notch the members are clipped to so the rail has nothing left to cover.
+    // The arithmetic that used to stand in for a measurement came out five
+    // pixels short — an active pip is wider than a resting one, and the rail's
+    // padding follows the density setting — which a spacer can absorb and a
+    // clip cannot. It is still the opening guess, for the first paint.
+    //
+    // This settles once per change of membership, not once per frame: while
+    // the pips animate one widens by exactly what the other loses, on the same
+    // curve, so the rail's own width never moves.
+    const railEl = useRef<HTMLDivElement | null>(null);
+    const [railWidth, setRailWidth] = useState(
+        () => shown.length * 13 + 38 + (overflow > 0 ? 26 : 0)
+    );
+    useEffect(() => {
+        const el = railEl.current;
+        if (!el || typeof ResizeObserver === 'undefined') return;
+        const measure = () => setRailWidth(Math.ceil(el.getBoundingClientRect().width));
+        measure();
+        const ro = new ResizeObserver(measure);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
 
-    const label = (id: string) => defsById.get(id)?.title ?? prettifyWidgetId(id);
+    const label = (id: string) => {
+        const def = defsById.get(id);
+        return def ? widgetLabel(def, t) : prettifyWidgetId(id);
+    };
 
     return (
         <div
@@ -207,21 +236,27 @@ export const BundleCard: FC<BundleCardProps> = ({
                     className="zenith-bundle__stage"
                     style={{ '--zenith-bundle-rail': `${railWidth}px` } as CSSProperties}
                 >
-                    {/* Keyed by widget id, never by slot — see `BundleSwitch.layers`. */}
-                    {layers.map((id) => (
-                        <div
-                            className={`zenith-bundle__layer ${id === targetId ? '' : 'is-leaving'}`}
-                            key={id}
-                            ref={layerRef(id)}
-                        >
-                            {renderMember(id, railWidth)}
-                        </div>
-                    ))}
+                    {/* A window of their own around the members, notched where
+                        the rail sits — see the stylesheet. The layers cannot
+                        carry the notch themselves: `clip-path` travels with an
+                        element's transform, and these slide. */}
+                    <div className="zenith-bundle__layers">
+                        {/* Keyed by widget id, never by slot — see `CrossFade.layers`. */}
+                        {layers.map((id) => (
+                            <div
+                                className={`zenith-bundle__layer ${id === targetId ? '' : 'is-leaving'}`}
+                                key={id}
+                                ref={layerRef(id)}
+                            >
+                                {renderMember(id, railWidth)}
+                            </div>
+                        ))}
+                    </div>
 
                     {/* Outside the layers on purpose: the pips belong to the
                         bundle, not to whichever member is on top, so they hold
                         still while the cards cross-fade underneath them. */}
-                    <div className="zenith-bundle__rail">
+                    <div className="zenith-bundle__rail" ref={railEl}>
                         {/* What the pips are pips OF. Without it a rail of
                             dots is just a rail of dots — the shoulder behind the
                             card says "there is more here" only to someone who

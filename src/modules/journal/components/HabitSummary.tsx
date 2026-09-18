@@ -2,7 +2,7 @@ import React, { type CSSProperties, type FC } from 'react';
 import { useTranslation } from '../../../core/i18n';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import type { HabitRow, HabitSummary as Summary } from '../services/habitMonth';
-import { useCountUp } from './useCountUp';
+import { useCountUp } from '../../../components/shared/useCountUp';
 
 interface HabitSummaryProps {
     summary: Summary;

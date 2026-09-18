@@ -84,3 +84,28 @@ export function terminatorRatio(fraction: number): number {
 export function litOnRight(waxing: boolean, latitude: number): boolean {
     return latitude >= 0 ? waxing : !waxing;
 }
+
+/**
+ * Days from a position in the lunation forward to the next time the moon
+ * reaches `target` (0 = new, 0.5 = full).
+ *
+ * Always forwards: the wrap is what makes "three days after full" answer
+ * "twenty-six days until the next full moon" rather than a negative number.
+ */
+export function daysUntilPhase(fraction: number, target: number): number {
+    const ahead = (((target - fraction) % 1) + 1) % 1;
+    return ahead * SYNODIC_DAYS;
+}
+
+export interface NextMoonPhase {
+    /** Only the two anyone waits for. */
+    phase: 'new' | 'full';
+    days: number;
+}
+
+/** Whichever of the new or full moon comes first, and how far off it is. */
+export function nextNamedPhase(fraction: number): NextMoonPhase {
+    const toNew = daysUntilPhase(fraction, 0);
+    const toFull = daysUntilPhase(fraction, 0.5);
+    return toFull <= toNew ? { phase: 'full', days: toFull } : { phase: 'new', days: toNew };
+}

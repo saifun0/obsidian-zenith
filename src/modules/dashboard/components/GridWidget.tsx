@@ -2,7 +2,7 @@ import React, { useEffect, useRef, type CSSProperties, type FC } from 'react';
 import { RotateCcw, SlidersHorizontal, X } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
-import { prettifyWidgetId } from '../widgets';
+import { widgetLabel } from '../widgets';
 import type { DashboardWidgetContext, DashboardWidgetDefinition } from '../widgets';
 import { useTranslation } from '../../../core/i18n';
 
@@ -46,6 +46,12 @@ export const DomWidgetHost: FC<{ def: DashboardWidgetDefinition; ctx: DashboardW
 
 interface GridWidgetProps {
     def: DashboardWidgetDefinition;
+    /**
+     * This card's layout id. The same as the widget's own id for the first
+     * copy; `picture.frame#2` and up for the rest. It is what the widget's own
+     * settings are stored under, so it goes to both faces of the card.
+     */
+    instanceId: string;
     ctx: DashboardWidgetContext;
     /** Absolute placement (grid mode) or plain height (stacked mode). */
     style: CSSProperties;
@@ -97,6 +103,7 @@ interface GridWidgetProps {
  */
 export const GridWidget: FC<GridWidgetProps> = ({
     def,
+    instanceId,
     ctx,
     style,
     editing = false,
@@ -120,7 +127,8 @@ export const GridWidget: FC<GridWidgetProps> = ({
 }) => {
     const t = useTranslation();
     const Body = def.component;
-    const title = def.title ?? prettifyWidgetId(def.id);
+    const Settings = def.settings;
+    const title = widgetLabel(def, t);
 
     const press = useRef<{ x: number; y: number } | null>(null);
     const front = useRef<HTMLDivElement>(null);
@@ -265,7 +273,11 @@ export const GridWidget: FC<GridWidgetProps> = ({
                             <span className="zenith-widget-card__title">{title}</span>
                         </div>
                         <div className="zenith-widget-card__body">
-                            {Body ? <Body size={size} /> : <DomWidgetHost def={def} ctx={ctx} />}
+                            {Body ? (
+                                <Body size={size} instanceId={instanceId} />
+                            ) : (
+                                <DomWidgetHost def={def} ctx={ctx} />
+                            )}
                         </div>
                     </div>
                 )}
@@ -336,6 +348,13 @@ export const GridWidget: FC<GridWidgetProps> = ({
                             t('dashboard.widget.shorter'),
                             t('dashboard.widget.taller')
                         )}
+
+                        {/* The widget's own settings, under the ones every
+                            widget has. They belong to THIS card rather than to
+                            the widget, which is why they are here and not on a
+                            module's settings page: that page has no way to say
+                            which of three pictures is being talked about. */}
+                        {Settings && <Settings instanceId={instanceId} />}
 
                         {panelExtra}
                     </div>

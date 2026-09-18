@@ -35,6 +35,7 @@ export class WeatherModule extends BaseModule {
             this.plugin.registerDashboardWidget({
                 id: 'weather.forecast',
                 title: 'Weather',
+                titleKey: 'widget.weather',
                 icon: 'cloud-sun',
                 description: 'Current conditions, hourly and multi-day forecast.',
                 sizes: ['sm', 'md', 'lg'],

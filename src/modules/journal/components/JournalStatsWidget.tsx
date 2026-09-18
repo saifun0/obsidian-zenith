@@ -1,5 +1,5 @@
 import React, { useMemo, type FC } from 'react';
-import { NotebookPen, CalendarDays } from 'lucide-react';
+import { NotebookPen, CalendarDays, Flame, CheckCircle2 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
@@ -8,43 +8,48 @@ import { activeTrackers } from '../../../core/journalConfig';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import type { WidgetSize } from '../../dashboard/grid/gridTypes';
 import { journalStats } from '../services/journalStats';
-import { TrackerStatRow, type TrackerRowScale } from './TrackerStatRow';
+import { TrackerDial, type TrackerDialScale } from './TrackerDial';
 
 const WINDOW_DAYS = 30;
 
-interface SizeLayout extends TrackerRowScale {
-    rows: number;
-    /** The three-up metric row. */
+interface SizeLayout extends TrackerDialScale {
+    /** The three-up journal metrics under the dial. */
     metrics: boolean;
 }
 
 /**
  * What each size shows.
  *
- * Three different summaries rather than one truncated three ways. Every size
- * shows the whole window — the plot is what says *when* something was
- * recorded, and cropping it to a week would make a small card answer a
- * different question from a large one. What grows is its height.
- *
- * The day-by-day coverage strip that used to sit under the header is gone: the
- * plots under every tracker already say which days were recorded, and saying
- * it twice cost the rows the room they needed.
+ * The dial is on every one of them — it *is* the card — and what grows around
+ * it is context: the basis under the figure, then the active tracker's window
+ * as a plot, then the three journal-wide numbers that belong to no tracker at
+ * all. A small card is not the dial cropped; it is the dial with nothing else
+ * competing for the height.
  */
 const LAYOUT: Record<WidgetSize, SizeLayout> = {
-    sm: { rows: 3, metrics: false, plotHeight: 12, showBasis: false },
-    md: { rows: 5, metrics: false, plotHeight: 16, showBasis: true },
-    lg: { rows: 6, metrics: true, plotHeight: 20, showBasis: true },
+    sm: { showBasis: false, plotHeight: 0, metrics: false },
+    md: { showBasis: true, plotHeight: 0, metrics: false },
+    lg: { showBasis: true, plotHeight: 22, metrics: true },
 };
 
 /**
- * JournalStatsWidget — what the journal has collected, and nothing to click.
+ * JournalStatsWidget — what the journal has collected, one thing at a time.
  *
- * The card now leads with how much data it is standing on. "3 / 30" was a 10px
- * footnote under an eyebrow, which put the caveat to every average below it in
- * the smallest type on the card; it is the headline instead.
+ * This was a list: every tracker got a row, and each row set its figure — the
+ * thing the row exists to say — in the smallest type on it. Four trackers made
+ * four cramped lines and a footnote reading "one more, in the journal", which
+ * is a list apologising for being a list.
+ *
+ * Now one tracker stands in the middle of the card and the rest are on the ring
+ * around it, and the dial moves on by itself. See `TrackerDial`.
+ *
+ * The header keeps what belongs to the journal rather than to any tracker: how
+ * much of the window was written on, and the streak. It lost its own small
+ * coverage ring when the dial arrived — two arcs on one card, at two scales,
+ * meaning two different things, is one arc too many.
  *
  * Deliberately read-only: values are set in the check-in widget, in the note's
- * own block, or in the journal view, and the button at the bottom goes there.
+ * own block, or in the journal view, and the corner button goes there.
  */
 export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const t = useTranslation();
@@ -60,8 +65,6 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
     );
 
     const layout = LAYOUT[size];
-    const shown = stats.trackers.slice(0, layout.rows);
-    const hidden = stats.trackers.length - shown.length;
 
     const openJournal = () => void plugin.moduleManager.get('journal')?.activateView();
 
@@ -82,50 +85,46 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
         { key: 'words', value: String(stats.words), label: t('journal.stats.wordsInWindow') },
     ];
 
-    const covered = stats.windowDays > 0 ? (stats.inRange / stats.windowDays) * 100 : 0;
-
     return (
         <div className={`zenith-jw zenith-jw--stats zenith-jw--${size}`}>
-            {/* The ring is the coverage and the number sits inside it: the
-                share reads at a glance, the count still reads exactly. The
-                streak moves out to a chip of its own — it is a different
-                quantity, and sharing a line with the coverage buried it. */}
+            {/* One line, and it is about the journal: the dial below is about
+                one tracker, and the two must not look like the same claim. */}
             <div className="zenith-jw__head">
-                <span
-                    className="zenith-jw__ring"
-                    style={{ ['--jw-covered' as string]: `${covered}%` }}
-                >
-                    <span className="zenith-jw__ring-num">{stats.inRange}</span>
-                </span>
                 <span className="zenith-jw__head-text">
                     <span className="zenith-jw__head-main">
-                        {t('journal.widget.coverage', {
-                            count: stats.inRange,
-                            days: stats.windowDays,
-                        })}
+                        <CheckCircle2 size={13} className="zenith-jw__head-icon" />
+                        <span>
+                            {t('journal.widget.coverage', {
+                                count: stats.inRange,
+                                days: stats.windowDays,
+                            })}
+                        </span>
                     </span>
-                    {size !== 'sm' && (
-                        <span className="zenith-jw__head-sub">{t('journal.stats.daysRecorded')}</span>
-                    )}
                 </span>
                 <span className="zenith-jw__streak">
-                    {t('journal.stats.streakShort')} {stats.currentStreak}
+                    <Flame size={12} className="zenith-jw__streak-flame" />
+                    <span>{t('journal.stats.streakShort')} {stats.currentStreak}</span>
                 </span>
-                {/* In the corner, unlabelled: the card is a summary you read,
-                    and the way out of it does not need a line of its own at the
-                    bottom — that line was the widest element on a small card
-                    and said what its icon already says. */}
                 <button
                     className="zenith-jw__open"
                     onClick={openJournal}
                     aria-label={t('journal.widget.openJournal')}
                     title={t('journal.widget.openJournal')}
                 >
-                    <CalendarDays size={15} />
+                    <CalendarDays size={14} />
                 </button>
             </div>
 
-            {layout.metrics && (
+            {stats.trackers.length === 0 ? (
+                <div className="zenith-jw__empty">
+                    <NotebookPen size={24} strokeWidth={1.5} />
+                    <span>{t('journal.noTrackers')}</span>
+                </div>
+            ) : (
+                <TrackerDial stats={stats.trackers} scale={layout} />
+            )}
+
+            {layout.metrics && stats.trackers.length > 0 && (
                 <div className="zenith-jw__metrics">
                     {metrics.map((m) => (
                         <div key={m.key} className="zenith-jw__metric">
@@ -134,23 +133,6 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
                         </div>
                     ))}
                 </div>
-            )}
-
-            {stats.trackers.length === 0 ? (
-                <div className="zenith-jw__empty">
-                    <NotebookPen size={24} strokeWidth={1.5} />
-                    <span>{t('journal.noTrackers')}</span>
-                </div>
-            ) : (
-                <ul className="zenith-jrows">
-                    {shown.map((stat) => (
-                        <TrackerStatRow key={stat.tracker.id} stat={stat} scale={layout} />
-                    ))}
-                </ul>
-            )}
-
-            {hidden > 0 && (
-                <span className="zenith-jw__more">{t('journal.widget.more', { count: hidden })}</span>
             )}
         </div>
     );

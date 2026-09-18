@@ -77,6 +77,23 @@
     --zenith-sky-day: rgba(255, 200, 110, 0.13);
     --zenith-sky-night: rgba(70, 100, 180, 0.05);
 
+    /* And the sun tab'''s own sky, painted over that wash: the specks it comes
+       out in after dusk, and the cloud that drifts across it by day. Stated per
+       theme for the same reason — a white star is invisible on white paper. */
+    --zenith-star: #e6ecff;
+    --zenith-cloud: rgba(226, 232, 240, 0.5);
+    /* The moon’s unlit half. Not the form-field grey — on a light theme that is
+       a pale disc against a pale disc, and the phase disappears. */
+    --zenith-moon-shadow: #2b3040;
+
+    /* The condition glyph. A cloud has to read as a cloud on either paper, so
+       the near one is stated per theme and the far one goes the other way —
+       towards the background it is receding into. */
+    --zenith-glyph-cloud: #ccd5e6;
+    --zenith-glyph-cloud-far: #7c8699;
+    --zenith-glyph-moon: #f2efe2;
+    --zenith-glyph-snow: #eaf1ff;
+
     /* ── Spacing Scale ──────────────────────────── */
     --zenith-space-xs: 4px;
     --zenith-space-sm: 8px;
@@ -91,6 +108,14 @@
 .theme-light .zenith-root {
     --zenith-sky-day: rgba(255, 186, 60, 0.10);
     --zenith-sky-night: rgba(40, 60, 120, 0.10);
+    --zenith-star: #7385b5;
+    --zenith-cloud: rgba(100, 116, 139, 0.2);
+    --zenith-moon-shadow: #b7bcc7;
+    --zenith-glyph-cloud: #99a3b5;
+    --zenith-glyph-cloud-far: #c6ccd8;
+    /* A pale moon and white flakes are invisible on white paper. */
+    --zenith-glyph-moon: #9c957f;
+    --zenith-glyph-snow: #8ea3c6;
 }
 
 /* ── Density ──

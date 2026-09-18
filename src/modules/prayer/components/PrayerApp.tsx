@@ -13,6 +13,7 @@ import { hasEntered, nextPrayer, type PrayerTimeId } from '../prayerTimes';
 import { hijriMonthKey } from '../hijri';
 import {
     useDayTimes,
+    useTimesFallback,
     useHijri,
     useNowMinutes,
     usePrayerDays,
@@ -52,6 +53,7 @@ export const PrayerApp: FC = () => {
 
     const place = usePrayerPlace();
     const day = useDayTimes(selected);
+    const fallback = useTimesFallback(selected);
     const days = usePrayerDays();
     const extras = usePrayerExtras();
     const nowMinutes = useNowMinutes();
@@ -120,6 +122,7 @@ export const PrayerApp: FC = () => {
                 }
                 placeLabel={placeLabel(place)}
                 methodLabel={t(`prayer.method.${settings.prayerMethod}`)}
+                fallback={fallback}
                 isToday={isToday}
                 next={next}
                 times={times}

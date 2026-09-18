@@ -3,6 +3,7 @@ import { useZenithStore } from '../store';
 import { TaskParser } from '../modules/tasks/services/taskParser';
 import { ContentParser } from '../modules/content/services/contentParser';
 import { JournalParser } from '../modules/journal/services/journalParser';
+import { ProjectParser } from '../modules/projects/services/projectParser';
 import { buildDateMatcher } from '../modules/journal/services/journalDates';
 import type { ZenithSettings } from '../store/settingsSlice';
 import type ZenithPlugin from '../main';
@@ -46,17 +47,20 @@ export class DataService {
     private readonly taskParser: TaskParser;
     private readonly contentParser: ContentParser;
     private readonly journalParser: JournalParser;
+    private readonly projectParser: ProjectParser;
 
     /** Paths touched since the last flush, per collection. */
     private readonly dirtyTasks = new Set<string>();
     private readonly dirtyContent = new Set<string>();
     private readonly dirtyJournal = new Set<string>();
+    private readonly dirtyProjects = new Set<string>();
     private readonly flushDebounced: Debounced;
 
     constructor(private readonly plugin: ZenithPlugin) {
         this.taskParser = new TaskParser(plugin.app);
         this.contentParser = new ContentParser(plugin.app);
         this.journalParser = new JournalParser(plugin.app);
+        this.projectParser = new ProjectParser(plugin.app);
         // Short window: this only coalesces the burst of events a single save
         // produces, not the user's typing — the work behind it is now one file.
         this.flushDebounced = debounce(() => void this.flushDirty(), 150, false);
@@ -102,6 +106,7 @@ export class DataService {
     /** Force a full reload of every collection (used by Refresh buttons). */
     async reloadAll(): Promise<void> {
         await Promise.all([this.reloadTasks(), this.reloadContent(), this.reloadJournal()]);
+        await this.reloadProjects();
     }
 
     async reloadTasks(): Promise<void> {
@@ -115,6 +120,26 @@ export class DataService {
             console.error('Zenith: Failed to parse tasks:', err);
         } finally {
             useZenithStore.getState().setTasksLoading(false);
+        }
+    }
+
+    async reloadProjects(): Promise<void> {
+        const store = useZenithStore.getState();
+        const { projectsFolderPath, activeModuleIds } = store.settings;
+        if (!activeModuleIds.includes('projects') || !projectsFolderPath?.trim()) {
+            store.setProjects([]);
+            return;
+        }
+        store.setProjectsLoading(true);
+        try {
+            const allTasks = store.tasks;
+            const projects = await this.projectParser.parseProjects(projectsFolderPath, allTasks);
+            useZenithStore.getState().setProjects(projects);
+            this.dirtyProjects.clear();
+        } catch (err) {
+            console.error('Zenith: Failed to parse projects:', err);
+        } finally {
+            useZenithStore.getState().setProjectsLoading(false);
         }
     }
 
@@ -144,11 +169,14 @@ export class DataService {
      * hold tasks just the same.
      */
     private taskFolders(): string[] {
-        const { tasksFolderPath, journalFolderPath, activeModuleIds } =
+        const { tasksFolderPath, journalFolderPath, projectsFolderPath, activeModuleIds } =
             useZenithStore.getState().settings;
         const folders = [tasksFolderPath];
         if (activeModuleIds.includes('journal') && journalFolderPath.trim()) {
             folders.push(journalFolderPath);
+        }
+        if (activeModuleIds.includes('projects') && projectsFolderPath?.trim()) {
+            folders.push(projectsFolderPath);
         }
         return folders;
     }
@@ -179,7 +207,7 @@ export class DataService {
         if (!isMd && !oldPath) return;
 
         const settings = useZenithStore.getState().settings;
-        const { contentFolderPath, journalFolderPath } = settings;
+        const { contentFolderPath, journalFolderPath, projectsFolderPath } = settings;
         const taskFolders = this.taskFolders();
         const dailyNotesWatched = watchesDailyNotes(settings);
         const paths = [file.path, oldPath].filter((p): p is string => !!p);
@@ -192,6 +220,10 @@ export class DataService {
             }
             if (this.isInFolder(path, contentFolderPath)) {
                 this.dirtyContent.add(path);
+                scheduled = true;
+            }
+            if (projectsFolderPath && this.isInFolder(path, projectsFolderPath)) {
+                this.dirtyProjects.add(path);
                 scheduled = true;
             }
             // A daily note is both a journal entry and a possible task source,
@@ -216,9 +248,11 @@ export class DataService {
         const taskPaths = [...this.dirtyTasks];
         const contentPaths = [...this.dirtyContent];
         const journalPaths = [...this.dirtyJournal];
+        const projectPaths = [...this.dirtyProjects];
         this.dirtyTasks.clear();
         this.dirtyContent.clear();
         this.dirtyJournal.clear();
+        this.dirtyProjects.clear();
 
         for (const path of taskPaths) {
             try {
@@ -238,6 +272,23 @@ export class DataService {
             } catch (err) {
                 console.error(`Zenith: Failed to parse content in "${path}":`, err);
             }
+        }
+
+        for (const path of projectPaths) {
+            try {
+                const file = this.plugin.app.vault.getAbstractFileByPath(path);
+                const project =
+                    file instanceof TFile
+                        ? await this.projectParser.parseFile(file, useZenithStore.getState().tasks)
+                        : null;
+                useZenithStore.getState().replaceProjectForFile(path, project);
+            } catch (err) {
+                console.error(`Zenith: Failed to parse project in "${path}":`, err);
+            }
+        }
+
+        if (taskPaths.length > 0 && projectPaths.length === 0) {
+            void this.reloadProjects();
         }
 
         if (journalPaths.length > 0) {

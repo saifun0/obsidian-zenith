@@ -3,9 +3,10 @@ import type { TaskSlice } from './taskSlice';
 import type { ContentSlice } from './contentSlice';
 import type { JournalSlice } from './journalSlice';
 import type { SettingsSlice } from './settingsSlice';
+import type { ProjectSlice } from './projectSlice';
 
 /** The full combined store shape. */
-export type ZenithStore = TaskSlice & ContentSlice & JournalSlice & SettingsSlice;
+export type ZenithStore = TaskSlice & ContentSlice & JournalSlice & SettingsSlice & ProjectSlice;
 
 /**
  * Typed slice creator for the Zenith store.

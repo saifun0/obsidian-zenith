@@ -29,10 +29,7 @@ export class ContentModule extends BaseModule {
     }
 
     async onload(): Promise<void> {
-        this.registerView(
-            VIEW_TYPE_CONTENT,
-            (leaf) => new ContentView(leaf, this.plugin)
-        );
+        this.registerView(VIEW_TYPE_CONTENT, (leaf) => new ContentView(leaf, this.plugin));
 
         this.addCommand({
             id: 'open-content',
@@ -45,9 +42,12 @@ export class ContentModule extends BaseModule {
             this.plugin.registerDashboardWidget({
                 id: 'content.overview',
                 title: 'Content',
+                titleKey: 'widget.content',
                 description: 'Library status at a glance and what to continue next.',
                 icon: 'library',
-                sizes: ['md', 'lg'],
+                // Small is real now: the card leads with one item and a
+                // meter, which is a composition a half-width cell can hold.
+                sizes: ['sm', 'md', 'lg'],
                 defaultSize: 'md',
                 order: 40,
                 component: ContentWidget,

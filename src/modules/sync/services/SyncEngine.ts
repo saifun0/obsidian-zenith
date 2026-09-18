@@ -44,6 +44,36 @@ export interface SyncProgress {
     done: number;
     total: number;
     key: string;
+    /**
+     * Bytes moved so far, against what the plan expects to move.
+     *
+     * Counted rather than measured: the size comes from the plan's own entities,
+     * so it is what the two sides claimed before the run began. That is enough
+     * for a rate and an estimate and is not enough to bill anyone for — a file
+     * edited between the preview and the run moves a different number of bytes
+     * than this says, and encryption adds its own overhead on top.
+     *
+     * A run is counted in files as well because a deletion moves nothing at all:
+     * a plan that only removes paths would otherwise sit at zero of zero bytes
+     * for its whole length, which reads as a stuck progress bar.
+     */
+    bytes: number;
+    totalBytes: number;
+    /** When the run began — a rate is this and the clock, and nothing else. */
+    startedAt: number;
+}
+
+/**
+ * How much a single decision moves.
+ *
+ * The larger of the two sides, because a push sends the local copy and a pull
+ * fetches the remote one and only one of the two is ever set for a creation.
+ * Deletions are zero: removing a path transfers no content, and counting its
+ * old size would make a run that frees space look like a run that spends it.
+ */
+function itemBytes(item: SyncPlanItem): number {
+    if (isDeletion(item)) return 0;
+    return Math.max(item.local?.size ?? 0, item.remote?.size ?? 0);
 }
 
 /** What a `smart` conflict actually resolved to, once the contents were read. */
@@ -140,6 +170,10 @@ export class SyncEngine {
         const merges: MergeOutcomeReport[] = [];
         const settled = new Map<string, PrevSyncRecord | null>();
         let done = 0;
+        let bytes = 0;
+
+        const totalBytes = work.reduce((sum, item) => sum + itemBytes(item), 0);
+        const startedAt = Date.now();
 
         const run = async (item: SyncPlanItem) => {
             try {
@@ -152,7 +186,19 @@ export class SyncEngine {
                 failed.push({ key: item.key, error: describe(err) });
             } finally {
                 done++;
-                opts.onProgress?.({ done, total: work.length, key: item.key });
+                // Counted on the way out whether the item succeeded or not: the
+                // bar is reporting how far through the WORK the run is, and a
+                // failure is a finished attempt. Skipping it would leave the bar
+                // permanently short of the end on any run with a bad file in it.
+                bytes += itemBytes(item);
+                opts.onProgress?.({
+                    done,
+                    total: work.length,
+                    key: item.key,
+                    bytes,
+                    totalBytes,
+                    startedAt,
+                });
             }
         };
 

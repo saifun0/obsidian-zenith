@@ -58,6 +58,7 @@ export class JournalModule extends BaseModule {
             this.plugin.registerDashboardWidget({
                 id: 'journal.checkin',
                 title: 'Check-in',
+                titleKey: 'widget.checkin',
                 description: "Today's trackers as buttons — the same controls as in the note.",
                 icon: 'circle-check',
                 sizes: ['sm', 'md', 'lg'],
@@ -68,6 +69,7 @@ export class JournalModule extends BaseModule {
             this.plugin.registerDashboardWidget({
                 id: 'journal.stats',
                 title: 'Journal stats',
+                titleKey: 'widget.journalStats',
                 description: 'Streak, entries and every tracker over the last 30 days.',
                 icon: 'bar-chart-3',
                 sizes: ['sm', 'md', 'lg'],

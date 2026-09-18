@@ -4,8 +4,9 @@ import { useApp } from '../../../context/AppContext';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
 import { RemoteAuthPanel } from './RemoteAuthPanel';
+import { countLine, progressRatio, rateLine } from '../progressFormat';
 import type { FileSyncStatus } from '../services/fileSync';
-import type { SyncRunResult } from '../services/SyncEngine';
+import type { SyncProgress, SyncRunResult } from '../services/SyncEngine';
 import {
     ACTIONABLE_DECISIONS,
     type SyncDecision,
@@ -154,16 +155,12 @@ export const FileSyncPanel: React.FC = () => {
                         </p>
                     )}
 
-                    {busy && (
-                        <p className="zenith-sync__hint">
-                            {status.progress
-                                ? t('sync.files.progress', {
-                                      done: String(status.progress.done),
-                                      total: String(status.progress.total),
-                                  })
-                                : t('sync.files.working')}
-                        </p>
-                    )}
+                    {busy &&
+                        (status.progress ? (
+                            <SyncProgressBar progress={status.progress} />
+                        ) : (
+                            <p className="zenith-sync__hint">{t('sync.files.working')}</p>
+                        ))}
 
                     {plan && <PlanReview plan={plan} />}
 
@@ -171,6 +168,48 @@ export const FileSyncPanel: React.FC = () => {
                 </>
             )}
         </section>
+    );
+};
+
+/**
+ * The run, on the page it was started from.
+ *
+ * The same numbers the notice carries — see `SyncProgressNotice`, which is
+ * where they follow the user once they leave this tab. Both read
+ * `progressFormat`, so a rate never differs between the two places it is shown.
+ *
+ * The clock is its own state rather than the progress object's: between two
+ * files of a slow transfer nothing re-renders, and a rate that only updates
+ * when a file lands reads as a stalled one.
+ */
+const SyncProgressBar: React.FC<{ progress: SyncProgress }> = ({ progress }) => {
+    const t = useTranslation();
+    const [now, setNow] = useState(() => Date.now());
+
+    useEffect(() => {
+        const timer = window.setInterval(() => setNow(Date.now()), 500);
+        return () => window.clearInterval(timer);
+    }, []);
+
+    const percent = Math.round(progressRatio(progress) * 100);
+
+    return (
+        <div
+            className="zenith-sync__progress"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={progress.total}
+            aria-valuenow={progress.done}
+        >
+            <div className="zenith-sync__progressHead">
+                <span>{countLine(progress)}</span>
+                <span className="zenith-sync__peerMeta">{rateLine(progress, now, t)}</span>
+            </div>
+            <div className="zenith-sync__bar">
+                <div className="zenith-sync__barFill" style={{ width: `${percent}%` }} />
+            </div>
+            <span className="zenith-sync__progressFile">{progress.key}</span>
+        </div>
     );
 };
 
@@ -270,7 +309,10 @@ const PlanReview: React.FC<{ plan: SyncPlan }> = ({ plan }) => {
 
             <ul className="zenith-sync__planList">
                 {rows.slice(0, MAX_ROWS).map((item) => (
-                    <li key={item.key} className={`zenith-sync__planRow is-${severity(item.decision)}`}>
+                    <li
+                        key={item.key}
+                        className={`zenith-sync__planRow is-${severity(item.decision)}`}
+                    >
                         <span className="zenith-sync__planAction">
                             {t(`sync.decision.${item.decision}`)}
                         </span>

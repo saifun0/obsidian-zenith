@@ -31,7 +31,12 @@ import type { WeatherData } from '../weatherTypes';
 /** How far back to look for a pressure trend. Three hours is the standard window. */
 const TREND_HOURS = 3;
 
-const Metric: React.FC<{
+/**
+ * One labelled reading. Exported because the Sun tab states its facts in the
+ * same shape, and two tile designs across two tabs of one panel would read as
+ * two panels.
+ */
+export const Metric: React.FC<{
     icon: React.ReactNode;
     label: string;
     value: React.ReactNode;

@@ -9,15 +9,16 @@ import { vaultModuleFs } from './core/moduleFs';
 import { iconRegistry, loadIconPacks, type IconPackReport } from './core/icons';
 import { DashboardModule } from './modules/dashboard/DashboardModule';
 import { NavigatorModule } from './modules/navigator/NavigatorModule';
+import { PictureModule } from './modules/picture/PictureModule';
 import { WeatherModule } from './modules/weather/WeatherModule';
 import { TasksModule } from './modules/tasks/TasksModule';
 import { TasksCalendarModule } from './modules/tasks-calendar/TasksCalendarModule';
 import { ContentModule } from './modules/content/ContentModule';
+import { ProjectsModule } from './modules/projects/ProjectsModule';
 import { JournalModule } from './modules/journal/JournalModule';
 import { PrayerModule } from './modules/prayer/PrayerModule';
 import { MediaModule } from './modules/media/MediaModule';
 import { SyncModule } from './modules/sync/SyncModule';
-import { CanvasModule } from './modules/canvas/CanvasModule';
 import { useZenithStore, resetZenithStore } from './store';
 import type { ZenithSettings } from './store';
 import type { SettingsSyncService } from './modules/sync/services/settingsSync';
@@ -135,15 +136,16 @@ export default class ZenithPlugin extends Plugin {
         this.moduleManager.init(this);
         this.moduleManager.register(new DashboardModule(this));
         this.moduleManager.register(new NavigatorModule(this));
+        this.moduleManager.register(new PictureModule(this));
         this.moduleManager.register(new WeatherModule(this));
         this.moduleManager.register(new TasksModule(this));
         this.moduleManager.register(new TasksCalendarModule(this));
         this.moduleManager.register(new ContentModule(this));
+        this.moduleManager.register(new ProjectsModule(this));
         this.moduleManager.register(new JournalModule(this));
         this.moduleManager.register(new PrayerModule(this));
         this.moduleManager.register(new MediaModule(this));
         this.moduleManager.register(new SyncModule(this));
-        this.moduleManager.register(new CanvasModule(this));
 
         // Only run code the user has already approved, and decide that without
         // asking anything: this runs during `onload`, where a dialog would

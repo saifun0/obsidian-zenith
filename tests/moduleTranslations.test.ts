@@ -11,26 +11,28 @@ import {
 import { localizeModule, moduleDescriptionKey, moduleNameKey } from '../src/core/moduleLabels';
 import { validateManifest } from '../src/core/moduleManifestSchema';
 
-import { canvasTranslations } from '../src/modules/canvas/i18n';
 import { contentTranslations } from '../src/modules/content/i18n';
 import { dashboardTranslations } from '../src/modules/dashboard/i18n';
 import { journalTranslations } from '../src/modules/journal/i18n';
 import { mediaTranslations } from '../src/modules/media/i18n';
 import { navigatorTranslations } from '../src/modules/navigator/i18n';
+import { pictureTranslations } from '../src/modules/picture/i18n';
 import { prayerTranslations } from '../src/modules/prayer/i18n';
+import { projectsTranslations } from '../src/modules/projects/i18n';
 import { syncTranslations } from '../src/modules/sync/i18n';
 import { tasksTranslations } from '../src/modules/tasks/i18n';
 import { tasksCalendarTranslations } from '../src/modules/tasks-calendar/i18n';
 import { weatherTranslations } from '../src/modules/weather/i18n';
 
 const BUILT_IN: Array<[string, TranslationTable]> = [
-    ['canvas', canvasTranslations],
     ['content', contentTranslations],
     ['dashboard', dashboardTranslations],
     ['journal', journalTranslations],
     ['media', mediaTranslations],
     ['navigator', navigatorTranslations],
+    ['picture', pictureTranslations],
     ['prayer', prayerTranslations],
+    ['projects', projectsTranslations],
     ['sync', syncTranslations],
     ['tasks', tasksTranslations],
     ['tasks-calendar', tasksCalendarTranslations],
@@ -48,7 +50,7 @@ const translatorFor = (locale: 'en' | 'ru') =>
 describe('registerTranslations', () => {
     afterEach(() => {
         clearTranslations('demo');
-        clearTranslations('canvas');
+        clearTranslations('journal');
     });
 
     it('answers in the reader’s language', () => {
@@ -74,9 +76,9 @@ describe('registerTranslations', () => {
     });
 
     it('cannot take a key Zenith already answers in that language', () => {
-        const before = translate('ru', 'canvas.notice.straightened');
-        registerTranslations('canvas', { ru: { 'canvas.notice.straightened': 'нет' } });
-        expect(translate('ru', 'canvas.notice.straightened')).toBe(before);
+        const before = translate('ru', 'journal.title');
+        registerTranslations('journal', { ru: { 'journal.title': 'нет' } });
+        expect(translate('ru', 'journal.title')).toBe(before);
     });
 
     it('takes the strings back when the module goes', () => {

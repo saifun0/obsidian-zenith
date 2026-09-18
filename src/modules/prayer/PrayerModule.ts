@@ -12,9 +12,10 @@ import { PrayerReminderService } from './PrayerReminderService';
 import { PrayerWidget } from './components/PrayerWidget';
 import { prayerSettingsSchema } from './settings.schema';
 import { setPrayerStatus, statusForTap } from './prayerActions';
-import { prayerCalcOptions, prayerPlaceOf } from './prayerOptions';
+import { prayerPlaceOf } from './prayerOptions';
+import { dayTimesFor, ensurePrayerDay } from './prayerSource';
 import { PRAYERS } from './prayerConfig';
-import { currentPrayer, formatClock, minutesOfDay, prayerTimes } from './prayerTimes';
+import { currentPrayer, formatClock, minutesOfDay } from './prayerTimes';
 import type ZenithPlugin from '../../main';
 import { prayerTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
@@ -22,15 +23,22 @@ import type { TranslationTable } from '../../core/i18n';
 /**
  * PrayerModule — prayer times and a record of what was prayed.
  *
- * Times are computed on the device from the chosen coordinates, so the module
- * works offline and sends nothing anywhere. What was prayed goes into the daily
- * note's frontmatter (`fajr: ontime`), which means the log is ordinary Markdown:
- * greppable, syncable, and still readable if Zenith is ever uninstalled.
+ * Times come from a published calendar service by default, because a tracker
+ * that disagrees with the mosque down the road is worse than no tracker; the
+ * on-device calculation stays underneath it and answers whenever the service
+ * cannot be reached, so the module still works with no network at all. Which
+ * one is in charge is a setting, and coordinates are the only thing that ever
+ * leaves — see `prayerApi.ts`.
+ *
+ * What was prayed goes into the daily note's frontmatter (`fajr: ontime`),
+ * which means the log is ordinary Markdown: greppable, syncable, and still
+ * readable if Zenith is ever uninstalled.
  */
 export class PrayerModule extends BaseModule {
     readonly id = 'prayer';
     readonly name = 'Prayer';
-    readonly description = 'Prayer times, computed locally, and a record of what you prayed.';
+    readonly description =
+        'Prayer times, from a published calendar or computed here, and a record of what you prayed.';
     readonly icon = 'moon-star';
 
     getTranslations(): TranslationTable {
@@ -81,6 +89,7 @@ export class PrayerModule extends BaseModule {
             this.plugin.registerDashboardWidget({
                 id: 'prayer.times',
                 title: 'Prayer',
+                titleKey: 'widget.prayer',
                 icon: 'moon-star',
                 description: "The next prayer, a countdown, and today's five at a tap.",
                 sizes: ['sm', 'md', 'lg'],
@@ -131,11 +140,15 @@ export class PrayerModule extends BaseModule {
             return null;
         }
         const now = new Date();
+        // A command run from the palette is the one place nothing has been on
+        // screen to start the fetch, so it is kicked off here; this run still
+        // answers from the calculation.
+        ensurePrayerDay(place, now, settings);
         return {
             settings,
             locale,
             now,
-            times: prayerTimes(place, now, prayerCalcOptions(settings, now)).times,
+            times: dayTimesFor(place, now, settings).times,
         };
     }
 

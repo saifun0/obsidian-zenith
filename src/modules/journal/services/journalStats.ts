@@ -67,6 +67,55 @@ export interface TrackerPoint {
     value: number | null;
 }
 
+/** How one tracker's window reads as a rhythm rather than as a total. */
+export interface TrackerHistory {
+    /** Consecutive recorded days ending at the window's last day. */
+    currentRun: number;
+    /** The longest run of consecutive recorded days anywhere in the window. */
+    bestRun: number;
+    /** Days since the last recorded one — 0 is today, null is never. */
+    sinceLast: number | null;
+}
+
+/**
+ * The three things a coverage figure cannot say.
+ *
+ * "Eleven days of thirty" is the same number whether they were eleven in a row
+ * or one every third day, and the same again whether the last of them was this
+ * morning or three weeks ago. These are what tell those cases apart, and they
+ * come out of one pass over the series because they are three readings of the
+ * same thing.
+ *
+ * `currentRun` forgives an unwritten today for the same reason `currentStreak`
+ * does: the day is not over. Two blank days in a row is what ends a run.
+ */
+export function trackerHistory(series: TrackerPoint[]): TrackerHistory {
+    let bestRun = 0;
+    let run = 0;
+    for (const point of series) {
+        run = point.value === null ? 0 : run + 1;
+        if (run > bestRun) bestRun = run;
+    }
+
+    let sinceLast: number | null = null;
+    for (let i = series.length - 1; i >= 0; i--) {
+        if (series[i].value !== null) {
+            sinceLast = series.length - 1 - i;
+            break;
+        }
+    }
+
+    let cursor = series.length - 1;
+    if (cursor >= 0 && series[cursor].value === null) cursor--;
+    let currentRun = 0;
+    while (cursor >= 0 && series[cursor].value !== null) {
+        currentRun++;
+        cursor--;
+    }
+
+    return { currentRun, bestRun, sinceLast };
+}
+
 export interface TrackerStat {
     tracker: JournalTracker;
     /** Length of the window, repeated here so a row can render standalone. */

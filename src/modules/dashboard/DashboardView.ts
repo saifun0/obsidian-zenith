@@ -36,9 +36,16 @@ export class DashboardView extends ItemView {
     async onOpen(): Promise<void> {
         const container = this.contentEl;
         container.empty();
-        container.addClass('zenith-root');
+        container.addClass('zenith-root', 'zenith-dash-host');
 
-        const mountPoint = container.createDiv();
+        // The wallpaper has to reach the pane's edges, and two things sat in
+        // the way. Obsidian gives `.view-content` an inset of its own, which
+        // under a plain board is pane colour on pane colour and under a
+        // picture is a frame of bare pane around it; and this mount point is
+        // otherwise an anonymous `div` with no height for a short board to
+        // fill. Both are the stylesheet's business — it only needs the two
+        // elements named.
+        const mountPoint = container.createDiv({ cls: 'zenith-dash-mount' });
         this.root = createRoot(mountPoint);
         this.root.render(
             createElement(StrictMode, null,

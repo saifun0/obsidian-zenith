@@ -2,8 +2,10 @@ import { Notice } from 'obsidian';
 import { useZenithStore } from '../../store';
 import { resolveLocale, translate } from '../../core/i18n';
 import { PRAYERS, type PrayerId } from './prayerConfig';
-import { prayerCalcOptions, prayerPlaceOf } from './prayerOptions';
-import { dateAtMinutes, formatClock, prayerTimes } from './prayerTimes';
+import { prayerPlaceOf } from './prayerOptions';
+import { subscribeApi } from './prayerApi';
+import { dayTimesFor, ensurePrayerDay } from './prayerSource';
+import { dateAtMinutes, formatClock } from './prayerTimes';
 
 /**
  * How stale a wake-up may be before its notice is dropped.
@@ -33,9 +35,13 @@ interface Scheduled {
 export class PrayerReminderService {
     private timer: number | null = null;
     private unsubscribe: (() => void) | null = null;
+    private unsubscribeApi: (() => void) | null = null;
 
     start(): void {
         this.schedule();
+        // A month arriving can move the next prayer by a minute or two, and the
+        // timer was aimed with the calculated value — so it is re-aimed.
+        this.unsubscribeApi = subscribeApi(() => this.schedule());
         // Any of these changes the answer to "when is the next prayer" — a
         // moved city or a switched method has to re-aim the timer, not wait for
         // the old one to fire.
@@ -45,6 +51,8 @@ export class PrayerReminderService {
                 return [
                     s.prayerNotify,
                     s.prayerNotifyBefore,
+                    s.prayerSource,
+                    s.prayerApiMidnight,
                     s.prayerMethod,
                     s.prayerAsrMadhab,
                     s.prayerHighLatRule,
@@ -62,6 +70,8 @@ export class PrayerReminderService {
         this.clearTimer();
         this.unsubscribe?.();
         this.unsubscribe = null;
+        this.unsubscribeApi?.();
+        this.unsubscribeApi = null;
     }
 
     private clearTimer(): void {
@@ -124,7 +134,10 @@ export class PrayerReminderService {
 
         for (const offset of [0, 1]) {
             const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
-            const { times } = prayerTimes(place, date, prayerCalcOptions(settings, date));
+            // The same resolution every surface uses: a notice that fired at a
+            // different minute than the widget showed would be worse than none.
+            ensurePrayerDay(place, date, settings);
+            const { times } = dayTimesFor(place, date, settings);
 
             for (const prayer of PRAYERS) {
                 const minutes = times[prayer];

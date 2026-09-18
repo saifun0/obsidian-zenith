@@ -8,6 +8,10 @@ node_modules/
 /manifest.json
 /data.json
 
+# Third-party / external modules
+/modules/
+modules_def/focus-timer/
+
 # Scratch / reference material
 temp/
 

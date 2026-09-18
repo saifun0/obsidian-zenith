@@ -1,17 +1,20 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { useZenithStore } from '../../store';
 import { useNow } from '../../core/useNow';
 import { isoToDate } from '../journal/services/journalDates';
 import type { GeoPlace } from '../../services/geocode';
 import { hijriDate, type HijriDate } from './hijri';
 import { prayerCalcOptions, prayerPlaceOf } from './prayerOptions';
-import { prayerDaysByDate, type PrayerDay } from './prayerStats';
+import { apiRevision, subscribeApi } from './prayerApi';
 import {
-    minutesOfDay,
-    prayerTimes,
-    type DayTimes,
-    type PrayerCalcOptions,
-} from './prayerTimes';
+    dayTimesFor,
+    ensurePrayerDay,
+    prayerApiPending,
+    resolveDayTimes,
+    type PrayerSourceSettings,
+} from './prayerSource';
+import { prayerDaysByDate, type PrayerDay } from './prayerStats';
+import { minutesOfDay, type DayTimes, type PrayerCalcOptions } from './prayerTimes';
 
 /**
  * The hooks every prayer surface shares.
@@ -26,27 +29,29 @@ import {
  */
 
 /**
- * Where to compute for: the prayer module's own place, else whatever the
- * weather module already resolved, else nothing.
+ * Where to compute for: the module's own override, else the plugin-wide
+ * location, else nothing.
  *
- * Borrowing the weather location means the common case needs no setup at all —
- * and the two can still be set apart, which matters for anyone who watches the
- * forecast somewhere they aren't.
+ * One place, set once, is what the common case needs — and the two can still be
+ * set apart, which matters for anyone who watches the forecast somewhere they
+ * aren't.
  */
 export function usePrayerPlace(): GeoPlace | null {
     const prayerPlace = useZenithStore((s) => s.settings.prayerPlace);
-    const weatherPlace = useZenithStore((s) => s.settings.weatherPlace);
-    return prayerPlaceOf({ prayerPlace, weatherPlace });
+    const location = useZenithStore((s) => s.settings.location);
+    return prayerPlaceOf({ prayerPlace, location });
 }
 
 /**
- * Calculation options as configured, for a given day.
+ * Everything either engine reads, as one stable object.
  *
- * The fields are selected one by one rather than taking `settings` whole: this
- * hook feeds a memo that recomputes the whole day, and subscribing to the
- * settings object would redo it every time an unrelated preference changed.
+ * The fields are selected one by one rather than taking `settings` whole: these
+ * feed memos that recompute a whole day, and subscribing to the settings object
+ * would redo that every time an unrelated preference changed.
  */
-export function usePrayerOptions(iso: string): PrayerCalcOptions {
+export function usePrayerSourceSettings(): PrayerSourceSettings {
+    const source = useZenithStore((s) => s.settings.prayerSource);
+    const apiMidnight = useZenithStore((s) => s.settings.prayerApiMidnight);
     const method = useZenithStore((s) => s.settings.prayerMethod);
     const fajrAngle = useZenithStore((s) => s.settings.prayerFajrAngle);
     const ishaAngle = useZenithStore((s) => s.settings.prayerIshaAngle);
@@ -56,32 +61,82 @@ export function usePrayerOptions(iso: string): PrayerCalcOptions {
     const hijriOffset = useZenithStore((s) => s.settings.prayerHijriOffset);
 
     return useMemo(
-        () =>
-            prayerCalcOptions(
-                {
-                    prayerMethod: method,
-                    prayerFajrAngle: fajrAngle,
-                    prayerIshaAngle: ishaAngle,
-                    prayerAsrMadhab: asrMadhab,
-                    prayerHighLatRule: highLatRule,
-                    prayerAdjustments: adjustments,
-                    prayerHijriOffset: hijriOffset,
-                },
-                isoToDate(iso)
-            ),
-        [method, fajrAngle, ishaAngle, asrMadhab, highLatRule, adjustments, hijriOffset, iso]
+        () => ({
+            prayerSource: source,
+            prayerApiMidnight: apiMidnight,
+            prayerMethod: method,
+            prayerFajrAngle: fajrAngle,
+            prayerIshaAngle: ishaAngle,
+            prayerAsrMadhab: asrMadhab,
+            prayerHighLatRule: highLatRule,
+            prayerAdjustments: adjustments,
+            prayerHijriOffset: hijriOffset,
+        }),
+        [
+            source,
+            apiMidnight,
+            method,
+            fajrAngle,
+            ishaAngle,
+            asrMadhab,
+            highLatRule,
+            adjustments,
+            hijriOffset,
+        ]
     );
 }
 
-/** Times for one day, or null when there's nowhere to compute them for. */
+/** Local calculation options as configured, for a given day. */
+export function usePrayerOptions(iso: string): PrayerCalcOptions {
+    const settings = usePrayerSourceSettings();
+    return useMemo(() => prayerCalcOptions(settings, isoToDate(iso)), [settings, iso]);
+}
+
+/**
+ * Times for one day, or null when there's nowhere to compute them for.
+ *
+ * In calendar mode the first frame is still the local calculation — the fetch
+ * has not landed yet, and a prayer view that opens empty while a request flies
+ * would be a worse trade than showing correct astronomy for a second. The
+ * revision counter is what swaps it for the published table when it arrives.
+ */
 export function useDayTimes(iso: string): DayTimes | null {
     const place = usePrayerPlace();
-    const options = usePrayerOptions(iso);
+    const settings = usePrayerSourceSettings();
+    const revision = useSyncExternalStore(subscribeApi, apiRevision, apiRevision);
+
+    useEffect(() => {
+        ensurePrayerDay(place, isoToDate(iso), settings);
+    }, [place, iso, settings]);
 
     return useMemo(() => {
         if (!place) return null;
-        return prayerTimes(place, isoToDate(iso), options);
-    }, [place, iso, options]);
+        return dayTimesFor(place, isoToDate(iso), settings);
+        // `revision` is a dependency without being read: it changes when a
+        // month lands, which is what changes the answer `dayTimesFor` finds in
+        // the cache.
+    }, [place, iso, settings, revision]);
+}
+
+/**
+ * Whether this day is showing the arithmetic because the service could not be
+ * reached — as opposed to because the user chose it, or because the month is
+ * still in flight. Only the first of those is worth a mark on screen.
+ */
+export function useTimesFallback(iso: string): boolean {
+    const place = usePrayerPlace();
+    const settings = usePrayerSourceSettings();
+    const revision = useSyncExternalStore(subscribeApi, apiRevision, apiRevision);
+
+    return useMemo(() => {
+        if (!place || settings.prayerSource !== 'api') return false;
+        const date = isoToDate(iso);
+        return (
+            resolveDayTimes(place, date, settings).origin === 'fallback' &&
+            !prayerApiPending(place, date, settings)
+        );
+        // Same as above: the counter is here to recompute, not to be read.
+    }, [place, iso, settings, revision]);
 }
 
 /** The Hijri date for a day, with the configured offset applied. */

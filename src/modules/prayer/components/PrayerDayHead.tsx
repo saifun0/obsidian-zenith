@@ -1,5 +1,5 @@
 import React, { type FC } from 'react';
-import { ChevronLeft, ChevronRight, MapPin, PenLine } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CloudOff, MapPin, PenLine } from 'lucide-react';
 import { useTranslation } from '../../../core/i18n';
 import type { PrayerDay } from '../prayerStats';
 import {
@@ -16,6 +16,13 @@ interface PrayerDayHeadProps {
     hijriLabel: string | null;
     placeLabel: string;
     methodLabel: string;
+    /**
+     * The service was asked for these times and could not be reached, so the
+     * arithmetic answered. A live failure, which is the only thing here that
+     * earns a mark on screen — the times are still correct, just not the ones
+     * the local calendar prints.
+     */
+    fallback?: boolean;
     isToday: boolean;
     next: NextPrayer | null;
     times: Record<PrayerTimeId, number>;
@@ -44,6 +51,7 @@ export const PrayerDayHead: FC<PrayerDayHeadProps> = ({
     hijriLabel,
     placeLabel,
     methodLabel,
+    fallback,
     isToday,
     next,
     times,
@@ -100,6 +108,15 @@ export const PrayerDayHead: FC<PrayerDayHeadProps> = ({
                     {placeLabel}
                 </span>
                 <span>{methodLabel}</span>
+                {fallback && (
+                    <span
+                        className="zenith-prayer__offline"
+                        title={t('prayer.api.fallback')}
+                        aria-label={t('prayer.api.fallback')}
+                    >
+                        <CloudOff size={11} />
+                    </span>
+                )}
             </p>
 
             {next && (

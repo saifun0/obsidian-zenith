@@ -42,6 +42,9 @@ const EN: Dict = {
     'settings.language': 'Language',
     'settings.language.desc': "Language for Zenith's own interface.",
     'settings.language.auto': 'Automatic (Obsidian)',
+    'settings.location': 'Location',
+    'settings.location.desc':
+        'Where you are, once, for the whole plugin — weather and prayer times both read it. Type in any language. Left empty, the device is asked.',
 
     // Settings — storage
     'settings.taskCapture': 'Capture into the daily note',
@@ -58,6 +61,8 @@ const EN: Dict = {
     'settings.tasksFolder.desc': 'Vault-relative path where tasks are stored.',
     'settings.contentFolder': 'Content Folder',
     'settings.contentFolder.desc': 'Vault-relative path where articles and notes are stored.',
+    'settings.projectsFolder': 'Projects Folder',
+    'settings.projectsFolder.desc': 'Vault-relative path where project notes are stored.',
     'settings.folderMissing': "This folder doesn't exist yet.",
     'settings.createFolder': 'Create',
 
@@ -76,9 +81,9 @@ const EN: Dict = {
         'Put every widget back on the dashboard at its default position and size.',
 
     // Settings — weather
-    'settings.weatherPlace': 'Location',
+    'settings.weatherPlace': 'Location for the forecast',
     'settings.weatherPlace.desc':
-        'Search for a place, or let the device say where you are. Stored as coordinates.',
+        'Only if the forecast should be somewhere other than the general location. Empty follows that one.',
     // Shared by every place picker (weather, prayer times).
     'settings.place.search': 'Search for a city…',
     'settings.place.searching': 'Searching…',
@@ -90,6 +95,8 @@ const EN: Dict = {
     'settings.place.auto': 'Automatic',
     'settings.place.clear': 'Use automatic location',
     'settings.place.here': 'Current location',
+    'settings.place.fromGlobal': 'from General',
+    'settings.place.useGlobal': 'Use the general location',
     'settings.weatherIpLookup': 'Fall back to IP lookup',
     'settings.weatherIpLookup.desc':
         'When the device declines to share its location, ask ipapi.co instead.',
@@ -113,6 +120,57 @@ const EN: Dict = {
         'Turn off to remove transitions and dialog motion. Already off when your system asks for reduced motion.',
 
     // Dashboard
+    'settings.dashBgGroup': 'Background',
+    'settings.dashBgGroup.desc':
+        'A picture behind the board. The cards stay readable over it — that is what the dimming is for.',
+    'settings.dashBgSource': 'Picture',
+    'settings.dashBgSource.desc': 'From the web, or a file in the vault.',
+    'settings.dashBgUrl': 'Address',
+    'settings.dashBgUrl.desc': 'A direct link to an image or a GIF.',
+    'settings.dashBgUrl.note':
+        'The board fetches this from its host every time it opens, which tells that host your address.',
+    'settings.dashBgPath': 'File',
+    'settings.dashBgPath.desc': 'A picture in the vault. Works offline and syncs with it.',
+    'settings.dashBgFit': 'Fit',
+    'settings.dashBgFit.desc': 'Fill the board, fit the whole picture in, or repeat it.',
+    'settings.dashBgDim': 'Dimming',
+    'settings.dashBgDim.desc': 'Black over the picture. Too little and the labels disappear into it.',
+    'settings.dashBgBlur': 'Blur',
+    'settings.dashBgBlur.desc': 'Softens a busy picture so the cards stand off it.',
+    'settings.dashCardOpacity': 'Card solidity',
+    'settings.dashCardOpacity.desc':
+        'How much of the picture the cards let through. A hundred is solid, and it shows only between them.',
+    'settings.dashBgMobile': 'Show on phone',
+    'settings.dashBgMobile.desc': 'Off keeps a heavy picture off a metered, battery-powered device.',
+    'settings.percentUnit': '%',
+    'settings.pxUnit': 'px',
+    'dashboard.bg.source.none': 'None',
+    'dashboard.bg.source.url': 'Link',
+    'dashboard.bg.source.vault': 'Vault',
+    'dashboard.bg.fit.cover': 'Fill',
+    'dashboard.bg.fit.contain': 'Fit',
+    'dashboard.bg.fit.tile': 'Tile',
+
+    // The vault picture picker, shared by every setting that names one.
+    'settings.vaultImage.placeholder': 'Attachments/wallpaper.jpg',
+    'settings.vaultImage.pick': 'Choose',
+    'settings.vaultImage.search': 'Search pictures in the vault…',
+    'settings.vaultImage.missing': 'No such file in the vault.',
+    'settings.vaultImage.notImage': 'That file is not a picture.',
+
+    // Picture widget. Every card carries its own picture, so these are the words
+    // on the back of a card rather than on a settings page.
+    'picture.source': 'From',
+    'picture.source.url': 'Link',
+    'picture.source.vault': 'Vault',
+    'picture.fit': 'Fit',
+    'picture.fit.cover': 'Fill',
+    'picture.fit.contain': 'Whole',
+    'picture.url.placeholder': 'https://…',
+    'picture.path.placeholder': 'Attachments/photo.jpg',
+    'picture.empty': 'No picture yet. Arrange the board and turn this card over.',
+    'picture.unusable': 'That is not a picture this can show.',
+    'picture.failed': 'The picture could not be loaded.',
     'settings.dashHeading': 'Heading',
     'settings.dashHeading.desc': 'What stands at the top of the dashboard.',
     'settings.dashHeading.none': 'None',
@@ -124,12 +182,22 @@ const EN: Dict = {
     'settings.dashDate.desc': 'Show today\u2019s date at the top of the dashboard.',
 
     // Prayer times
-    'settings.prayerPlace': 'Location',
+    'settings.prayerPlace': 'Location for prayer times',
     'settings.prayerPlace.desc':
-        'Prayer times are a function of where you are. Falls back to the weather location, then to the device.',
+        'Only if you pray somewhere other than the general location. Empty follows that one.',
     'settings.prayerCalcGroup': 'Calculation',
     'settings.prayerCalcGroup.desc':
-        'Authorities differ on the twilight angles and on when asr begins. Pick what your local calendar uses.',
+        'Where the times come from, and — for the calculation — the points authorities differ on: twilight angles, and when asr begins.',
+    'settings.prayerSource': 'Times from',
+    'settings.prayerSource.desc':
+        'A published calendar, or this device working the sun out for itself. Without a network the calculation answers either way.',
+    'settings.prayerApiMidnight': 'Middle of the night',
+    'settings.prayerApiMidnight.desc':
+        'What the service measures midnight and the last third to. The local calculation always divides sunset to fajr.',
+    'settings.prayerApiRefresh': 'Published times',
+    'settings.prayerApiRefresh.desc':
+        'Fetched a month at a time and kept offline. Refresh after changing the method, or if the mosque has corrected its table.',
+    'settings.prayerApiRefresh.button': 'Refresh',
     'settings.prayerMethod': 'Method',
     'settings.prayerMethod.desc': 'Sets the fajr and isha angles.',
     'settings.prayerFajrAngle': 'Fajr angle',
@@ -566,6 +634,18 @@ const EN: Dict = {
     'weather.forecastDays': '{count}-day forecast',
     'weather.rainChance': '{pct}% rain',
     'weather.spark.aria': 'Next {hours} hours: {low}° to {high}°',
+    'weather.code.clear': 'Clear',
+    'weather.code.mainlyClear': 'Mainly clear',
+    'weather.code.partlyCloudy': 'Partly cloudy',
+    'weather.code.overcast': 'Overcast',
+    'weather.code.fog': 'Fog',
+    'weather.code.drizzle': 'Drizzle',
+    'weather.code.rain': 'Rain',
+    'weather.code.snow': 'Snow',
+    'weather.code.showers': 'Rain showers',
+    'weather.code.snowShowers': 'Snow showers',
+    'weather.code.thunderstorm': 'Thunderstorm',
+    'weather.code.unknown': 'Weather',
     'weather.sunrise': 'Sunrise',
     'weather.sunset': 'Sunset',
     'common.hourShort': 'h',
@@ -601,6 +681,12 @@ const EN: Dict = {
     'weather.untilSunrise': '{time} until sunrise',
     'weather.dayLength': 'Day length',
     'weather.sunshine': 'Sunshine',
+    'weather.sunshineOf': '{pct}% of the daylight',
+    'weather.solarNoon': 'Solar noon',
+    'weather.tomorrow': 'Tomorrow',
+    'weather.dayLonger': 'longer',
+    'weather.dayShorter': 'shorter',
+    'weather.daySame': 'same as today',
     'weather.moon.new': 'New moon',
     'weather.moon.waxingCrescent': 'Waxing crescent',
     'weather.moon.firstQuarter': 'First quarter',
@@ -611,6 +697,12 @@ const EN: Dict = {
     'weather.moon.waningCrescent': 'Waning crescent',
     'weather.moon.illuminated': '{pct}% illuminated',
     'weather.moon.age': 'Day {days} of the lunar month',
+    'weather.moon.lunation': 'The lunar month',
+    'weather.moon.untilFull': 'Until full moon',
+    'weather.moon.untilNew': 'Until new moon',
+    'weather.moon.today': 'today',
+    'weather.moon.days.one': '{count} day',
+    'weather.moon.days.other': '{count} days',
     'weather.moon.note':
         'Phase is computed locally. Moonrise and moonset are not shown — the forecast ' +
         'provides no lunar times, and they cannot be derived from the phase alone.',
@@ -701,6 +793,21 @@ const EN: Dict = {
     'nav.tasks.desc': 'Everything on your plate',
     'nav.calendar': 'Calendar',
     'nav.calendar.desc': 'Tasks by month, week, day or agenda',
+    // Widget header titles. Short — they are set in a band above the card, in
+    // caps, and a two-word name wraps the header onto a second line.
+    'widget.content': 'Library',
+    'widget.clock': 'Clock',
+    'widget.nav': 'Navigation',
+    'widget.picture': 'Picture',
+    'widget.prayer': 'Prayer',
+    'widget.tasks': 'Tasks',
+    'widget.projects': 'Projects',
+    'widget.week': 'Week ahead',
+    'widget.weather': 'Weather',
+    'widget.checkin': 'Check-in',
+    'widget.journalStats': 'Journal',
+    'nav.projects': 'Projects',
+    'nav.projects.desc': 'Track progress, tasks and deadlines',
     'nav.content': 'Content',
     'nav.content.desc': 'Books, films, games and shows',
     'nav.journal': 'Journal',
@@ -737,6 +844,13 @@ const EN: Dict = {
     'prayer.status.clear': 'Not recorded',
     'prayer.status.none': 'Not recorded yet',
 
+    'prayer.source.api': 'Calendar',
+    'prayer.source.local': 'Calculated',
+    'prayer.midnight.toFajr': 'Sunset to fajr',
+    'prayer.midnight.toSunrise': 'Sunset to sunrise',
+    'prayer.api.refreshed': 'Prayer times updated.',
+    'prayer.api.unreachable': 'The times service is unreachable — showing calculated times.',
+    'prayer.api.fallback': 'Calculated on this device: the times service is unreachable.',
     'prayer.madhab.standard': 'Standard',
     'prayer.madhab.hanafi': 'Hanafi',
     'prayer.highLat.none': "Don't substitute",
@@ -992,8 +1106,8 @@ const EN: Dict = {
     'content.detail.tookDays.one': 'took {count} day',
     'content.detail.tookDays.other': 'took {count} days',
     'content.filterByGenre': 'Show everything in “{genre}”',
-    'content.card.plusOne': 'One more {unit}',
-    'content.card.minusOne': 'One fewer {unit}',
+    'content.card.plusOne': '+1 {unit}',
+    'content.card.minusOne': '−1 {unit}',
     'content.bulk.select': 'Select several',
     'content.bulk.selected.one': '{count} selected',
     'content.bulk.selected.other': '{count} selected',
@@ -1051,6 +1165,9 @@ const EN: Dict = {
     'content.widget.openLibrary': 'Open library',
     'content.widget.upNext': 'Up next',
     'content.widget.bump': 'Add one {unit} to {title}',
+    // The footer strip: the two things the shelf cannot say, because both are
+    // about items that are not on the card.
+    'content.widget.stalled': '{count} not moving',
 
     'tasks.filter.allPriorities': 'All priorities',
     'tasks.filter.due': 'Due: {name}',
@@ -1134,6 +1251,8 @@ const EN: Dict = {
 
     'journal.trackers': 'Check-in',
     'journal.noTrackers': 'No trackers configured. Add one in Settings → Journal.',
+    // The dial: one tracker at the centre of the card, the rest on the ring.
+    'journal.dial.aria': 'Trackers — choose which one the card shows',
     'journal.clearValue': 'Clear {name}',
     'journal.kind.check': 'Check-box',
     'journal.kind.scale': 'Scale 1–5',
@@ -1147,7 +1266,6 @@ const EN: Dict = {
     'journal.widget.blank': 'Not written yet',
     'journal.widget.lastDays': 'Last {days} days',
     'journal.widget.entriesOf': '{count} of {days} days written',
-    'journal.widget.more': '+{count} more in the journal',
     'journal.widget.coverage': '{count} of {days} days',
     'journal.widget.openJournal': 'Open journal',
 
@@ -1180,6 +1298,16 @@ const EN: Dict = {
     'journal.stats.axisStart': '{days} days ago',
     'journal.stats.axisToday': 'today',
     'journal.stats.noEntry': 'no entry',
+    // The panel beside the ring — one tracker's window, in words.
+    'journal.stats.coverageDays': '{count} of {days} days',
+    'journal.stats.runLabel': 'run · best {count}',
+    'journal.stats.lastMark': 'last mark',
+    // The strip under a small dial: two words a chip, the full phrase on hover.
+    'journal.stats.inARow': 'in a row',
+    'journal.stats.avgPerDay': 'per recorded day',
+    'journal.stats.perDay': 'a day',
+    'journal.stats.daysAgo': '{count} d ago',
+    'journal.stats.panelAria': 'Window statistics for {name}',
     'journal.stats.legend':
         'Tracker kinds are summarised differently: a scale is an average over recorded days, a number is a window sum, a check is a frequency. They are not comparable to each other.',
 
@@ -1332,8 +1460,26 @@ const EN: Dict = {
     'sync.conflicts.kept': 'kept {winner}',
     'sync.conflicts.local': 'this device',
     'sync.conflicts.remote': 'the other device',
+    'sync.devices': 'Devices',
+    'sync.thisDeviceTag': 'this device',
     'sync.history': 'History',
     'sync.history.empty': 'Nothing has been sent or received yet.',
+    // Repeats are collapsed into one row — see `groupHistory` for why there
+    // are six identical lines to collapse in the first place.
+    'sync.history.repeat': '×{count}',
+    'sync.history.all': 'All {count}',
+    'sync.history.less': 'Fewer',
+    // The run notice, and the bar on the page it was started from.
+    'sync.progress.title': 'Syncing files',
+    'sync.progress.done': 'Sync finished',
+    'sync.progress.failed': 'Sync stopped',
+    'sync.progress.rate': '{rate}/s',
+    'sync.progress.eta': '{time} left',
+    'sync.progress.files': '{count} files',
+    'sync.unit.kb': 'kB',
+    'sync.unit.mb': 'MB',
+    'sync.unit.gb': 'GB',
+    'sync.unit.seconds': 's',
     'sync.history.publish': 'sent {count}',
     'sync.history.merge': 'received {count}',
     'sync.history.conflict': 'resolved {count}',
@@ -1373,6 +1519,10 @@ const EN: Dict = {
 
     // Sync — file engine settings
     'sync.settings.stateGroup': 'Zenith settings',
+    'sync.settings.statusGroup': 'State',
+    'sync.settings.statusGroup.desc': 'What sync is doing right now, and what it did last.',
+    'sync.settings.openTab': 'Open in a tab',
+    'sync.settings.openTab.desc': 'The same page, beside your notes rather than in this dialog.',
     'sync.settings.filesGroup': 'Note files',
     'sync.settings.filesGroup.desc': 'Sync the vault itself to storage you control. Separate from settings sync, and never runs on a timer.',
     'sync.settings.files': 'Sync note files',
@@ -1514,48 +1664,6 @@ const EN: Dict = {
     'sync.settings.whatSyncs': 'What travels',
     'sync.settings.open': 'Open sync',
     'sync.settings.whatSyncs.desc': 'Folders, trackers, content types, location, prayer and weather preferences, installed modules and the running timer. Layout, density, active modules and where you left off stay on each device.',
-
-    'canvas.title': 'Canvas',
-    'canvas.desc': 'Tidy, generate and reshape Obsidian canvases.',
-    'canvas.toolbar.tooltip': 'Zenith canvas tools',
-    'canvas.toolbar.tidy': 'Tidy up',
-    'canvas.action.grid': 'Arrange in a grid',
-    'canvas.action.tree': 'Arrange as a tree',
-    'canvas.action.radial': 'Arrange radially',
-    'canvas.action.probe': 'Capture internals report (developer)',
-    'canvas.notice.tidied': 'Canvas rearranged.',
-    'canvas.notice.tidiedReopen': 'Canvas rearranged — reopen the tab to see it.',
-    'canvas.notice.alreadyTidy': 'Canvas is already tidy — nothing to move.',
-    'canvas.notice.failed': 'Could not rearrange the canvas: {error}',
-    'canvas.notice.openOne': 'Open a canvas — Zenith canvas tools act on the canvas you are viewing.',
-    'canvas.settings.layout': 'Layout',
-    'canvas.settings.layout.desc': 'How nodes are placed when you rearrange a canvas.',
-    'canvas.settings.gap': 'Spacing',
-    'canvas.settings.gap.desc': 'Room left between nodes, and between the levels of a tree.',
-    'canvas.settings.direction': 'Tree grows',
-    'canvas.settings.direction.down': 'Downward',
-    'canvas.settings.direction.right': 'Rightward',
-    'canvas.settings.direction.desc': 'Downward reads like an outline; rightward suits wide, shallow trees.',
-    'canvas.settings.columns': 'Grid columns',
-    'canvas.settings.columns.desc': 'Zero picks a roughly square grid for however many nodes there are.',
-    'canvas.action.toNote': 'Export to a note',
-    'canvas.action.fromNote': 'Turn headings into a canvas',
-    'canvas.notice.noHeadings': 'This note has no headings to turn into a canvas.',
-    'canvas.notice.empty': 'This canvas is empty — nothing to export.',
-    'canvas.notice.created': 'Canvas created from {count} headings.',
-    'canvas.notice.exported': 'Note created from {count} nodes.',
-    'canvas.action.search': 'Find a node',
-    'canvas.search.placeholder': 'Search this canvas…',
-    'canvas.notice.noLiveCanvas': 'Could not read the open canvas — this Obsidian build keeps it out of reach.',
-    'canvas.action.fit': 'Fit cards to their text',
-    'canvas.notice.fitted': 'Cards resized to fit.',
-    'canvas.notice.alreadyFitted': 'Every card already fits its text.',
-    'canvas.notice.tidiedSelection': 'Rearranged {count} selected nodes.',
-    'canvas.action.straighten': 'Reattach arrows to the nearest sides',
-    'canvas.notice.straightened': 'Arrows reattached.',
-    'canvas.notice.alreadyStraight': 'Every arrow already leaves the right side.',
-    'canvas.notice.scopeUnknown':
-        'Could not read the selection on this open canvas, so nothing was changed. Close the tab and run it again to rearrange the whole canvas.',
 };
 
 const RU: Dict = {
@@ -1581,6 +1689,9 @@ const RU: Dict = {
     'settings.language': 'Язык',
     'settings.language.desc': 'Язык интерфейса Zenith.',
     'settings.language.auto': 'Автоматически (Obsidian)',
+    'settings.location': 'Местоположение',
+    'settings.location.desc':
+        'Место один раз на весь плагин — его читают и погода, и намаз. Вводить можно на любом языке. Пусто — спросим устройство.',
 
     'settings.taskCapture': 'Писать в ежедневную заметку',
     'settings.taskCapture.desc': 'Новые задачи попадают в заметку сегодняшнего дня. Если выключить — в папку задач; читаются в любом случае обе.',
@@ -1596,6 +1707,8 @@ const RU: Dict = {
     'settings.tasksFolder.desc': 'Путь относительно хранилища, где лежат задачи.',
     'settings.contentFolder': 'Папка контента',
     'settings.contentFolder.desc': 'Путь относительно хранилища для заметок и статей.',
+    'settings.projectsFolder': 'Папка проектов',
+    'settings.projectsFolder.desc': 'Путь относительно хранилища для заметок проектов.',
     'settings.folderMissing': 'Эта папка ещё не существует.',
     'settings.createFolder': 'Создать',
 
@@ -1612,9 +1725,9 @@ const RU: Dict = {
     'settings.widgets.reset.desc':
         'Вернуть все виджеты на дашборд в положение и размер по умолчанию.',
 
-    'settings.weatherPlace': 'Местоположение',
+    'settings.weatherPlace': 'Место для погоды',
     'settings.weatherPlace.desc':
-        'Найдите город или дайте устройству определить место. Сохраняется как координаты.',
+        'Только если погода нужна не там, где вы. Пусто — берётся место из «Основных».',
     'settings.place.search': 'Поиск города…',
     'settings.place.searching': 'Ищем…',
     'settings.place.none': 'Ничего не найдено.',
@@ -1625,6 +1738,8 @@ const RU: Dict = {
     'settings.place.auto': 'Автоматически',
     'settings.place.clear': 'Определять автоматически',
     'settings.place.here': 'Текущее место',
+    'settings.place.fromGlobal': 'из «Основных»',
+    'settings.place.useGlobal': 'Брать место из «Основных»',
     'settings.weatherIpLookup': 'Запасной вариант — по IP',
     'settings.weatherIpLookup.desc':
         'Если устройство не сообщает местоположение, спросить ipapi.co.',
@@ -1648,6 +1763,57 @@ const RU: Dict = {
         'Выключите, чтобы убрать переходы и движение диалогов. И так выключены, если система просит уменьшить движение.',
 
     // Дашборд
+    'settings.dashBgGroup': 'Фон',
+    'settings.dashBgGroup.desc':
+        'Картинка за доской. Карточки над ней остаются читаемыми — для этого и нужно затемнение.',
+    'settings.dashBgSource': 'Картинка',
+    'settings.dashBgSource.desc': 'Из сети или файлом из хранилища.',
+    'settings.dashBgUrl': 'Адрес',
+    'settings.dashBgUrl.desc': 'Прямая ссылка на картинку или GIF.',
+    'settings.dashBgUrl.note':
+        'Доска тянет её с чужого сервера при каждом открытии — сервер видит ваш адрес.',
+    'settings.dashBgPath': 'Файл',
+    'settings.dashBgPath.desc': 'Картинка из хранилища. Работает оффлайн и ездит с ним.',
+    'settings.dashBgFit': 'Заполнение',
+    'settings.dashBgFit.desc': 'Заполнить доску, вместить целиком или повторять плиткой.',
+    'settings.dashBgDim': 'Затемнение',
+    'settings.dashBgDim.desc': 'Чёрный поверх картинки. Мало — и подписи в ней тонут.',
+    'settings.dashBgBlur': 'Размытие',
+    'settings.dashBgBlur.desc': 'Смягчает пеструю картинку, чтобы карточки от неё отделялись.',
+    'settings.dashCardOpacity': 'Плотность карточек',
+    'settings.dashCardOpacity.desc':
+        'Сколько картинки карточки пропускают сквозь себя. Сто — непрозрачны, и фон виден только между ними.',
+    'settings.dashBgMobile': 'Показывать на телефоне',
+    'settings.dashBgMobile.desc': 'Выключено — тяжёлая картинка не грузится на мобильном трафике.',
+    'settings.percentUnit': '%',
+    'settings.pxUnit': 'px',
+    'dashboard.bg.source.none': 'Нет',
+    'dashboard.bg.source.url': 'Ссылка',
+    'dashboard.bg.source.vault': 'Хранилище',
+    'dashboard.bg.fit.cover': 'Заполнить',
+    'dashboard.bg.fit.contain': 'Целиком',
+    'dashboard.bg.fit.tile': 'Плиткой',
+
+    // Выбор картинки из хранилища — общий для всех настроек, где она нужна.
+    'settings.vaultImage.placeholder': 'Attachments/wallpaper.jpg',
+    'settings.vaultImage.pick': 'Выбрать',
+    'settings.vaultImage.search': 'Поиск картинок в хранилище…',
+    'settings.vaultImage.missing': 'Такого файла в хранилище нет.',
+    'settings.vaultImage.notImage': 'Этот файл не картинка.',
+
+    // Виджет «Картинка». У каждой карточки картинка своя, поэтому это
+    // слова с оборота карточки, а не со страницы настроек.
+    'picture.source': 'Откуда',
+    'picture.source.url': 'Ссылка',
+    'picture.source.vault': 'Хранилище',
+    'picture.fit': 'Заполнение',
+    'picture.fit.cover': 'Заполнить',
+    'picture.fit.contain': 'Целиком',
+    'picture.url.placeholder': 'https://…',
+    'picture.path.placeholder': 'Attachments/photo.jpg',
+    'picture.empty': 'Картинки пока нет. Включите режим раскладки и переверните карточку.',
+    'picture.unusable': 'Это не та картинка, которую можно показать.',
+    'picture.failed': 'Картинку не удалось загрузить.',
     'settings.dashHeading': 'Заголовок',
     'settings.dashHeading.desc': 'Что стоит в шапке дашборда.',
     'settings.dashHeading.none': 'Нет',
@@ -1659,12 +1825,22 @@ const RU: Dict = {
     'settings.dashDate.desc': 'Показывать сегодняшнюю дату в шапке дашборда.',
 
     // Намаз
-    'settings.prayerPlace': 'Место',
+    'settings.prayerPlace': 'Место для намаза',
     'settings.prayerPlace.desc':
-        'Времена намаза зависят от координат. Если не выбрано — берётся место из погоды, затем с устройства.',
+        'Только если намаз не там, где вы. Пусто — берётся место из «Основных».',
     'settings.prayerCalcGroup': 'Расчёт',
     'settings.prayerCalcGroup.desc':
-        'Мнения расходятся и об углах сумерек, и о начале аср-намаза. Выберите то, по чему считает ваш календарь.',
+        'Откуда берутся времена и — для расчёта — то, в чём мнения расходятся: углы сумерек и начало аср-намаза.',
+    'settings.prayerSource': 'Времена',
+    'settings.prayerSource.desc':
+        'Из готового календаря или расчётом на устройстве. Без сети в обоих случаях отвечает расчёт.',
+    'settings.prayerApiMidnight': 'Середина ночи',
+    'settings.prayerApiMidnight.desc':
+        'До чего сервис считает полночь и последнюю треть. Локальный расчёт всегда делит от заката до фаджра.',
+    'settings.prayerApiRefresh': 'Готовые времена',
+    'settings.prayerApiRefresh.desc':
+        'Забираются помесячно и хранятся оффлайн. Обновите после смены метода или если мечеть поправила таблицу.',
+    'settings.prayerApiRefresh.button': 'Обновить',
     'settings.prayerMethod': 'Метод',
     'settings.prayerMethod.desc': 'Задаёт углы для фаджра и иши.',
     'settings.prayerFajrAngle': 'Угол фаджра',
@@ -2109,6 +2285,18 @@ const RU: Dict = {
     'weather.forecastDays': 'Прогноз на {count} дн.',
     'weather.rainChance': 'осадки {pct}%',
     'weather.spark.aria': 'Ближайшие {hours} ч: от {low}° до {high}°',
+    'weather.code.clear': 'Ясно',
+    'weather.code.mainlyClear': 'Малооблачно',
+    'weather.code.partlyCloudy': 'Переменная облачность',
+    'weather.code.overcast': 'Пасмурно',
+    'weather.code.fog': 'Туман',
+    'weather.code.drizzle': 'Морось',
+    'weather.code.rain': 'Дождь',
+    'weather.code.snow': 'Снег',
+    'weather.code.showers': 'Ливень',
+    'weather.code.snowShowers': 'Снегопад',
+    'weather.code.thunderstorm': 'Гроза',
+    'weather.code.unknown': 'Погода',
     'weather.sunrise': 'Восход',
     'weather.sunset': 'Закат',
     'common.hourShort': ' ч',
@@ -2144,6 +2332,12 @@ const RU: Dict = {
     'weather.untilSunrise': 'до восхода {time}',
     'weather.dayLength': 'Длина дня',
     'weather.sunshine': 'Солнце',
+    'weather.sunshineOf': '{pct}% светового дня',
+    'weather.solarNoon': 'Полдень',
+    'weather.tomorrow': 'Завтра',
+    'weather.dayLonger': 'длиннее',
+    'weather.dayShorter': 'короче',
+    'weather.daySame': 'как сегодня',
     'weather.moon.new': 'Новолуние',
     'weather.moon.waxingCrescent': 'Растущий серп',
     'weather.moon.firstQuarter': 'Первая четверть',
@@ -2154,6 +2348,13 @@ const RU: Dict = {
     'weather.moon.waningCrescent': 'Убывающий серп',
     'weather.moon.illuminated': 'освещено {pct}%',
     'weather.moon.age': '{days}-й день лунного месяца',
+    'weather.moon.lunation': 'Лунный месяц',
+    'weather.moon.untilFull': 'До полнолуния',
+    'weather.moon.untilNew': 'До новолуния',
+    'weather.moon.today': 'сегодня',
+    'weather.moon.days.one': '{count} день',
+    'weather.moon.days.few': '{count} дня',
+    'weather.moon.days.many': '{count} дней',
     'weather.moon.note':
         'Фаза считается локально. Восход и заход луны не показаны: провайдер не даёт ' +
         'лунных времён, а из одной фазы их вывести нельзя.',
@@ -2245,6 +2446,19 @@ const RU: Dict = {
     'nav.tasks.desc': 'Всё, что нужно сделать',
     'nav.calendar': 'Календарь',
     'nav.calendar.desc': 'Задачи по месяцам, неделям, дням и спискам',
+    'widget.content': 'Библиотека',
+    'widget.clock': 'Часы',
+    'widget.nav': 'Навигация',
+    'widget.picture': 'Картинка',
+    'widget.prayer': 'Намаз',
+    'widget.tasks': 'Задачи',
+    'widget.projects': 'Проекты',
+    'widget.week': 'Неделя',
+    'widget.weather': 'Погода',
+    'widget.checkin': 'Отметка дня',
+    'widget.journalStats': 'Дневник',
+    'nav.projects': 'Проекты',
+    'nav.projects.desc': 'Прогресс, задачи и дедлайны',
     'nav.content': 'Контент',
     'nav.content.desc': 'Книги, фильмы, игры и сериалы',
     'nav.journal': 'Дневник',
@@ -2281,6 +2495,13 @@ const RU: Dict = {
     'prayer.status.clear': 'Не отмечено',
     'prayer.status.none': 'Пока не отмечено',
 
+    'prayer.source.api': 'Календарь',
+    'prayer.source.local': 'Расчёт',
+    'prayer.midnight.toFajr': 'От заката до фаджра',
+    'prayer.midnight.toSunrise': 'От заката до восхода',
+    'prayer.api.refreshed': 'Времена намаза обновлены.',
+    'prayer.api.unreachable': 'Сервис времён недоступен — показан локальный расчёт.',
+    'prayer.api.fallback': 'Посчитано на устройстве: сервис времён недоступен.',
     'prayer.madhab.standard': 'Обычный',
     'prayer.madhab.hanafi': 'Ханафи',
     'prayer.highLat.none': 'Не заменять',
@@ -2540,8 +2761,8 @@ const RU: Dict = {
     'content.detail.tookDays.few': 'заняло {count} дня',
     'content.detail.tookDays.many': 'заняло {count} дней',
     'content.filterByGenre': 'Показать всё в жанре «{genre}»',
-    'content.card.plusOne': 'Ещё один {unit}',
-    'content.card.minusOne': 'На один {unit} меньше',
+    'content.card.plusOne': '+1 {unit}',
+    'content.card.minusOne': '−1 {unit}',
     'content.bulk.select': 'Выбрать несколько',
     'content.bulk.selected.one': 'выбран {count}',
     'content.bulk.selected.few': 'выбрано {count}',
@@ -2606,6 +2827,7 @@ const RU: Dict = {
     'content.widget.openLibrary': 'Открыть библиотеку',
     'content.widget.upNext': 'Что дальше',
     'content.widget.bump': 'Добавить один ({unit}) — {title}',
+    'content.widget.stalled': 'без движения: {count}',
 
     'tasks.filter.allPriorities': 'Все приоритеты',
     'tasks.filter.due': 'Срок: {name}',
@@ -2689,6 +2911,8 @@ const RU: Dict = {
 
     'journal.trackers': 'Отметки дня',
     'journal.noTrackers': 'Отметок нет. Добавьте их в Настройках → Журнал.',
+    // Циферблат: один трекер в центре карточки, остальные на кольце.
+    'journal.dial.aria': 'Отметки — выберите, какую показывает карточка',
     'journal.clearValue': 'Сбросить: {name}',
     'journal.kind.check': 'Галочка',
     'journal.kind.scale': 'Шкала 1–5',
@@ -2704,7 +2928,6 @@ const RU: Dict = {
     'journal.widget.lastDays': 'Последние {days} дней',
     'journal.widget.entriesOf': 'заполнено дней: {count} из {days}',
     'journal.widget.coverage': '{count} из {days} дней',
-    'journal.widget.more': 'ещё {count} — в журнале',
     'journal.widget.openJournal': 'Открыть журнал',
 
     // ── Tasks calendar ──────────────────────────────
@@ -2786,6 +3009,14 @@ const RU: Dict = {
     'journal.stats.axisStart': '{days} дней назад',
     'journal.stats.axisToday': 'сегодня',
     'journal.stats.noEntry': 'нет записи',
+    'journal.stats.coverageDays': '{count} из {days} дней',
+    'journal.stats.runLabel': 'серия · рекорд {count}',
+    'journal.stats.lastMark': 'последняя отметка',
+    'journal.stats.inARow': 'подряд',
+    'journal.stats.avgPerDay': 'за день с записью',
+    'journal.stats.perDay': 'в день',
+    'journal.stats.daysAgo': '{count} д назад',
+    'journal.stats.panelAria': 'Статистика окна: {name}',
     'journal.stats.legend':
         'Виды трекеров считаются по-разному: шкала — среднее по записанным дням, число — сумма за окно, отметка — частота. Между собой они не сравниваются.',
 
@@ -2890,8 +3121,23 @@ const RU: Dict = {
     'sync.conflicts.kept': 'оставлено: {winner}',
     'sync.conflicts.local': 'это устройство',
     'sync.conflicts.remote': 'другое устройство',
+    'sync.devices': 'Устройства',
+    'sync.thisDeviceTag': 'это устройство',
     'sync.history': 'История',
     'sync.history.empty': 'Пока ничего не отправлялось и не получалось.',
+    'sync.history.repeat': '×{count}',
+    'sync.history.all': 'Все {count}',
+    'sync.history.less': 'Свернуть',
+    'sync.progress.title': 'Синхронизация файлов',
+    'sync.progress.done': 'Синхронизация завершена',
+    'sync.progress.failed': 'Синхронизация остановлена',
+    'sync.progress.rate': '{rate}/с',
+    'sync.progress.eta': 'осталось {time}',
+    'sync.progress.files': 'файлов: {count}',
+    'sync.unit.kb': 'КБ',
+    'sync.unit.mb': 'МБ',
+    'sync.unit.gb': 'ГБ',
+    'sync.unit.seconds': 'с',
     'sync.history.publish': 'отправлено: {count}',
     'sync.history.merge': 'получено: {count}',
     'sync.history.conflict': 'разрешено: {count}',
@@ -2934,6 +3180,10 @@ const RU: Dict = {
 
     // Синхронизация — настройки файлового движка
     'sync.settings.stateGroup': 'Настройки Zenith',
+    'sync.settings.statusGroup': 'Состояние',
+    'sync.settings.statusGroup.desc': 'Что синхронизация делает сейчас и что сделала в прошлый раз.',
+    'sync.settings.openTab': 'Открыть вкладкой',
+    'sync.settings.openTab.desc': 'Та же страница, но рядом с заметками, а не в этом окне.',
     'sync.settings.filesGroup': 'Файлы заметок',
     'sync.settings.filesGroup.desc': 'Синхронизация самого волта с хранилищем, которым вы управляете. Отдельно от настроек и никогда не по таймеру.',
     'sync.settings.files': 'Синхронизировать файлы заметок',
@@ -3075,48 +3325,6 @@ const RU: Dict = {
     'sync.settings.whatSyncs': 'Что уезжает',
     'sync.settings.open': 'Открыть синхронизацию',
     'sync.settings.whatSyncs.desc': 'Папки, трекеры, типы контента, локация, настройки намаза и погоды, установленные модули и запущенный таймер. Раскладка, плотность, активные модули и место, где вы остановились, остаются на каждом устройстве своими.',
-
-    'canvas.title': 'Холст',
-    'canvas.desc': 'Прибирает, создаёт и перестраивает холсты Obsidian.',
-    'canvas.toolbar.tooltip': 'Инструменты холста Zenith',
-    'canvas.toolbar.tidy': 'Прибраться',
-    'canvas.action.grid': 'Разложить сеткой',
-    'canvas.action.tree': 'Разложить деревом',
-    'canvas.action.radial': 'Разложить радиально',
-    'canvas.action.probe': 'Снять отчёт о внутренностях (для разработки)',
-    'canvas.notice.tidied': 'Холст перестроен.',
-    'canvas.notice.tidiedReopen': 'Холст перестроен — переоткройте вкладку, чтобы увидеть.',
-    'canvas.notice.alreadyTidy': 'Холст уже прибран — двигать нечего.',
-    'canvas.notice.failed': 'Не удалось перестроить холст: {error}',
-    'canvas.notice.openOne': 'Откройте холст — инструменты Zenith работают с тем холстом, который вы смотрите.',
-    'canvas.settings.layout': 'Раскладка',
-    'canvas.settings.layout.desc': 'Как расставляются узлы, когда вы перестраиваете холст.',
-    'canvas.settings.gap': 'Отступы',
-    'canvas.settings.gap.desc': 'Расстояние между узлами и между уровнями дерева.',
-    'canvas.settings.direction': 'Дерево растёт',
-    'canvas.settings.direction.down': 'Вниз',
-    'canvas.settings.direction.right': 'Вправо',
-    'canvas.settings.direction.desc': 'Вниз читается как план; вправо удобнее для широких неглубоких деревьев.',
-    'canvas.settings.columns': 'Колонок в сетке',
-    'canvas.settings.columns.desc': 'Ноль подбирает примерно квадратную сетку под текущее число узлов.',
-    'canvas.action.toNote': 'Выгрузить в заметку',
-    'canvas.action.fromNote': 'Собрать холст из заголовков',
-    'canvas.notice.noHeadings': 'В заметке нет заголовков, из которых можно собрать холст.',
-    'canvas.notice.empty': 'Холст пуст — выгружать нечего.',
-    'canvas.notice.created': 'Холст собран из {count} заголовков.',
-    'canvas.notice.exported': 'Заметка создана из {count} узлов.',
-    'canvas.action.search': 'Найти узел',
-    'canvas.search.placeholder': 'Поиск по холсту…',
-    'canvas.notice.noLiveCanvas': 'Не удалось прочитать открытый холст — в этой сборке Obsidian он недоступен.',
-    'canvas.action.fit': 'Подогнать карточки под текст',
-    'canvas.notice.fitted': 'Размеры карточек подогнаны.',
-    'canvas.notice.alreadyFitted': 'Все карточки уже по размеру текста.',
-    'canvas.notice.tidiedSelection': 'Перестроено выделенных узлов: {count}.',
-    'canvas.action.straighten': 'Пересадить стрелки на ближние грани',
-    'canvas.notice.straightened': 'Стрелки пересажены.',
-    'canvas.notice.alreadyStraight': 'Все стрелки уже выходят с нужной грани.',
-    'canvas.notice.scopeUnknown':
-        'Не удалось прочитать выделение на открытом холсте — ничего не изменено. Закройте вкладку и повторите, чтобы перестроить весь холст.',
 };
 
 /**
@@ -3357,6 +3565,28 @@ export interface Translator {
 }
 
 /**
+ * A `t()` bound to one language, for code that is not a component.
+ *
+ * The hook below is this plus a re-render. Kept as its own function because the
+ * places that need a translator outside React — a notice that outlives the view
+ * that started it, a service reporting a result — were each writing their own
+ * four-line copy of it, and a copy that forgets `plural` fails only in the
+ * languages the author does not speak.
+ */
+export function translatorFor(locale: Locale): Translator {
+    const t = ((key: string, params?: TParams) => translate(locale, key, params)) as Translator;
+    t.plural = (key, count, params) => translatePlural(locale, key, count, params);
+    t.has = (key) => hasTranslation(locale, key);
+    t.locale = locale;
+    return t;
+}
+
+/** The same, for whichever language is in force right now. */
+export function translatorNow(): Translator {
+    return translatorFor(currentLocale());
+}
+
+/**
  * React hook returning a `t()` bound to the current language. Re-renders when
  * the user changes the language in settings.
  */
@@ -3371,11 +3601,5 @@ export function useTranslation(): Translator {
         translationsRevision
     );
     const locale = resolveLocale(language);
-    return useMemo(() => {
-        const t = ((key: string, params?: TParams) => translate(locale, key, params)) as Translator;
-        t.plural = (key, count, params) => translatePlural(locale, key, count, params);
-        t.has = (key) => hasTranslation(locale, key);
-        t.locale = locale;
-        return t;
-    }, [locale, revision]);
+    return useMemo(() => translatorFor(locale), [locale, revision]);
 }

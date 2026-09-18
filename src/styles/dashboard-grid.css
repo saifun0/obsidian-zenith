@@ -543,6 +543,9 @@
 
 /* ── Add-widget gallery (edit mode) ──────────────── */
 .zenith-add-sheet {
+    /* The badge's edge, in one place: the row's floor is derived from it, and
+       the two have to agree or the air around it goes with the font size. */
+    --zenith-add-icon: 26px;
     margin-top: var(--zenith-space-sm);
     /* Sides and floor match the bars above; the ceiling is theirs too, so the
        three panels' first lines sit on the same rhythm. */
@@ -593,11 +596,32 @@
     color: var(--zenith-text-muted);
 }
 
+/* Hovering lifts the hairline and nothing else.
+   Whatever the theme or Obsidian wanted to do to the input on hover is already
+   neutralised below, so without this the box had no hover state of its own —
+   it had one borrowed from somewhere else, which is why it flashed a filled
+   background at a field that is not a button. A border a shade brighter says
+   "you can type here" without repainting the box. */
+.zenith-add-sheet__search:hover:not(:focus-within) {
+    border-color: color-mix(in srgb, var(--background-modifier-border) 75%, transparent);
+}
+
 .zenith-add-sheet__search:focus-within {
     border-color: var(--zenith-accent);
 }
 
-.zenith-add-sheet__search input {
+/* Obsidian styles bare inputs with a box-shadow — an inset hairline normally,
+   an accent ring on focus — and it survives resetting `border` and `outline`,
+   which is all this rule used to do. The wrapper already draws the border and
+   lights it on `:focus-within`, so the two stacked: a lit rounded rectangle
+   inside a lit rounded rectangle. Every state is named because Obsidian's
+   focus rule is as specific as ours, and losing the inner ring costs no focus
+   indication — the wrapper is the indicator. */
+.zenith-add-sheet__search input,
+.zenith-add-sheet__search input:hover,
+.zenith-add-sheet__search input:focus,
+.zenith-add-sheet__search input:focus-visible,
+.zenith-add-sheet__search input:active {
     flex: 1;
     min-width: 0;
     border: none;
@@ -605,6 +629,7 @@
     color: var(--zenith-text-normal);
     font-size: 0.82rem;
     outline: none;
+    box-shadow: none;
 }
 
 .zenith-add-sheet__search button {
@@ -669,7 +694,16 @@
     align-items: center;
     gap: 10px;
     width: 100%;
-    padding: 6px var(--zenith-space-md);
+    /* Both axes off the spacing scale, and a floor under the row.
+       The vertical padding used to be a flat 6px against a horizontal 16, and
+       the row's height came from the two-line text block rather than from
+       either — so at a smaller interface font the text shrank, the badge did
+       not, and it ended up with 17px beside it and five above: visibly wedged
+       between the row's edges. The floor keeps a ring of air around the badge
+       whatever the text does, and costs nothing when the text is the taller of
+       the two. */
+    min-height: calc(var(--zenith-add-icon) + var(--zenith-space-sm) * 2);
+    padding: var(--zenith-space-sm) var(--zenith-space-md);
     border: 1px solid var(--zenith-border);
     border-radius: var(--zenith-radius-md);
     background: var(--zenith-bg-primary);
@@ -711,8 +745,8 @@
     justify-content: center;
     /* Smaller than the two-line text block so it reads as a badge with air
        around it, not a slab wedged into the card. */
-    width: 26px;
-    height: 26px;
+    width: var(--zenith-add-icon);
+    height: var(--zenith-add-icon);
     flex-shrink: 0;
     border-radius: var(--zenith-radius-sm);
     background: var(--zenith-bg-tertiary);
