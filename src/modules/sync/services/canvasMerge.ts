@@ -1,5 +1,5 @@
-import { parseCanvas, serializeCanvas } from '../../canvas/canvasTypes';
-import type { CanvasData, CanvasEdge, CanvasNode } from '../../canvas/canvasTypes';
+import { parseCanvas, serializeCanvas } from './canvasFormat';
+import type { CanvasData, CanvasEdge, CanvasNode } from './canvasFormat';
 import type { MergeNote, MergeOptions, MergeOutcome } from './conflictResolve';
 
 /**

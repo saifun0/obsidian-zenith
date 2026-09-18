@@ -240,7 +240,9 @@ body.is-mobile .zenith-dashboard.no-bg-mobile .zenith-dashboard__bg {
 }
 
 @supports (backdrop-filter: blur(1px)) {
-    body.is-mobile .zenith-dashboard.has-bg-glass .zenith-widget-card:not(.zenith-bundle__member)::before,
+    body.is-mobile
+        .zenith-dashboard.has-bg-glass
+        .zenith-widget-card:not(.zenith-bundle__member)::before,
     body.is-mobile .zenith-dashboard.has-bg-glass .zenith-bundle__card::before,
     body.is-mobile .zenith-dashboard.has-bg-glass .zenith-bundle__shoulder::before,
     body.is-mobile .zenith-dashboard.has-bg-glass .zenith-gridbar::before,
@@ -404,7 +406,9 @@ body.is-phone .zenith-dashboard__bg::before {
     box-shadow: none;
     color: var(--zenith-text-muted);
     cursor: pointer;
-    transition: color var(--zenith-transition-fast), background var(--zenith-transition-fast);
+    transition:
+        color var(--zenith-transition-fast),
+        background var(--zenith-transition-fast);
 }
 
 /* Refreshing is a different errand, so it keeps its own edges. */
@@ -619,7 +623,9 @@ body.is-phone .zenith-dashboard__bg::before {
     color: var(--zenith-text-faint);
     cursor: pointer;
     z-index: 2;
-    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast);
+    transition:
+        background var(--zenith-transition-fast),
+        color var(--zenith-transition-fast);
 }
 
 .zenith-clock button.zenith-clock__toggle:hover {
@@ -745,7 +751,10 @@ body.is-phone .zenith-dashboard__bg::before {
     animation-delay: calc(var(--i, 0) * 16ms);
     /* Slow on purpose: an hour turning over is not an event that needs to snap.
        At this length it is only ever noticed in the corner of the eye. */
-    transition: background 700ms ease, opacity 700ms ease, height 350ms ease;
+    transition:
+        background 700ms ease,
+        opacity 700ms ease,
+        height 350ms ease;
 }
 
 /* Midnight, six, noon, six — landmarks, so a glance can place the needle
@@ -957,7 +966,9 @@ body.is-phone .zenith-dashboard__bg::before {
     line-height: 1;
     cursor: pointer;
     border-radius: var(--zenith-radius-sm);
-    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast);
+    transition:
+        background var(--zenith-transition-fast),
+        color var(--zenith-transition-fast);
 }
 
 .zenith-cal__num {
@@ -2193,11 +2204,21 @@ body.is-phone .zenith-dashboard__bg::before {
 }
 
 /* UV bands. Shared by the metric tile and the per-day extras row. */
-.is-uv-low { --zenith-uv: var(--zenith-success); }
-.is-uv-moderate { --zenith-uv: var(--zenith-warning); }
-.is-uv-high { --zenith-uv: #fb923c; }
-.is-uv-veryHigh { --zenith-uv: var(--zenith-danger); }
-.is-uv-extreme { --zenith-uv: #a855f7; }
+.is-uv-low {
+    --zenith-uv: var(--zenith-success);
+}
+.is-uv-moderate {
+    --zenith-uv: var(--zenith-warning);
+}
+.is-uv-high {
+    --zenith-uv: #fb923c;
+}
+.is-uv-veryHigh {
+    --zenith-uv: var(--zenith-danger);
+}
+.is-uv-extreme {
+    --zenith-uv: #a855f7;
+}
 
 .zenith-weather__metric.is-uv-low .zenith-weather__metric-hint,
 .zenith-weather__metric.is-uv-moderate .zenith-weather__metric-hint,
@@ -2239,11 +2260,12 @@ body.is-phone .zenith-dashboard__bg::before {
     overflow: hidden;
     border: 1px solid var(--zenith-border);
     border-radius: var(--zenith-radius-lg);
-    background: linear-gradient(180deg, var(--sky-top), var(--sky-bot)),
-        var(--zenith-bg-secondary);
+    background: linear-gradient(180deg, var(--sky-top), var(--sky-bot)), var(--zenith-bg-secondary);
     /* Registered above precisely so this works: the wash crossfades as the
        phase turns over instead of switching at the horizon crossing. */
-    transition: --sky-top 1.4s ease, --sky-bot 1.4s ease;
+    transition:
+        --sky-top 1.4s ease,
+        --sky-bot 1.4s ease;
     animation: zenith-sky-in 520ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
 
@@ -2414,7 +2436,8 @@ body.is-phone .zenith-dashboard__bg::before {
    it along the real path instead of across the chord, and the entrance is the
    morning replayed in a second and a half. */
 .zenith-weather__sun {
-    transition: offset-distance 1200ms cubic-bezier(0.4, 0, 0.2, 1),
+    transition:
+        offset-distance 1200ms cubic-bezier(0.4, 0, 0.2, 1),
         transform 1200ms cubic-bezier(0.4, 0, 0.2, 1);
     animation: zenith-sun-travel 1600ms cubic-bezier(0.33, 0, 0.2, 1) backwards;
 }
@@ -2583,7 +2606,8 @@ body.is-phone .zenith-dashboard__bg::before {
     padding: var(--zenith-space-md);
     border: 1px solid var(--zenith-border);
     border-radius: var(--zenith-radius-lg);
-    background: radial-gradient(130% 170% at 10% 0%, rgba(148, 163, 255, 0.11), transparent 62%),
+    background:
+        radial-gradient(130% 170% at 10% 0%, rgba(148, 163, 255, 0.11), transparent 62%),
         var(--zenith-bg-secondary);
     animation: zenith-fact-in 520ms cubic-bezier(0.2, 0.8, 0.3, 1) 340ms both;
 }
@@ -2721,7 +2745,9 @@ body.is-phone .zenith-dashboard__bg::before {
     background: #f6f4ea;
     /* Rimmed, because it crosses its own track: cream on cream at the full moon
        is where an unrimmed dot disappears. */
-    box-shadow: 0 0 0 1.5px rgba(20, 24, 38, 0.7), 0 0 9px rgba(232, 230, 223, 0.45);
+    box-shadow:
+        0 0 0 1.5px rgba(20, 24, 38, 0.7),
+        0 0 9px rgba(232, 230, 223, 0.45);
     /* Walks the month from the last new moon to tonight. */
     animation: zenith-lunation-in 950ms cubic-bezier(0.4, 0, 0.2, 1) 420ms backwards;
 }
@@ -2802,12 +2828,24 @@ body.is-phone .zenith-dashboard__bg::before {
     background: var(--zenith-bg-secondary);
 }
 
-.zenith-weather__aqi.is-good { --zenith-aqi: var(--zenith-success); }
-.zenith-weather__aqi.is-fair { --zenith-aqi: #84cc16; }
-.zenith-weather__aqi.is-moderate { --zenith-aqi: var(--zenith-warning); }
-.zenith-weather__aqi.is-poor { --zenith-aqi: #fb923c; }
-.zenith-weather__aqi.is-veryPoor { --zenith-aqi: var(--zenith-danger); }
-.zenith-weather__aqi.is-extreme { --zenith-aqi: #a855f7; }
+.zenith-weather__aqi.is-good {
+    --zenith-aqi: var(--zenith-success);
+}
+.zenith-weather__aqi.is-fair {
+    --zenith-aqi: #84cc16;
+}
+.zenith-weather__aqi.is-moderate {
+    --zenith-aqi: var(--zenith-warning);
+}
+.zenith-weather__aqi.is-poor {
+    --zenith-aqi: #fb923c;
+}
+.zenith-weather__aqi.is-veryPoor {
+    --zenith-aqi: var(--zenith-danger);
+}
+.zenith-weather__aqi.is-extreme {
+    --zenith-aqi: #a855f7;
+}
 
 .zenith-weather__aqi-head {
     display: flex;
@@ -2900,9 +2938,15 @@ body.is-phone .zenith-dashboard__bg::before {
     font-variant-numeric: tabular-nums;
 }
 
-.zenith-weather__pollen-item.is-low b { color: var(--zenith-success); }
-.zenith-weather__pollen-item.is-moderate b { color: var(--zenith-warning); }
-.zenith-weather__pollen-item.is-high b { color: var(--zenith-danger); }
+.zenith-weather__pollen-item.is-low b {
+    color: var(--zenith-success);
+}
+.zenith-weather__pollen-item.is-moderate b {
+    color: var(--zenith-warning);
+}
+.zenith-weather__pollen-item.is-high b {
+    color: var(--zenith-danger);
+}
 
 /* Explanatory footnotes — deliberately quiet, but present, because the things
    they explain (no moonrise, no pollen outside Europe) are otherwise mysteries. */
@@ -3022,11 +3066,49 @@ body.is-phone .zenith-dashboard__bg::before {
     border-color: var(--zenith-accent);
 }
 
-/* ── Content Widget (.zenith-cw) ─────────────────── */
+/* ── Content Widget (.zenith-cw) ─────────────────────
+   A hero that states the library, a shelf that grows, and a footer. The shelf
+   is the only part with `flex: 1`, which is what stopped this card ending
+   wherever its contents happened to end and leaving three hundred pixels of
+   nothing under them.
+
+   `container-type: size` so the parts that only make sense on a tall card can
+   be dropped by height rather than by preset — a card the user has just
+   dragged shorter is a size no preset knows about. Safe because the height
+   comes from the grid cell and never from the contents. */
 .zenith-cw {
     display: flex;
     flex-direction: column;
     gap: var(--zenith-space-sm);
+    height: 100%;
+    min-height: 0;
+    container-type: size;
+    container-name: zenith-cw;
+}
+
+.zenith-cw__hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-sm);
+    flex: none;
+}
+
+/* Everything the card is actually about, and the only part that takes the
+   height left over — which is what pins the footer to the bottom of the card
+   instead of leaving it wherever the list happened to end.
+
+   Deliberately not a scroll container of its own. The widget card's body
+   already scrolls (see `dashboard-grid.css`), and a second scrollbar inside it
+   traps the wheel over one half of the card and cuts the last row in half to
+   advertise itself. What keeps the shelf inside the card is the row budget in
+   `LAYOUT`; overflowing past that is the card body's problem, and it has an
+   answer for it. */
+.zenith-cw__shelf {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-sm);
+    flex: 1;
+    min-height: 0;
 }
 
 .zenith-cw__summary {
@@ -3080,7 +3162,23 @@ body.is-phone .zenith-dashboard__bg::before {
 .zenith-cw__bar-seg {
     height: 100%;
     min-width: 3px;
+    transform-origin: left center;
     transition: width var(--zenith-transition);
+    /* Grown from nothing on the first paint, one after another, so the bar
+       reads as a measurement being taken rather than as a rule ruled across
+       the card. `backwards` holds each segment at zero through its own delay —
+       without it they all stand full width until their turn comes. */
+    animation: zenith-cw-grow 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(var(--cw-at, 0) * 70ms);
+}
+
+@keyframes zenith-cw-grow {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
 }
 
 .zenith-cw__breakdown {
@@ -3134,11 +3232,78 @@ body.is-phone .zenith-dashboard__bg::before {
     min-width: 0;
     cursor: pointer;
     outline: none;
+    position: relative;
+    transition:
+        background-color var(--zenith-transition-fast),
+        transform var(--zenith-transition-fast);
+    /* One after another, from the top. The delay is a number on the element
+       rather than an `nth-child` chain: how many rows there are is the card's
+       business, and a selector per position has to be written out per count. */
+    animation: zenith-cw-rise 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(var(--cw-at, 0) * 45ms);
+}
+
+@keyframes zenith-cw-rise {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
 }
 
 .zenith-cw__item:hover,
 .zenith-cw__item:focus-visible {
     background: var(--zenith-bg-hover);
+}
+
+.zenith-cw__item:active {
+    transform: scale(0.995);
+}
+
+/* The row that was just advanced. A meter three pixels tall moving by half a
+   percent is not a visible event; this is what makes the press land. */
+.zenith-cw__item.is-cheering,
+.zenith-cw__spot-bump.is-cheering {
+    animation: zenith-cw-flash 620ms ease-out;
+}
+
+@keyframes zenith-cw-flash {
+    0% {
+        background-color: color-mix(in srgb, var(--zenith-accent) 26%, transparent);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+/* The "+1" itself, floating off the control that earned it. */
+.zenith-cw__cheer {
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    pointer-events: none;
+    color: var(--zenith-accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    animation: zenith-cw-cheer 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes zenith-cw-cheer {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 4px);
+    }
+    22% {
+        opacity: 1;
+        transform: translate(-50%, -4px);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -18px);
+    }
 }
 
 .zenith-cw__item-main {
@@ -3147,6 +3312,15 @@ body.is-phone .zenith-dashboard__bg::before {
     gap: 3px;
     flex: 1;
     min-width: 0;
+}
+
+/* Every row is the same height, whether its second line is a meter or a
+   subtitle. A game with no measurable length sat a few pixels shorter than the
+   show above it, which is enough to break the rhythm of a list and read as a
+   row that failed to load something. */
+.zenith-cw__item-track,
+.zenith-cw__item-sub {
+    min-height: 14px;
 }
 
 .zenith-cw__item-sub {
@@ -3174,14 +3348,25 @@ body.is-phone .zenith-dashboard__bg::before {
     font-variant-numeric: tabular-nums;
 }
 
-/* The meter runs under the text column, full width — it's a magnitude, not a
-   value to read, so it doesn't need to share its line with digits. */
+/* The meter runs under the text column, full width — it is a magnitude, not a
+   value to read, so it does not need to share its line with digits.
+
+   Three things stop it reading as an underline on the title above it, which is
+   exactly what it looked like at three pixels tall pressed against the text:
+   it stands off the line it belongs to, it is tall enough to have an inside,
+   and its unfilled part is VISIBLE. That last one is the whole point of a
+   meter — without a full-width track there is nothing to say where the scale
+   ends, and a half-drawn bar is indistinguishable from a short one. The
+   track's own grey is mixed from the theme's faintest ink rather than taken
+   from a surface token, because `--background-modifier-form-field` on a dark
+   theme is within a percent of the card it sits on. */
 .zenith-cw__item-track {
     display: block;
     width: 100%;
-    height: 3px;
+    height: 5px;
+    margin-top: 3px;
     border-radius: 999px;
-    background: var(--zenith-bg-tertiary);
+    background: color-mix(in srgb, var(--zenith-text-faint) 30%, transparent);
     overflow: hidden;
 }
 
@@ -3209,7 +3394,9 @@ body.is-phone .zenith-dashboard__bg::before {
     color: var(--zenith-text-muted);
     cursor: pointer;
     opacity: 0;
-    transition: opacity var(--zenith-transition-fast), color var(--zenith-transition-fast),
+    transition:
+        opacity var(--zenith-transition-fast),
+        color var(--zenith-transition-fast),
         border-color var(--zenith-transition-fast);
 }
 
@@ -3273,6 +3460,198 @@ body.is-phone .zenith-dashboard__bg::before {
     font-variant-numeric: tabular-nums;
 }
 
+/* ── The spotlight ───────────────────────────────────
+   The item closest to finishing, drawn as the card's subject rather than as its
+   first row: artwork at a size worth recognising, the count and the share
+   together, and the one action worth taking spelled out instead of waiting
+   behind a hover. */
+.zenith-cw__spot {
+    display: flex;
+    gap: var(--zenith-space-sm);
+    padding: 2px var(--zenith-space-sm) var(--zenith-space-sm);
+    min-width: 0;
+    animation: zenith-cw-rise 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* No border and no fill, deliberately. It had both, and a bordered panel inside
+   a bordered card is two frames around one thing — the card already says where
+   its contents begin. What separates the leading item from the rows below it is
+   what it is given: artwork at twice the size, a title a step larger, and the
+   share spelled out beside the count. Rank by scale, not by chrome.
+
+   The rule under it is the one piece of separation that earns its pixels: it
+   says the shelf continues, which a gap alone does not. */
+.zenith-cw__spot + .zenith-cw__section-title,
+.zenith-cw__spot + .zenith-cw__list {
+    padding-top: var(--zenith-space-sm);
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-cw button.zenith-cw__spot-art {
+    flex: none;
+    width: 54px;
+    height: 78px;
+    padding: 0;
+    border: none;
+    border-radius: var(--zenith-radius-md);
+    background: none;
+    box-shadow: none;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform var(--zenith-transition);
+}
+
+.zenith-cw button.zenith-cw__spot-art:hover {
+    transform: scale(1.04);
+}
+
+.zenith-cw__spot-main {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-cw__spot-top {
+    display: flex;
+    align-items: baseline;
+    gap: var(--zenith-space-sm);
+    min-width: 0;
+}
+
+.zenith-cw button.zenith-cw__spot-title {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: 0.98rem;
+    font-weight: 600;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.zenith-cw button.zenith-cw__spot-title:hover {
+    color: var(--zenith-accent);
+}
+
+.zenith-cw__spot-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--zenith-space-sm);
+    color: var(--zenith-text-muted);
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-cw__spot-pct {
+    color: var(--cw-color, var(--zenith-accent));
+    font-weight: 600;
+}
+
+/* The same control the rows have, one size up.
+
+   It was a pill reading "+ Ещё один ep" — a label built out of two languages,
+   because the unit is the user's own word from their content type and the
+   sentence around it was not. It also outweighed everything near it: a
+   28-pixel button beside three 22-pixel circles reads as the card's primary
+   action when it is the same action the rows offer. The word went to the
+   tooltip, where a user-supplied noun does not have to agree with anything. */
+.zenith-cw button.zenith-cw__spot-bump {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    align-self: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--zenith-border);
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    transition:
+        color var(--zenith-transition-fast),
+        border-color var(--zenith-transition-fast);
+}
+
+.zenith-cw button.zenith-cw__spot-bump:hover {
+    color: var(--cw-color, var(--zenith-accent));
+    border-color: var(--cw-color, var(--zenith-accent));
+}
+
+/* ── Artwork ─────────────────────────────────────────
+   An `<img>` rather than a background, for one reason: a background cannot say
+   when it has arrived. A cover fetched over the network pops in mid-scroll
+   otherwise, and on a shelf of six that is six separate flickers. */
+.zenith-cw__art,
+.zenith-cw__item-thumb {
+    display: block;
+    overflow: hidden;
+    background: var(--zenith-bg-tertiary);
+}
+
+.zenith-cw__art {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+}
+
+.zenith-cw__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 260ms ease;
+}
+
+.zenith-cw__img.is-loaded {
+    opacity: 1;
+}
+
+/* No cover: the type's own glyph, centred, in the type's own colour. */
+.zenith-cw__art.is-blank,
+.zenith-cw__item-thumb.is-blank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── The footer ──────────────────────────────────────
+   The two things the shelf cannot say, because both are about items that are
+   NOT on the card: how much of the library is behind you, and what quietly
+   stopped moving. */
+.zenith-cw__footer {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    flex: none;
+    flex-wrap: wrap;
+    font-size: 0.74rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-cw__footStat {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-cw__footStat.is-warn {
+    color: var(--zenith-warning, var(--zenith-text-muted));
+}
+
 /* "Open library" is where the widget ends, so it reads as the card's footer
    rather than as one more thing in the list. Overrides the `.zenith-cw__open`
    rule above by coming later at the same specificity. */
@@ -3283,6 +3662,77 @@ body.is-phone .zenith-dashboard__bg::before {
     margin-top: var(--zenith-space-xs);
     padding: 7px 12px;
     border-radius: var(--zenith-radius-md);
+}
+
+/* In the footer it is one control among three, so it stops being a full-width
+   band and goes to the end of the line. */
+.zenith-cw__footer .zenith-cw__open {
+    align-self: auto;
+    width: auto;
+    margin: 0 0 0 auto;
+    padding: 4px 10px;
+}
+
+/* ── What a small card gives up ──────────────────────
+   In order, and never the legend itself: the label words go first (the count
+   keeps its dot, and the chip's tooltip keeps the name), then the footer's
+   note about items that are not on the card, then the spotlight's artwork
+   comes down to a row's thumbnail.
+
+   The legend stays at every size on purpose. A four-colour bar with no key is
+   a decoration the reader has to guess at, and the earlier version dropped the
+   key first — leaving the smallest card, where guessing costs most, with the
+   bar and nothing to read it by. */
+/* Narrow, not short: the legend wraps onto a second line rather than dropping
+   its words. Two lines of key costs one row of shelf and buys the colours
+   their names, which on the smallest card is the better trade — a chip reading
+   "● 3" is a colour with a number next to it. */
+@container zenith-cw (max-width: 340px) {
+    .zenith-cw__breakdown {
+        gap: 5px var(--zenith-space-sm);
+    }
+
+    .zenith-cw__stat {
+        font-size: 0.76rem;
+    }
+}
+
+@container zenith-cw (max-height: 210px) {
+    /* Here there is genuinely no room, and the dot plus the count still says
+       which segment is which by colour. The name stays on the chip's title. */
+    .zenith-cw__stat-label {
+        display: none;
+    }
+
+    .zenith-cw__footStat {
+        display: none;
+    }
+
+    .zenith-cw__spot {
+        padding-bottom: var(--zenith-space-xs);
+    }
+
+    .zenith-cw button.zenith-cw__spot-art {
+        width: 32px;
+        height: 46px;
+    }
+
+    .zenith-cw button.zenith-cw__spot-title {
+        font-size: 0.9rem;
+    }
+}
+
+/* Motion off means off. The plugin-wide switch is handled by the wildcard in
+   `variables.css`; this is the operating system's. */
+@media (prefers-reduced-motion: reduce) {
+    .zenith-cw__item,
+    .zenith-cw__spot,
+    .zenith-cw__bar-seg,
+    .zenith-cw__cheer,
+    .zenith-cw__img {
+        animation: none;
+        transition: none;
+    }
 }
 
 .zenith-cw__hint {

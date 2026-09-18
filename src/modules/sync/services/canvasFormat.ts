@@ -1,16 +1,14 @@
 /**
- * The `.canvas` file format.
+ * The `.canvas` file format — as much of it as a merge needs.
  *
  * Obsidian ships no public Canvas API — `obsidian.d.ts` does not mention canvas
  * once — so everything a plugin can rely on lives here, in the JSON on disk.
- * That file format IS documented and stable, which is why the module is built
- * on it: features expressed as file transforms keep working across Obsidian
- * releases, while anything reaching into the live view does not.
+ * That file format IS documented and stable, which is why `canvasMerge` is
+ * built on it: a merge expressed as a file transform keeps working across
+ * Obsidian releases, while anything reaching into the live view does not.
  *
  * Reference: https://jsoncanvas.org — the spec Obsidian implements.
  */
-
-export type CanvasNodeType = 'text' | 'file' | 'link' | 'group';
 
 /** Obsidian's six palette slots. Any other string is a raw hex colour. */
 export type CanvasColor = '1' | '2' | '3' | '4' | '5' | '6' | (string & {});
@@ -67,7 +65,7 @@ export interface CanvasEdge {
 }
 
 /**
- * A node or edge this module could not validate, kept exactly as it was read
+ * A node or edge the parser could not validate, kept exactly as it was read
  * together with where it sat in the file.
  *
  * `at` is the slot it must land on again when the canvas is written. Obsidian
@@ -85,60 +83,12 @@ export interface CanvasData {
     /**
      * Everything `parseCanvas` did not recognise, carried through untouched.
      *
-     * A canvas is rewritten wholesale, so anything the parser drops is deleted
-     * from the user's file the moment any command runs. Unknown node types are
-     * the ordinary case — a newer Obsidian, or another plugin's own node — and
-     * none of that is ours to discard just because we cannot lay it out.
+     * A merged canvas is written wholesale, so anything the parser drops is
+     * deleted from the user's file. Unknown node types are the ordinary case —
+     * a newer Obsidian, or another plugin's own node — and none of that is ours
+     * to discard just because we cannot match it up.
      */
     preserved?: { nodes: PreservedEntry[]; edges: PreservedEntry[] };
-}
-
-export const EMPTY_CANVAS: CanvasData = { nodes: [], edges: [] };
-
-/** Obsidian's own defaults for a new card, matched so generated canvases feel native. */
-export const DEFAULT_NODE_WIDTH = 400;
-export const DEFAULT_NODE_HEIGHT = 400;
-export const DEFAULT_TEXT_HEIGHT = 60;
-
-export function isGroupNode(node: CanvasNode): node is CanvasGroupNode {
-    return node.type === 'group';
-}
-
-export function isTextNode(node: CanvasNode): node is CanvasTextNode {
-    return node.type === 'text';
-}
-
-export function isFileNode(node: CanvasNode): node is CanvasFileNode {
-    return node.type === 'file';
-}
-
-/**
- * Does `outer` fully hold `inner`?
- *
- * This is the entirety of group membership on a canvas: Obsidian stores no
- * member list, so a node belongs to a group when it sits inside the group's
- * rectangle and nowhere else. Every feature that moves or resizes anything has
- * to agree on this exact test, or one of them will resize a card out of a group
- * that another is still treating as a member.
- */
-export function contains(outer: CanvasNodeBase, inner: CanvasNodeBase): boolean {
-    return (
-        inner.x >= outer.x &&
-        inner.y >= outer.y &&
-        inner.x + inner.width <= outer.x + outer.width &&
-        inner.y + inner.height <= outer.y + outer.height
-    );
-}
-
-/**
- * Obsidian's ids are 16 lowercase hex characters. Matching that shape matters:
- * ids appear in edge references, and a canvas whose ids look foreign is harder
- * to debug when hand-editing the JSON.
- */
-export function createCanvasId(): string {
-    let id = '';
-    for (let i = 0; i < 16; i++) id += Math.floor(Math.random() * 16).toString(16);
-    return id;
 }
 
 class CanvasParseError extends Error {
@@ -188,9 +138,9 @@ export function parseCanvas(raw: string): CanvasData {
     });
 
     // Two sets, because they answer different questions. `known` is what the
-    // transforms are allowed to touch; `present` is everything that will still
-    // be in the file afterwards, including what we are only passing through —
-    // an edge may legitimately point at a node we do not understand.
+    // merge is allowed to touch; `present` is everything that will still be in
+    // the file afterwards, including what we are only passing through — an edge
+    // may legitimately point at a node we do not understand.
     const known = new Set(nodes.map((n) => n.id));
     const present = new Set(known);
     for (const held of heldNodes) {
@@ -223,7 +173,7 @@ export function parseCanvas(raw: string): CanvasData {
     return { nodes, edges, preserved: { nodes: heldNodes, edges: heldEdges } };
 }
 
-/** Everything the transforms know how to move, resize and re-attach. */
+/** Everything the merge knows how to match up and write back. */
 function isKnownNode(candidate: unknown): boolean {
     if (!isRecord(candidate)) return false;
     const { id, type, x, y, width, height } = candidate;
@@ -248,7 +198,7 @@ function reinsert(kept: readonly unknown[], held: readonly PreservedEntry[]): un
 
 /**
  * Serialise back to disk. Tab-indented to match what Obsidian writes, so a
- * canvas touched by this module does not show up as a whole-file diff in git.
+ * canvas Zenith merged does not show up as a whole-file diff in git.
  */
 export function serializeCanvas(data: CanvasData): string {
     return JSON.stringify(
@@ -259,27 +209,4 @@ export function serializeCanvas(data: CanvasData): string {
         null,
         '\t'
     );
-}
-
-/** Axis-aligned bounds of a set of nodes, or null when there are none. */
-export function boundsOf(nodes: readonly CanvasNode[]): {
-    minX: number;
-    minY: number;
-    maxX: number;
-    maxY: number;
-    width: number;
-    height: number;
-} | null {
-    if (!nodes.length) return null;
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-    for (const n of nodes) {
-        minX = Math.min(minX, n.x);
-        minY = Math.min(minY, n.y);
-        maxX = Math.max(maxX, n.x + n.width);
-        maxY = Math.max(maxY, n.y + n.height);
-    }
-    return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
 }

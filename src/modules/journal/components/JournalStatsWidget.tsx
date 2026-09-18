@@ -1,5 +1,5 @@
 import React, { useMemo, type FC } from 'react';
-import { NotebookPen, CalendarDays } from 'lucide-react';
+import { NotebookPen, CalendarDays, Flame, CheckCircle2 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
@@ -92,26 +92,26 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
             <div className="zenith-jw__head">
                 <span className="zenith-jw__head-text">
                     <span className="zenith-jw__head-main">
-                        {t('journal.widget.coverage', {
-                            count: stats.inRange,
-                            days: stats.windowDays,
-                        })}
+                        <CheckCircle2 size={13} className="zenith-jw__head-icon" />
+                        <span>
+                            {t('journal.widget.coverage', {
+                                count: stats.inRange,
+                                days: stats.windowDays,
+                            })}
+                        </span>
                     </span>
                 </span>
                 <span className="zenith-jw__streak">
-                    {t('journal.stats.streakShort')} {stats.currentStreak}
+                    <Flame size={12} className="zenith-jw__streak-flame" />
+                    <span>{t('journal.stats.streakShort')} {stats.currentStreak}</span>
                 </span>
-                {/* In the corner, unlabelled: the card is a summary you read,
-                    and the way out of it does not need a line of its own at the
-                    bottom — that line was the widest element on a small card
-                    and said what its icon already says. */}
                 <button
                     className="zenith-jw__open"
                     onClick={openJournal}
                     aria-label={t('journal.widget.openJournal')}
                     title={t('journal.widget.openJournal')}
                 >
-                    <CalendarDays size={15} />
+                    <CalendarDays size={14} />
                 </button>
             </div>
 

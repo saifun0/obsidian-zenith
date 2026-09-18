@@ -1,4 +1,12 @@
-import React, { useCallback, useMemo, useRef, useState, type CSSProperties, type FC } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    type CSSProperties,
+    type FC,
+} from 'react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { useCrossFade, useReducedMotion } from '../../../components/shared/useCrossFade';
 import { useZenithStore } from '../../../store';
@@ -6,7 +14,8 @@ import { useTranslation } from '../../../core/i18n';
 import type { TrackerStat } from '../services/journalStats';
 import { summarizeTracker } from './trackerSummary';
 import { TrackerPanel } from './TrackerPanel';
-import { useCountUp } from './useCountUp';
+import { TrackerStrip } from './TrackerStrip';
+import { useCountUp } from '../../../components/shared/useCountUp';
 import { useAutoAdvance } from './useAutoAdvance';
 import { dialAngles, dialPoint, nearestTurn } from './dialGeometry';
 
@@ -14,18 +23,51 @@ import { dialAngles, dialPoint, nearestTurn } from './dialGeometry';
  * The ring's radius, in the 100×100 viewBox the circle is drawn in — which is
  * also a percentage of the stage, so the icons can be placed against the same
  * number the circle uses. The stylesheet holds it a second time as `--jdial-r`,
- * for the travelling mark; they have to agree.
+ * for the travelling light; they have to agree.
  *
- * Thirty-four because nothing that stands on the ring is as thin as the ring.
+ * Thirty-seven because nothing that stands on the ring is as thin as the ring.
  * An icon is a fixed 26px however large the ring is and it is centred ON the
- * line; the travelling mark is a 30px halo with 12px of glow, 27px from its own
- * centre. The dial is clipped to its own box — see `.zenith-jdial` — so the
- * stage has to be wide enough for the radius plus the widest of those, or the
- * mark reaches twelve o'clock with its glow cut off along a straight line. At
- * the smallest ring the card will draw before falling back to pips, forty left
- * 14.8px and thirty-four leaves 23.7px.
+ * line; the light under it is masked to a band about the radius, so it needs no
+ * room of its own. The dial is clipped to its own box — see `.zenith-jdial` —
+ * so the stage has to be wide enough for the radius plus half an icon, or the
+ * mark reaches twelve o'clock cut off along a straight line. At the smallest
+ * ring the card will draw before falling back to pips — a 133px stage — this
+ * leaves 4.3px past the icon; forty would leave none.
  */
-const RING_R = 34;
+const RING_R = 37;
+
+/**
+ * How long the light takes to travel between two slots.
+ *
+ * The number itself is the stylesheet's — it is the mark's transition — and it
+ * is repeated here for one reason: while the light is moving the dial wears
+ * `is-travelling`, which is what lets the beam swell on the way and settle on
+ * arrival. CSS cannot ask "is this transform still running", so the component
+ * has to hold the answer for exactly as long as the transition lasts. Move one
+ * and move the other.
+ */
+const TRAVEL_MS = 520;
+
+/** True from the moment the mark sets off until it lands. */
+function useTravelling(key: string, ms: number): boolean {
+    const [travelling, setTravelling] = useState(false);
+    const settled = useRef(false);
+
+    useEffect(() => {
+        // The first slot is not travelled to — it is where the dial opens. A
+        // light that swells the moment the card appears reads as a switch
+        // nobody made.
+        if (!settled.current) {
+            settled.current = true;
+            return;
+        }
+        setTravelling(true);
+        const timer = window.setTimeout(() => setTravelling(false), ms);
+        return () => window.clearTimeout(timer);
+    }, [key, ms]);
+
+    return travelling;
+}
 
 export interface TrackerDialScale {
     /** "avg · 3 d" under the figure. */
@@ -105,6 +147,14 @@ const DialFace: FC<{ stat: TrackerStat; scale: TrackerDialScale; animate: boolea
  * moves on by itself every few seconds, and stops the moment anybody looks —
  * see `useAutoAdvance` for the three ways it knows to hold still.
  *
+ * Which one is showing used to be said by a ring drawn around its icon, and a
+ * ring around an icon is a badge: it belongs to the icon, it sits on top of the
+ * composition, and at a glance it reads as a control that has been switched on
+ * rather than as a place the dial is pointing. The ring's own track carries it
+ * now — the line the trackers stand on lights up in the active tracker's colour
+ * where that tracker stands, and slides round to the next one. The icon is left
+ * alone to be an icon.
+ *
  * Beside the ring stands the panel, and between them they hold two different
  * kinds of claim. The ring is about the SET of trackers — how many, which one,
  * how to reach another. The panel is about the one in the middle: how much of
@@ -157,6 +207,8 @@ export const TrackerDial: FC<TrackerDialProps> = ({ stats, scale }) => {
     const turn = useRef(angles[0] ?? 0);
     turn.current = nearestTurn(turn.current, angles[activeIndex] ?? 0);
 
+    const travelling = useTravelling(targetId, TRAVEL_MS);
+
     if (!active) return null;
 
     const dialStyle = {
@@ -166,7 +218,7 @@ export const TrackerDial: FC<TrackerDialProps> = ({ stats, scale }) => {
 
     return (
         <div
-            className="zenith-jdial"
+            className={`zenith-jdial ${travelling ? 'is-travelling' : ''}`}
             style={dialStyle}
             // Holding still while somebody reads is the whole contract with an
             // auto-advancing card. Focus counts as reading: a keyboard user
@@ -199,12 +251,16 @@ export const TrackerDial: FC<TrackerDialProps> = ({ stats, scale }) => {
                             <circle className="zenith-jdial__track" cx="50" cy="50" r={RING_R} />
                         </svg>
 
-                        {/* The travelling mark: one element turned about the
-                            dial's centre. It moves rather than the icons,
-                            which stay where they were put — a click target
-                            that walks away every seven seconds is not one. */}
+                        {/* The travelling light: one element turned about the
+                            dial's centre, carrying a wedge of the tracker's
+                            colour masked down onto the ring's own line. It
+                            moves rather than the icons, which stay where they
+                            were put — a click target that walks away every
+                            seven seconds is not one. The wedge dips in the
+                            middle so the glyph it arrives under is read
+                            against the card and not against its own colour. */}
                         <span className="zenith-jdial__mark" aria-hidden="true">
-                            <span className="zenith-jdial__mark-dot" />
+                            <span className="zenith-jdial__beam" />
                         </span>
 
                         {stats.map((stat, i) => {
@@ -255,33 +311,43 @@ export const TrackerDial: FC<TrackerDialProps> = ({ stats, scale }) => {
                 <TrackerPanel stat={active} plotHeight={scale.plotHeight} />
             </div>
 
-            {/* The same three things in a tenth of the room — how many, which
-                one, how to reach another — for a card too short to hold a ring.
-                Both are drawn and the stylesheet picks; `display: none` takes
-                the unused one out of the accessibility tree as well, so there
-                is never a second set of tab stops for the same choice. */}
-            {stats.length > 1 && (
-                <div
-                    className="zenith-jdial__pips"
-                    role="tablist"
-                    aria-label={t('journal.dial.aria')}
-                >
-                    {stats.map((stat) => (
-                        <button
-                            key={stat.tracker.id}
-                            className={`zenith-jdial__pip ${stat.tracker.id === targetId ? 'is-active' : ''}`}
-                            style={{ ['--hmon-color' as string]: stat.tracker.color }}
-                            role="tab"
-                            aria-selected={stat.tracker.id === targetId}
-                            aria-label={stat.tracker.label}
-                            title={stat.tracker.label}
-                            onClick={() => switchTo(stat.tracker.id)}
-                        >
-                            <span className="zenith-jdial__pip-dot" />
-                        </button>
-                    ))}
-                </div>
-            )}
+            {/* Under the dial: what the panel would have said, on a card too
+                narrow to seat a panel. Keyed by the tracker so a switch
+                remounts it and the chips play their entrance — the strip is
+                the small card's whole answer to "which habit is this", and it
+                has to be seen to change. See `TrackerStrip`. */}
+            <div className="zenith-jdial__foot">
+                <TrackerStrip key={targetId} stat={active} />
+
+                {/* The same three things the ring says in a tenth of the room —
+                    how many, which one, how to reach another — for a card too
+                    short to hold a ring. Both are drawn and the stylesheet
+                    picks; `display: none` takes the unused one out of the
+                    accessibility tree as well, so there is never a second set
+                    of tab stops for the same choice. */}
+                {stats.length > 1 && (
+                    <div
+                        className="zenith-jdial__pips"
+                        role="tablist"
+                        aria-label={t('journal.dial.aria')}
+                    >
+                        {stats.map((stat) => (
+                            <button
+                                key={stat.tracker.id}
+                                className={`zenith-jdial__pip ${stat.tracker.id === targetId ? 'is-active' : ''}`}
+                                style={{ ['--hmon-color' as string]: stat.tracker.color }}
+                                role="tab"
+                                aria-selected={stat.tracker.id === targetId}
+                                aria-label={stat.tracker.label}
+                                title={stat.tracker.label}
+                                onClick={() => switchTo(stat.tracker.id)}
+                            >
+                                <span className="zenith-jdial__pip-dot" />
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

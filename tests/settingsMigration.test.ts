@@ -132,6 +132,16 @@ describe('loadSettings — versioning', () => {
         expect(already.activeModuleIds).not.toContain('sync');
     });
 
+    it('drops the canvas module, which no longer ships', () => {
+        // Not merely inert: `canvas` is not a reserved id, so leaving it in the
+        // list would silently start a third-party module that took the name.
+        const s = load({
+            settingsVersion: 7,
+            activeModuleIds: ['dashboard', 'canvas', 'tasks'],
+        });
+        expect(s.activeModuleIds).toEqual(['dashboard', 'tasks']);
+    });
+
     it('never adds a module the user already has', () => {
         const s = load({ settingsVersion: 1, activeModuleIds: ['navigator', 'prayer'] });
         expect(s.activeModuleIds.filter((id) => id === 'prayer')).toHaveLength(1);

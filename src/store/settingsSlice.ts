@@ -1,6 +1,7 @@
 import {
     DEFAULT_TASKS_FOLDER,
     DEFAULT_CONTENT_FOLDER,
+    DEFAULT_PROJECTS_FOLDER,
     DEFAULT_JOURNAL_FOLDER,
     DEFAULT_JOURNAL_FORMAT,
     LEGACY_JOURNAL_FOLDER,
@@ -54,7 +55,6 @@ export type UiDensity = 'compact' | 'comfortable' | 'spacious';
 
 /** How the navigation launcher lays its buttons out. */
 export type NavigatorLayout = 'grid' | 'list';
-export type CanvasTreeDirection = 'down' | 'right';
 
 /** A module the installer put on disk, and where it came from. */
 export interface InstalledModuleRecord {
@@ -89,6 +89,8 @@ export interface ZenithSettings {
     taskImageSize: number;
     /** Vault-relative path to folder with content .md files */
     contentFolderPath: string;
+    /** Vault-relative path to folder with project .md files */
+    projectsFolderPath: string;
     /** Vault-relative path to folder with daily notes */
     journalFolderPath: string;
     /**
@@ -247,13 +249,6 @@ export interface ZenithSettings {
      * of waiting to be found in settings.
      */
     navigatorHiddenActions: string[];
-
-    /** Canvas: space left between nodes when a layout is applied. */
-    canvasLayoutGap: number;
-    /** Canvas: columns for the grid layout. 0 picks a roughly square grid. */
-    canvasLayoutColumns: number;
-    /** Canvas: which way a tree layout grows. */
-    canvasTreeDirection: CanvasTreeDirection;
 
     /** How much breathing room the interface uses. */
     uiDensity: UiDensity;
@@ -577,7 +572,7 @@ export interface SettingsSlice {
  * Bump when a migration is added, and gate that migration on the value below.
  * Version 1 is "everything written before versioning existed".
  */
-export const CURRENT_SETTINGS_VERSION = 7;
+export const CURRENT_SETTINGS_VERSION = 8;
 
 /**
  * Object-valued settings that must be merged field-by-field rather than
@@ -610,6 +605,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     taskImageAlign: 'left',
     taskImageSize: 56,
     contentFolderPath: DEFAULT_CONTENT_FOLDER,
+    projectsFolderPath: DEFAULT_PROJECTS_FOLDER,
     journalFolderPath: DEFAULT_JOURNAL_FOLDER,
     journalDateFormat: DEFAULT_JOURNAL_FORMAT,
     journalTemplatePath: '',
@@ -658,9 +654,6 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     navigatorLayout: 'grid',
     navigatorShowLabels: true,
     navigatorHiddenActions: [],
-    canvasLayoutGap: 64,
-    canvasLayoutColumns: 0,
-    canvasTreeDirection: 'down',
     uiDensity: 'comfortable',
     uiAnimations: true,
     activeModuleIds: [
@@ -669,6 +662,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
         'weather',
         'tasks',
         'tasks-calendar',
+        'projects',
         'content',
         'journal',
         'prayer',
@@ -834,6 +828,18 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             // shows nothing at all until a picture is chosen for it.
             if (from < 7 && !merged.activeModuleIds.includes('picture')) {
                 merged.activeModuleIds = [...merged.activeModuleIds, 'picture'];
+            }
+
+            // ── v7 → v8 ──
+            // The canvas module is gone, and its id has to leave the active
+            // list rather than sit there inertly: `canvas` was never a reserved
+            // id, so a third-party module that later takes it would start up on
+            // its own, never having been switched on. Its three settings are
+            // left where they are, like any other key we no longer read — see
+            // the merge above: forgetting them would cost the user their layout
+            // choices if they ever went back to a build that still has it.
+            if (from < 8) {
+                merged.activeModuleIds = merged.activeModuleIds.filter((id) => id !== 'canvas');
             }
 
             return { settings: merged };

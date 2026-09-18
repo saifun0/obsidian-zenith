@@ -61,6 +61,8 @@ const EN: Dict = {
     'settings.tasksFolder.desc': 'Vault-relative path where tasks are stored.',
     'settings.contentFolder': 'Content Folder',
     'settings.contentFolder.desc': 'Vault-relative path where articles and notes are stored.',
+    'settings.projectsFolder': 'Projects Folder',
+    'settings.projectsFolder.desc': 'Vault-relative path where project notes are stored.',
     'settings.folderMissing': "This folder doesn't exist yet.",
     'settings.createFolder': 'Create',
 
@@ -791,6 +793,21 @@ const EN: Dict = {
     'nav.tasks.desc': 'Everything on your plate',
     'nav.calendar': 'Calendar',
     'nav.calendar.desc': 'Tasks by month, week, day or agenda',
+    // Widget header titles. Short — they are set in a band above the card, in
+    // caps, and a two-word name wraps the header onto a second line.
+    'widget.content': 'Library',
+    'widget.clock': 'Clock',
+    'widget.nav': 'Navigation',
+    'widget.picture': 'Picture',
+    'widget.prayer': 'Prayer',
+    'widget.tasks': 'Tasks',
+    'widget.projects': 'Projects',
+    'widget.week': 'Week ahead',
+    'widget.weather': 'Weather',
+    'widget.checkin': 'Check-in',
+    'widget.journalStats': 'Journal',
+    'nav.projects': 'Projects',
+    'nav.projects.desc': 'Track progress, tasks and deadlines',
     'nav.content': 'Content',
     'nav.content.desc': 'Books, films, games and shows',
     'nav.journal': 'Journal',
@@ -1089,8 +1106,8 @@ const EN: Dict = {
     'content.detail.tookDays.one': 'took {count} day',
     'content.detail.tookDays.other': 'took {count} days',
     'content.filterByGenre': 'Show everything in “{genre}”',
-    'content.card.plusOne': 'One more {unit}',
-    'content.card.minusOne': 'One fewer {unit}',
+    'content.card.plusOne': '+1 {unit}',
+    'content.card.minusOne': '−1 {unit}',
     'content.bulk.select': 'Select several',
     'content.bulk.selected.one': '{count} selected',
     'content.bulk.selected.other': '{count} selected',
@@ -1148,6 +1165,9 @@ const EN: Dict = {
     'content.widget.openLibrary': 'Open library',
     'content.widget.upNext': 'Up next',
     'content.widget.bump': 'Add one {unit} to {title}',
+    // The footer strip: the two things the shelf cannot say, because both are
+    // about items that are not on the card.
+    'content.widget.stalled': '{count} not moving',
 
     'tasks.filter.allPriorities': 'All priorities',
     'tasks.filter.due': 'Due: {name}',
@@ -1282,6 +1302,10 @@ const EN: Dict = {
     'journal.stats.coverageDays': '{count} of {days} days',
     'journal.stats.runLabel': 'run · best {count}',
     'journal.stats.lastMark': 'last mark',
+    // The strip under a small dial: two words a chip, the full phrase on hover.
+    'journal.stats.inARow': 'in a row',
+    'journal.stats.avgPerDay': 'per recorded day',
+    'journal.stats.perDay': 'a day',
     'journal.stats.daysAgo': '{count} d ago',
     'journal.stats.panelAria': 'Window statistics for {name}',
     'journal.stats.legend':
@@ -1436,8 +1460,26 @@ const EN: Dict = {
     'sync.conflicts.kept': 'kept {winner}',
     'sync.conflicts.local': 'this device',
     'sync.conflicts.remote': 'the other device',
+    'sync.devices': 'Devices',
+    'sync.thisDeviceTag': 'this device',
     'sync.history': 'History',
     'sync.history.empty': 'Nothing has been sent or received yet.',
+    // Repeats are collapsed into one row — see `groupHistory` for why there
+    // are six identical lines to collapse in the first place.
+    'sync.history.repeat': '×{count}',
+    'sync.history.all': 'All {count}',
+    'sync.history.less': 'Fewer',
+    // The run notice, and the bar on the page it was started from.
+    'sync.progress.title': 'Syncing files',
+    'sync.progress.done': 'Sync finished',
+    'sync.progress.failed': 'Sync stopped',
+    'sync.progress.rate': '{rate}/s',
+    'sync.progress.eta': '{time} left',
+    'sync.progress.files': '{count} files',
+    'sync.unit.kb': 'kB',
+    'sync.unit.mb': 'MB',
+    'sync.unit.gb': 'GB',
+    'sync.unit.seconds': 's',
     'sync.history.publish': 'sent {count}',
     'sync.history.merge': 'received {count}',
     'sync.history.conflict': 'resolved {count}',
@@ -1477,6 +1519,10 @@ const EN: Dict = {
 
     // Sync — file engine settings
     'sync.settings.stateGroup': 'Zenith settings',
+    'sync.settings.statusGroup': 'State',
+    'sync.settings.statusGroup.desc': 'What sync is doing right now, and what it did last.',
+    'sync.settings.openTab': 'Open in a tab',
+    'sync.settings.openTab.desc': 'The same page, beside your notes rather than in this dialog.',
     'sync.settings.filesGroup': 'Note files',
     'sync.settings.filesGroup.desc': 'Sync the vault itself to storage you control. Separate from settings sync, and never runs on a timer.',
     'sync.settings.files': 'Sync note files',
@@ -1618,48 +1664,6 @@ const EN: Dict = {
     'sync.settings.whatSyncs': 'What travels',
     'sync.settings.open': 'Open sync',
     'sync.settings.whatSyncs.desc': 'Folders, trackers, content types, location, prayer and weather preferences, installed modules and the running timer. Layout, density, active modules and where you left off stay on each device.',
-
-    'canvas.title': 'Canvas',
-    'canvas.desc': 'Tidy, generate and reshape Obsidian canvases.',
-    'canvas.toolbar.tooltip': 'Zenith canvas tools',
-    'canvas.toolbar.tidy': 'Tidy up',
-    'canvas.action.grid': 'Arrange in a grid',
-    'canvas.action.tree': 'Arrange as a tree',
-    'canvas.action.radial': 'Arrange radially',
-    'canvas.action.probe': 'Capture internals report (developer)',
-    'canvas.notice.tidied': 'Canvas rearranged.',
-    'canvas.notice.tidiedReopen': 'Canvas rearranged — reopen the tab to see it.',
-    'canvas.notice.alreadyTidy': 'Canvas is already tidy — nothing to move.',
-    'canvas.notice.failed': 'Could not rearrange the canvas: {error}',
-    'canvas.notice.openOne': 'Open a canvas — Zenith canvas tools act on the canvas you are viewing.',
-    'canvas.settings.layout': 'Layout',
-    'canvas.settings.layout.desc': 'How nodes are placed when you rearrange a canvas.',
-    'canvas.settings.gap': 'Spacing',
-    'canvas.settings.gap.desc': 'Room left between nodes, and between the levels of a tree.',
-    'canvas.settings.direction': 'Tree grows',
-    'canvas.settings.direction.down': 'Downward',
-    'canvas.settings.direction.right': 'Rightward',
-    'canvas.settings.direction.desc': 'Downward reads like an outline; rightward suits wide, shallow trees.',
-    'canvas.settings.columns': 'Grid columns',
-    'canvas.settings.columns.desc': 'Zero picks a roughly square grid for however many nodes there are.',
-    'canvas.action.toNote': 'Export to a note',
-    'canvas.action.fromNote': 'Turn headings into a canvas',
-    'canvas.notice.noHeadings': 'This note has no headings to turn into a canvas.',
-    'canvas.notice.empty': 'This canvas is empty — nothing to export.',
-    'canvas.notice.created': 'Canvas created from {count} headings.',
-    'canvas.notice.exported': 'Note created from {count} nodes.',
-    'canvas.action.search': 'Find a node',
-    'canvas.search.placeholder': 'Search this canvas…',
-    'canvas.notice.noLiveCanvas': 'Could not read the open canvas — this Obsidian build keeps it out of reach.',
-    'canvas.action.fit': 'Fit cards to their text',
-    'canvas.notice.fitted': 'Cards resized to fit.',
-    'canvas.notice.alreadyFitted': 'Every card already fits its text.',
-    'canvas.notice.tidiedSelection': 'Rearranged {count} selected nodes.',
-    'canvas.action.straighten': 'Reattach arrows to the nearest sides',
-    'canvas.notice.straightened': 'Arrows reattached.',
-    'canvas.notice.alreadyStraight': 'Every arrow already leaves the right side.',
-    'canvas.notice.scopeUnknown':
-        'Could not read the selection on this open canvas, so nothing was changed. Close the tab and run it again to rearrange the whole canvas.',
 };
 
 const RU: Dict = {
@@ -1703,6 +1707,8 @@ const RU: Dict = {
     'settings.tasksFolder.desc': 'Путь относительно хранилища, где лежат задачи.',
     'settings.contentFolder': 'Папка контента',
     'settings.contentFolder.desc': 'Путь относительно хранилища для заметок и статей.',
+    'settings.projectsFolder': 'Папка проектов',
+    'settings.projectsFolder.desc': 'Путь относительно хранилища для заметок проектов.',
     'settings.folderMissing': 'Эта папка ещё не существует.',
     'settings.createFolder': 'Создать',
 
@@ -2440,6 +2446,19 @@ const RU: Dict = {
     'nav.tasks.desc': 'Всё, что нужно сделать',
     'nav.calendar': 'Календарь',
     'nav.calendar.desc': 'Задачи по месяцам, неделям, дням и спискам',
+    'widget.content': 'Библиотека',
+    'widget.clock': 'Часы',
+    'widget.nav': 'Навигация',
+    'widget.picture': 'Картинка',
+    'widget.prayer': 'Намаз',
+    'widget.tasks': 'Задачи',
+    'widget.projects': 'Проекты',
+    'widget.week': 'Неделя',
+    'widget.weather': 'Погода',
+    'widget.checkin': 'Отметка дня',
+    'widget.journalStats': 'Дневник',
+    'nav.projects': 'Проекты',
+    'nav.projects.desc': 'Прогресс, задачи и дедлайны',
     'nav.content': 'Контент',
     'nav.content.desc': 'Книги, фильмы, игры и сериалы',
     'nav.journal': 'Дневник',
@@ -2742,8 +2761,8 @@ const RU: Dict = {
     'content.detail.tookDays.few': 'заняло {count} дня',
     'content.detail.tookDays.many': 'заняло {count} дней',
     'content.filterByGenre': 'Показать всё в жанре «{genre}»',
-    'content.card.plusOne': 'Ещё один {unit}',
-    'content.card.minusOne': 'На один {unit} меньше',
+    'content.card.plusOne': '+1 {unit}',
+    'content.card.minusOne': '−1 {unit}',
     'content.bulk.select': 'Выбрать несколько',
     'content.bulk.selected.one': 'выбран {count}',
     'content.bulk.selected.few': 'выбрано {count}',
@@ -2808,6 +2827,7 @@ const RU: Dict = {
     'content.widget.openLibrary': 'Открыть библиотеку',
     'content.widget.upNext': 'Что дальше',
     'content.widget.bump': 'Добавить один ({unit}) — {title}',
+    'content.widget.stalled': 'без движения: {count}',
 
     'tasks.filter.allPriorities': 'Все приоритеты',
     'tasks.filter.due': 'Срок: {name}',
@@ -2992,6 +3012,9 @@ const RU: Dict = {
     'journal.stats.coverageDays': '{count} из {days} дней',
     'journal.stats.runLabel': 'серия · рекорд {count}',
     'journal.stats.lastMark': 'последняя отметка',
+    'journal.stats.inARow': 'подряд',
+    'journal.stats.avgPerDay': 'за день с записью',
+    'journal.stats.perDay': 'в день',
     'journal.stats.daysAgo': '{count} д назад',
     'journal.stats.panelAria': 'Статистика окна: {name}',
     'journal.stats.legend':
@@ -3098,8 +3121,23 @@ const RU: Dict = {
     'sync.conflicts.kept': 'оставлено: {winner}',
     'sync.conflicts.local': 'это устройство',
     'sync.conflicts.remote': 'другое устройство',
+    'sync.devices': 'Устройства',
+    'sync.thisDeviceTag': 'это устройство',
     'sync.history': 'История',
     'sync.history.empty': 'Пока ничего не отправлялось и не получалось.',
+    'sync.history.repeat': '×{count}',
+    'sync.history.all': 'Все {count}',
+    'sync.history.less': 'Свернуть',
+    'sync.progress.title': 'Синхронизация файлов',
+    'sync.progress.done': 'Синхронизация завершена',
+    'sync.progress.failed': 'Синхронизация остановлена',
+    'sync.progress.rate': '{rate}/с',
+    'sync.progress.eta': 'осталось {time}',
+    'sync.progress.files': 'файлов: {count}',
+    'sync.unit.kb': 'КБ',
+    'sync.unit.mb': 'МБ',
+    'sync.unit.gb': 'ГБ',
+    'sync.unit.seconds': 'с',
     'sync.history.publish': 'отправлено: {count}',
     'sync.history.merge': 'получено: {count}',
     'sync.history.conflict': 'разрешено: {count}',
@@ -3142,6 +3180,10 @@ const RU: Dict = {
 
     // Синхронизация — настройки файлового движка
     'sync.settings.stateGroup': 'Настройки Zenith',
+    'sync.settings.statusGroup': 'Состояние',
+    'sync.settings.statusGroup.desc': 'Что синхронизация делает сейчас и что сделала в прошлый раз.',
+    'sync.settings.openTab': 'Открыть вкладкой',
+    'sync.settings.openTab.desc': 'Та же страница, но рядом с заметками, а не в этом окне.',
     'sync.settings.filesGroup': 'Файлы заметок',
     'sync.settings.filesGroup.desc': 'Синхронизация самого волта с хранилищем, которым вы управляете. Отдельно от настроек и никогда не по таймеру.',
     'sync.settings.files': 'Синхронизировать файлы заметок',
@@ -3283,48 +3325,6 @@ const RU: Dict = {
     'sync.settings.whatSyncs': 'Что уезжает',
     'sync.settings.open': 'Открыть синхронизацию',
     'sync.settings.whatSyncs.desc': 'Папки, трекеры, типы контента, локация, настройки намаза и погоды, установленные модули и запущенный таймер. Раскладка, плотность, активные модули и место, где вы остановились, остаются на каждом устройстве своими.',
-
-    'canvas.title': 'Холст',
-    'canvas.desc': 'Прибирает, создаёт и перестраивает холсты Obsidian.',
-    'canvas.toolbar.tooltip': 'Инструменты холста Zenith',
-    'canvas.toolbar.tidy': 'Прибраться',
-    'canvas.action.grid': 'Разложить сеткой',
-    'canvas.action.tree': 'Разложить деревом',
-    'canvas.action.radial': 'Разложить радиально',
-    'canvas.action.probe': 'Снять отчёт о внутренностях (для разработки)',
-    'canvas.notice.tidied': 'Холст перестроен.',
-    'canvas.notice.tidiedReopen': 'Холст перестроен — переоткройте вкладку, чтобы увидеть.',
-    'canvas.notice.alreadyTidy': 'Холст уже прибран — двигать нечего.',
-    'canvas.notice.failed': 'Не удалось перестроить холст: {error}',
-    'canvas.notice.openOne': 'Откройте холст — инструменты Zenith работают с тем холстом, который вы смотрите.',
-    'canvas.settings.layout': 'Раскладка',
-    'canvas.settings.layout.desc': 'Как расставляются узлы, когда вы перестраиваете холст.',
-    'canvas.settings.gap': 'Отступы',
-    'canvas.settings.gap.desc': 'Расстояние между узлами и между уровнями дерева.',
-    'canvas.settings.direction': 'Дерево растёт',
-    'canvas.settings.direction.down': 'Вниз',
-    'canvas.settings.direction.right': 'Вправо',
-    'canvas.settings.direction.desc': 'Вниз читается как план; вправо удобнее для широких неглубоких деревьев.',
-    'canvas.settings.columns': 'Колонок в сетке',
-    'canvas.settings.columns.desc': 'Ноль подбирает примерно квадратную сетку под текущее число узлов.',
-    'canvas.action.toNote': 'Выгрузить в заметку',
-    'canvas.action.fromNote': 'Собрать холст из заголовков',
-    'canvas.notice.noHeadings': 'В заметке нет заголовков, из которых можно собрать холст.',
-    'canvas.notice.empty': 'Холст пуст — выгружать нечего.',
-    'canvas.notice.created': 'Холст собран из {count} заголовков.',
-    'canvas.notice.exported': 'Заметка создана из {count} узлов.',
-    'canvas.action.search': 'Найти узел',
-    'canvas.search.placeholder': 'Поиск по холсту…',
-    'canvas.notice.noLiveCanvas': 'Не удалось прочитать открытый холст — в этой сборке Obsidian он недоступен.',
-    'canvas.action.fit': 'Подогнать карточки под текст',
-    'canvas.notice.fitted': 'Размеры карточек подогнаны.',
-    'canvas.notice.alreadyFitted': 'Все карточки уже по размеру текста.',
-    'canvas.notice.tidiedSelection': 'Перестроено выделенных узлов: {count}.',
-    'canvas.action.straighten': 'Пересадить стрелки на ближние грани',
-    'canvas.notice.straightened': 'Стрелки пересажены.',
-    'canvas.notice.alreadyStraight': 'Все стрелки уже выходят с нужной грани.',
-    'canvas.notice.scopeUnknown':
-        'Не удалось прочитать выделение на открытом холсте — ничего не изменено. Закройте вкладку и повторите, чтобы перестроить весь холст.',
 };
 
 /**
@@ -3565,6 +3565,28 @@ export interface Translator {
 }
 
 /**
+ * A `t()` bound to one language, for code that is not a component.
+ *
+ * The hook below is this plus a re-render. Kept as its own function because the
+ * places that need a translator outside React — a notice that outlives the view
+ * that started it, a service reporting a result — were each writing their own
+ * four-line copy of it, and a copy that forgets `plural` fails only in the
+ * languages the author does not speak.
+ */
+export function translatorFor(locale: Locale): Translator {
+    const t = ((key: string, params?: TParams) => translate(locale, key, params)) as Translator;
+    t.plural = (key, count, params) => translatePlural(locale, key, count, params);
+    t.has = (key) => hasTranslation(locale, key);
+    t.locale = locale;
+    return t;
+}
+
+/** The same, for whichever language is in force right now. */
+export function translatorNow(): Translator {
+    return translatorFor(currentLocale());
+}
+
+/**
  * React hook returning a `t()` bound to the current language. Re-renders when
  * the user changes the language in settings.
  */
@@ -3579,11 +3601,5 @@ export function useTranslation(): Translator {
         translationsRevision
     );
     const locale = resolveLocale(language);
-    return useMemo(() => {
-        const t = ((key: string, params?: TParams) => translate(locale, key, params)) as Translator;
-        t.plural = (key, count, params) => translatePlural(locale, key, count, params);
-        t.has = (key) => hasTranslation(locale, key);
-        t.locale = locale;
-        return t;
-    }, [locale, revision]);
+    return useMemo(() => translatorFor(locale), [locale, revision]);
 }

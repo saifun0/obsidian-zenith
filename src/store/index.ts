@@ -4,6 +4,7 @@ import { createTaskSlice } from './taskSlice';
 import { createContentSlice } from './contentSlice';
 import { createJournalSlice } from './journalSlice';
 import { createSettingsSlice } from './settingsSlice';
+import { createProjectSlice } from './projectSlice';
 import type { ZenithStore } from './types';
 
 // ── Combined Store Type ──────────────────────────────
@@ -33,6 +34,7 @@ export const useZenithStore = create<ZenithStore>()(
         ...createContentSlice(...args),
         ...createJournalSlice(...args),
         ...createSettingsSlice(...args),
+        ...createProjectSlice(...args),
     }))
 );
 
@@ -50,6 +52,8 @@ export function resetZenithStore(): void {
     s.setTasksLoading(false);
     s.setContentItems([]);
     s.setContentLoading(false);
+    s.setProjects([]);
+    s.setProjectsLoading(false);
     s.setJournalEntries([]);
     s.setJournalLoading(false);
     s.setAvailableModules([]);

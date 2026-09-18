@@ -2,7 +2,7 @@ import React, { useEffect, useRef, type CSSProperties, type FC } from 'react';
 import { RotateCcw, SlidersHorizontal, X } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
-import { prettifyWidgetId } from '../widgets';
+import { widgetLabel } from '../widgets';
 import type { DashboardWidgetContext, DashboardWidgetDefinition } from '../widgets';
 import { useTranslation } from '../../../core/i18n';
 
@@ -128,7 +128,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
     const t = useTranslation();
     const Body = def.component;
     const Settings = def.settings;
-    const title = def.title ?? prettifyWidgetId(def.id);
+    const title = widgetLabel(def, t);
 
     const press = useRef<{ x: number; y: number } | null>(null);
     const front = useRef<HTMLDivElement>(null);

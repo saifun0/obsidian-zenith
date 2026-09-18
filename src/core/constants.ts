@@ -17,6 +17,7 @@ export const VIEW_TYPE_MEDIA = 'zenith-media-view';
 export const VIEW_TYPE_JOURNAL = 'zenith-journal-view';
 export const VIEW_TYPE_TASKS_CALENDAR = 'zenith-tasks-calendar-view';
 export const VIEW_TYPE_SYNC = 'zenith-sync-view';
+export const VIEW_TYPE_PROJECTS = 'zenith-projects-view';
 /**
  * Retired: the prayer tracker is a modal now. Kept only so PrayerModule can
  * detach leaves left in workspace layouts saved while it was still a view.
@@ -41,6 +42,7 @@ export const IMAGE_EXTENSIONS = [
 // task. A dedicated subfolder holds only what Zenith put there.
 export const DEFAULT_TASKS_FOLDER = '10 Inbox/Tasks';
 export const DEFAULT_CONTENT_FOLDER = '30 Content';
+export const DEFAULT_PROJECTS_FOLDER = '20 Projects';
 /**
  * Daily notes live in their own subfolder of the scaffold's journal folder,
  * which leaves the folder itself free for the weekly/monthly notes and indexes

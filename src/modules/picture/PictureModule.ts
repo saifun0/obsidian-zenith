@@ -42,6 +42,7 @@ export class PictureModule extends BaseModule {
             this.plugin.registerDashboardWidget({
                 id: 'picture.frame',
                 title: 'Picture',
+                titleKey: 'widget.picture',
                 icon: 'image',
                 description: 'A photo or a GIF, from a link or from the vault.',
                 sizes: ['sm', 'md', 'lg'],

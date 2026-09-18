@@ -39,6 +39,7 @@ export class NavigatorModule extends BaseModule {
             this.plugin.registerDashboardWidget({
                 id: 'navigator.launcher',
                 title: 'Navigation',
+                titleKey: 'widget.nav',
                 icon: 'compass',
                 description: 'Jump to any Zenith view — and anywhere a module adds a button.',
                 sizes: ['sm', 'md', 'lg'],

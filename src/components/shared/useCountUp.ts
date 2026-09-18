@@ -3,10 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 /**
  * A number that animates to its target instead of jumping.
  *
- * Used by the habit summary, where the figure changes as a side effect of
+ * Written for the habit summary, where the figure changes as a side effect of
  * ticking a day several rows above it. A percentage that silently swaps from 62
  * to 66 is a change nobody sees; one that runs there says "that click did
- * this", which is the whole reason the grid is worth clicking.
+ * this", which is the whole reason the grid is worth clicking. The library
+ * widget wants exactly that for the same reason — pressing "+1" on a row
+ * changes a count at the top of the card — which is why this sits in `shared`
+ * rather than inside the journal.
  *
  * `enabled` is the user's motion setting. Off, the value is simply the target —
  * not a faster animation, none at all.

@@ -5,6 +5,7 @@ import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import {
     prettifyWidgetId,
+    widgetLabel,
     useDashboardWidgets,
     widgetSizes,
     type DashboardWidgetContext,
@@ -193,6 +194,22 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
         }
         return map;
     }, [registered, copyIds]);
+
+    /**
+     * What to call a placed item, in the user's language.
+     *
+     * An id rather than a definition, because the callers hold ids: a bundle's
+     * tab strip and a drop target both name a widget they only know by id, and
+     * a copy's id is not its widget's. `prettifyWidgetId` is the answer for an
+     * id nothing is registered under — a layout that outlived its module.
+     */
+    const labelOf = useCallback(
+        (id: string) => {
+            const def = defsById.get(id);
+            return def ? widgetLabel(def, t) : prettifyWidgetId(id);
+        },
+        [defsById, t]
+    );
 
     /** Presets per placeable item — widgets by their own, bundles by the
      *  intersection of their members'. */
@@ -387,7 +404,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     const describe = useCallback(
         (def: (typeof registered)[number]): AddableWidget => ({
             id: def.id,
-            label: def.title ?? prettifyWidgetId(def.id),
+            label: widgetLabel(def, t),
             icon: def.icon,
             description: def.description,
             defaultSize: widgetSizes(def).defaultSize,
@@ -570,7 +587,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                   ? { text: t('dashboard.bundle.mergeHint'), warn: false }
                   : {
                         text: t('dashboard.bundle.mergeSizeHint', {
-                            name: defsById.get(source)?.title ?? prettifyWidgetId(source),
+                            name: labelOf(source),
                             size: SIZE_LABEL[size],
                         }),
                         warn: true,
@@ -653,8 +670,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                             bundle={bundle}
                                             members={bundle.members.map((id) => ({
                                                 id,
-                                                label:
-                                                    defsById.get(id)?.title ?? prettifyWidgetId(id),
+                                                label: labelOf(id),
                                                 sizes: sizesById.get(id)?.sizes ?? [],
                                             }))}
                                             onRename={(name) =>
@@ -741,7 +757,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                     'aria-label':
                                         editing && !stacked
                                             ? t('dashboard.widget.arrangeHint', {
-                                                  name: def.title ?? prettifyWidgetId(def.id),
+                                                  name: widgetLabel(def, t),
                                               })
                                             : undefined,
                                 }}

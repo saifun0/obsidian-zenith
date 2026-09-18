@@ -4,7 +4,7 @@ import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { useTranslation } from '../../../core/i18n';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
 import type { DashboardWidgetContext, DashboardWidgetDefinition } from '../widgets';
-import { prettifyWidgetId } from '../widgets';
+import { prettifyWidgetId, widgetLabel } from '../widgets';
 import { DomWidgetHost } from './GridWidget';
 import { BUNDLE_MAX_PIPS, type WidgetBundle } from '../grid/bundleTypes';
 import { useCrossFade } from '../../../components/shared/useCrossFade';
@@ -34,7 +34,7 @@ interface MemberViewProps {
 const MemberView: FC<MemberViewProps> = ({ def, instanceId, ctx, size, railReserve, compact }) => {
     const t = useTranslation();
     const Body = def.component;
-    const label = def.title ?? prettifyWidgetId(def.id);
+    const label = widgetLabel(def, t);
 
     return (
         <div className="zenith-widget-card zenith-bundle__member">
@@ -206,7 +206,10 @@ export const BundleCard: FC<BundleCardProps> = ({
         return () => ro.disconnect();
     }, []);
 
-    const label = (id: string) => defsById.get(id)?.title ?? prettifyWidgetId(id);
+    const label = (id: string) => {
+        const def = defsById.get(id);
+        return def ? widgetLabel(def, t) : prettifyWidgetId(id);
+    };
 
     return (
         <div

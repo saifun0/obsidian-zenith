@@ -6,6 +6,7 @@ import { SyncView } from './SyncView';
 import { syncSettingsSchema } from './settings.schema';
 import { SettingsSyncService } from './services/settingsSync';
 import { FileSyncService } from './services/fileSync';
+import { SyncProgressNotice } from './SyncProgressNotice';
 import { DROPBOX_PROTOCOL_ACTION } from './services/remotes/appIds';
 import { DropboxRemote } from './services/remotes/dropboxRemote';
 import type { SettingsSchema } from '../../settings/schema/types';
@@ -40,6 +41,8 @@ export class SyncModule extends BaseModule {
 
     private service: SettingsSyncService | null = null;
     private files: FileSyncService | null = null;
+    /** Reports a file run wherever the user is; see `SyncProgressNotice`. */
+    private progress: SyncProgressNotice | null = null;
     private disposers: Array<() => void> = [];
 
     async onload(): Promise<void> {
@@ -56,6 +59,10 @@ export class SyncModule extends BaseModule {
             () => this.service?.getStatus().deviceName ?? 'device'
         );
         this.plugin.fileSync = this.files;
+
+        // A transfer takes minutes and the page it was started from is the one
+        // page nobody stays on. The notice is how the run follows them out.
+        this.progress = new SyncProgressNotice(this.files);
 
         await this.applyEnabledState();
 
@@ -107,6 +114,8 @@ export class SyncModule extends BaseModule {
     async onunload(): Promise<void> {
         this.disposers.forEach((d) => d());
         this.disposers = [];
+        this.progress?.dispose();
+        this.progress = null;
         this.service?.stop();
         this.service = null;
         this.files = null;

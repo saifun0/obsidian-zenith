@@ -71,7 +71,7 @@ export const StringsAudit: React.FC = () => {
             <div className="zenith-settings__section-label">{t('debug.strings.lookup')}</div>
             <TextInput
                 value={lookup}
-                placeholder="module.canvas.name"
+                placeholder="module.journal.name"
                 monospace
                 onChange={setLookup}
             />

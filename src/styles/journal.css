@@ -1757,61 +1757,79 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
 }
 
 /* Takes the slack, so the chip and the corner button stay pinned right. */
-.zenith-jw--stats .zenith-jw__head-text {
-    flex: 1;
+.zenith-jw__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid color-mix(in srgb, var(--zenith-border) 70%, transparent);
 }
 
-/* The way out of the card: an icon in the corner. */
+.zenith-jw--stats .zenith-jw__head-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-jw__head-main {
+    font-size: 0.82rem;
+    font-weight: 650;
+    color: var(--zenith-text-normal);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.zenith-jw__head-icon {
+    color: var(--zenith-accent);
+    opacity: 0.85;
+    flex-shrink: 0;
+}
+
+.zenith-jw--stats .zenith-jw__streak {
+    flex: none;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, #f59e0b 14%, transparent);
+    border: 1px solid color-mix(in srgb, #f59e0b 28%, transparent);
+    color: #f59e0b;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-jw__streak-flame {
+    flex-shrink: 0;
+    color: #f59e0b;
+}
+
 .zenith-root button.zenith-jw__open {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex: none;
     align-self: center;
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     padding: 0;
     border: 1px solid var(--zenith-border);
     border-radius: var(--zenith-radius-sm);
-    background: transparent;
-    box-shadow: none;
+    background: var(--zenith-bg-secondary);
     color: var(--zenith-text-muted);
     cursor: pointer;
-    transition:
-        border-color var(--zenith-transition-fast),
-        color var(--zenith-transition-fast);
+    transition: all var(--zenith-transition-fast);
 }
+
 .zenith-root button.zenith-jw__open:hover {
     border-color: var(--zenith-accent);
-    background: transparent;
-    box-shadow: none;
     color: var(--zenith-accent);
-}
-
-.zenith-jw__head-main {
-    font-size: 0.86rem;
-    font-weight: 600;
-    color: var(--zenith-text-normal);
-}
-.zenith-jw__head-sub {
-    font-size: 0.72rem;
-    color: var(--zenith-text-muted);
-}
-
-/* A chip of its own: the streak is a different quantity from the coverage, and
-   sharing a line with it is what buried it. */
-.zenith-jw--stats .zenith-jw__streak {
-    flex: none;
-    /* On the ring's line, not above it: pinned to the top the chip floated
-       away from everything it belongs with. */
-    align-self: center;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--zenith-accent) 15%, transparent);
-    color: var(--zenith-accent);
-    font-size: 0.68rem;
-    font-weight: 650;
-    font-variant-numeric: tabular-nums;
+    background: var(--zenith-bg-hover);
+    box-shadow: var(--zenith-shadow-xs);
 }
 
 /* Three figures that earn their place on a tall card: how long the run is,
@@ -1902,17 +1920,21 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
    language barrier and lives here once.
    ══════════════════════════════════════════════════════ */
 .zenith-jdial {
-    /* Thirty-four rather than forty, and the six points are the room the ring's
-       furniture needs to finish drawing inside the clip below. Nothing on the
-       ring is as thin as the ring: a slot icon is 26px centred on the line, and
-       the travelling mark is a 30px halo with 12px of glow — 27px from its own
-       centre. At forty a 148px stage left 14.8px, so the mark arrived at the
-       top of the dial with its glow sliced flat along the clip and the whole
-       composition read as standing in a square. Thirty-four leaves 23.7px,
-       which the icon and the mark's ring clear outright and the glow's last
-       soft inch does not miss. `RING_R` in `TrackerDial.tsx` is this same
-       number and has to move with it. */
-    --jdial-r: 34%;
+    /* The room the ring's furniture needs to finish drawing inside the clip
+       below. Nothing on the ring is as thin as the ring: a slot icon is 26px
+       centred on the line, so the stage needs the radius plus 13px.
+
+       It was thirty-four when the mark was a 30px halo with 12px of glow
+       standing at the radius — at forty, a 148px stage left it 14.8px and the
+       mark arrived at twelve o'clock sliced flat along the clip. The mark is a
+       band masked about the radius now and asks for nothing, so the ring is
+       free to be the size it wants to be: thirty-seven still clears the icon
+       on the smallest ring a card ever draws.
+
+       `RING_R` in `TrackerDial.tsx` is this same number, and the beam's mask
+       below is measured off this one — `closest-side` puts 100% at half the
+       stage, so doubling it is the radius in the mask's own units. */
+    --jdial-r: 37%;
 
     display: flex;
     flex: 1;
@@ -1966,21 +1988,15 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
    composition; the panel beside it is the reading. */
 .zenith-jdial__stage {
     position: relative;
-    /* Sized by the height, not by the share of the row it can grab: `flex: 1`
-       against a panel makes the ring as wide as the leftover space and the
-       aspect ratio then takes that back out of the height, so the ring shrank
-       as the card got wider. */
     flex: 0 1 auto;
     height: 100%;
     aspect-ratio: 1;
     min-height: 0;
     max-width: 100%;
-    /* Capped, because a ring that keeps growing stops being a composition: on
-       a four-row card the untethered version was a four-hundred-pixel circle
-       with a small number adrift in the middle of it. Past this the height
-       goes to the things that wanted it — the tracker's own window, and the
-       journal's figures under it. */
     max-height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 10%, transparent) 0%, transparent 68%);
+    transition: background var(--zenith-transition-slow);
 }
 
 .zenith-jdial__ring-layer {
@@ -1992,27 +2008,17 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     display: block;
     width: 100%;
     height: 100%;
-    /* Zero at twelve o'clock, like the slots. An arc that starts at three and
-       a ring of icons that starts at twelve are two different clocks. */
     transform: rotate(-90deg);
     overflow: visible;
 }
 
-/* The line the trackers stand on, and nothing more. A second circle used to
-   run on top of it for the active tracker's coverage, which is a share of a
-   window — a quantity with a denominator, drawn as a length with no scale
-   beside it. It reads as a figure and it is one now; see `.zenith-jdial__panel`
-   for what took its place, and for the three things it could not say. */
 .zenith-jdial__track {
     fill: none;
     stroke-linecap: round;
-    stroke-width: 2;
-    stroke: color-mix(in srgb, var(--zenith-text-faint) 22%, transparent);
+    stroke-width: 2.5;
+    stroke: color-mix(in srgb, var(--zenith-border) 80%, transparent);
 }
 
-/* The travelling mark: one element turned about the centre with the halo held
-   out at the ring's radius, so the transition animates a single angle and the
-   halo lands exactly on a slot. */
 .zenith-jdial__mark {
     position: absolute;
     inset: 0;
@@ -2021,59 +2027,100 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     pointer-events: none;
 }
 
-.zenith-jdial__mark-dot {
+.zenith-jdial__beam {
     position: absolute;
-    top: 50%;
-    left: calc(50% + var(--jdial-r));
-    width: 30px;
-    height: 30px;
-    margin: -15px 0 0 -15px;
+    inset: 0;
     border-radius: 50%;
-    /* A ring and a glow rather than a filled disc. The disc was the tracker's
-       own colour and so is the icon standing on it, so the mark was drowning
-       the thing it was pointing at — most of all for a pale tracker, where a
-       yellow glyph sat on a yellow wash. Nothing is painted behind the icon
-       now; the ring says which one, and the icon is read against the card. */
-    background: none;
-    box-shadow:
-        0 0 0 1.5px color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 62%, transparent),
-        0 0 12px 2px color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 22%, transparent);
+    background: conic-gradient(
+        from 90deg at 50% 50%,
+        color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 25%, transparent) 0deg,
+        color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 65%, transparent) 15deg,
+        transparent 36deg,
+        transparent 324deg,
+        color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 65%, transparent) 345deg,
+        color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 25%, transparent) 360deg
+    );
+    -webkit-mask: radial-gradient(
+        circle closest-side,
+        transparent calc(var(--jdial-r) * 2 - 10%),
+        rgba(0, 0, 0, 0.2) calc(var(--jdial-r) * 2 - 5%),
+        #000 calc(var(--jdial-r) * 2 - 2%),
+        #000 calc(var(--jdial-r) * 2 + 2%),
+        rgba(0, 0, 0, 0.2) calc(var(--jdial-r) * 2 + 5%),
+        transparent calc(var(--jdial-r) * 2 + 10%)
+    );
+    mask: radial-gradient(
+        circle closest-side,
+        transparent calc(var(--jdial-r) * 2 - 10%),
+        rgba(0, 0, 0, 0.2) calc(var(--jdial-r) * 2 - 5%),
+        #000 calc(var(--jdial-r) * 2 - 2%),
+        #000 calc(var(--jdial-r) * 2 + 2%),
+        rgba(0, 0, 0, 0.2) calc(var(--jdial-r) * 2 + 5%),
+        transparent calc(var(--jdial-r) * 2 + 10%)
+    );
+    opacity: 0.9;
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 50%, transparent));
+    transition:
+        opacity 260ms ease,
+        transform 300ms cubic-bezier(0.34, 1.28, 0.64, 1);
 }
 
-/* A slot: the tracker's own icon, in its own colour, standing on the ring. */
+.zenith-jdial.is-travelling .zenith-jdial__beam {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
 .zenith-jdial .zenith-jdial__slot {
     position: absolute;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     padding: 0;
     transform: translate(-50%, -50%);
-    border: none;
+    border: 1px solid var(--zenith-border);
     border-radius: 50%;
-    background: transparent;
-    box-shadow: none;
-    /* Muted, not faint. Faint is Zenith's quietest ink and it was chosen for
-       text on a solid card; on glass, over a photograph, it stopped being
-       quiet and started being absent. */
+    background: var(--zenith-bg-secondary);
     color: var(--zenith-text-muted);
     cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.16);
     transition:
-        color var(--zenith-transition),
-        transform var(--zenith-transition);
+        color var(--zenith-transition-fast),
+        border-color var(--zenith-transition-fast),
+        background var(--zenith-transition-fast),
+        box-shadow var(--zenith-transition-fast),
+        transform var(--zenith-transition-fast);
+    z-index: 2;
 }
 
 .zenith-jdial .zenith-jdial__slot:hover {
-    background: transparent;
-    box-shadow: none;
+    background: var(--zenith-bg-hover);
     color: var(--zenith-text-normal);
+    border-color: var(--hmon-color);
     transform: translate(-50%, -50%) scale(1.15);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--hmon-color) 40%, transparent);
 }
 
 .zenith-jdial .zenith-jdial__slot.is-active {
+    background: color-mix(in srgb, var(--hmon-color) 20%, var(--zenith-bg-primary));
+    border: 1.5px solid var(--hmon-color);
     color: var(--hmon-color);
-    transform: translate(-50%, -50%) scale(1.2);
+    transform: translate(-50%, -50%) scale(1.22);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--hmon-color) 50%, transparent), 0 2px 6px rgba(0, 0, 0, 0.3);
+    animation: zenith-jdial-land 520ms cubic-bezier(0.34, 1.28, 0.64, 1);
+}
+
+@keyframes zenith-jdial-land {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    46% {
+        transform: translate(-50%, -50%) scale(1.36);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.22);
+    }
 }
 
 .zenith-jdial .zenith-jdial__slot:focus-visible {
@@ -2081,11 +2128,8 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     outline-offset: 2px;
 }
 
-/* The middle. Absolutely positioned so the two cross-fading faces stand in the
-   same place rather than pushing each other around. */
 .zenith-jdial__centre {
     position: absolute;
-    /* Inside the ring, not under it: a face must never reach the icons. */
     inset: 22%;
     display: flex;
     align-items: center;
@@ -2098,57 +2142,56 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* No `will-change` here, deliberately. It used to say "the cross-fade
-       composites each face on its own", which the cross-fade does for itself:
-       it runs on the Web Animations API, which promotes an element for the
-       length of its animation and lets the layer go afterwards. Declared in the
-       stylesheet the promotion is permanent instead — a compositing layer held
-       for ever for two hundred milliseconds of movement every seven seconds.
-
-       On a wallpapered board that is not merely wasteful. The card is glass,
-       and a `backdrop-filter` does not read through a separately composited
-       child: the layer's box stopped showing the picture and became a flat
-       rectangle laid over the middle of the dial. */
 }
 
 .zenith-jdial__face {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    min-width: 0;
+    justify-content: center;
     text-align: center;
+    gap: 3px;
+    max-width: 85%;
 }
 
-/* Large enough to read across a room, which is the point of giving one tracker
-   the middle instead of giving four of them a line each. */
 .zenith-jdial__value {
     display: flex;
     align-items: baseline;
-    gap: 2px;
-    font-size: 2rem;
-    font-weight: 600;
+    justify-content: center;
+    gap: 3px;
+    font-size: 2.1rem;
+    font-weight: 750;
     line-height: 1;
     color: var(--zenith-text-normal);
+    letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
 }
 
 .zenith-jdial__unit {
-    font-size: 0.72rem;
-    font-weight: 500;
+    font-size: 0.74rem;
+    font-weight: 600;
     color: var(--zenith-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .zenith-jdial__name {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 5px;
-    max-width: 100%;
+    max-width: 110px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
+    font-weight: 600;
     color: var(--zenith-text-normal);
+    background: color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 12%, var(--zenith-bg-secondary));
+    border: 1px solid color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 25%, var(--zenith-border));
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-top: 3px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .zenith-jdial__name svg {
@@ -2156,24 +2199,20 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     color: var(--jdial-color, var(--zenith-accent));
 }
 
-/* The n behind the figure. Without it an average over three days and one over
-   thirty look equally confident. */
 .zenith-jdial__basis {
     font-size: 0.65rem;
+    font-weight: 500;
     color: var(--zenith-text-faint);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
+    margin-top: 1px;
 }
 
-/* ── The panel ──
-   What the arc used to claim, said in words, with the things it could not say
-   underneath. Hidden by default and switched on by width: a column of figures
-   squeezed beside a ring is worse than no column at all. */
 .zenith-jdial__panel {
     display: none;
-    flex-direction: column;
-    justify-content: center;
-    gap: var(--zenith-space-sm);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    align-content: center;
     flex: 1 1 0;
     min-width: 0;
     min-height: 0;
@@ -2182,38 +2221,163 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
 .zenith-jstat {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    justify-content: space-between;
+    gap: 3px;
+    padding: 7px 9px;
+    border-radius: var(--zenith-radius-sm);
+    background: color-mix(in srgb, var(--zenith-bg-secondary) 85%, transparent);
+    border: 1px solid var(--zenith-border);
     min-width: 0;
+    box-shadow: var(--zenith-shadow-xs);
+    transition:
+        border-color var(--zenith-transition-fast),
+        background var(--zenith-transition-fast),
+        transform var(--zenith-transition-fast);
+}
+
+.zenith-jstat:hover {
+    background: var(--zenith-bg-hover);
+    border-color: color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 40%, var(--zenith-border));
+}
+
+.zenith-jstat__header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.zenith-jstat__icon {
+    flex-shrink: 0;
+    color: var(--jdial-color, var(--zenith-accent));
+    opacity: 0.9;
+}
+
+.zenith-jstat__label {
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--zenith-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .zenith-jstat__value {
     font-size: 1.05rem;
-    font-weight: 650;
+    font-weight: 700;
     line-height: 1.15;
     color: var(--zenith-text-normal);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* The coverage carries the tracker's own colour, because it is the reading the
-   ring used to draw in it. One coloured figure, not three: a panel where every
-   line is accented has no lead line. */
+.zenith-jstat:first-child:nth-last-child(3),
+.zenith-jstat:only-child {
+    grid-column: 1 / -1;
+}
+
+.zenith-jstat--lead {
+    background: color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 8%, var(--zenith-bg-secondary));
+    border-color: color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 26%, var(--zenith-border));
+}
+
+.zenith-jstat--lead:hover {
+    background: color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 14%, var(--zenith-bg-secondary));
+    border-color: color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 50%, var(--zenith-border));
+}
+
 .zenith-jstat--lead .zenith-jstat__value {
-    font-size: 1.5rem;
+    font-size: 1.18rem;
+    font-weight: 800;
     color: var(--jdial-color, var(--zenith-accent));
 }
 
-.zenith-jstat__label {
-    font-size: 0.68rem;
-    line-height: 1.3;
-    color: var(--zenith-text-muted);
-    overflow-wrap: break-word;
-}
-
 .zenith-jstat__plot {
+    grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
     gap: 3px;
     min-width: 0;
+}
+
+/* ── The strip ──
+   The line under the dial: the active tracker's window, on a card too narrow
+   to seat the panel beside the ring. Off by default and switched on wherever
+   the panel is not — the two say the same three things, and a card showing
+   both would be saying them twice.
+
+   It shares the row with the pips because the alternative is two rows, and
+   every row under the dial comes straight out of the ring's diameter. */
+.zenith-jdial__foot {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    flex-wrap: wrap;
+    /* Wider than the gap between the chips themselves, so the pips read as the
+       other thing on the line rather than as a fourth fact. */
+    gap: 2px 15px;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.zenith-jdial__strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* One fact: an icon, a figure, and the word that says what the figure counts.
+   The icon is what makes the line scan as three separate readings rather than
+   as a sentence — at this size a middle dot between them is a smudge. */
+.zenith-jfact {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    white-space: nowrap;
+    font-size: 0.68rem;
+    line-height: 1.2;
+    /* Backwards, so a chip holds its first frame through its own delay rather
+       than standing there finished until its turn comes. */
+    animation: zenith-jfact-in 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(var(--jfact-at, 0) * 70ms);
+}
+
+/* The one coloured thing in the line. Three small marks in the tracker's own
+   colour tie the strip to the ring above it without accenting a figure — a
+   strip where a number is coloured has a lead, and these three are equals. */
+.zenith-jfact svg {
+    flex: none;
+    color: color-mix(in srgb, var(--jdial-color, var(--zenith-accent)) 72%, transparent);
+}
+
+.zenith-jfact__value {
+    font-weight: 600;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-jfact__unit {
+    color: var(--zenith-text-faint);
+}
+
+@keyframes zenith-jfact-in {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
 }
 
 /* ── The pips ──
@@ -2303,17 +2467,24 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
 
 /* ── Room for the panel ──
    Two conditions, and each rules out a card the panel would spoil. Narrow: the
-   ring is square and takes the height, so on anything under this the column
-   beside it is two words wide and wraps every label into three lines. Short: a
-   card this flat has already dropped the ring for pips, and a panel beside a
-   bare number is a table with one row in it.
+   ring is square and takes the height, so under this the column beside it is
+   two words wide and wraps every label into three lines. Short: under this the
+   ring is gone for pips, and a panel beside a bare number is a table with one
+   row in it.
+
+   Both were higher — 320 and 150 — and the half-width card on a normal board
+   landed just under one of them. What it got instead was the strip: the same
+   readings on one line under the ring, which is the version written for a
+   phone. The panel is the better answer wherever a column fits at all, and a
+   column fits well before 320px; what did not fit was the panel's *type*, so
+   that is what gives now (see the compact tier below) rather than the panel.
 
    Stated as the condition for showing rather than for hiding, because the
    panel is the addition — a card that cannot take it must land exactly where
    it stood before there was one. */
-@container zenith-jdial (min-width: 320px) and (min-height: 150px) {
+@container zenith-jdial (min-width: 270px) and (min-height: 133px) {
     .zenith-jdial__panel {
-        display: flex;
+        display: grid;
     }
 
     /* Left, not centred: the ring and the panel are one composition now, and a
@@ -2321,6 +2492,61 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
        panel's labels happen to be short. */
     .zenith-jdial__body {
         justify-content: flex-start;
+    }
+}
+
+/* ── The compact panel ── */
+@container zenith-jdial (max-height: 200px) {
+    .zenith-jdial__panel {
+        gap: 4px;
+    }
+
+    .zenith-jstat {
+        padding: 5px 7px;
+    }
+
+    .zenith-jstat--lead .zenith-jstat__value {
+        font-size: 1.05rem;
+    }
+
+    .zenith-jstat__value {
+        font-size: 0.92rem;
+    }
+}
+
+/* ── No room for the panel ──
+   The exact complement of the query above, written as one rather than as two
+   thresholds a pixel apart: the strip and the panel are the same reading, and
+   a card must never be able to fall between them and show neither.
+
+   The basis goes when the strip arrives. "avg · 11 d" and "11/30 d" are the
+   same day count twice, and the strip's version is the one with a denominator
+   under it. */
+@container zenith-jdial not ((min-width: 270px) and (min-height: 133px)) {
+    .zenith-jdial__foot {
+        display: flex;
+    }
+
+    .zenith-jdial__basis {
+        display: none;
+    }
+}
+
+/* The line gives up its facts from the end as the card narrows, and it is the
+   end that can afford it: the first chip is whichever reading the dial's centre
+   is NOT already showing, and the last is the staleness — which a run of zero
+   has half implied anyway. `n+3` rather than a chip apiece because how many
+   there are is the tracker's kind's business: a number has four, a scale and a
+   check three. */
+@container zenith-jdial (max-width: 340px) {
+    .zenith-jfact:nth-child(n + 4) {
+        display: none;
+    }
+}
+
+@container zenith-jdial (max-width: 250px) {
+    .zenith-jfact:nth-child(n + 3) {
+        display: none;
     }
 }
 
@@ -2354,8 +2580,16 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
    is the hook's, and it reads the same two switches this does. */
 @media (prefers-reduced-motion: reduce) {
     .zenith-jdial__mark,
+    .zenith-jdial__beam,
     .zenith-jdial .zenith-jdial__slot,
     .zenith-jdial__pip-dot {
         transition: none;
+    }
+
+    /* The light still moves — it has to, or nothing says which tracker is
+       showing — but nothing lands, swells or rises on the way. */
+    .zenith-jdial .zenith-jdial__slot.is-active,
+    .zenith-jfact {
+        animation: none;
     }
 }

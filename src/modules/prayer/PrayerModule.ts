@@ -89,6 +89,7 @@ export class PrayerModule extends BaseModule {
             this.plugin.registerDashboardWidget({
                 id: 'prayer.times',
                 title: 'Prayer',
+                titleKey: 'widget.prayer',
                 icon: 'moon-star',
                 description: "The next prayer, a countdown, and today's five at a tap.",
                 sizes: ['sm', 'md', 'lg'],

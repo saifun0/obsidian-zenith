@@ -62,6 +62,7 @@ export interface KeyPolicy {
 export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // ── Storage paths — the vault is shared, so these must be ──
     tasksFolderPath: { scope: 'shared' },
+    projectsFolderPath: { scope: 'shared' },
     contentFolderPath: { scope: 'shared' },
     journalFolderPath: { scope: 'shared' },
     journalDateFormat: { scope: 'shared' },
@@ -152,14 +153,6 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // A hide-list, merged as LWW rather than as a set: union would make hiding
     // a button anywhere hide it everywhere with no way to bring it back.
     navigatorHiddenActions: { scope: 'shared' },
-
-    // ── Canvas ──
-    // Shared rather than per-device: these shape the `.canvas` file itself, and
-    // that file already travels. Spacing that differed by device would mean
-    // tidying on the laptop silently re-spaces what the phone just arranged.
-    canvasLayoutGap: { scope: 'shared' },
-    canvasLayoutColumns: { scope: 'shared' },
-    canvasTreeDirection: { scope: 'shared' },
 
     // ── Identity and chrome that is not layout ──
     // The accent is a personal choice, not a per-screen accommodation, so

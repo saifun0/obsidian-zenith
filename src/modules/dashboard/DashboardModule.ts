@@ -48,6 +48,7 @@ export class DashboardModule extends BaseModule {
             this.plugin.registerDashboardWidget({
                 id: 'dashboard.clock',
                 title: 'Clock',
+                titleKey: 'widget.clock',
                 icon: 'clock',
                 description: 'Time, date and a live seconds ring.',
                 sizes: ['sm', 'md'],

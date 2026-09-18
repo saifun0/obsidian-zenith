@@ -49,6 +49,7 @@ export class TasksModule extends BaseModule {
             this.plugin.registerDashboardWidget({
                 id: 'tasks.overview',
                 title: 'Tasks',
+                titleKey: 'widget.tasks',
                 description: 'What’s due, overdue and in progress, with quick add.',
                 icon: 'check-square',
                 sizes: ['sm', 'md', 'lg'],

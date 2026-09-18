@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { mergeCanvas } from '../src/modules/sync/services/canvasMerge';
-import { parseCanvas, serializeCanvas } from '../src/modules/canvas/canvasTypes';
-import type { CanvasData, CanvasNode } from '../src/modules/canvas/canvasTypes';
+import { parseCanvas, serializeCanvas } from '../src/modules/sync/services/canvasFormat';
+import type { CanvasData, CanvasNode } from '../src/modules/sync/services/canvasFormat';
 
 const node = (id: string, x = 0, y = 0, text = id): CanvasNode =>
     ({ id, type: 'text', x, y, width: 200, height: 100, text }) as CanvasNode;

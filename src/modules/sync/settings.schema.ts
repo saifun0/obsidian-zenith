@@ -1,4 +1,5 @@
 import { coreSchema } from '../../settings/schema/types';
+import { SyncSettingsPanel } from './components/SyncSettingsPanel';
 import { HAS_SHIPPED_DROPBOX, HAS_SHIPPED_ONEDRIVE } from './services/remotes/appIds';
 
 /**
@@ -48,10 +49,9 @@ export const syncSettingsSchema = coreSchema({
                 {
                     type: 'action',
                     key: 'openSync',
-                    labelKey: 'sync.title',
-                    descKey: 'sync.desc',
+                    labelKey: 'sync.settings.openTab',
+                    descKey: 'sync.settings.openTab.desc',
                     buttonKey: 'sync.settings.open',
-                    cta: true,
                     run: ({ plugin }) => {
                         void plugin.moduleManager.get('sync')?.activateView();
                     },
@@ -356,6 +356,12 @@ export const syncSettingsSchema = coreSchema({
                     showIf: (v) => v.syncFilesEnabled === true,
                 },
             ],
+        },
+        {
+            id: 'syncStatus',
+            titleKey: 'sync.settings.statusGroup',
+            descKey: 'sync.settings.statusGroup.desc',
+            fields: [{ type: 'custom', key: 'syncDashboard', render: SyncSettingsPanel }],
         },
     ],
 });
