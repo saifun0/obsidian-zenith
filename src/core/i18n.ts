@@ -1090,6 +1090,8 @@ const EN: Dict = {
     'content.progress.less': 'One {unit} less',
     'content.progress.more': 'One {unit} more',
     'content.progress.finished': 'Finished',
+    // The menu behind the card's progress control, and its own label.
+    'content.progress.edit': 'Progress — {title}',
     'content.progress.done': '{unit} done',
     'content.progress.total': 'total {unit}',
     'content.detail.source': 'Source',
@@ -2746,6 +2748,7 @@ const RU: Dict = {
     'content.progress.less': 'На один меньше ({unit})',
     'content.progress.more': 'На один больше ({unit})',
     'content.progress.finished': 'Завершить',
+    'content.progress.edit': 'Прогресс — {title}',
     'content.progress.done': 'пройдено ({unit})',
     'content.progress.total': 'всего ({unit})',
     'content.detail.source': 'Источник',

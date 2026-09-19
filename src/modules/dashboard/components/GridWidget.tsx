@@ -269,7 +269,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
                             whether they have a title reads as unfinished rather
                             than as minimal. */}
                         <div className="zenith-widget-card__header">
-                            <DynamicIcon name={def.icon} size={15} />
+                            <DynamicIcon name={def.icon} size={13} />
                             <span className="zenith-widget-card__title">{title}</span>
                         </div>
                         <div className="zenith-widget-card__body">
@@ -286,7 +286,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
             {editing && (
                 <div className="zenith-widget-settings" ref={back} aria-hidden={!flipped}>
                     <div className="zenith-widget-settings__header">
-                        <DynamicIcon name={def.icon} size={14} />
+                        <DynamicIcon name={def.icon} size={13} />
                         <span className="zenith-widget-settings__title">{title}</span>
                         <button
                             className="zenith-widget-settings__done"

@@ -628,11 +628,14 @@
 .zenith-tw__load-seg.is-next { background: var(--zenith-text-muted); opacity: 0.3; }
 
 /* ── Columns (sm, md) ────────────────────────────── */
+/* Same bargain as `__groups` on the flat presets: it may shrink, never grow,
+   and what it cannot hold it clips rather than spilling past the card. */
 .zenith-tw__body {
     display: flex;
     gap: 36px;
-    flex: 0 0 auto;
+    flex: 0 1 auto;
     min-height: 0;
+    overflow: hidden;
 }
 .zenith-tw__col {
     display: flex;
@@ -654,6 +657,14 @@
 /* ── Groups (lg) ─────────────────────────────────── */
 /* Spread down the card rather than stacked at the top: the bottom strip is
    pinned, and the space between groups is what separates them. */
+/* The list is the part that gives.
+
+   Everything else on the card is furniture with a fixed height — the heading,
+   the load bar, the "+N more" link, the strip along the bottom — and the plan
+   fits rows into what is left. If the plan is a pixel or two optimistic the
+   slack has to come out of something, and it must be the list: a row clipped
+   at the bottom of a list costs a row that the "+N more" link already counted,
+   where a strip pushed past the card's edge costs the whole strip. */
 .zenith-tw__groups {
     display: flex;
     flex-direction: column;
@@ -661,6 +672,7 @@
     gap: 10px;
     flex: 1 1 auto;
     min-height: 0;
+    overflow: hidden;
 }
 .zenith-tw__group {
     display: flex;

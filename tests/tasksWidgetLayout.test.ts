@@ -399,3 +399,61 @@ describe('a card the user has resized', () => {
         expect(titlesOf(p.lines).length + p.hidden).toBe(12);
     });
 });
+
+/**
+ * The card's own furniture, measured rather than assumed.
+ *
+ * `METRICS` guesses what the heading and the bottom strip cost, and both depend
+ * on the theme's font and on the language of the labels. When the guess was low
+ * the difference came out of the strip pinned to the bottom of the card, which
+ * was pushed past the edge and clipped — so the plan has to be able to be told
+ * what those two really measured.
+ */
+describe('furniture the card measured for itself', () => {
+    const many = () => Array.from({ length: 12 }, (_, i) => task(`Задача ${i}`, { dueDate: '2026-08-20' }));
+
+    it('keeps the guess until something has been measured', () => {
+        const split = splitTasks(many(), TODAY);
+        const guessed = planWidget({ split, size: 'lg', available: 460, expanded: null });
+        // Zero is "not measured yet", never "takes no room" — a strip costed at
+        // nothing would let the list fill the card and then be drawn over it.
+        const unmeasured = planWidget({
+            split,
+            size: 'lg',
+            available: 460,
+            expanded: null,
+            chrome: { head: 0, stats: 0 },
+        });
+        expect(titlesOf(unmeasured.groups?.flatMap((g) => g.lines) ?? [])).toEqual(
+            titlesOf(guessed.groups?.flatMap((g) => g.lines) ?? [])
+        );
+    });
+
+    it('gives up a row when the heading turns out taller than budgeted', () => {
+        const split = splitTasks(many(), TODAY);
+        const budgeted = planWidget({ split, size: 'lg', available: 460, expanded: null });
+        const measured = planWidget({
+            split,
+            size: 'lg',
+            available: 460,
+            expanded: null,
+            chrome: { head: METRICS.lg.head + 40, stats: METRICS.lg.stats + 20 },
+        });
+        const rows = (p: Plan) => (p.groups ?? []).reduce((n, g) => n + g.lines.length, 0);
+        expect(rows(measured)).toBeLessThan(rows(budgeted));
+        expect(measured.hidden).toBeGreaterThan(budgeted.hidden);
+    });
+
+    it('still accounts for every task it was given', () => {
+        const split = splitTasks(many(), TODAY);
+        const p = planWidget({
+            split,
+            size: 'lg',
+            available: 460,
+            expanded: null,
+            chrome: { head: 52, stats: 61 },
+        });
+        const shown = (p.groups ?? []).flatMap((g) => titlesOf(g.lines)).length;
+        expect(shown + p.hidden).toBe(12);
+    });
+});

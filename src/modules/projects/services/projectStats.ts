@@ -1,5 +1,6 @@
 import type { Task } from '../../../store/taskSlice';
-import type { ProjectStats } from '../projectsTypes';
+import type { Translator } from '../../../core/i18n';
+import type { Project, ProjectStats } from '../projectsTypes';
 import { toLocalIsoDate } from '../../../core/dateUtils';
 
 const DAY_MS = 86_400_000;
@@ -42,4 +43,30 @@ export function computeProjectStats(
         isOverdue,
         daysRemaining,
     };
+}
+
+/**
+ * A project's deadline, in the words that are true of it.
+ *
+ * Two things were wrong with the version that lived inline in the card. It
+ * built "7 просрочено" by putting a number in front of the word "overdue",
+ * which is not a sentence in either language this speaks. And it drew a
+ * countdown on projects that have already landed: a finished project whose
+ * date has passed reported "−13 days left", a negative number of days
+ * remaining on something that does not remain.
+ *
+ * So a project that is done or shelved has no deadline to report, and the rest
+ * get a phrase rather than a number with a word after it.
+ */
+export function dueLabel(project: Project, t: Translator): { text: string; tone: string } | null {
+    if (!project.due) return null;
+    if (project.status === 'completed' || project.status === 'archived') return null;
+
+    const days = project.stats.daysRemaining;
+    if (days === undefined) return null;
+    if (project.stats.isOverdue || days < 0) {
+        return { text: t('projects.stats.overdueDays', { count: Math.abs(days) }), tone: 'is-overdue' };
+    }
+    if (days === 0) return { text: t('projects.stats.today'), tone: 'is-today' };
+    return { text: t('projects.stats.daysLeftN', { count: days }), tone: '' };
 }

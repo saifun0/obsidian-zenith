@@ -237,10 +237,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 600;
+    line-height: 1;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.07em;
 }
 
 .zenith-root button.zenith-widget-settings__done {

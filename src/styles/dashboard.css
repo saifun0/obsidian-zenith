@@ -544,10 +544,15 @@ body.is-phone .zenith-dashboard__bg::before {
 }
 
 .zenith-widget-card__title {
-    font-size: 0.72rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    font-size: 0.68rem;
     font-weight: 600;
+    line-height: 1;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.07em;
 }
 
 .zenith-widget-card__body {
@@ -644,6 +649,10 @@ body.is-phone .zenith-dashboard__bg::before {
     flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
+    /* The clock keeps its own centring. Only the calendar beside it wants the
+       card's full height, so it asks for it itself rather than the row being
+       switched to `stretch` — which would have pulled the time apart too. */
+    align-self: center;
 }
 
 .zenith-clock__time {
@@ -841,16 +850,32 @@ body.is-phone .zenith-dashboard__bg::before {
 }
 
 /* ── Right pane: month calendar ──────────────────── */
+/* Stretched rather than centred, and allowed to shrink: the calendar is sized
+   BY the card, never the other way round.
+
+   Day cells are square, and square is measured off the column width — so at
+   the width a card gives them, six rows came out taller than the card had.
+   The body scrolled, and the first thing to scroll out of sight was the
+   month's own title, up behind the card's title band. That is the bug in the
+   screenshot: a calendar with no name and a scrollbar. */
 .zenith-cal {
     flex: 0 0 auto;
+    align-self: stretch;
     width: 46%;
     min-width: 150px;
     max-width: 200px;
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-height: 0;
+    /* Six flexible rows divide a height that is rarely a whole number, and the
+       half-pixel left over at the bottom was enough to give the card a
+       scrollbar — the one thing this pane must never grow. Nothing is actually
+       cut: the rows have already taken the room. */
+    overflow: hidden;
     font-variant-numeric: tabular-nums;
 }
+
 
 .zenith-cal__head {
     display: grid;
@@ -928,6 +953,20 @@ body.is-phone .zenith-dashboard__bg::before {
     gap: 2px;
 }
 
+/* The grid takes whatever height the header and the weekday letters leave, and
+   the six week rows divide it between them. That is what caps the calendar at
+   the card: a row can no longer be as tall as a cell is wide, so a month can
+   no longer be taller than the pane it is drawn in.
+
+   `minmax(0, 1fr)` rather than `1fr` because a grid row's automatic minimum is
+   its content, and a row that refuses to go below its content is a row that
+   overflows — which is the whole fault this is here to end. */
+.zenith-cal__grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-auto-rows: minmax(0, 1fr);
+}
+
 /* A little air under the header, and a little more under the letters than
    between the week rows — the letters caption the grid, they are not part of
    it. */
@@ -955,8 +994,12 @@ body.is-phone .zenith-dashboard__bg::before {
     align-items: center;
     justify-content: center;
     gap: 1px;
+    /* Square is what it would LIKE to be, and the row it sits in has the last
+       word: on a card with room the ratio holds, and on a short one the row
+       squashes it rather than pushing the month off the bottom. */
     aspect-ratio: 1 / 1;
     min-width: 0;
+    min-height: 0;
     padding: 0;
     border: none;
     background: transparent;
@@ -3089,7 +3132,9 @@ body.is-phone .zenith-dashboard__bg::before {
 .zenith-cw__hero {
     display: flex;
     flex-direction: column;
-    gap: var(--zenith-space-sm);
+    /* The bar belongs to the line above it, so it sits close enough to read as
+       its underline rather than as the next thing on the card. */
+    gap: 5px;
     flex: none;
 }
 
@@ -3111,49 +3156,69 @@ body.is-phone .zenith-dashboard__bg::before {
     min-height: 0;
 }
 
-.zenith-cw__summary {
+/* The library in one row: four counts that are also the bar's key, and the
+   total at the end where a total belongs.
+
+   It was two rows and a headline. The total was set at 1.5rem — the largest
+   type on a card that is not about how many things you own — and under the bar
+   came a legend restating in numbers exactly what the bar had just drawn to
+   scale. The counts and the key were always the same four things, so they are
+   now the same four chips, and the bar under them is their underline. */
+.zenith-cw__status {
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
-    gap: var(--zenith-space-sm);
+    flex-wrap: wrap;
+    /* Tight enough that four counts and a total fit one line on a half-width
+       card; the line wraps rather than dropping words when they do not. */
+    gap: 3px 11px;
+    min-width: 0;
 }
 
+.zenith-cw__status,
+.zenith-cw__stat {
+    font-size: 0.72rem;
+}
+
+/* Pushed to the end of the line, and quiet: it is the denominator to the four
+   counts beside it, not a headline of its own. */
 .zenith-cw__total {
-    display: flex;
+    display: inline-flex;
     align-items: baseline;
-    gap: 5px;
+    gap: 4px;
+    margin-left: auto;
+    color: var(--zenith-text-faint);
+    font-size: 0.74rem;
 }
 
 .zenith-cw__total-value {
-    font-size: 1.5rem;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--zenith-text-normal);
+    font-weight: 600;
+    color: var(--zenith-text-muted);
     font-variant-numeric: tabular-nums;
 }
 
 .zenith-cw__total-label {
-    font-size: 0.78rem;
-    color: var(--zenith-text-muted);
+    color: var(--zenith-text-faint);
 }
 
+/* The library's average rating, as a footnote to the total rather than as the
+   filled amber pill it was. It answers nothing you would ask at a glance, and
+   it was shouting. */
 .zenith-cw__avg {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--zenith-warning-bg);
-    color: var(--zenith-text-normal);
-    font-size: 0.76rem;
+    gap: 3px;
+    margin-left: 4px;
+    color: var(--zenith-text-muted);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
 
-/* Proportional status bar — the whole library at a glance. */
+/* Proportional status bar — the whole library at a glance, and the underline
+   of the row above it. Thinner than it was: it no longer has to carry the
+   claim on its own, because the numbers are on the line it sits under. */
 .zenith-cw__bar {
     display: flex;
-    height: 6px;
+    height: 3px;
     border-radius: 999px;
     overflow: hidden;
     background: var(--zenith-bg-tertiary);
@@ -3181,23 +3246,21 @@ body.is-phone .zenith-dashboard__bg::before {
     }
 }
 
-.zenith-cw__breakdown {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--zenith-space-sm) var(--zenith-space-md);
-}
-
 .zenith-cw__stat {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+    font-size: 0.76rem;
     color: var(--zenith-text-muted);
+    white-space: nowrap;
 }
 
 .zenith-cw__stat-dot {
-    width: 8px;
-    height: 8px;
+    align-self: center;
+    flex: none;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
 }
 
@@ -3206,11 +3269,30 @@ body.is-phone .zenith-dashboard__bg::before {
     color: var(--zenith-text-normal);
 }
 
+/* The rows, and the room there is for them.
+
+   `flex: 1 1 0` rather than `auto`: the height has to come from what the card
+   has left and never from what is in it, because this is the element the row
+   budget is measured against — a box that grew with its contents would tell
+   the card it had room for the rows it was already drawing, every time.
+
+   `overflow: hidden` is the backstop. The budget is measured now and should be
+   right, but if it is ever a row out, the row is what gets cut — not the
+   footer, which used to be drawn straight over the last one. */
+.zenith-cw__rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-sm);
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
 .zenith-cw__section-title {
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     color: var(--zenith-text-faint);
 }
 
@@ -3223,11 +3305,18 @@ body.is-phone .zenith-dashboard__bg::before {
     list-style: none;
 }
 
+/* 35px and one line.
+
+   It was 49 and two: a title with a full-width meter under it. That shape is
+   right for one item drawn large and wrong for a list of five — six saturated
+   bars stacked down a card is the first thing the eye lands on, and not one of
+   them is what the card is for. The meter is beside the count now, small, and
+   the row is as tall as its poster. */
 .zenith-cw__item {
     display: flex;
     align-items: center;
-    gap: var(--zenith-space-sm);
-    padding: 6px var(--zenith-space-sm);
+    gap: 7px;
+    padding: 2px 7px;
     border-radius: var(--zenith-radius-md);
     min-width: 0;
     cursor: pointer;
@@ -3266,7 +3355,7 @@ body.is-phone .zenith-dashboard__bg::before {
 /* The row that was just advanced. A meter three pixels tall moving by half a
    percent is not a visible event; this is what makes the press land. */
 .zenith-cw__item.is-cheering,
-.zenith-cw__spot-bump.is-cheering {
+.zenith-cw__spot .zenith-cw__control.is-cheering {
     animation: zenith-cw-flash 620ms ease-out;
 }
 
@@ -3279,71 +3368,23 @@ body.is-phone .zenith-dashboard__bg::before {
     }
 }
 
-/* The "+1" itself, floating off the control that earned it. */
-.zenith-cw__cheer {
-    position: absolute;
-    left: 50%;
-    bottom: 100%;
-    pointer-events: none;
-    color: var(--zenith-accent);
-    font-size: 0.72rem;
-    font-weight: 700;
-    animation: zenith-cw-cheer 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
 
-@keyframes zenith-cw-cheer {
-    0% {
-        opacity: 0;
-        transform: translate(-50%, 4px);
-    }
-    22% {
-        opacity: 1;
-        transform: translate(-50%, -4px);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -18px);
-    }
-}
-
-.zenith-cw__item-main {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    flex: 1;
-    min-width: 0;
-}
-
-/* Every row is the same height, whether its second line is a meter or a
-   subtitle. A game with no measurable length sat a few pixels shorter than the
-   show above it, which is enough to break the rhythm of a list and read as a
-   row that failed to load something. */
-.zenith-cw__item-track,
+/* What a row says when it has no meter to draw: its length, or its year and
+   maker. Set to the same width the meter takes so both kinds of row put the
+   rating and the control in the same column. */
 .zenith-cw__item-sub {
-    min-height: 14px;
-}
-
-.zenith-cw__item-sub {
-    font-size: 0.72rem;
+    flex: none;
+    max-width: 44%;
+    font-size: 0.68rem;
     color: var(--zenith-text-faint);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* Title line: the name, and the one number that goes with it.
-   The count used to ride at the end of a full-width progress bar, which parked
-   it against the card's right edge with a gap in the middle of every row. */
-.zenith-cw__item-top {
-    display: flex;
-    align-items: baseline;
-    gap: var(--zenith-space-sm);
-    min-width: 0;
-}
-
 .zenith-cw__item-value {
     flex-shrink: 0;
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     color: var(--zenith-text-faint);
     font-variant-numeric: tabular-nums;
 }
@@ -3363,11 +3404,22 @@ body.is-phone .zenith-dashboard__bg::before {
 .zenith-cw__item-track {
     display: block;
     width: 100%;
-    height: 5px;
-    margin-top: 3px;
+    height: 4px;
+    margin-top: 2px;
     border-radius: 999px;
     background: color-mix(in srgb, var(--zenith-text-faint) 30%, transparent);
     overflow: hidden;
+}
+
+/* In a row it is a mark beside the count rather than a rule under the title.
+   The unfilled part still has to be visible — that is what says where the
+   scale ends — so it keeps its track; it just does not need a hundred pixels
+   of it to make the point. */
+.zenith-cw__item .zenith-cw__item-track {
+    flex: none;
+    width: 44px;
+    height: 3px;
+    margin-top: 0;
 }
 
 .zenith-cw__item-fill {
@@ -3378,14 +3430,29 @@ body.is-phone .zenith-dashboard__bg::before {
     transition: width var(--zenith-transition);
 }
 
-/* "+1" — visible on hover/focus so the row stays calm at rest. */
-.zenith-cw__item button.zenith-cw__item-bump {
+/* ── The progress control ────────────────────────────
+   It was a "+1" that wrote one unit per press. Three episodes cost three
+   presses, three writes and three re-parses, and "I am on page 212" could not
+   be said from the card at all. It opens a menu now — the same gesture a
+   task's checkbox has, and the same mechanics. See `ProgressPopover`.
+
+   22px was under the floor. WCAG 2.2 sets a pointer target at 24×24 minimum;
+   Apple asks 44 and Material 48 for a finger, which the coarse-pointer block
+   at the end of this file gives it without the row growing to match. */
+.zenith-cw__control {
+    display: inline-flex;
+    flex: none;
+    position: relative;
+}
+
+.zenith-cw button.zenith-cw__bump {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
+    flex: none;
+    width: 24px;
+    height: 24px;
     padding: 0;
     border: 1px solid var(--zenith-border);
     border-radius: 50%;
@@ -3393,28 +3460,33 @@ body.is-phone .zenith-dashboard__bg::before {
     box-shadow: none;
     color: var(--zenith-text-muted);
     cursor: pointer;
+    /* Calm at rest on a pointer that can hover, and never hidden from one
+       that cannot — see the coarse block below. */
     opacity: 0;
     transition:
         opacity var(--zenith-transition-fast),
         color var(--zenith-transition-fast),
-        border-color var(--zenith-transition-fast);
+        border-color var(--zenith-transition-fast),
+        background var(--zenith-transition-fast);
 }
 
-.zenith-cw__item:hover button.zenith-cw__item-bump,
-.zenith-cw__item button.zenith-cw__item-bump:focus-visible {
+.zenith-cw button.zenith-cw__bump--spot {
+    width: 26px;
+    height: 26px;
+}
+
+.zenith-cw__item:hover .zenith-cw__bump,
+.zenith-cw__spot:hover .zenith-cw__bump,
+.zenith-cw .zenith-cw__bump:focus-visible,
+.zenith-cw .zenith-cw__bump.is-open {
     opacity: 1;
 }
 
-.zenith-cw__item button.zenith-cw__item-bump:hover {
+.zenith-cw .zenith-cw__bump:hover,
+.zenith-cw .zenith-cw__bump.is-open {
     color: var(--zenith-accent);
     border-color: var(--zenith-accent);
-}
-
-/* Coarse pointers have no hover — keep the action reachable. */
-@media (pointer: coarse) {
-    .zenith-cw__item button.zenith-cw__item-bump {
-        opacity: 1;
-    }
+    background: var(--zenith-bg-hover);
 }
 
 .zenith-cw__item-icon {
@@ -3428,9 +3500,9 @@ body.is-phone .zenith-dashboard__bg::before {
    way to recognise a row, so it gets enough width to actually be one. */
 .zenith-cw__item-thumb {
     flex-shrink: 0;
-    width: 26px;
-    height: 37px;
-    border-radius: 4px;
+    width: 22px;
+    height: 31px;
+    border-radius: 3px;
     background: var(--zenith-bg-tertiary) center / cover no-repeat;
     display: inline-flex;
     align-items: center;
@@ -3442,7 +3514,7 @@ body.is-phone .zenith-dashboard__bg::before {
 
 .zenith-cw__item-title {
     flex: 1;
-    font-size: 0.88rem;
+    font-size: 0.8rem;
     color: var(--zenith-text-normal);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -3467,8 +3539,9 @@ body.is-phone .zenith-dashboard__bg::before {
    behind a hover. */
 .zenith-cw__spot {
     display: flex;
+    align-items: center;
     gap: var(--zenith-space-sm);
-    padding: 2px var(--zenith-space-sm) var(--zenith-space-sm);
+    padding: 0 var(--zenith-space-sm) 6px;
     min-width: 0;
     animation: zenith-cw-rise 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
@@ -3481,16 +3554,15 @@ body.is-phone .zenith-dashboard__bg::before {
 
    The rule under it is the one piece of separation that earns its pixels: it
    says the shelf continues, which a gap alone does not. */
-.zenith-cw__spot + .zenith-cw__section-title,
-.zenith-cw__spot + .zenith-cw__list {
+.zenith-cw__spot + .zenith-cw__rows {
     padding-top: var(--zenith-space-sm);
     border-top: 1px solid var(--zenith-border);
 }
 
 .zenith-cw button.zenith-cw__spot-art {
     flex: none;
-    width: 54px;
-    height: 78px;
+    width: 44px;
+    height: 64px;
     padding: 0;
     border: none;
     border-radius: var(--zenith-radius-md);
@@ -3505,12 +3577,20 @@ body.is-phone .zenith-dashboard__bg::before {
     transform: scale(1.04);
 }
 
+/* One left edge for the title, the count and the meter. They are three
+   readings of one item and they have to start in the same place; `align-items`
+   left at its default let a button stretch and a span sit where its text put
+   it, so the title floated over the middle of the card while the count under
+   it began at the artwork's edge. */
 .zenith-cw__spot-main {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
     gap: 5px;
     flex: 1;
     min-width: 0;
+    text-align: left;
 }
 
 .zenith-cw__spot-top {
@@ -3523,12 +3603,13 @@ body.is-phone .zenith-dashboard__bg::before {
 .zenith-cw button.zenith-cw__spot-title {
     flex: 1;
     min-width: 0;
+    justify-content: flex-start;
     padding: 0;
     border: none;
     background: none;
     box-shadow: none;
     color: var(--zenith-text-normal);
-    font-size: 0.98rem;
+    font-size: 0.88rem;
     font-weight: 600;
     text-align: left;
     overflow: hidden;
@@ -3547,47 +3628,13 @@ body.is-phone .zenith-dashboard__bg::before {
     justify-content: space-between;
     gap: var(--zenith-space-sm);
     color: var(--zenith-text-muted);
-    font-size: 0.76rem;
+    font-size: 0.71rem;
     font-variant-numeric: tabular-nums;
 }
 
 .zenith-cw__spot-pct {
     color: var(--cw-color, var(--zenith-accent));
     font-weight: 600;
-}
-
-/* The same control the rows have, one size up.
-
-   It was a pill reading "+ Ещё один ep" — a label built out of two languages,
-   because the unit is the user's own word from their content type and the
-   sentence around it was not. It also outweighed everything near it: a
-   28-pixel button beside three 22-pixel circles reads as the card's primary
-   action when it is the same action the rows offer. The word went to the
-   tooltip, where a user-supplied noun does not have to agree with anything. */
-.zenith-cw button.zenith-cw__spot-bump {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
-    align-self: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: 1px solid var(--zenith-border);
-    border-radius: 50%;
-    background: transparent;
-    box-shadow: none;
-    color: var(--zenith-text-muted);
-    cursor: pointer;
-    transition:
-        color var(--zenith-transition-fast),
-        border-color var(--zenith-transition-fast);
-}
-
-.zenith-cw button.zenith-cw__spot-bump:hover {
-    color: var(--cw-color, var(--zenith-accent));
-    border-color: var(--cw-color, var(--zenith-accent));
 }
 
 /* ── Artwork ─────────────────────────────────────────
@@ -3631,13 +3678,16 @@ body.is-phone .zenith-dashboard__bg::before {
    The two things the shelf cannot say, because both are about items that are
    NOT on the card: how much of the library is behind you, and what quietly
    stopped moving. */
+/* One line, and the control on it is the card's only way out. There were two
+   — a "+N more" link inside the shelf and an "open library" button under it —
+   and they went to the same place. */
 .zenith-cw__footer {
     display: flex;
     align-items: center;
     gap: var(--zenith-space-sm);
     flex: none;
     flex-wrap: wrap;
-    font-size: 0.74rem;
+    font-size: 0.7rem;
     color: var(--zenith-text-muted);
 }
 
@@ -3670,7 +3720,11 @@ body.is-phone .zenith-dashboard__bg::before {
     align-self: auto;
     width: auto;
     margin: 0 0 0 auto;
-    padding: 4px 10px;
+    /* 24px tall, which is the floor WCAG 2.2 sets for a pointer target; the
+       coarse-pointer block at the end of this file takes it to 44. */
+    min-height: 24px;
+    padding: 3px 9px;
+    font-size: 0.72rem;
 }
 
 /* ── What a small card gives up ──────────────────────
@@ -3683,17 +3737,42 @@ body.is-phone .zenith-dashboard__bg::before {
    a decoration the reader has to guess at, and the earlier version dropped the
    key first — leaving the smallest card, where guessing costs most, with the
    bar and nothing to read it by. */
-/* Narrow, not short: the legend wraps onto a second line rather than dropping
-   its words. Two lines of key costs one row of shelf and buys the colours
-   their names, which on the smallest card is the better trade — a chip reading
-   "● 3" is a colour with a number next to it. */
+/* Narrow, not short: the line wraps rather than dropping its words. Two lines
+   of key costs one row of shelf and buys the colours their names, which on the
+   smallest card is the better trade — a chip reading "● 3" is a colour with a
+   number next to it. */
 @container zenith-cw (max-width: 340px) {
-    .zenith-cw__breakdown {
-        gap: 5px var(--zenith-space-sm);
+    .zenith-cw__status {
+        gap: 3px var(--zenith-space-sm);
     }
 
     .zenith-cw__stat {
-        font-size: 0.76rem;
+        font-size: 0.72rem;
+    }
+
+    /* Wrapped, the total is no longer at the end of a line — it is the end of
+       the block, and a margin that pushes it right would strand it alone. */
+    .zenith-cw__total {
+        margin-left: 0;
+    }
+}
+
+/* A narrow card drops the picture of the number before the number.
+
+   The row is five things on one line — poster, title, count, meter, control —
+   and under about 320px the title is the one paying for all of them, which is
+   backwards: the title is what you are looking for. The meter goes first
+   because the count beside it says the same thing exactly, then the rating,
+   which belongs to the library rather than to tonight. */
+@container zenith-cw (max-width: 320px) {
+    .zenith-cw__item .zenith-cw__item-track {
+        display: none;
+    }
+}
+
+@container zenith-cw (max-width: 260px) {
+    .zenith-cw__item .zenith-cw__item-rating {
+        display: none;
     }
 }
 
@@ -3722,13 +3801,252 @@ body.is-phone .zenith-dashboard__bg::before {
     }
 }
 
+/* ── A finger ────────────────────────────────────────
+   Two rules, and both come from the same place: a coarse pointer cannot hover,
+   so nothing may be hidden behind hover, and it aims with a fingertip, so
+   nothing may be smaller than it can hit. Apple asks 44pt and Material 48dp;
+   WCAG 2.2 sets 24 as the floor for any pointer.
+
+   The hit area grows and the drawn button does not. A 44px circle in a 40px
+   row would be the loudest thing on the card, so the target is an invisible
+   box centred on the control — which is what the guidance is actually asking
+   for, since it is about where a finger lands, not about how much ink there
+   is. */
+@media (pointer: coarse) {
+    .zenith-cw button.zenith-cw__bump {
+        opacity: 1;
+        width: 28px;
+        height: 28px;
+    }
+
+    .zenith-cw button.zenith-cw__bump::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 44px;
+        height: 44px;
+        transform: translate(-50%, -50%);
+    }
+
+    .zenith-cw__footer .zenith-cw__open {
+        min-height: 36px;
+        padding: 6px 12px;
+    }
+
+    /* A row is a target too — it opens the item. At 40px it is already close,
+       and the gap between rows counts towards the spacing exception, but a
+       finger deserves the four pixels. */
+    .zenith-cw__item {
+        padding: 4px 7px;
+    }
+}
+
+/* ── The progress menu ───────────────────────────────
+   The card's "+1" opened nothing; this is what it opens now. Same shape and
+   manners as a task's status menu — a portal, fixed position, dismissed by a
+   click outside, by Escape, or by any scroll.
+
+   Every colour here is one of Obsidian's OWN variables, not Zenith's. The menu
+   is portalled to `document.body`, which is outside `.zenith-root`, and
+   `--zenith-*` is declared on that root: read from here they resolve to
+   nothing and the menu comes out unstyled. The hex fallbacks are for a theme
+   that has not declared the native one either.
+
+   Widths and heights come from the target guidance: 24px is the floor WCAG 2.2
+   sets for a pointer, so nothing in here is smaller, and the coarse-pointer
+   block below takes every control to the 44 Apple asks for and Material
+   rounds up to 48. */
+.zenith-cwp {
+    position: fixed;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 9px;
+    background: var(--background-secondary, #262626);
+    border: 1px solid var(--background-modifier-border, #444);
+    border-radius: 11px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+    animation: zenith-fade-in 0.12s ease;
+}
+
+/* Which item this is about. The menu can open a long way from the row that
+   summoned it — near the bottom of the screen it opens upwards — and a stepper
+   with no subject is a stepper you have to remember the subject of. */
+.zenith-cwp__title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    line-height: 1.2;
+    color: var(--text-faint, #888);
+}
+
+.zenith-cwp__stepper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.zenith-cwp button.zenith-cwp__step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--background-modifier-border, #444);
+    border-radius: 7px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-muted, #9a9a9a);
+    cursor: pointer;
+}
+
+.zenith-cwp button.zenith-cwp__step:hover:not(:disabled) {
+    color: var(--text-normal, #dcddde);
+    background: var(--background-modifier-hover, #2f2f2f);
+}
+
+.zenith-cwp button.zenith-cwp__step:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* The number is the middle of the control, and it is editable — that is the
+   half of this menu the chips cannot do. */
+.zenith-cwp__value {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-cwp input.zenith-cwp__num {
+    width: 52px;
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid var(--background-modifier-border, #444);
+    border-radius: 7px;
+    background: var(--background-primary, #1e1e1e);
+    box-shadow: none;
+    color: var(--text-normal, #dcddde);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* The spinners are a second, tiny stepper beside the real one, and on a touch
+   screen they are unhittable. */
+.zenith-cwp input.zenith-cwp__num::-webkit-outer-spin-button,
+.zenith-cwp input.zenith-cwp__num::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+}
+
+.zenith-cwp input.zenith-cwp__num {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.zenith-cwp__of {
+    flex: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    color: var(--text-muted, #9a9a9a);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Three jumps, equal width so the row reads as a scale rather than as three
+   different buttons. */
+.zenith-cwp__jumps {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 5px;
+}
+
+.zenith-cwp button.zenith-cwp__jump {
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--background-modifier-border, #444);
+    border-radius: 7px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-muted, #9a9a9a);
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+}
+
+.zenith-cwp button.zenith-cwp__jump:hover {
+    color: var(--cwp-color, var(--interactive-accent, #8b5cf6));
+    border-color: var(--cwp-color, var(--interactive-accent, #8b5cf6));
+}
+
+.zenith-cwp button.zenith-cwp__finish {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 7px;
+    background: var(--background-modifier-hover, #2f2f2f);
+    box-shadow: none;
+    color: var(--text-normal, #dcddde);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.zenith-cwp button.zenith-cwp__finish:hover {
+    background: var(--interactive-accent, #8b5cf6);
+    color: var(--text-on-accent, #fff);
+}
+
+/* A finger, in the menu as well as on the card. Nothing here is a hover-only
+   affordance, so the only thing that has to change is the size of what it is
+   aiming at. */
+@media (pointer: coarse) {
+    .zenith-cwp {
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .zenith-cwp button.zenith-cwp__step,
+    .zenith-cwp input.zenith-cwp__num {
+        width: 44px;
+        height: 44px;
+    }
+
+    .zenith-cwp input.zenith-cwp__num {
+        width: 58px;
+        font-size: 15px;
+        text-align: center;
+    }
+
+    .zenith-cwp button.zenith-cwp__jump,
+    .zenith-cwp button.zenith-cwp__finish {
+        height: 40px;
+        font-size: 13px;
+    }
+}
+
 /* Motion off means off. The plugin-wide switch is handled by the wildcard in
    `variables.css`; this is the operating system's. */
 @media (prefers-reduced-motion: reduce) {
     .zenith-cw__item,
     .zenith-cw__spot,
     .zenith-cw__bar-seg,
-    .zenith-cw__cheer,
     .zenith-cw__img {
         animation: none;
         transition: none;

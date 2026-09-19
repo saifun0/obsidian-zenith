@@ -5,129 +5,126 @@ import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import type { Project } from '../projectsTypes';
+import { dueLabel } from '../services/projectStats';
 
+/**
+ * The projects card: what is running, and how close each one is to done.
+ *
+ * Only what is active — a dashboard is about what is on you now, and a shelf
+ * of archived projects is the view's business. The footer says so out loud,
+ * because a card that counts three while the view counts six and explains
+ * neither number is a card you stop trusting.
+ */
 export const ProjectsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const t = useTranslation();
     const { app, plugin } = useApp();
     const projects = useZenithStore((s) => s.projects);
 
-    const activeProjects = useMemo(() => {
-        return projects
-            .filter((p) => p.status === 'active' || p.status === 'in-progress')
-            .sort((a, b) => {
-                // First overdue / due soonest
-                if (a.stats.daysRemaining !== undefined && b.stats.daysRemaining !== undefined) {
-                    return a.stats.daysRemaining - b.stats.daysRemaining;
-                }
-                if (a.stats.daysRemaining !== undefined) return -1;
-                if (b.stats.daysRemaining !== undefined) return 1;
-                return a.title.localeCompare(b.title);
-            });
-    }, [projects]);
+    const active = useMemo(
+        () =>
+            projects
+                .filter((p) => p.status === 'active' || p.status === 'in-progress')
+                // Soonest first, and anything without a date last: a project
+                // with no deadline is not urgent, it is undated.
+                .sort((a, b) => {
+                    const x = a.stats.daysRemaining;
+                    const y = b.stats.daysRemaining;
+                    if (x !== undefined && y !== undefined) return x - y;
+                    if (x !== undefined) return -1;
+                    if (y !== undefined) return 1;
+                    return a.title.localeCompare(b.title);
+                }),
+        [projects]
+    );
 
-    const openProjectsView = useCallback(() => {
+    const openView = useCallback(() => {
         void plugin.moduleManager.get('projects')?.activateView();
     }, [plugin]);
 
-    const openProjectNote = useCallback(
+    const openNote = useCallback(
         (project: Project) => {
             void app.workspace.openLinkText(project.filePath, '', false);
         },
         [app]
     );
 
-    // Number of items to display based on widget size
-    const maxItems = size === 'sm' ? 2 : size === 'md' ? 4 : 8;
-    const displayed = activeProjects.slice(0, maxItems);
-
-    if (activeProjects.length === 0) {
-        return (
-            <div className="zenith-projects-widget">
-                <div className="zenith-projects__empty" style={{ padding: '24px 10px' }}>
-                    <FolderKanban size={28} className="zenith-projects__empty-icon" />
-                    <div className="zenith-projects__empty-title" style={{ fontSize: '0.9rem' }}>
-                        {t('projects.widget.empty')}
-                    </div>
-                </div>
-                <div className="zenith-projects-widget__footer">
-                    <button
-                        type="button"
-                        className="zenith-projects-widget__open-all"
-                        onClick={openProjectsView}
-                    >
-                        <span>{t('projects.widget.open')}</span>
-                        <ArrowRight size={12} />
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    const rows = size === 'sm' ? 2 : size === 'md' ? 4 : 8;
+    const shown = active.slice(0, rows);
+    const hidden = active.length - shown.length;
 
     return (
-        <div className="zenith-projects-widget">
-            <div className="zenith-projects-widget__list">
-                {displayed.map((p) => {
-                    const pct = p.stats.progressPercent;
-                    const isOverdue = p.stats.isOverdue;
-                    const daysLeft = p.stats.daysRemaining;
-
-                    return (
-                        <div
-                            key={p.id}
-                            className="zenith-projects-widget__item"
-                            onClick={() => openProjectNote(p)}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    openProjectNote(p);
-                                }
-                            }}
-                        >
-                            <div className="zenith-projects-widget__item-top">
-                                <span className="zenith-projects-widget__item-title">{p.title}</span>
-                                {daysLeft !== undefined && (
-                                    <span
-                                        className={`zenith-projects-widget__item-due ${
-                                            isOverdue ? 'is-overdue' : ''
-                                        }`}
-                                    >
-                                        {isOverdue
-                                            ? t('projects.stats.overdue')
-                                            : daysLeft === 0
-                                            ? t('projects.stats.today')
-                                            : `${daysLeft} ${t('projects.stats.daysLeft')}`}
-                                    </span>
+        <div className="zenith-pw">
+            {shown.length === 0 ? (
+                <div className="zenith-pw__empty">
+                    <FolderKanban size={24} strokeWidth={1.5} />
+                    <span>{t('projects.widget.empty')}</span>
+                </div>
+            ) : (
+                <ul className="zenith-pw__list">
+                    {shown.map((p) => {
+                        const due = dueLabel(p, t);
+                        return (
+                            <li
+                                key={p.id}
+                                className="zenith-pw__item"
+                                role="button"
+                                tabIndex={0}
+                                title={p.title}
+                                onClick={() => openNote(p)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        openNote(p);
+                                    }
+                                }}
+                            >
+                                {/* One line, in reading order: which project,
+                                    when it is due, how far along, how far in
+                                    tasks. It was two — a title over a
+                                    full-width bar — which made four projects
+                                    as tall as eight rows and stacked four
+                                    saturated meters down the card. */}
+                                <span className="zenith-pw__title">{p.title}</span>
+                                {due && (
+                                    <span className={`zenith-pw__due ${due.tone}`}>{due.text}</span>
                                 )}
-                            </div>
-                            <div className="zenith-projects-widget__meter">
-                                <div className="zenith-projects-widget__meter-bar">
-                                    <div
-                                        className="zenith-projects-widget__meter-fill"
-                                        style={{ width: `${pct}%` }}
+                                <span className="zenith-pw__track">
+                                    <span
+                                        className={`zenith-pw__fill ${
+                                            p.stats.progressPercent === 100 ? 'is-complete' : ''
+                                        }`}
+                                        style={{ width: `${p.stats.progressPercent}%` }}
                                     />
-                                </div>
-                                <span className="zenith-projects-widget__meter-label">
+                                </span>
+                                <span className="zenith-pw__count">
                                     {p.stats.totalTasks > 0
                                         ? `${p.stats.completedTasks}/${p.stats.totalTasks}`
-                                        : `${pct}%`}
+                                        : `${p.stats.progressPercent}%`}
                                 </span>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-            <div className="zenith-projects-widget__footer">
-                <span style={{ fontSize: '0.75rem', color: 'var(--zenith-text-muted)' }}>
-                    {activeProjects.length} {t('projects.stats.tasks') ? activeProjects.length === 1 ? 'проект' : 'проекта' : ''}
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
+
+            {/* It used to read `t('projects.stats.tasks') ? … 'проект' : 'проекта'`
+                — a translated string tested for truthiness (it always is) to
+                choose between two Russian words hardcoded in the source. Wrong
+                for five and up, wrong in every other language, and it never
+                said that the number it was counting was the ACTIVE projects
+                while the view beside it counted all of them. */}
+            <div className="zenith-pw__footer">
+                <span className="zenith-pw__count-note">
+                    {t('projects.summary.active', { count: active.length })}
                 </span>
                 <button
                     type="button"
-                    className="zenith-projects-widget__open-all"
-                    onClick={openProjectsView}
+                    className="zenith-pw__open"
+                    onClick={openView}
+                    title={t('projects.widget.open')}
                 >
-                    <span>{t('projects.widget.open')}</span>
-                    <ArrowRight size={12} />
+                    {hidden > 0 ? t('common.more', { count: hidden }) : t('projects.widget.open')}
+                    <ArrowRight size={13} />
                 </button>
             </div>
         </div>

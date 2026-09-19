@@ -114,11 +114,52 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
 
     const split = useMemo(() => splitTasks(tasks, today), [tasks, today]);
 
+    /** Only the detailed preset has the height for the bottom strip. */
+    const showStats = size === 'lg' && split.active.length > 0;
+
     // ── Layout ───────────────────────────────────────
 
+    /**
+     * What the card's own furniture actually costs.
+     *
+     * The heading is a 34px number beside 22px words sharing a baseline, and
+     * the bottom strip is a rule, a week and a row of figures — both taller
+     * than the constants that stood in for them, and both dependent on the
+     * theme's font and the language. The difference came out of the list's
+     * budget, and what it cost was the strip: pinned to the bottom, pushed
+     * past it, clipped away.
+     *
+     * Safe to measure because neither height answers to the plan. See
+     * `Chrome` in `widgetLayout`.
+     */
+    const headRef = useRef<HTMLDivElement>(null);
+    /** Also the element the figure-fitting measures its width on, below. */
+    const statsRef = useRef<HTMLDivElement>(null);
+    const [chrome, setChrome] = useState({ head: 0, stats: 0 });
+
+    useEffect(() => {
+        if (typeof ResizeObserver === 'undefined') return;
+        const read = () => {
+            const head = headRef.current?.offsetHeight ?? 0;
+            const stats = statsRef.current?.offsetHeight ?? 0;
+            setChrome((prev) =>
+                Math.abs(prev.head - head) > 1 || Math.abs(prev.stats - stats) > 1
+                    ? { head, stats }
+                    : prev
+            );
+        };
+        const ro = new ResizeObserver(read);
+        if (headRef.current) ro.observe(headRef.current);
+        if (statsRef.current) ro.observe(statsRef.current);
+        read();
+        return () => ro.disconnect();
+        // Re-attached when the strip appears or disappears, since the element
+        // it observes is mounted and unmounted with it.
+    }, [showStats]);
+
     const layout = useMemo(
-        () => planWidget({ split, size, available, expanded }),
-        [split, size, available, expanded]
+        () => planWidget({ split, size, available, expanded, chrome }),
+        [split, size, available, expanded, chrome]
     );
 
     // ── Rendering ────────────────────────────────────
@@ -261,7 +302,6 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
         say(t('tasks.widget.noActive'), 'is-strong is-dim');
     }
 
-    const showStats = size === 'lg' && split.active.length > 0;
     // On `lg` the summary strip carries the link, so the heading doesn't repeat it.
     const headLink = showStats ? '' : size === 'sm' ? t('tasks.widget.allShort') : t('tasks.widget.allTasks');
 
@@ -337,7 +377,6 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
      * off the edge. Each figure is measured as drawn and the ones there is no
      * room for are dropped, rather than clipped in place.
      */
-    const statsRef = useRef<HTMLDivElement>(null);
     const figuresRef = useRef<HTMLDivElement>(null);
     const figureWidths = useRef(new Map<string, number>());
     const [shownFigures, setShownFigures] = useState<string[] | null>(null);
@@ -376,7 +415,7 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
 
     return (
         <div className={`zenith-tw zenith-tw--${size}`} ref={rootRef}>
-            <div className="zenith-tw__head" style={{ minHeight: m.head }}>
+            <div className="zenith-tw__head" ref={headRef} style={{ minHeight: m.head }}>
                 <div className="zenith-tw__head-line">
                     {heading.map((part, i) => (
                         <span key={i} className={`zenith-tw__say ${part.cls}`}>

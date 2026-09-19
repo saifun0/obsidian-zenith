@@ -21,7 +21,8 @@
 }
 
 .zenith-projects__header-title {
-    font-size: 1.4rem;
+    flex: none;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--zenith-text-normal);
     display: flex;
@@ -30,11 +31,38 @@
     margin: 0;
 }
 
-.zenith-projects__header-actions {
+/* The four figures that used to be four bordered boxes across the top of the
+   view. Ninety pixels of chrome to say "6 projects" above a grid of six
+   projects, "3 active" above a filter tab that says Active, and a task tally
+   nothing else repeated — which is the only one of the four that was earning
+   anything, and it earns it just as well set small beside the title. */
+.zenith-projects__summary {
     display: flex;
-    align-items: center;
-    gap: var(--zenith-space-sm);
+    align-items: baseline;
     flex-wrap: wrap;
+    gap: 2px 14px;
+    flex: 1;
+    min-width: 0;
+    font-size: 0.78rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-root button.zenith-projects__new {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+}
+
+.zenith-root button.zenith-projects__search-clear {
+    display: inline-flex;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
 }
 
 /* ── Filter / Search Bar ─────────────────────────── */
@@ -54,6 +82,7 @@
 .zenith-projects__search-box {
     display: flex;
     align-items: center;
+    color: var(--zenith-text-muted);
     gap: var(--zenith-space-xs);
     background: var(--zenith-bg-primary);
     border: 1px solid var(--zenith-border);
@@ -104,275 +133,245 @@
     font-weight: 600;
 }
 
-/* ── Summary Stats Strip ─────────────────────────── */
-.zenith-projects__stats-bar {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: var(--zenith-space-md);
-    margin-bottom: var(--zenith-space-lg);
-}
-
-.zenith-projects__stat-card {
-    background: var(--zenith-bg-secondary);
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-md);
-    padding: var(--zenith-space-md);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.zenith-projects__stat-label {
-    font-size: 0.75rem;
-    color: var(--zenith-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 600;
-}
-
-.zenith-projects__stat-value {
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--zenith-text-normal);
-    font-variant-numeric: tabular-nums;
-}
-
-/* ── Projects Grid ───────────────────────────────── */
+/* ── The grid ────────────────────────────────────── */
 .zenith-projects__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: var(--zenith-space-lg);
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--zenith-space-md);
 }
 
-/* ── Project Card ────────────────────────────────── */
+/* ── One project ─────────────────────────────────────
+   Four lines, where there were ten elements.
+
+   What it carried: a filled status pill, a priority in English capitals
+   beside it, a deadline chip, the title, "1 / 3 completed", "33%", a meter, a
+   "TASKS (3)" heading, a "SHOW ▾" toggle, a row of tags and a bordered "open
+   note" button — about 245px per project, for a card whose subject is one
+   name and one fraction.
+
+   What it carries now, in reading order: the name and when it is due; what
+   state it is in and what it is about; how far along; and the tasks, behind
+   one quiet toggle. The same facts, none of them twice, and no filled box
+   around any of them — the card is already a box. */
 .zenith-project-card {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: var(--zenith-space-md);
     background: var(--zenith-bg-secondary);
     border: 1px solid var(--zenith-border);
     border-radius: var(--zenith-radius-lg);
-    padding: var(--zenith-space-lg);
-    display: flex;
-    flex-direction: column;
-    gap: var(--zenith-space-md);
-    transition: transform var(--zenith-transition-fast), box-shadow var(--zenith-transition-fast), border-color var(--zenith-transition-fast);
-    position: relative;
-    box-shadow: var(--zenith-shadow-xs);
+    transition:
+        border-color var(--zenith-transition-fast),
+        background var(--zenith-transition-fast);
 }
 
 .zenith-project-card:hover {
-    border-color: var(--zenith-accent);
-    box-shadow: var(--zenith-shadow-sm);
+    border-color: color-mix(in srgb, var(--zenith-accent) 40%, var(--zenith-border));
 }
 
-.zenith-project-card__header {
+.zenith-project-card__top {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    align-items: baseline;
     gap: var(--zenith-space-sm);
-}
-
-.zenith-project-card__title-row {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
     min-width: 0;
 }
 
+/* The way into the note, and the only one. There was a bordered button in the
+   corner doing the same thing — the loudest control on the card, for the
+   action its own heading already performs. */
 .zenith-project-card__title {
-    font-size: 1.15rem;
-    font-weight: 650;
-    color: var(--zenith-text-normal);
-    cursor: pointer;
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--zenith-text-normal);
+    font-size: 0.98rem;
+    font-weight: 650;
     text-decoration: none;
-    transition: color var(--zenith-transition-fast);
+    cursor: pointer;
 }
 
 .zenith-project-card__title:hover {
     color: var(--zenith-accent);
+    text-decoration: none;
 }
 
-.zenith-project-card__badges {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-/* Status Pill */
-.zenith-project-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 999px;
-    text-transform: capitalize;
-}
-
-.zenith-project-badge--active {
-    background: rgba(59, 130, 246, 0.12);
-    color: #3b82f6;
-}
-
-.zenith-project-badge--in-progress {
-    background: rgba(14, 165, 233, 0.12);
-    color: #0ea5e9;
-}
-
-.zenith-project-badge--completed {
-    background: var(--zenith-success-bg);
-    color: var(--zenith-success);
-}
-
-.zenith-project-badge--paused {
-    background: var(--zenith-warning-bg);
-    color: var(--zenith-warning);
-}
-
-.zenith-project-badge--archived {
-    background: rgba(107, 114, 128, 0.15);
-    color: var(--zenith-text-muted);
-}
-
-/* Priority badge */
-.zenith-project-priority {
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: var(--zenith-radius-xs);
-}
-
-.zenith-project-priority--urgent {
-    background: rgba(239, 68, 68, 0.15);
-    color: var(--zenith-danger);
-}
-
-.zenith-project-priority--high {
-    background: rgba(245, 158, 11, 0.15);
-    color: var(--zenith-warning);
-}
-
-.zenith-project-priority--normal {
-    color: var(--zenith-text-muted);
-}
-
-.zenith-project-priority--low {
-    color: var(--zenith-text-faint);
-}
-
-/* Due Date Badge */
 .zenith-project-due {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.75rem;
+    flex: none;
+    font-size: 0.72rem;
+    color: var(--zenith-text-faint);
     font-variant-numeric: tabular-nums;
-    font-weight: 500;
-    color: var(--zenith-text-muted);
+    white-space: nowrap;
 }
 
 .zenith-project-due.is-overdue {
     color: var(--zenith-danger);
-    font-weight: 650;
+    font-weight: 600;
 }
 
 .zenith-project-due.is-today {
     color: var(--zenith-warning);
-    font-weight: 650;
+    font-weight: 600;
 }
 
-/* ── Progress Bar ────────────────────────────────── */
-.zenith-project-card__progress-block {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.zenith-project-card__progress-info {
+/* State, urgency and subject on one quiet line. Every one of these was a
+   filled chip; three filled chips on a card is a card of chips. */
+.zenith-project-card__meta {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    font-size: 0.8rem;
+    flex-wrap: wrap;
+    gap: 3px 10px;
+    min-width: 0;
+    font-size: 0.72rem;
+    color: var(--zenith-text-faint);
+}
+
+/* The state keeps a colour, because it is the one thing on the line that is a
+   status rather than a description — but a colour on the word, not a box
+   around it. */
+.zenith-project-state {
+    font-weight: 600;
     color: var(--zenith-text-muted);
 }
 
-.zenith-project-card__progress-pct {
-    font-weight: 700;
-    color: var(--zenith-text-normal);
-    font-variant-numeric: tabular-nums;
+.zenith-project-state--active,
+.zenith-project-state--in-progress {
+    color: var(--zenith-accent);
+}
+
+.zenith-project-state--completed {
+    color: var(--zenith-success);
+}
+
+.zenith-project-state--paused {
+    color: var(--zenith-warning);
+}
+
+.zenith-project-prio {
+    font-weight: 600;
+    text-transform: lowercase;
+}
+
+.zenith-project-prio--urgent {
+    color: var(--zenith-danger);
+}
+
+.zenith-project-prio--high {
+    color: var(--zenith-warning);
+}
+
+.zenith-project-tag {
+    color: var(--zenith-text-faint);
+}
+
+/* ── How far along ───────────────────────────────────
+   The bar IS the percentage. It used to be drawn under a line reading
+   "1 / 3 completed" on the left and "33%" on the right: the same fraction
+   three times, in three notations, on three different parts of the card. */
+.zenith-project-card__meter {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    min-width: 0;
 }
 
 .zenith-project-progress-track {
-    width: 100%;
-    height: 8px;
-    background: var(--zenith-bg-tertiary);
+    display: block;
+    flex: 1;
+    height: 5px;
+    min-width: 0;
     border-radius: 999px;
+    background: color-mix(in srgb, var(--zenith-text-faint) 28%, transparent);
     overflow: hidden;
-    position: relative;
 }
 
 .zenith-project-progress-fill {
+    display: block;
     height: 100%;
-    background: var(--zenith-accent);
     border-radius: 999px;
-    transition: width 300ms ease;
+    background: var(--zenith-accent);
+    transition: width var(--zenith-transition);
 }
 
 .zenith-project-progress-fill.is-complete {
     background: var(--zenith-success);
 }
 
-/* ── Tasks Preview Section ───────────────────────── */
+.zenith-project-card__count {
+    flex: none;
+    font-size: 0.72rem;
+    color: var(--zenith-text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── The tasks ───────────────────────────────────────
+   One line of text that opens a list. It was a bordered strip with an icon, a
+   heading in capitals and the word "SHOW" with an arrow after it — heavier
+   than the three checkboxes behind it. */
 .zenith-project-card__tasks {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    border-top: 1px solid var(--zenith-border);
-    padding-top: var(--zenith-space-sm);
-    margin-top: 2px;
+    gap: 4px;
+    min-width: 0;
 }
 
-.zenith-project-card__tasks-header {
-    display: flex;
+.zenith-root button.zenith-project-card__toggle {
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    font-weight: 600;
+    align-self: flex-start;
+    gap: 5px;
+    min-height: 24px;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
     color: var(--zenith-text-faint);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-project-card__toggle:hover {
+    color: var(--zenith-text-normal);
+    background: none;
+    box-shadow: none;
+}
+
+.zenith-project-card__toggle svg {
+    transition: transform var(--zenith-transition-fast);
+}
+
+.zenith-project-card__toggle.is-open svg {
+    transform: rotate(180deg);
+}
+
+.zenith-project-card__task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
 .zenith-project-task-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.82rem;
-    color: var(--zenith-text-normal);
-    padding: 4px 6px;
-    border-radius: var(--zenith-radius-xs);
-    transition: background var(--zenith-transition-fast);
+    gap: 7px;
+    min-height: 24px;
+    min-width: 0;
+    border-radius: var(--zenith-radius-sm);
 }
 
-.zenith-project-task-item:hover {
-    background: var(--zenith-bg-hover);
-}
-
-.zenith-project-task-item.is-done {
-    color: var(--zenith-text-faint);
-    text-decoration: line-through;
-}
-
-.zenith-project-task-checkbox {
+.zenith-root button.zenith-project-task-check {
+    display: inline-flex;
+    flex: none;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
     cursor: pointer;
-    accent-color: var(--zenith-accent);
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
 }
 
 .zenith-project-task-text {
@@ -381,196 +380,220 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-/* ── Project Card Footer ─────────────────────────── */
-.zenith-project-card__footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: auto;
-    padding-top: var(--zenith-space-sm);
-    border-top: 1px solid var(--zenith-border);
-}
-
-.zenith-project-card__tags {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-wrap: wrap;
-}
-
-.zenith-project-tag {
-    font-size: 0.72rem;
+    font-size: 0.8rem;
     color: var(--zenith-text-muted);
-    background: var(--zenith-bg-tertiary);
-    padding: 2px 6px;
-    border-radius: var(--zenith-radius-xs);
 }
 
-.zenith-project-card__open-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: transparent;
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-sm);
-    padding: 4px 10px;
-    font-size: 0.78rem;
-    font-weight: 500;
-    color: var(--zenith-text-muted);
-    cursor: pointer;
-    transition: all var(--zenith-transition-fast);
+.zenith-project-task-item.is-done .zenith-project-task-text {
+    color: var(--zenith-text-faint);
+    text-decoration: line-through;
 }
 
-.zenith-project-card__open-btn:hover {
-    color: var(--zenith-text-normal);
-    border-color: var(--zenith-accent);
-    background: var(--zenith-bg-hover);
-}
-
-/* ── Empty State ─────────────────────────────────── */
+/* ── Nothing to show ─────────────────────────────── */
 .zenith-projects__empty {
-    text-align: center;
-    padding: 60px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: var(--zenith-space-md);
-    color: var(--zenith-text-muted);
+    gap: var(--zenith-space-sm);
+    padding: var(--zenith-space-2xl) var(--zenith-space-md);
+    text-align: center;
 }
 
 .zenith-projects__empty-icon {
-    opacity: 0.4;
+    color: var(--zenith-text-faint);
+    opacity: 0.6;
 }
 
 .zenith-projects__empty-title {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--zenith-text-normal);
 }
 
 .zenith-projects__empty-desc {
     font-size: 0.85rem;
-    max-width: 400px;
+    color: var(--zenith-text-muted);
+    max-width: 380px;
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   Zenith — Projects Dashboard Widget
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-.zenith-projects-widget {
+/* ══════════════════════════════════════════════════════
+   The dashboard card
+   ──────────────────────────────────────────────────────
+   Same bargain as the library's: one line a project, the meter beside the
+   count rather than under the title, and one way out at the foot.
+   ══════════════════════════════════════════════════════ */
+.zenith-pw {
     display: flex;
     flex-direction: column;
-    height: 100%;
     gap: var(--zenith-space-sm);
+    height: 100%;
+    min-height: 0;
+    container-type: inline-size;
+    container-name: zenith-pw;
+}
+
+
+.zenith-pw__list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
     overflow: hidden;
 }
 
-.zenith-projects-widget__list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-}
-
-.zenith-projects-widget__item {
-    background: var(--zenith-bg-secondary);
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-sm);
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    cursor: pointer;
-    transition: border-color var(--zenith-transition-fast), background var(--zenith-transition-fast);
-}
-
-.zenith-projects-widget__item:hover {
-    border-color: var(--zenith-accent);
-    background: var(--zenith-bg-hover);
-}
-
-.zenith-projects-widget__item-top {
+.zenith-pw__item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 6px;
+    gap: 8px;
+    min-height: 28px;
+    padding: 3px 7px;
+    border-radius: var(--zenith-radius-md);
+    min-width: 0;
+    cursor: pointer;
+    transition: background var(--zenith-transition-fast);
 }
 
-.zenith-projects-widget__item-title {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--zenith-text-normal);
+.zenith-pw__item:hover,
+.zenith-pw__item:focus-visible {
+    background: var(--zenith-bg-hover);
+    outline: none;
+}
+
+.zenith-pw__title {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-size: 0.82rem;
+    color: var(--zenith-text-normal);
 }
 
-.zenith-projects-widget__item-due {
-    font-size: 0.72rem;
-    color: var(--zenith-text-muted);
+.zenith-pw__due {
+    flex: none;
+    font-size: 0.68rem;
+    color: var(--zenith-text-faint);
     font-variant-numeric: tabular-nums;
-    flex-shrink: 0;
+    white-space: nowrap;
 }
 
-.zenith-projects-widget__item-due.is-overdue {
+.zenith-pw__due.is-overdue {
     color: var(--zenith-danger);
     font-weight: 600;
 }
 
-.zenith-projects-widget__meter {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.zenith-pw__due.is-today {
+    color: var(--zenith-warning);
+    font-weight: 600;
 }
 
-.zenith-projects-widget__meter-bar {
-    flex: 1;
-    height: 5px;
-    background: var(--zenith-bg-tertiary);
+.zenith-pw__track {
+    display: block;
+    flex: none;
+    width: 44px;
+    height: 3px;
     border-radius: 999px;
+    background: color-mix(in srgb, var(--zenith-text-faint) 28%, transparent);
     overflow: hidden;
 }
 
-.zenith-projects-widget__meter-fill {
+.zenith-pw__fill {
+    display: block;
     height: 100%;
-    background: var(--zenith-accent);
     border-radius: 999px;
+    background: var(--zenith-accent);
+    transition: width var(--zenith-transition);
 }
 
-.zenith-projects-widget__meter-label {
-    font-size: 0.72rem;
-    color: var(--zenith-text-muted);
+.zenith-pw__fill.is-complete {
+    background: var(--zenith-success);
+}
+
+.zenith-pw__count {
+    flex: none;
+    font-size: 0.66rem;
+    color: var(--zenith-text-faint);
     font-variant-numeric: tabular-nums;
-    min-width: 32px;
-    text-align: right;
 }
 
-.zenith-projects-widget__footer {
+.zenith-pw__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+    padding: 16px;
+    color: var(--zenith-text-muted);
+    text-align: center;
+    font-size: 0.82rem;
+}
+
+.zenith-pw__footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding-top: 4px;
-    margin-top: auto;
-    border-top: 1px solid var(--zenith-border);
+    gap: var(--zenith-space-sm);
+    flex: none;
+    flex-wrap: wrap;
+    font-size: 0.7rem;
+    color: var(--zenith-text-faint);
 }
 
-.zenith-projects-widget__open-all {
+.zenith-pw__count-note {
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-root button.zenith-pw__open {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-size: 0.75rem;
-    color: var(--zenith-text-muted);
+    gap: 5px;
+    flex: none;
+    margin-left: auto;
+    min-height: 24px;
+    padding: 3px 9px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
     background: transparent;
-    border: none;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.72rem;
     cursor: pointer;
-    padding: 2px 4px;
-    border-radius: var(--zenith-radius-xs);
-    transition: color var(--zenith-transition-fast);
+    transition: all var(--zenith-transition-fast);
 }
 
-.zenith-projects-widget__open-all:hover {
-    color: var(--zenith-accent);
+.zenith-root button.zenith-pw__open:hover {
+    color: var(--zenith-text-normal);
+    border-color: var(--zenith-accent);
+    background: var(--zenith-bg-hover);
+}
+
+/* A finger: nothing here hides behind hover, so only the sizes change. */
+@media (pointer: coarse) {
+    .zenith-pw__item {
+        min-height: 36px;
+        padding: 5px 7px;
+    }
+
+    .zenith-root button.zenith-pw__open {
+        min-height: 36px;
+        padding: 6px 12px;
+    }
+
+    .zenith-project-task-item,
+    .zenith-root button.zenith-project-card__toggle {
+        min-height: 36px;
+    }
+}
+
+/* On a narrow card the name is the thing paying for everything else on the
+   line, which is backwards — the name is what you are looking for. The meter
+   goes first: the count beside it says the same thing exactly. */
+@container zenith-pw (max-width: 300px) {
+    .zenith-pw__track {
+        display: none;
+    }
 }

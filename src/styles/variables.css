@@ -44,8 +44,14 @@
        have to agree on it: the header itself, and the bundle rail that floats
        over it. That agreement is what puts the pips on the title's line
        instead of near it. Derived from the spacing scale so it breathes with
-       the rest of the theme. */
-    --zenith-widget-head-h: calc(18px + var(--zenith-space-md));
+       the rest of the theme.
+
+       It was `18px + space-md` — 34px, and every one of those pixels came out
+       of the widget below it. The band carries one line of 11px uppercase and
+       a 13px glyph; it needs about half that. Widgets that lay themselves out
+       against a measured height got the room back for free, and the two that
+       had been quietly clipped by the difference stopped being clipped. */
+    --zenith-widget-head-h: calc(14px + var(--zenith-space-sm) * 1.5);
 
     /* ── Transitions ────────────────────────────── */
     --zenith-transition-fast: 150ms ease;

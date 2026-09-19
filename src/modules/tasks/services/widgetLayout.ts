@@ -217,6 +217,29 @@ export interface Plan {
     gap: number;
 }
 
+/**
+ * The card's fixed furniture, as it was actually drawn.
+ *
+ * `METRICS` says what the heading and the bottom strip are *expected* to cost,
+ * and both of them depend on things this file cannot see: the theme's font, the
+ * language of the labels, whether the day produced an outcome worth a figure.
+ * The heading in particular is a 34px number beside 22px words on a shared
+ * baseline, which is taller than any of its parts and taller than the 32 that
+ * was budgeted for it — so the list was planned against a few pixels that did
+ * not exist, and the strip pinned to the bottom was pushed out of the card.
+ *
+ * Neither height depends on what this function decides, which is what makes
+ * measuring them safe: the heading is the same heading whether the list under
+ * it holds two rows or six, and the strip is fixed furniture. Feeding back a
+ * measurement that the plan could change would be a layout loop; this cannot.
+ */
+export interface Chrome {
+    /** Drawn height of the heading block, in px. Zero falls back to METRICS. */
+    head?: number;
+    /** Drawn height of the bottom strip, including its rule. `lg` only. */
+    stats?: number;
+}
+
 export interface PlanInput {
     split: Split;
     size: WidgetSize;
@@ -224,10 +247,18 @@ export interface PlanInput {
     available: number;
     /** Id of the task whose subtasks are open, if any. */
     expanded: string | null;
+    /** What the card's own furniture turned out to cost. See `Chrome`. */
+    chrome?: Chrome;
 }
 
-export function planWidget({ split, size, available, expanded }: PlanInput): Plan {
-    const m = METRICS[size];
+export function planWidget({ split, size, available, expanded, chrome }: PlanInput): Plan {
+    const metrics = METRICS[size];
+    // A measurement of zero is "not measured yet", never "takes no room".
+    const m: Metrics = {
+        ...metrics,
+        head: chrome?.head && chrome.head > 0 ? chrome.head : metrics.head,
+        stats: chrome?.stats && chrome.stats > 0 ? chrome.stats : metrics.stats,
+    };
     const gap = expanded !== null ? m.gapExpanded : m.gap;
 
     const blockFor = (task: Task, withSubs: boolean): Line[] => {
