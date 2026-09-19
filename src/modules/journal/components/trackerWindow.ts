@@ -1,7 +1,21 @@
 import type { Translator } from '../../../core/i18n';
 import type { TrackerStat } from '../services/journalStats';
 import { trackerHistory } from '../services/journalStats';
-import { clampRate } from './dialGeometry';
+/**
+ * The share of the window the tracker was recorded on, 0-1 and safe to print.
+ *
+ * Every kind of tracker has a rate, and it is the one quantity all three can be
+ * asked for without the answer changing meaning. An average out of five and a
+ * sum of repetitions do not share a scale; "written down on eleven days of
+ * thirty" does.
+ *
+ * Clamped rather than trusted: the window and the count come from parsing
+ * notes, and a day counted twice would otherwise report 103%.
+ */
+export function clampRate(rate: number): number {
+    if (!Number.isFinite(rate)) return 0;
+    return Math.min(1, Math.max(0, rate));
+}
 
 const trim = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 
@@ -9,11 +23,11 @@ const trim = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed
  * One tracker's window, read as figures rather than as a shape.
  *
  * Two places say this and they say it at different lengths: the panel beside
- * the ring has room for a figure, a label and a plot, and the strip under the
- * dial has one line. Both need the same numbers, and the interesting part is
+ * the face has room for a figure, a label and a plot, and the strip under the
+ * deck has one line. Both need the same numbers, and the interesting part is
  * not the arithmetic — it is `figureIsCoverage`, which is the one thing that
- * stops the short version repeating the number already standing in the middle
- * of the dial.
+ * stops the short version repeating the number already standing beside the
+ * tracker’s own icon.
  *
  * So the counting lives here once and the phrasing lives in the two renderers.
  */
@@ -32,9 +46,9 @@ export interface TrackerWindow {
     /** The same, in words: "today" / "3 d ago" / "never". */
     lastMark: string;
     /**
-     * Whether the dial's own figure already IS the coverage.
+     * Whether the deck's own figure already IS the coverage.
      *
-     * A `check` tracker's centre reads "11" over "/30", which is the coverage
+     * A `check` tracker's figure reads "11" over "/30", which is the coverage
      * spelled exactly the way the strip would spell it. Saying it twice on one
      * card is worse than saying it once, so the strip drops its first chip and
      * leads with the run instead.
@@ -67,8 +81,8 @@ export function trackerWindow(stat: TrackerStat, t: Translator): TrackerWindow {
 /**
  * One line of the reading, at both the lengths it gets asked for.
  *
- * The panel beside the ring sets a figure over a phrase; the strip under a
- * small dial sets the same fact in two words. They are the same fact and the
+ * The panel beside the face sets a figure over a phrase; the strip under a
+ * small deck sets the same fact in two words. They are the same fact and the
  * same order, and the difference is only how much room there is to say it — so
  * one function decides WHICH facts a tracker has, and each renderer picks the
  * pair of fields it can fit.
@@ -88,8 +102,8 @@ export interface TrackerFact {
 /**
  * What a tracker's window has to say, beyond the figure in the middle.
  *
- * The rule that shapes the list is that nothing here repeats the dial's own
- * centre. Each kind of tracker leads with a different headline — a scale with
+ * The rule that shapes the list is that nothing here repeats the deck's own
+ * figure. Each kind of tracker leads with a different headline — a scale with
  * its average, a number with its window sum, a check with the days it was
  * ticked — so each one has a different fact left over to be the first thing
  * beside it:
@@ -98,10 +112,10 @@ export interface TrackerFact {
  *   check   11 /30    →  average (as a share), run, last
  *   number  12 glasses → average per day, coverage, run, last
  *
- * The average is the one that has been missing. A check tracker's centre says
+ * The average is the one that has been missing. A check tracker's figure says
  * eleven days of thirty and never says what share of the month that is; a
- * number tracker's centre is a total, which is the one figure that grows just
- * by leaving the window open. A scale's average IS its centre, so it is not
+ * number tracker's figure is a total, which is the one figure that grows just
+ * by leaving the window open. A scale's average IS its figure, so it is not
  * repeated — see the kind check below rather than looking for it in the list.
  */
 export function trackerFacts(stat: TrackerStat, t: Translator): TrackerFact[] {
@@ -117,7 +131,7 @@ export function trackerFacts(stat: TrackerStat, t: Translator): TrackerFact[] {
 
     // A yes/no tracker's average is the share of the window it was ticked on —
     // the same quantity the coverage counts, said as a rate rather than as two
-    // numbers, which is exactly what its centre is NOT saying.
+    // numbers, which is exactly what its figure is NOT saying.
     if (stat.tracker.kind === 'check') {
         facts.push({
             key: 'average',

@@ -1251,8 +1251,10 @@ const EN: Dict = {
 
     'journal.trackers': 'Check-in',
     'journal.noTrackers': 'No trackers configured. Add one in Settings → Journal.',
-    // The dial: one tracker at the centre of the card, the rest on the ring.
-    'journal.dial.aria': 'Trackers — choose which one the card shows',
+    // The deck: one tracker's icon and figure at a time, arrows to the rest.
+    'journal.deck.aria': 'Trackers — one at a time; the arrows change which',
+    'journal.deck.prev': 'Previous tracker',
+    'journal.deck.next': 'Next tracker',
     'journal.clearValue': 'Clear {name}',
     'journal.kind.check': 'Check-box',
     'journal.kind.scale': 'Scale 1–5',
@@ -2911,8 +2913,10 @@ const RU: Dict = {
 
     'journal.trackers': 'Отметки дня',
     'journal.noTrackers': 'Отметок нет. Добавьте их в Настройках → Журнал.',
-    // Циферблат: один трекер в центре карточки, остальные на кольце.
-    'journal.dial.aria': 'Отметки — выберите, какую показывает карточка',
+    // Колода: по одной отметке за раз, остальные — стрелками.
+    'journal.deck.aria': 'Отметки — по одной; переключайте стрелками',
+    'journal.deck.prev': 'Предыдущая отметка',
+    'journal.deck.next': 'Следующая отметка',
     'journal.clearValue': 'Сбросить: {name}',
     'journal.kind.check': 'Галочка',
     'journal.kind.scale': 'Шкала 1–5',

@@ -20,10 +20,12 @@ const FACT_ICONS: Record<string, LucideIcon> = {
 };
 
 /**
- * The active tracker's window, read out beside the ring.
+ * The active tracker's window, read out beside its face.
  *
- * Rendered as an organized grid of tactile metric tiles with clear icons,
- * prominent values, and consistent visual hierarchy.
+ * A grid of small tiles: an icon and a label over a figure, in the tracker's
+ * own colour. The tiles are what the deck's icon and figure cannot say on
+ * their own — how much of the window the tracker was written down on, how long
+ * the current run is, how stale the last mark is.
  */
 export const TrackerPanel: FC<TrackerPanelProps> = ({ stat, plotHeight }) => {
     const t = useTranslation();
@@ -32,8 +34,8 @@ export const TrackerPanel: FC<TrackerPanelProps> = ({ stat, plotHeight }) => {
 
     return (
         <div
-            className="zenith-jdial__panel"
-            style={{ ['--hmon-color' as string]: stat.tracker.color } as CSSProperties}
+            className="zenith-jdeck__panel"
+            style={{ ['--jdeck-color' as string]: stat.tracker.color } as CSSProperties}
             aria-label={t('journal.stats.panelAria', { name: stat.tracker.label })}
         >
             {facts.map((fact, i) => {
