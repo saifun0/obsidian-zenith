@@ -496,7 +496,19 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
 
             {showStats && (
                 <div className="zenith-tw__stats" ref={statsRef} style={{ gap: STATS_GAP }}>
-                    <div className="zenith-tw__week">
+                    {/* The width the fitting maths reserved, stated. Without
+                        it the strip sized itself to its content — the cells
+                        are shrinkable, so a flex container measuring its own
+                        max-content ignores their bases entirely — and came out
+                        at 174px where 268 had been set aside for it. Two
+                        consequences, both visible: the overdue cell arrived at
+                        34px with a label that needs 42, ellipsised to
+                        "просроч…", and ninety pixels the figures could have
+                        used sat empty between the two halves of the strip. */}
+                    <div
+                        className="zenith-tw__week"
+                        style={{ flexBasis: weekWidth(split.overdue > 0) }}
+                    >
                         {split.overdue > 0 && (
                             <div
                                 className="zenith-tw__week-cell is-overdue"

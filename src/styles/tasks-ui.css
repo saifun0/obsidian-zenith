@@ -816,6 +816,11 @@ button.zenith-seg__btn {
 .zenith-tw__week {
     display: flex;
     align-items: flex-end;
+    /* `flex-basis` is set inline from `weekWidth()`, the same number the
+       figure fitting sets aside for this strip. It has to be stated: the cells
+       below are shrinkable, and a flex container sizing itself to content
+       takes their content widths rather than their bases — so a strip of
+       two-letter weekday labels measured 174px where 268 was reserved. */
     flex: 0 1 auto;
     min-width: 0;
 }
