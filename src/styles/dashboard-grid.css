@@ -693,6 +693,7 @@
 .zenith-add-sheet__list button.zenith-add-sheet__item {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 10px;
     width: 100%;
     /* Both axes off the spacing scale, and a floor under the row.

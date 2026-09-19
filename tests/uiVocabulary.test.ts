@@ -253,6 +253,38 @@ describe('a button the theme cannot repaint', () => {
         expect(pinned.filter((p) => !inherited.test(p))).toEqual([]);
     });
 
+    /**
+     * Obsidian's bare `button` also sets `justify-content: center` and
+     * `white-space: nowrap`, and both are wrong for a button that is a row of
+     * text. Nowrap means the label cannot shrink, so a long one overflows; and
+     * centring then pushes the overflow out of BOTH ends, sliding that row's
+     * contents left of every other row's. That is how one long option in a
+     * menu of three ended up at a different indent from the other two.
+     *
+     * A rule that has already said `text-align: left` has stated the intent;
+     * this asks it to state it where flex can hear it.
+     */
+    it('says left to flex as well as to the text', () => {
+        const onButtons = new Set<string>();
+        for (const f of tsx) for (const c of buttonClasses(read(f))) onButtons.add(c);
+
+        const centred: string[] = [];
+        for (const f of css) {
+            const body = read(f).replace(/\/\*[\s\S]*?\*\//g, '');
+            for (const rule of body.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+                const d = rule[2];
+                if (!/(?:^|[\s;{])display\s*:\s*(?:inline-)?flex/.test(d)) continue;
+                if (!/(?:^|[\s;{])text-align\s*:\s*left/.test(d)) continue;
+                if (/(?:^|[\s;{])justify-content\s*:/.test(d)) continue;
+                for (const part of rule[1].split(',').map((p) => p.trim())) {
+                    const classes = [...part.matchAll(/\.(zenith-[a-z0-9_-]+)/g)].map((m) => m[1]);
+                    if (classes.some((c) => onButtons.has(c))) centred.push(`${rel(f)}: ${part}`);
+                }
+            }
+        }
+        expect(centred).toEqual([]);
+    });
+
     it('states its own background at a specificity the theme cannot beat', () => {
         const onButtons = new Set<string>();
         for (const f of tsx) for (const c of buttonClasses(read(f))) onButtons.add(c);

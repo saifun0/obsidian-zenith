@@ -627,6 +627,7 @@
 .zenith-picker__list button.zenith-picker__result {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 12px;
     width: 100%;
     /* Must clear the 48px thumb — at 6px the rows collided. */

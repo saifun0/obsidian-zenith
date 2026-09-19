@@ -43,6 +43,7 @@
     overflow: hidden;
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: var(--zenith-space-sm);
     min-width: 0;
     padding: var(--zenith-space-sm) var(--zenith-space-md);

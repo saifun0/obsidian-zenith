@@ -165,29 +165,36 @@
     gap: 4px;
 }
 
-/* Progress ring around the counter: a conic sweep of how much of the range is
-   already done, so the number reads against something. */
+/* How much of the range is already done, under the counter.
+
+   It was a conic sweep masked into the button's border, and it was wrong twice
+   over. A conic gradient is linear in ANGLE, and the button is a rounded
+   rectangle — so the first quarter-turn covers the short top edge and the
+   corner, and a fifth of the work drew a bar reaching halfway along the top.
+   The remaining track was `--zenith-border`, which is 40% transparent, so
+   there was nothing behind the sweep to read it against: what arrived on
+   screen was a purple tick in one corner and no ring at all.
+
+   A straight bar along the bottom edge is linear in the thing it measures, and
+   its unfilled half is visible, which is what makes the filled half mean
+   something. */
 .zenith-tcal__stat {
     position: relative;
     padding-right: 8px;
 }
 
-.zenith-tcal__stat::before {
+.zenith-tcal__stat::after {
     content: '';
     position: absolute;
-    inset: -1px;
-    border-radius: var(--zenith-radius-sm);
-    padding: 1px;
-    background: conic-gradient(
+    inset-inline: 5px;
+    bottom: 3px;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(
+        to right,
         var(--zenith-accent) var(--zenith-tcal-progress, 0%),
-        var(--zenith-border) 0
+        color-mix(in srgb, var(--zenith-text-faint) 35%, transparent) 0
     );
-    /* Ring, not a filled block: mask out everything but the 1px border band. */
-    -webkit-mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
     pointer-events: none;
 }
 
@@ -241,13 +248,22 @@
     color: var(--interactive-accent, #8b5cf6);
 }
 
+/* `flex: none`, because a flex item is allowed to shrink and an empty span
+   shrinks to nothing. The unchecked row's tick column collapsed and its label
+   slid left into the checked rows' tick position — the menu read as three
+   items at two different indents. It only happened to the row whose label was
+   long enough to need the space, which is why it looked like a one-off. */
 .zenith-tcal__pop-check {
+    flex: none;
     width: 1em;
     color: var(--interactive-accent, #8b5cf6);
 }
 
+/* `min-width: 0`, or the label's longest word is a floor the row cannot go
+   under and the whole thing overflows rather than wrapping. */
 .zenith-tcal__pop-label {
     flex: 1;
+    min-width: 0;
 }
 
 .zenith-tcal__pop-count {
@@ -423,6 +439,7 @@
 .zenith-root button.zenith-tcal__chip {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 5px;
     width: 100%;
     /* `height: auto` because Obsidian's bare `button` pins one at 30px and a
@@ -476,6 +493,7 @@
 .zenith-root button.zenith-tcal__ribbon {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 4px;
     align-self: center;
     min-width: 0;
@@ -768,6 +786,7 @@
     position: absolute;
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
     gap: 1px;
     padding: 2px 5px 2px 6px;
     border: none;

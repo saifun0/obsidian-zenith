@@ -145,8 +145,8 @@ export const CalendarToolbar: FC<ToolbarProps> = ({
                     anchor={opts.anchor}
                     open={opts.open}
                     onClose={opts.close}
-                    width={210}
-                    height={options.length * 38 + 8}
+                    width={260}
+                    height={options.length * 44 + 8}
                     align="end"
                     label={t('calendar.options')}
                 >
@@ -162,7 +162,7 @@ export const CalendarToolbar: FC<ToolbarProps> = ({
                                 aria-checked={o.on}
                             >
                                 <span className="zenith-tcal__pop-check">{o.on ? '✓' : ''}</span>
-                                {o.label}
+                                <span className="zenith-tcal__pop-label">{o.label}</span>
                             </button>
                         ))}
                 </Popover>
