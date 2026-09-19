@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, type FC } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { Notice } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
@@ -13,6 +13,7 @@ import {
     isoWeek,
     monthGrid,
     monthLabel,
+    monthRun,
     sameMonth,
     startOfWeek,
     weekGrid,
@@ -33,6 +34,21 @@ import { WeekGrid } from './WeekGrid';
 import { AgendaList } from './AgendaList';
 
 const MODES: CalendarViewMode[] = ['month', 'week', 'day', 'list'];
+
+/**
+ * How far the scrolling month run reaches, in months either side of the
+ * anchor, and how much more it takes on each time the scroll nears its end.
+ *
+ * One month back rather than none, because the week a month starts in usually
+ * belongs to the one before it, and arriving at a heading with nothing above it
+ * reads as a rendering fault. Forward is where a calendar is read, so that is
+ * the side that grows.
+ */
+const RUN_BEHIND = 1;
+const RUN_AHEAD = 4;
+const RUN_STEP = 4;
+/** Far enough that nobody scrolls to it; a guard against an unbounded run. */
+const RUN_MAX = 60;
 
 /** Validate the persisted view mode — it comes back from `data.json`. */
 function toMode(raw: string): CalendarViewMode {
@@ -66,6 +82,17 @@ export const TasksCalendarApp: FC = () => {
 
     const [anchor, setAnchor] = useState(today);
     const [focus, setFocus] = useState<EntryKind | null>(null);
+    const [ahead, setAhead] = useState(RUN_AHEAD);
+    const anchorMonth = anchor.slice(0, 7);
+
+    // Paging to a different month starts the run over from there, so the
+    // window does not creep wider every time the arrows are used.
+    useEffect(() => setAhead(RUN_AHEAD), [anchorMonth]);
+
+    const growRun = useCallback(
+        () => setAhead((n) => (n >= RUN_MAX ? n : Math.min(RUN_MAX, n + RUN_STEP))),
+        []
+    );
 
     /**
      * Recover a daily note's date from its path. Only wired up while the journal
@@ -103,6 +130,17 @@ export const TasksCalendarApp: FC = () => {
         const grid = monthGrid(anchor, weekStart);
         return mode === 'list' ? grid.filter((date) => sameMonth(date, anchor)) : grid;
     }, [mode, anchor, weekStart]);
+
+    /**
+     * What the month view actually draws: several months of whole weeks, run
+     * together. `days` stays the anchor month alone, because the figures in the
+     * toolbar are about the month it names — counting six months of tasks under
+     * a heading that says September would be a different, wrong number.
+     */
+    const run = useMemo(
+        () => (mode === 'month' ? monthRun(anchor, weekStart, RUN_BEHIND, ahead) : []),
+        [mode, anchor, weekStart, ahead]
+    );
 
     const counts = useMemo(() => countEntries(calendar, days), [calendar, days]);
 
@@ -207,7 +245,7 @@ export const TasksCalendarApp: FC = () => {
                     t={t}
                     anchor={anchor}
                     today={today}
-                    days={days}
+                    days={run}
                     weekStart={weekStart}
                     calendar={calendar}
                     focus={focus}
@@ -215,6 +253,7 @@ export const TasksCalendarApp: FC = () => {
                     onOpenEntry={openEntry}
                     onOpenSpan={openSpan}
                     onOpenWeek={openWeek}
+                    onReachEnd={growRun}
                 />
             )}
 

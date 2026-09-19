@@ -222,6 +222,37 @@ describe('a button the theme cannot repaint', () => {
         return n(/\.[a-zA-Z_-]/g) + n(/\[/g) + n(/(?<!:):[a-z-]+/g);
     }
 
+    /**
+     * The same rule's other half: `button { height: var(--input-height) }` is
+     * 30px, and a `min-height` below it is ignored outright. A control that
+     * asks for 20 and is given 30 is not obviously broken, which is how the
+     * calendar's chips spent a version being half again as tall as designed.
+     */
+    it('hands back the height before asking for a smaller one', () => {
+        const onButtons = new Set<string>();
+        for (const f of tsx) for (const c of buttonClasses(read(f))) onButtons.add(c);
+
+        const pinned: string[] = [];
+        for (const f of css) {
+            const body = read(f).replace(/\/\*[\s\S]*?\*\//g, '');
+            for (const rule of body.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+                const min = rule[2].match(/(?:^|[\s;{])min-height\s*:\s*([^;}]+)/);
+                if (!min) continue;
+                if (/(?:^|[\s;{])height\s*:/.test(rule[2])) continue;
+                // A `min-height` at or above Obsidian's 30px wins on its own.
+                const px = Number(min[1].match(/^(\d+(?:\.\d+)?)px/)?.[1]);
+                if (!Number.isFinite(px) || px >= 30) continue;
+                for (const part of rule[1].split(',').map((p) => p.trim())) {
+                    const classes = [...part.matchAll(/\.(zenith-[a-z0-9_-]+)/g)].map((m) => m[1]);
+                    if (classes.some((c) => onButtons.has(c))) pinned.push(`${rel(f)}: ${part}`);
+                }
+            }
+        }
+        // Both inherit `height: auto` from the rule that defines them.
+        const inherited = /zenith-btn--sm|zenith-project-card__toggle|zenith-tw__link/;
+        expect(pinned.filter((p) => !inherited.test(p))).toEqual([]);
+    });
+
     it('states its own background at a specificity the theme cannot beat', () => {
         const onButtons = new Set<string>();
         for (const f of tsx) for (const c of buttonClasses(read(f))) onButtons.add(c);

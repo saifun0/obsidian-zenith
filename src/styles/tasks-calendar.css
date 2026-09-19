@@ -19,8 +19,15 @@
 .zenith-tcal {
     /* One column template for every band — the day-number row, the ribbon
        lanes and the chip stacks are separate grids that have to line up. */
-    --tcal-cols: 1.6em repeat(7, minmax(0, 1fr));
-    --tcal-lane-h: 17px;
+    /* Seven equal columns and nothing else. The week-number gutter that used
+       to take the first one is gone: a month's name stands at the left of the
+       week it begins in, and a narrow column of small numbers beside a large
+       heading is the ambiguity this grid least needs. */
+    --tcal-cols: repeat(7, minmax(0, 1fr));
+    --tcal-lane-h: 18px;
+    /* A week's floor. The rows scroll, so this is a rhythm rather than a
+       budget — four chips and a "+N" fit without the row growing. */
+    --tcal-row-h: 108px;
 
     display: flex;
     flex-direction: column;
@@ -254,13 +261,14 @@
     font-size: 0.78rem;
 }
 
-/* ── Month grid ──────────────────────────────────────
-   No boxes. A filled rectangle per day turns six weeks into a wall of chrome
-   that competes with the tasks inside it; a hairline between weeks and the
-   day numbers pinned to the top-left is enough structure to read a grid by.
+/* ── The months, as one scroll ────────────────────
+   No boxes. A filled rectangle per day turns a month into a wall of chrome
+   that competes with the tasks inside it; a hairline between weeks and the day
+   numbers pinned to the top-left is enough structure to read a grid by.
 
-   Each week is a single grid so a ribbon can span columns:
-     row 1              day numbers
+   The weeks run on rather than paging a month at a time. Each one is a single
+   grid so a ribbon can span columns:
+     row 1              day numbers, and a month's name where it begins
      rows 2…1+lanes     one multi-day ribbon each
      last row           the day's chips */
 .zenith-tcal__month {
@@ -278,6 +286,17 @@
     padding-bottom: 4px;
 }
 
+/* The one part that scrolls. The weekday strip above stays put, because a
+   column header that scrolls away is a column header you have to scroll back
+   for. */
+.zenith-tcal__run {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
 /* `grid-template-rows` is set inline per week — `repeat()` rejects a count of
    zero, so a week with no ribbons would invalidate the whole declaration and
    take the `auto … 1fr` down with it. */
@@ -285,9 +304,8 @@
     display: grid;
     grid-template-columns: var(--tcal-cols);
     gap: 0 4px;
-    flex: 1;
-    min-height: 0;
-    padding: 3px 0 4px;
+    min-height: var(--tcal-row-h);
+    padding: 4px 0 6px;
     border-top: 1px solid var(--zenith-border);
 }
 
@@ -300,49 +318,31 @@
     letter-spacing: 0.05em;
 }
 
-/* The week-number gutter is a button in the body rows and a plain span in the
-   header, so the shared look is class-only and the button reset sits on top.
-   It whispers on purpose: two columns of numbers side by side is exactly the
-   ambiguity that made the first version hard to read, so only the day numbers
-   are allowed any weight. */
-.zenith-tcal__wk {
-    grid-row: 1 / -1;
-    align-self: start;
-    justify-self: center;
-    padding: 1px 0 0;
-    color: var(--zenith-text-faint);
-    font-size: 0.6rem;
-    font-variant-numeric: tabular-nums;
-    opacity: 0.5;
-}
-
-.zenith-root button.zenith-tcal__wk {
-    border: none;
-    border-radius: var(--zenith-radius-xs);
-    background: transparent;
-    box-shadow: none;
-    color: var(--zenith-text-faint);
-    cursor: pointer;
-}
-
-.zenith-root button.zenith-tcal__wk:hover {
-    background: transparent;
-    box-shadow: none;
-    color: var(--zenith-accent);
-    opacity: 1;
-}
-
 .zenith-tcal__daynum-cell {
     display: flex;
     align-items: center;
     min-width: 0;
-    padding-bottom: 2px;
+    padding-bottom: 3px;
 }
 
-/* Days outside the month stay legible but recede — they're context, not
-   content. Only the number fades: the tasks on those days are real. */
-.zenith-tcal__daynum-cell.is-outside .zenith-tcal__daynum {
-    opacity: 0.4;
+/* A month, announced where it begins: set large in the first column of the
+   week its 1st falls in, standing in for that cell's day number.
+
+   That cell is the one place on this grid where a heading of this size costs
+   nothing. The day it displaces belongs to the month that is ending — whose
+   own name is already somewhere above — and a run of weeks has no page break
+   to put the name on instead. Nothing else here is allowed to be this loud,
+   which is what makes it findable while scrolling past. */
+.zenith-tcal__month-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-inline-start: 2px;
+    color: var(--zenith-text-normal);
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
 }
 
 .zenith-tcal__stack {
@@ -396,48 +396,78 @@
     color: var(--zenith-text-normal);
 }
 
-/* ── Chips ───────────────────────────────────────────
-   A glyph in the kind colour and plain text — no fill. Eight filled blocks in a
-   week row is the thing that reads as noise; the colour lives in the icon,
-   which is enough to tell "due" from "done" at a glance, and the background
-   only appears under the pointer.
+/* "1 Sep" rather than "1". A month boundary falling mid-row has nothing else
+   to mark it — the heading only appears when the 1st lands in column one —
+   and a bare "1" between a 31 and a 2 is the kind of thing a reader corrects
+   for half a second too late. */
+.zenith-tcal__daynum.is-first {
+    width: auto;
+    min-width: 0;
+    padding: 0 6px;
+    color: var(--zenith-text-normal);
+    font-weight: 600;
+}
+
+/* ── Chips ─────────────────────────────────
+   A soft band in the kind's colour, filling its cell.
+
+   These used to be bare text with a coloured glyph, on the argument that eight
+   filled blocks in a week row read as noise. That argument was about saturated
+   blocks. At a tenth of the colour the fill does the opposite: it gives a day
+   a shape, so a glance reads "three things on Tuesday, one on Wednesday"
+   without counting lines of text — which is the question a month grid exists
+   to answer, and the one a column of bare sentences answers worst.
 
    One line, ellipsised: a calendar cell is a glance, not a reading surface. The
    full text is in the tooltip and, one click away, in the note. */
 .zenith-root button.zenith-tcal__chip {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     width: 100%;
-    padding: 1px 3px;
+    /* `height: auto` because Obsidian's bare `button` pins one at 30px and a
+       `min-height` under that is simply ignored — which would make every chip
+       half again as tall as it asks to be, and a week row half again as tall
+       as it needs. */
+    height: auto;
+    min-height: 20px;
+    padding: 2px 6px;
     border: none;
-    border-left: 2px solid transparent;
     border-radius: var(--zenith-radius-xs);
-    background: transparent;
+    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-text-muted)) 11%, transparent);
     box-shadow: none;
     color: var(--zenith-text-muted);
     font-size: 0.72rem;
-    line-height: 1.45;
+    line-height: 1.35;
     text-align: left;
     cursor: pointer;
-    transition: opacity var(--zenith-transition-fast), background var(--zenith-transition-fast),
+    transition:
+        opacity var(--zenith-transition-fast),
+        background var(--zenith-transition-fast),
         color var(--zenith-transition-fast);
 }
 
 .zenith-root button.zenith-tcal__chip:hover {
-    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-text-muted)) 18%, transparent);
+    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-text-muted)) 22%, transparent);
     box-shadow: none;
     color: var(--zenith-text-normal);
 }
 
-/* Priority earns the only coloured edge, and only when it's actually urgent —
-   a marker every chip carries is a marker that says nothing. */
+/* Priority is the one thing that gets a hard edge, and only when it is one of
+   the two that mean hurry — a marker every chip carries is a marker that says
+   nothing. */
+.zenith-root button.zenith-tcal__chip.is-priority-high,
+.zenith-root button.zenith-tcal__chip.is-priority-urgent {
+    padding-inline-start: 8px;
+    box-shadow: inset 2px 0 0 0 currentColor;
+}
+
 .zenith-root button.zenith-tcal__chip.is-priority-high {
-    border-left-color: var(--zenith-warning, #f59e0b);
+    color: var(--zenith-warning, #f59e0b);
 }
 
 .zenith-root button.zenith-tcal__chip.is-priority-urgent {
-    border-left-color: var(--zenith-danger, #ef4444);
+    color: var(--zenith-danger, #ef4444);
 }
 
 /* ── Ribbons ─────────────────────────────────────────

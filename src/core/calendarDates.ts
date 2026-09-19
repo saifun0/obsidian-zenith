@@ -122,3 +122,50 @@ export function dayLabel(iso: string, locale: string): string {
 export function shortDayLabel(iso: string, locale: string): string {
     return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(isoToDate(iso));
 }
+
+/**
+ * "July 2026" for a heading standing inside the grid.
+ *
+ * Built from parts rather than from a plain format string because Russian's
+ * `{month: 'long', year: 'numeric'}` is "июль 2026 г." — the era suffix is
+ * correct in a sentence and noise in a heading two words long.
+ */
+export function monthHeading(iso: string, locale: string): string {
+    const parts = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).formatToParts(
+        isoToDate(iso)
+    );
+    const month = parts.find((p) => p.type === 'month')?.value ?? '';
+    const year = parts.find((p) => p.type === 'year')?.value ?? '';
+    return `${month.charAt(0).toUpperCase()}${month.slice(1)} ${year}`;
+}
+
+/**
+ * Whole weeks covering a run of months, for a calendar that scrolls through
+ * them rather than paging between them.
+ *
+ * A month at a time is a decision the paper wall calendar had to make and a
+ * screen does not: the last week of August and the first of September are
+ * adjacent in life, and putting a page turn between them is the reason the
+ * question "what is happening at the end of next month" takes two clicks. The
+ * run starts at the week containing the 1st of `from` months before the anchor
+ * and ends at the week containing the last day of `to` months after it.
+ */
+export function monthRun(
+    anchor: string,
+    weekStart: WeekStart,
+    from: number,
+    to: number
+): string[] {
+    const begin = isoToDate(addMonths(anchor, -from));
+    const first = toLocalIsoDate(new Date(begin.getFullYear(), begin.getMonth(), 1));
+
+    const end = isoToDate(addMonths(anchor, to));
+    const last = toLocalIsoDate(new Date(end.getFullYear(), end.getMonth() + 1, 0));
+
+    const start = startOfWeek(first, weekStart);
+    const stop = addDays(startOfWeek(last, weekStart), 6);
+
+    const days: string[] = [];
+    for (let date = start; date <= stop; date = addDays(date, 1)) days.push(date);
+    return days;
+}
