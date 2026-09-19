@@ -1,9 +1,13 @@
-import React, { useState, useRef, useEffect, type FC } from 'react';
+import React, { useState, type FC } from 'react';
 import { PRIORITIES } from '../../../core/constants';
 import type { TaskFilterState } from './TasksApp';
 import { useTranslation } from '../../../core/i18n';
+import { Popover, usePopover } from '../../../components/shared';
 
 // ── Props ────────────────────────────────────────────
+
+/** Eight rows at 34px, plus the menu's own padding. */
+const SUGGESTIONS_H = 280;
 
 interface TaskFiltersProps {
     filters: TaskFilterState;
@@ -20,25 +24,11 @@ export const TaskFilters: FC<TaskFiltersProps> = ({
 }) => {
     const t = useTranslation();
     const [tagInput, setTagInput] = useState(filters.tag);
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const suggestionsRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    // Close suggestions on outside click
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (
-                suggestionsRef.current &&
-                !suggestionsRef.current.contains(e.target as Node) &&
-                inputRef.current &&
-                !inputRef.current.contains(e.target as Node)
-            ) {
-                setShowSuggestions(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    // The suggestion list was a div positioned inside the field's own box, with
+    // twelve inline style properties, no Escape and no roles — so it was clipped
+    // by the filter bar, and unreachable without a mouse. It is the plugin's
+    // popover now, like every other menu.
+    const tags = usePopover<HTMLInputElement>();
 
     // Filtered suggestions
     const suggestions = tagInput
@@ -52,13 +42,13 @@ export const TaskFilters: FC<TaskFiltersProps> = ({
     const handleTagChange = (value: string) => {
         setTagInput(value);
         onFilterChange({ ...filters, tag: value });
-        setShowSuggestions(true);
+        tags.setOpen(true);
     };
 
     const selectTag = (tag: string) => {
         setTagInput(tag);
         onFilterChange({ ...filters, tag });
-        setShowSuggestions(false);
+        tags.close();
     };
 
     return (
@@ -99,46 +89,42 @@ export const TaskFilters: FC<TaskFiltersProps> = ({
             </select>
 
             {/* Tag Filter */}
-            <div style={{ position: 'relative' }}>
+            <>
                 <input
-                    ref={inputRef}
+                    {...tags.anchorProps}
                     type="text"
                     className="zenith-task-filters__input"
                     placeholder={t('tasks.filter.tagPlaceholder')}
                     value={tagInput}
                     onChange={(e) => handleTagChange(e.target.value)}
-                    onFocus={() => setShowSuggestions(true)}
+                    onFocus={() => tags.setOpen(true)}
                 />
-                {showSuggestions && suggestions.length > 0 && (
-                    <div
-                        ref={suggestionsRef}
-                        style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            right: 0,
-                            background: 'var(--background-secondary)',
-                            border: '1px solid var(--background-modifier-border)',
-                            borderRadius: '4px',
-                            maxHeight: '150px',
-                            overflowY: 'auto',
-                            zIndex: 30,
-                            marginTop: '4px'
-                        }}
-                    >
-                        {suggestions.slice(0, 8).map((tag) => (
-                            <div
-                                key={tag}
-                                style={{ padding: '6px 10px', cursor: 'pointer', fontSize: '0.85rem' }}
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => selectTag(tag)}
-                            >
-                                #{tag}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                <Popover
+                    anchor={tags.anchor}
+                    open={tags.open && suggestions.length > 0}
+                    onClose={tags.close}
+                    width={0}
+                    height={SUGGESTIONS_H}
+                    matchWidth
+                    role="listbox"
+                    label={t('tasks.filter.tagPlaceholder')}
+                    className="zenith-pop--scroll"
+                >
+                    {suggestions.slice(0, 8).map((tag) => (
+                        <button
+                            key={tag}
+                            type="button"
+                            role="option"
+                            aria-selected={false}
+                            className="zenith-pop__item"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => selectTag(tag)}
+                        >
+                            #{tag}
+                        </button>
+                    ))}
+                </Popover>
+            </>
 
             {/* Sort */}
             <select

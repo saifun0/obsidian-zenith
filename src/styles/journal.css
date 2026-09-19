@@ -17,33 +17,7 @@
     margin: 0 auto;
 }
 
-.zenith-journal__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--zenith-space-md);
-}
-.zenith-journal__header-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-}
-.zenith-journal__header-icon {
-    color: var(--zenith-accent);
-    flex-shrink: 0;
-}
-.zenith-journal__title {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--zenith-text-normal);
-}
-.zenith-journal__header-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
+/* The header is `.zenith-vhead` in ui.css now. */
 
 /* Two columns when the pane allows it, stacked when it doesn't. `auto-fit`
    rather than a media query: what matters is the pane's width, and a viewport

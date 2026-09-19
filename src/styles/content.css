@@ -11,37 +11,9 @@
     animation: zenith-fade-in var(--zenith-transition-slow);
 }
 
-.zenith-content__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--zenith-space-md);
-}
-
-.zenith-content__header-left {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: var(--zenith-space-sm) var(--zenith-space-md);
-    min-width: 0;
-}
-
-.zenith-content__header-actions {
-    display: flex;
-    gap: var(--zenith-space-xs);
-    flex-shrink: 0;
-}
-
-/* Header pulse: count, what's moving, what's done, how it's rated. */
-.zenith-content__summary {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 4px 12px;
-    font-size: 0.82rem;
-    color: var(--zenith-text-muted);
-}
-
+/* The header itself is `.zenith-vhead` in ui.css, shared with every other
+   module's view. What is left is the one thing that is about a library: a
+   coloured dot per status in the caption. */
 .zenith-content__summary-stat {
     display: inline-flex;
     align-items: center;

@@ -6,3 +6,6 @@ export { Tabs } from './Tabs';
 export { IconButton } from './IconButton';
 export { StarRating } from './StarRating';
 export { Modal } from './Modal';
+export { Meter } from './Meter';
+export { ViewHeader } from './ViewHeader';
+export { Popover, usePopover } from './Popover';

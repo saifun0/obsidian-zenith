@@ -1,0 +1,416 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — the control vocabulary
+   ───────────────────────────────────────────────────
+   Every module had been inventing its own. A count, before this file existed:
+   109 distinct `button.zenith-*` rules across eighteen stylesheets, fourteen
+   independent track/fill pairs for the same progress bar, seven hand-written
+   click-outside handlers, and five view titles at 1.2, 1.25, 1.4, 1.5 and
+   1.9rem in three weights. Four buttons that all say "more" measured 0.66,
+   0.72, 0.72 and 0.75rem, one of them bordered and three not.
+
+   None of that was a decision. It is what happens when each surface starts
+   from an empty stylesheet: the second one looks nearly like the first, the
+   fifth looks like nothing in particular, and the plugin stops reading as one
+   program. The rules are here now, once, and a module says which kind of
+   control it wants rather than what it looks like.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.zenith-root {
+    /* ── Target sizes ────────────────────────────────
+       WCAG 2.2 SC 2.5.8 puts the floor at 24×24 CSS px, which is `sm` — that
+       is a floor, not a size to design at, so it is for a glyph inside a dense
+       row and nothing else. `lg` is the ordinary button. Under a finger every
+       one of them grows: Apple's HIG and WCAG 2.5.5 both say 44, Material says
+       48dp, and a hover-sized target is not a target on a touch screen. */
+    --zenith-ctl-sm: 24px;
+    --zenith-ctl-md: 28px;
+    --zenith-ctl-lg: 32px;
+
+    /* One scale for text on controls, so "more" is the same size wherever it
+       is written. */
+    --zenith-ctl-font-sm: 0.72rem;
+    --zenith-ctl-font-md: 0.8rem;
+    --zenith-ctl-font-lg: 0.88rem;
+}
+
+@media (pointer: coarse) {
+    .zenith-root {
+        --zenith-ctl-sm: 36px;
+        --zenith-ctl-md: 40px;
+        --zenith-ctl-lg: 44px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════
+   Buttons
+   ──────────────────────────────────────────────────────
+   Four kinds, because there turned out to be four jobs:
+
+     cta      the one action a surface exists to offer
+     outline  a secondary action that needs an edge to be found
+     ghost    a quiet action inside a row or a footer
+     icon     a glyph on its own, square
+
+   Scoped `.zenith-root button.zenith-btn` throughout, because Obsidian styles
+   bare `button` at (0,1,1) and a lone class loses to it — which is why so many
+   of the rules being replaced here were a stack of `!important`.
+   ══════════════════════════════════════════════════════ */
+.zenith-root button.zenith-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: none;
+    min-height: var(--zenith-ctl-lg);
+    padding: 0 12px;
+    border: 1px solid transparent;
+    border-radius: var(--zenith-radius-md);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-family: inherit;
+    font-size: var(--zenith-ctl-font-md);
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+        color var(--zenith-transition-fast),
+        background var(--zenith-transition-fast),
+        border-color var(--zenith-transition-fast),
+        transform 100ms ease;
+}
+
+.zenith-root button.zenith-btn:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.zenith-root button.zenith-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.zenith-root button.zenith-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--zenith-accent) 45%, transparent);
+}
+
+/* The primary action. One per surface — two of these on a card is a card with
+   no primary action. */
+.zenith-root button.zenith-btn--cta {
+    background: var(--zenith-accent);
+    border-color: transparent;
+    color: var(--text-on-accent, #fff);
+    font-weight: 600;
+}
+
+.zenith-root button.zenith-btn--cta:hover:not(:disabled) {
+    background: var(--zenith-accent-hover);
+    color: var(--text-on-accent, #fff);
+}
+
+.zenith-root button.zenith-btn--outline {
+    border-color: var(--zenith-border);
+    color: var(--zenith-text-muted);
+}
+
+.zenith-root button.zenith-btn--outline:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--zenith-accent) 50%, var(--zenith-border));
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-root button.zenith-btn--ghost {
+    border-color: transparent;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-root button.zenith-btn--ghost:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-root button.zenith-btn--danger {
+    border-color: transparent;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-root button.zenith-btn--danger:hover:not(:disabled) {
+    background: var(--zenith-danger-bg);
+    color: var(--zenith-danger);
+}
+
+/* A glyph on its own: square, and sized by the target scale rather than by
+   whatever padding happened to sit around the icon. */
+.zenith-root button.zenith-btn--icon {
+    width: var(--zenith-ctl-lg);
+    height: var(--zenith-ctl-lg);
+    min-height: 0;
+    padding: 0;
+    gap: 0;
+    border-radius: var(--zenith-radius-sm);
+}
+
+.zenith-root button.zenith-btn--sm {
+    min-height: var(--zenith-ctl-sm);
+    padding: 0 8px;
+    font-size: var(--zenith-ctl-font-sm);
+    border-radius: var(--zenith-radius-sm);
+}
+
+.zenith-root button.zenith-btn--sm.zenith-btn--icon {
+    width: var(--zenith-ctl-sm);
+    height: var(--zenith-ctl-sm);
+    padding: 0;
+}
+
+.zenith-root button.zenith-btn--md {
+    min-height: var(--zenith-ctl-md);
+    padding: 0 10px;
+}
+
+.zenith-root button.zenith-btn--md.zenith-btn--icon {
+    width: var(--zenith-ctl-md);
+    height: var(--zenith-ctl-md);
+    padding: 0;
+}
+
+.zenith-root button.zenith-btn--active {
+    color: var(--zenith-accent);
+    border-color: color-mix(in srgb, var(--zenith-accent) 50%, transparent);
+    background: color-mix(in srgb, var(--zenith-accent) 12%, transparent);
+}
+
+.zenith-btn svg {
+    flex: none;
+}
+
+/* ══════════════════════════════════════════════════════
+   The meter
+   ──────────────────────────────────────────────────────
+   Fourteen track/fill pairs drew this same bar: the project card, the projects
+   widget, the library row and its Continue shelf, the task statistics, the
+   journal's calendar, the sync notice, the prayer rail. They disagreed on
+   height (3, 4, 5, 6, 10px), on radius, and on what an empty track is made of.
+
+   One element, one colour property. `--meter` is what a caller sets to say
+   what this particular bar is about — a content type, a status, a mood — and
+   everything else follows from it.
+   ══════════════════════════════════════════════════════ */
+.zenith-meter {
+    --meter: var(--zenith-accent);
+    --meter-h: 5px;
+    display: block;
+    flex: 1;
+    min-width: 0;
+    height: var(--meter-h);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--zenith-text-faint) 28%, transparent);
+    overflow: hidden;
+}
+
+.zenith-meter--xs {
+    --meter-h: 3px;
+}
+
+.zenith-meter--sm {
+    --meter-h: 4px;
+}
+
+.zenith-meter--lg {
+    --meter-h: 8px;
+}
+
+.zenith-meter__fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--meter);
+    transition: width var(--zenith-transition-slow);
+}
+
+.zenith-meter.is-complete {
+    --meter: var(--zenith-success);
+}
+
+/* ══════════════════════════════════════════════════════
+   The popover
+   ──────────────────────────────────────────────────────
+   Rendered through a portal onto document.body, which is outside every
+   `.zenith-root` — so none of the `--zenith-*` variables above resolve inside
+   it. Native theme variables with hex fallbacks, all the way down.
+
+   The portal is the point: a menu that lives in the DOM where it was opened is
+   clipped by the first ancestor with `overflow: hidden`, and every widget card
+   is one. Five of the seven menus in this plugin were being clipped that way.
+   ══════════════════════════════════════════════════════ */
+.zenith-pop {
+    position: fixed;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    background: var(--background-secondary, #262626);
+    border: 1px solid var(--background-modifier-border, #454545);
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    color: var(--text-normal, #dcddde);
+    font-family: var(--font-text);
+    animation: zenith-fade-in 0.12s ease;
+}
+
+.zenith-pop__title {
+    padding: 6px 8px 4px;
+    color: var(--text-faint, #7a7a7a);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.zenith-pop button.zenith-pop__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 34px;
+    padding: 0 10px;
+    margin: 0;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-normal, #dcddde);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 400;
+    line-height: 1;
+    text-align: left;
+    cursor: pointer;
+}
+
+.zenith-pop button.zenith-pop__item:hover {
+    background: var(--background-modifier-hover, #2f2f2f);
+    color: var(--text-normal, #dcddde);
+}
+
+.zenith-pop button.zenith-pop__item.is-active {
+    background: color-mix(in srgb, var(--interactive-accent, #8b5cf6) 16%, transparent);
+}
+
+.zenith-pop button.zenith-pop__item svg {
+    flex: none;
+}
+
+/* A list long enough to scroll — suggestions, a tag list, a month of days. */
+.zenith-pop--scroll {
+    max-height: min(280px, 50vh);
+    overflow-y: auto;
+}
+
+.zenith-pop__sep {
+    height: 1px;
+    margin: 4px 6px;
+    background: var(--background-modifier-border, #454545);
+    opacity: 0.6;
+}
+
+@media (pointer: coarse) {
+    .zenith-pop button.zenith-pop__item {
+        min-height: 44px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════
+   The view header
+   ──────────────────────────────────────────────────────
+   Five views, five headers, five title sizes. A reader moving between them was
+   being told, in type, that they had gone somewhere further away than they
+   had.
+
+   One shape: a glyph, a name, a caption of plain figures, and the actions at
+   the far end. The caption is deliberately not a row of bordered boxes — those
+   cost ninety pixels above the projects grid to say "6 projects" over six
+   projects.
+   ══════════════════════════════════════════════════════ */
+.zenith-vhead {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-sm) var(--zenith-space-md);
+    margin-bottom: var(--zenith-space-md);
+}
+
+.zenith-vhead__title {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    flex: none;
+    margin: 0;
+    color: var(--zenith-text-normal);
+    font-size: 1.25rem;
+    font-weight: 650;
+    line-height: 1.2;
+}
+
+.zenith-vhead__title svg {
+    flex: none;
+    color: var(--zenith-accent);
+}
+
+.zenith-vhead__caption {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+    gap: 2px 14px;
+    color: var(--zenith-text-muted);
+    font-size: var(--zenith-ctl-font-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+/* A figure is one fact and does not break across two lines. */
+.zenith-vhead__caption > * {
+    white-space: nowrap;
+}
+
+.zenith-vhead__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    flex: none;
+    margin-left: auto;
+}
+
+/* ══════════════════════════════════════════════════════
+   The widget footer
+   ──────────────────────────────────────────────────────
+   A note about what is not shown, and one way out. Three cards had converged
+   on this by hand and disagreed on all of it; the tasks card offered two ways
+   out in two different shapes.
+   ══════════════════════════════════════════════════════ */
+.zenith-wfoot {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-sm);
+    flex: none;
+    min-width: 0;
+    padding-top: 4px;
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-wfoot__note {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--zenith-text-faint);
+    font-size: var(--zenith-ctl-font-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-root button.zenith-wfoot__open {
+    margin-left: auto;
+}

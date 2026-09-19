@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { RotateCw, BarChart3, LayoutGrid, Star, FileUp } from 'lucide-react';
+import { RotateCw, BarChart3, LayoutGrid, Library, Star, FileUp } from 'lucide-react';
 import { Notice } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
@@ -7,6 +7,7 @@ import { useTranslation } from '../../../core/i18n';
 import { ContentForm } from './ContentForm';
 import { ContentImportModal } from './ContentImportModal';
 import { IconButton } from '../../../components/shared/IconButton';
+import { ViewHeader } from '../../../components/shared';
 import { ContentGallery } from './ContentGallery';
 import { ContentStats } from './ContentStats';
 import { Plus } from 'lucide-react';
@@ -45,10 +46,11 @@ export const ContentApp: React.FC = () => {
 
     return (
         <div className="zenith-content">
-            <header className="zenith-content__header">
-                <div className="zenith-content__header-left">
-                    <h1 className="zenith-heading">{t('content.title')}</h1>
-                    <span className="zenith-content__summary">
+            <ViewHeader
+                icon={Library}
+                title={t('content.title')}
+                caption={
+                    <>
                         <span>{t.plural('common.items', contentItems.length)}</span>
                         {summary.inProgress > 0 && (
                             <span className="zenith-content__summary-stat">
@@ -68,9 +70,9 @@ export const ContentApp: React.FC = () => {
                                 {summary.avgRating.toFixed(1)}
                             </span>
                         )}
-                    </span>
-                </div>
-                <div className="zenith-content__header-actions">
+                    </>
+                }
+            >
                     <IconButton
                         icon={Plus}
                         tooltip={t('content.addItem')}
@@ -96,8 +98,7 @@ export const ContentApp: React.FC = () => {
                         variant="ghost"
                         disabled={contentLoading}
                     />
-                </div>
-            </header>
+            </ViewHeader>
 
             {showForm && (
                 <ContentForm

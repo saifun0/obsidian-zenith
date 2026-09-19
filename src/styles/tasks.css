@@ -52,22 +52,10 @@
 }
 
 /* ── Filter Popover ─────────────────────────────── */
+/* The surface is `.zenith-pop`; this is only its padding and the fields inside. */
 .zenith-task-filters-popover {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    margin-top: 8px;
-    padding: 16px;
-    background: var(--background-secondary);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
+    padding: 14px;
     gap: 12px;
-    width: 250px;
-    animation: zenith-fade-in var(--zenith-transition-fast) ease-out;
 }
 
 .zenith-task-filters-popover .zenith-task-filters__select,

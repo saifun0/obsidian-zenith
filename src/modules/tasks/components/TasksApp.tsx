@@ -17,10 +17,15 @@ import { queryTasks, type DueFilter } from '../services/taskFilter';
 import type { Priority } from '../../../core/constants';
 import { Tabs } from '../../../components/shared/Tabs';
 import { IconButton } from '../../../components/shared/IconButton';
+import { Popover, usePopover } from '../../../components/shared';
 import { TaskList } from './TaskList';
 import { TaskFilters } from './TaskFilters';
 import { TaskStats } from './TaskStats';
 import { TaskEditorModal } from './TaskEditorModal';
+
+/** The filters panel: five controls in a column, plus its own padding. */
+const FILTERS_W = 250;
+const FILTERS_H = 300;
 
 // ── Filter Types ─────────────────────────────────────
 
@@ -97,8 +102,7 @@ export const TasksApp: FC = () => {
     const [search, setSearch] = useState('');
     const [showCreate, setShowCreate] = useState(false);
     const [showStats, setShowStats] = useState(false);
-    const [showFilters, setShowFilters] = useState(false);
-    const filterRef = useRef<HTMLDivElement>(null);
+    const filterPop = usePopover<HTMLDivElement>();
 
     // ── Refresh from vault (the DataService keeps the store live already;
     //    this is the explicit force-reload behind the Refresh button) ──
@@ -106,19 +110,6 @@ export const TasksApp: FC = () => {
     const loadTasks = useCallback(async () => {
         await plugin.dataService.reloadTasks();
     }, [plugin]);
-
-    // Close filters on outside click
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
-                setShowFilters(false);
-            }
-        };
-        if (showFilters) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showFilters]);
 
     // ── Filter + sort tasks ──────────────────────────
 
@@ -198,13 +189,13 @@ export const TasksApp: FC = () => {
                             variant={showStats ? 'default' : 'ghost'}
                             size="md"
                         />
-                        <div style={{ position: 'relative' }} ref={filterRef}>
+                        <div ref={filterPop.anchorProps.ref}>
                             <IconButton
                                 icon={SlidersHorizontal}
                                 tooltip={t('tasks.filter.sort')}
-                                onClick={() => setShowFilters((v) => !v)}
+                                onClick={() => filterPop.setOpen(!filterPop.open)}
                                 variant={
-                                    showFilters ||
+                                    filterPop.open ||
                                     filters.tag ||
                                     filters.priority !== 'all' ||
                                     filters.due !== 'all'
@@ -213,16 +204,27 @@ export const TasksApp: FC = () => {
                                 }
                                 size="md"
                             />
-                            {showFilters && (
-                                <div className="zenith-task-filters-popover">
-                                    <TaskFilters
-                                        filters={filters}
-                                        onFilterChange={setFilters}
-                                        allTags={allTags}
-                                    />
-                                </div>
-                            )}
                         </div>
+                        {/* The panel used to sit inside that div, positioned
+                            absolutely — so it was clipped by the header strip
+                            and had no way to be dismissed but a click outside. */}
+                        <Popover
+                            anchor={filterPop.anchor}
+                            open={filterPop.open}
+                            onClose={filterPop.close}
+                            width={FILTERS_W}
+                            height={FILTERS_H}
+                            align="end"
+                            role="dialog"
+                            label={t('tasks.filter.sort')}
+                            className="zenith-task-filters-popover"
+                        >
+                            <TaskFilters
+                                filters={filters}
+                                onFilterChange={setFilters}
+                                allTags={allTags}
+                            />
+                        </Popover>
                         <IconButton
                             icon={Plus}
                             tooltip={t('tasks.addTask')}

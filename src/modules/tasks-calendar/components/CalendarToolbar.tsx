@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, type FC } from 'react';
+import React, { type FC } from 'react';
 import {
     CalendarCheck,
     CalendarClock,
@@ -15,6 +15,7 @@ import {
 import type { Translator } from '../../../core/i18n';
 import { ENTRY_KINDS, type CalendarCounts, type EntryKind } from '../services/calendarTasks';
 import { KindIcon, kindKey } from './kindUi';
+import { Popover, usePopover } from '../../../components/shared';
 
 export type CalendarViewMode = 'month' | 'week' | 'day' | 'list';
 
@@ -49,32 +50,6 @@ const MODES: Array<{ id: CalendarViewMode; icon: typeof List; key: string }> = [
 ];
 
 /**
- * A popover that closes on outside click and Escape.
- *
- * Escape is listened for in the bubble phase on purpose: a popover opened over
- * the calendar sits inside whatever else is listening, and taking the key in
- * capture would swallow it from controls nested deeper.
- */
-function useDismissable(onClose: () => void) {
-    const ref = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        const onDown = (e: MouseEvent) => {
-            if (!ref.current?.contains(e.target as Node)) onClose();
-        };
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
-        document.addEventListener('mousedown', onDown);
-        document.addEventListener('keydown', onKey);
-        return () => {
-            document.removeEventListener('mousedown', onDown);
-            document.removeEventListener('keydown', onKey);
-        };
-    }, [onClose]);
-    return ref;
-}
-
-/**
  * The bar above the grid: what you're looking at, how to move through it, and
  * how much of it is done.
  *
@@ -99,10 +74,8 @@ export const CalendarToolbar: FC<ToolbarProps> = ({
     onToggle,
     onFocus,
 }) => {
-    const [statsOpen, setStatsOpen] = useState(false);
-    const [optionsOpen, setOptionsOpen] = useState(false);
-    const statsRef = useDismissable(() => setStatsOpen(false));
-    const optionsRef = useDismissable(() => setOptionsOpen(false));
+    const stats = usePopover();
+    const opts = usePopover();
 
     // Nothing to do at all reads differently from "all done" — one is an empty
     // month, the other is a finished one, and the icon says which.
@@ -160,86 +133,96 @@ export const CalendarToolbar: FC<ToolbarProps> = ({
             </div>
 
             <div className="zenith-tcal__bar-end">
-                <div className="zenith-tcal__pop-host" ref={optionsRef}>
-                    <button
-                        className={`zenith-tcal__tool ${optionsOpen ? 'is-active' : ''}`}
-                        onClick={() => setOptionsOpen((v) => !v)}
-                        title={t('calendar.options')}
-                        aria-expanded={optionsOpen}
-                    >
-                        <Settings2 size={15} />
-                    </button>
-                    {optionsOpen && (
-                        <ul className="zenith-tcal__pop">
-                            {options.filter((o) => o.shown !== false).map((o) => (
-                                <li key={o.key}>
-                                    <button
-                                        className={`zenith-tcal__pop-item ${o.on ? 'is-on' : ''}`}
-                                        onClick={() => onToggle(o.key)}
-                                        role="menuitemcheckbox"
-                                        aria-checked={o.on}
-                                    >
-                                        <span className="zenith-tcal__pop-check">{o.on ? '✓' : ''}</span>
-                                        {o.label}
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
+                <button
+                    {...opts.anchorProps}
+                    className={`zenith-tcal__tool ${opts.open ? 'is-active' : ''}`}
+                    onClick={opts.toggle}
+                    title={t('calendar.options')}
+                >
+                    <Settings2 size={15} />
+                </button>
+                <Popover
+                    anchor={opts.anchor}
+                    open={opts.open}
+                    onClose={opts.close}
+                    width={210}
+                    height={options.length * 38 + 8}
+                    align="end"
+                    label={t('calendar.options')}
+                >
+                    {options
+                        .filter((o) => o.shown !== false)
+                        .map((o) => (
+                            <button
+                                key={o.key}
+                                type="button"
+                                className={`zenith-pop__item ${o.on ? 'is-on' : ''}`}
+                                onClick={() => onToggle(o.key)}
+                                role="menuitemcheckbox"
+                                aria-checked={o.on}
+                            >
+                                <span className="zenith-tcal__pop-check">{o.on ? '✓' : ''}</span>
+                                {o.label}
+                            </button>
+                        ))}
+                </Popover>
 
-                <div className="zenith-tcal__pop-host" ref={statsRef}>
-                    <button
-                        className={`zenith-tcal__stat ${statsOpen ? 'is-active' : ''}`}
-                        onClick={() => setStatsOpen((v) => !v)}
-                        title={t('calendar.stats', { percent: counts.percentDone })}
-                        aria-expanded={statsOpen}
-                        style={{ ['--zenith-tcal-progress' as string]: `${counts.percentDone}%` }}
-                    >
-                        <StatusIcon size={15} />
-                        {counts.remaining > 0 && (
-                            <span className="zenith-tcal__stat-count">
-                                {counts.remaining > 99 ? '99+' : counts.remaining}
-                            </span>
-                        )}
-                    </button>
-                    {statsOpen && (
-                        <ul className="zenith-tcal__pop zenith-tcal__pop--stats">
-                            <li className="zenith-tcal__pop-head">
-                                {t('calendar.stats', { percent: counts.percentDone })}
-                            </li>
-                            {ENTRY_KINDS.map((kind) => {
-                                const n = counts.byKind[kind];
-                                if (n === 0) return null;
-                                return (
-                                    <li key={kind}>
-                                        <button
-                                            className={`zenith-tcal__pop-item is-${kind} ${
-                                                focus === kind ? 'is-on' : ''
-                                            }`}
-                                            onClick={() => onFocus(focus === kind ? null : kind)}
-                                            aria-pressed={focus === kind}
-                                        >
-                                            <KindIcon kind={kind} size={13} />
-                                            <span className="zenith-tcal__pop-label">{t(kindKey(kind))}</span>
-                                            <span className="zenith-tcal__pop-count">{n}</span>
-                                        </button>
-                                    </li>
-                                );
-                            })}
-                            {focus && (
-                                <li>
-                                    <button
-                                        className="zenith-tcal__pop-item zenith-tcal__pop-clear"
-                                        onClick={() => onFocus(null)}
-                                    >
-                                        {t('calendar.clearFocus')}
-                                    </button>
-                                </li>
-                            )}
-                        </ul>
+                <button
+                    {...stats.anchorProps}
+                    className={`zenith-tcal__stat ${stats.open ? 'is-active' : ''}`}
+                    onClick={stats.toggle}
+                    title={t('calendar.stats', { percent: counts.percentDone })}
+                    style={{ ['--zenith-tcal-progress' as string]: `${counts.percentDone}%` }}
+                >
+                    <StatusIcon size={15} />
+                    {counts.remaining > 0 && (
+                        <span className="zenith-tcal__stat-count">
+                            {counts.remaining > 99 ? '99+' : counts.remaining}
+                        </span>
                     )}
-                </div>
+                </button>
+                <Popover
+                    anchor={stats.anchor}
+                    open={stats.open}
+                    onClose={stats.close}
+                    width={210}
+                    height={(ENTRY_KINDS.length + 2) * 38}
+                    align="end"
+                    label={t('calendar.stats', { percent: counts.percentDone })}
+                    className="zenith-tcal__pop--stats"
+                >
+                    <div className="zenith-pop__title">
+                        {t('calendar.stats', { percent: counts.percentDone })}
+                    </div>
+                    {ENTRY_KINDS.map((kind) => {
+                        const n = counts.byKind[kind];
+                        if (n === 0) return null;
+                        return (
+                            <button
+                                key={kind}
+                                type="button"
+                                className={`zenith-pop__item is-${kind} ${
+                                    focus === kind ? 'is-on' : ''
+                                }`}
+                                onClick={() => onFocus(focus === kind ? null : kind)}
+                                aria-pressed={focus === kind}
+                            >
+                                <KindIcon kind={kind} size={13} />
+                                <span className="zenith-tcal__pop-label">{t(kindKey(kind))}</span>
+                                <span className="zenith-tcal__pop-count">{n}</span>
+                            </button>
+                        );
+                    })}
+                    {focus && (
+                        <button
+                            type="button"
+                            className="zenith-pop__item zenith-tcal__pop-clear"
+                            onClick={() => onFocus(null)}
+                        >
+                            {t('calendar.clearFocus')}
+                        </button>
+                    )}
+                </Popover>
             </div>
         </div>
     );

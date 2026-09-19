@@ -25,6 +25,7 @@ import { formatProgress, progressPercent, shortUnit } from '../services/progress
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
 import { useContentMenu } from './useContentMenu';
 import { ProgressPopover } from './ProgressPopover';
+import { Meter } from '../../../components/shared';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import type { WidgetSize } from '../../dashboard/grid/gridTypes';
 
@@ -474,10 +475,10 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
              * month. It is a subset of the blue segment rather than a status of
              * its own — which is why it is worded as a condition and not as a
              * name, and why it is here and not a fifth colour on the bar. */}
-            <div className="zenith-cw__footer">
+            <div className="zenith-wfoot zenith-cw__footer">
                 {layout.stats && counts.stalled > 0 && (
                     <span
-                        className="zenith-cw__footStat is-warn"
+                        className="zenith-wfoot__note is-warn"
                         title={t('content.stats.stalledHint')}
                     >
                         <Moon size={11} />
@@ -485,7 +486,8 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
                     </span>
                 )}
                 <button
-                    className="zenith-cw__open"
+                    type="button"
+                    className="zenith-btn zenith-btn--ghost zenith-btn--sm zenith-wfoot__open"
                     onClick={openContent}
                     title={t('content.widget.openLibrary')}
                 >
@@ -592,12 +594,12 @@ const Spotlight: React.FC<RowProps> = ({ item, facts, cheering, onOpen, onBump }
                 </div>
 
                 {facts.pct != null && (
-                    <span className="zenith-cw__item-track">
-                        <span
-                            className="zenith-cw__item-fill"
-                            style={{ width: `${facts.pct}%`, background: facts.type.color }}
-                        />
-                    </span>
+                    <Meter
+                        percent={facts.pct}
+                        size="sm"
+                        color={facts.type.color}
+                        className="zenith-cw__item-track"
+                    />
                 )}
             </div>
 
@@ -667,12 +669,12 @@ const Row = React.forwardRef<HTMLLIElement, RowProps & { at: number }>(function 
             {facts.pct != null ? (
                 <>
                     {facts.value && <span className="zenith-cw__item-value">{facts.value}</span>}
-                    <span className="zenith-cw__item-track">
-                        <span
-                            className="zenith-cw__item-fill"
-                            style={{ width: `${facts.pct}%`, background: facts.type.color }}
-                        />
-                    </span>
+                    <Meter
+                        percent={facts.pct}
+                        size="sm"
+                        color={facts.type.color}
+                        className="zenith-cw__item-track"
+                    />
                 </>
             ) : (
                 <span className="zenith-cw__item-sub">{facts.value || facts.sub}</span>

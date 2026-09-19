@@ -193,66 +193,50 @@
 /* ── Popovers ────────────────────────────────────────
    Anchored, not portalled: the toolbar is at the top of a full-height view, so
    there's no ancestor clipping them and no need to track scroll. */
-.zenith-tcal__pop-host {
-    position: relative;
+/* The popover surface and its rows are `.zenith-pop` / `.zenith-pop__item` in
+   ui.css. What stays here is the two things that are about a calendar: the
+   kind's own colour on its glyph, and the check column. */
+/* The kind colours again, in native variables.
+
+   The statistics menu is portalled onto document.body, so `.zenith-tcal .is-*`
+   above does not reach it and neither does any `--zenith-*` it would have read
+   — those are declared on `.zenith-root`, and the menu is not inside one. This
+   is the whole reason a popover has to be written with the theme's own
+   variables: the rules that styled it in place silently stop applying the
+   moment it moves to where it can no longer be clipped. */
+.zenith-tcal__pop--stats .is-overdue {
+    --tcal-kind: #ef4444;
+}
+.zenith-tcal__pop--stats .is-due,
+.zenith-tcal__pop--stats .is-process {
+    --tcal-kind: var(--interactive-accent, #8b5cf6);
+}
+.zenith-tcal__pop--stats .is-recurrence {
+    --tcal-kind: #3b82f6;
+}
+.zenith-tcal__pop--stats .is-start,
+.zenith-tcal__pop--stats .is-done {
+    --tcal-kind: #10b981;
+}
+.zenith-tcal__pop--stats .is-scheduled {
+    --tcal-kind: var(--text-muted, #a5a5a5);
+}
+.zenith-tcal__pop--stats .is-dailyNote,
+.zenith-tcal__pop--stats .is-cancelled {
+    --tcal-kind: var(--text-faint, #7a7a7a);
 }
 
-.zenith-tcal__pop {
-    position: absolute;
-    top: calc(100% + 4px);
-    right: 0;
-    z-index: 20;
-    min-width: 190px;
-    margin: 0;
-    padding: 4px;
-    list-style: none;
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-md);
-    background: var(--zenith-bg-primary);
-    box-shadow: var(--zenith-shadow-md);
+.zenith-tcal__pop--stats .zenith-pop__item svg {
+    color: var(--tcal-kind, var(--text-muted, #a5a5a5));
 }
 
-.zenith-tcal__pop-head {
-    padding: 4px 8px 6px;
-    color: var(--zenith-text-faint);
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
-
-.zenith-root button.zenith-tcal__pop-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 5px 8px;
-    border: none;
-    border-radius: var(--zenith-radius-sm);
-    background: transparent;
-    box-shadow: none;
-    color: var(--zenith-text-normal);
-    font-size: 0.82rem;
-    text-align: left;
-    cursor: pointer;
-}
-
-.zenith-root button.zenith-tcal__pop-item:hover {
-    background: var(--zenith-bg-hover);
-    box-shadow: none;
-}
-
-.zenith-root button.zenith-tcal__pop-item.is-on {
-    color: var(--zenith-accent);
-}
-
-.zenith-tcal__pop--stats .zenith-tcal__pop-item svg {
-    color: var(--tcal-kind, var(--zenith-text-muted));
+.zenith-pop button.zenith-pop__item.is-on {
+    color: var(--interactive-accent, #8b5cf6);
 }
 
 .zenith-tcal__pop-check {
     width: 1em;
-    color: var(--zenith-accent);
+    color: var(--interactive-accent, #8b5cf6);
 }
 
 .zenith-tcal__pop-label {
@@ -260,13 +244,13 @@
 }
 
 .zenith-tcal__pop-count {
-    color: var(--zenith-text-muted);
+    color: var(--text-muted, #a5a5a5);
     font-variant-numeric: tabular-nums;
 }
 
-.zenith-root button.zenith-tcal__pop-item.zenith-tcal__pop-clear {
+.zenith-pop button.zenith-pop__item.zenith-tcal__pop-clear {
     justify-content: center;
-    color: var(--zenith-text-muted);
+    color: var(--text-muted, #a5a5a5);
     font-size: 0.78rem;
 }
 

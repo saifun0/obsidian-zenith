@@ -589,6 +589,7 @@ const EN: Dict = {
     'common.showLess': 'Show less',
 
     // ── Statuses ────────────────────────────────────
+    'status.menu': 'Status',
     'status.todo': 'To do',
     'status.inProgress': 'In progress',
     'status.done': 'Done',
@@ -2244,6 +2245,7 @@ const RU: Dict = {
     'common.showLess': 'Свернуть',
 
     // ── Статусы ─────────────────────────────────────
+    'status.menu': 'Статус',
     'status.todo': 'К выполнению',
     'status.inProgress': 'В работе',
     'status.done': 'Готово',

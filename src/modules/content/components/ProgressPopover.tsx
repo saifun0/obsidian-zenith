@@ -1,7 +1,7 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, type FC } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useEffect, useState, type FC } from 'react';
 import { Check, Minus, Plus } from 'lucide-react';
 import { useTranslation } from '../../../core/i18n';
+import { Popover, usePopover } from '../../../components/shared';
 
 interface ProgressPopoverProps {
     title: string;
@@ -60,57 +60,14 @@ export const ProgressPopover: FC<ProgressPopoverProps> = ({
     onBump,
 }) => {
     const t = useTranslation();
-    const [open, setOpen] = useState(false);
-    const [coords, setCoords] = useState({ top: 0, left: 0 });
+    const pop = usePopover();
     /** What the number field is showing while it is being typed into. */
     const [draft, setDraft] = useState('');
-    const btnRef = useRef<HTMLButtonElement>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
-
-    // Anchored to the button, flipped up or left at the edges of the window.
-    useLayoutEffect(() => {
-        if (!open || !btnRef.current) return;
-        const r = btnRef.current.getBoundingClientRect();
-        const up = r.bottom + MENU_H > window.innerHeight;
-        setCoords({
-            top: up ? Math.max(8, r.top - MENU_H - 4) : r.bottom + 4,
-            // Right-aligned to the button: the control sits at the right edge
-            // of its row, so a menu hung from its left corner would reach past
-            // the card and be pushed back every time.
-            left: Math.max(8, Math.min(r.right - MENU_W, window.innerWidth - MENU_W - 8)),
-        });
-    }, [open]);
 
     useEffect(() => {
-        if (!open) return;
+        if (!pop.open) return;
         setDraft(String(current));
-    }, [open, current]);
-
-    useEffect(() => {
-        if (!open) return;
-        const onDown = (e: Event) => {
-            const target = e.target as Node;
-            if (btnRef.current?.contains(target) || menuRef.current?.contains(target)) return;
-            setOpen(false);
-        };
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                setOpen(false);
-                btnRef.current?.focus();
-            }
-        };
-        const dismiss = () => setOpen(false);
-        document.addEventListener('mousedown', onDown);
-        document.addEventListener('keydown', onKey);
-        window.addEventListener('scroll', dismiss, true);
-        window.addEventListener('resize', dismiss);
-        return () => {
-            document.removeEventListener('mousedown', onDown);
-            document.removeEventListener('keydown', onKey);
-            window.removeEventListener('scroll', dismiss, true);
-            window.removeEventListener('resize', dismiss);
-        };
-    }, [open]);
+    }, [pop.open, current]);
 
     const step = (delta: number) => {
         if (delta !== 0) void onBump(delta);
@@ -134,33 +91,32 @@ export const ProgressPopover: FC<ProgressPopoverProps> = ({
     return (
         <>
             <button
-                ref={btnRef}
+                {...pop.anchorProps}
                 type="button"
-                className={`zenith-cw__bump zenith-cw__bump--${variant} ${open ? 'is-open' : ''}`}
-                aria-haspopup="dialog"
-                aria-expanded={open}
+                className={`zenith-cw__bump zenith-cw__bump--${variant} ${pop.open ? 'is-open' : ''}`}
                 aria-label={t('content.progress.edit', { title })}
                 title={t('content.progress.edit', { title })}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setOpen((v) => !v);
-                }}
+                onClick={pop.toggle}
             >
                 <Plus size={variant === 'spot' ? 15 : 13} strokeWidth={2.5} />
             </button>
 
-            {open &&
-                createPortal(
-                    <div
-                        ref={menuRef}
-                        role="dialog"
-                        aria-label={t('content.progress.edit', { title })}
-                        className="zenith-cwp"
-                        style={{ top: coords.top, left: coords.left, width: MENU_W }}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="zenith-cwp__title" title={title}>
+            <Popover
+                anchor={pop.anchor}
+                open={pop.open}
+                onClose={pop.close}
+                width={MENU_W}
+                height={MENU_H}
+                // The control sits at the right edge of its row, so a menu hung
+                // from its left corner reaches past the card and gets pushed
+                // back every time.
+                align="end"
+                role="dialog"
+                label={t('content.progress.edit', { title })}
+                className="zenith-cwp"
+            >
+                <div onClick={(e) => e.stopPropagation()}>
+                        <div className="zenith-pop__title" title={title}>
                             {title}
                         </div>
 
@@ -237,9 +193,8 @@ export const ProgressPopover: FC<ProgressPopoverProps> = ({
                                 {t('content.progress.finished')}
                             </button>
                         )}
-                    </div>,
-                    document.body
-                )}
+                </div>
+            </Popover>
         </>
     );
 };

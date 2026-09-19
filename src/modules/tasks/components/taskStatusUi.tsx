@@ -1,15 +1,29 @@
-import React, { useState, useRef, useEffect, useLayoutEffect, type FC } from 'react';
-import { createPortal } from 'react-dom';
+import React, { type FC } from 'react';
 import { Check, Minus, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { TASK_STATUSES, STATUS_META } from '../../../core/constants';
+import { TASK_STATUSES } from '../../../core/constants';
 import type { TaskStatus } from '../../../core/constants';
+import { useTranslation } from '../../../core/i18n';
+import { Popover, usePopover } from '../../../components/shared';
 
 export const STATUS_COLOR: Record<TaskStatus, string> = {
     todo: 'var(--zenith-text-muted)',
     'in-progress': 'var(--zenith-info, #4c9be8)',
     done: 'var(--zenith-success, #3fb950)',
     cancelled: 'var(--zenith-danger, #e5534b)',
+};
+
+/**
+ * The dictionary key for each status. `STATUS_META` carries an English `label`
+ * beside the character it writes into the note — a fallback, not a label, and
+ * it was being printed straight into the menu, which is how "In progress" came
+ * to name a status the rest of the interface calls "В работе".
+ */
+export const STATUS_I18N: Record<TaskStatus, string> = {
+    todo: 'status.todo',
+    'in-progress': 'status.inProgress',
+    done: 'status.done',
+    cancelled: 'status.cancelled',
 };
 
 /** White glyph drawn inside the filled checkbox for each non-empty status. */
@@ -56,86 +70,52 @@ const MENU_WIDTH = 180;
 const MENU_HEIGHT = 170;
 
 /**
- * A status icon button that opens a small popover to pick one of the four
- * statuses. The popover is rendered through a portal with fixed positioning so
- * it's never clipped by an ancestor's `overflow: hidden` (task rows, widget
- * cards, etc.).
+ * A status icon button that opens a small menu to pick one of the four.
+ *
+ * The positioning, the portal and the three ways of dismissing it all live in
+ * `Popover` now; this file is down to what is actually about a task status.
  */
 export const TaskStatusControl: FC<StatusControlProps> = ({ status, onChange, size = 18 }) => {
-    const [open, setOpen] = useState(false);
-    const [coords, setCoords] = useState({ top: 0, left: 0 });
-    const btnRef = useRef<HTMLButtonElement>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
-
-    // Position the menu next to the button, flipping up/left near the edges.
-    useLayoutEffect(() => {
-        if (!open || !btnRef.current) return;
-        const r = btnRef.current.getBoundingClientRect();
-        const openUp = r.bottom + MENU_HEIGHT > window.innerHeight;
-        const left = Math.min(r.left, window.innerWidth - MENU_WIDTH - 8);
-        setCoords({
-            top: openUp ? r.top - MENU_HEIGHT - 4 : r.bottom + 4,
-            left: Math.max(8, left),
-        });
-    }, [open]);
-
-    useEffect(() => {
-        if (!open) return;
-        const onDown = (e: Event) => {
-            const t = e.target as Node;
-            if (btnRef.current?.contains(t) || menuRef.current?.contains(t)) return;
-            setOpen(false);
-        };
-        const dismiss = () => setOpen(false);
-        document.addEventListener('mousedown', onDown);
-        window.addEventListener('scroll', dismiss, true);
-        window.addEventListener('resize', dismiss);
-        return () => {
-            document.removeEventListener('mousedown', onDown);
-            window.removeEventListener('scroll', dismiss, true);
-            window.removeEventListener('resize', dismiss);
-        };
-    }, [open]);
+    const t = useTranslation();
+    const pop = usePopover();
 
     return (
         <div className="zenith-status">
             <button
-                ref={btnRef}
+                {...pop.anchorProps}
+                type="button"
                 className="zenith-status__btn"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setOpen((v) => !v);
-                }}
-                aria-label={`Status: ${STATUS_META[status].label}`}
-                title={STATUS_META[status].label}
+                onClick={pop.toggle}
+                aria-label={t(STATUS_I18N[status])}
+                title={t(STATUS_I18N[status])}
             >
                 <StatusBox status={status} size={size} />
             </button>
-            {open &&
-                createPortal(
-                    <div
-                        ref={menuRef}
-                        className="zenith-status__menu"
-                        style={{ top: coords.top, left: coords.left, width: MENU_WIDTH }}
-                        onMouseDown={(e) => e.stopPropagation()}
+            <Popover
+                anchor={pop.anchor}
+                open={pop.open}
+                onClose={pop.close}
+                width={MENU_WIDTH}
+                height={MENU_HEIGHT}
+                label={t('status.menu')}
+            >
+                {TASK_STATUSES.map((s) => (
+                    <button
+                        key={s}
+                        type="button"
+                        role="menuitem"
+                        className={`zenith-pop__item ${s === status ? 'is-active' : ''}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onChange(s);
+                            pop.close();
+                        }}
                     >
-                        {TASK_STATUSES.map((s) => (
-                            <button
-                                key={s}
-                                className={`zenith-status__item ${s === status ? 'is-active' : ''}`}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onChange(s);
-                                    setOpen(false);
-                                }}
-                            >
-                                <StatusBox status={s} size={16} />
-                                <span>{STATUS_META[s].label}</span>
-                            </button>
-                        ))}
-                    </div>,
-                    document.body
-                )}
+                        <StatusBox status={s} size={16} />
+                        <span>{t(STATUS_I18N[s])}</span>
+                    </button>
+                ))}
+            </Popover>
         </div>
     );
 };

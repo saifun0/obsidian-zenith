@@ -4,6 +4,16 @@
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 /* ── Projects View Container ─────────────────────── */
+/* The query container is the shell rather than the view, because an element
+   cannot answer its own container query — that would be circular, so the rule
+   is simply dropped. Which means `.zenith-projects { padding }` written inside
+   `@container zenith-projects` does nothing at all, silently. The shell holds
+   the measurement; the view holds the padding that has to change with it. */
+.zenith-projects-shell {
+    container-type: inline-size;
+    container-name: zenith-projects;
+}
+
 .zenith-projects {
     padding: var(--zenith-space-lg);
     max-width: 1280px;
@@ -11,49 +21,9 @@
     animation: zenith-fade-in var(--zenith-transition-slow);
 }
 
-.zenith-projects__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: var(--zenith-space-md);
-    margin-bottom: var(--zenith-space-md);
-}
-
-.zenith-projects__header-title {
-    flex: none;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--zenith-text-normal);
-    display: flex;
-    align-items: center;
-    gap: var(--zenith-space-sm);
-    margin: 0;
-}
-
-/* The four figures that used to be four bordered boxes across the top of the
-   view. Ninety pixels of chrome to say "6 projects" above a grid of six
-   projects, "3 active" above a filter tab that says Active, and a task tally
-   nothing else repeated — which is the only one of the four that was earning
-   anything, and it earns it just as well set small beside the title. */
-.zenith-projects__summary {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 2px 14px;
-    flex: 1;
-    min-width: 0;
-    font-size: 0.78rem;
-    color: var(--zenith-text-muted);
-    font-variant-numeric: tabular-nums;
-}
-
-.zenith-root button.zenith-projects__new {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex: none;
-}
+/* The header, the caption and the button are `.zenith-vhead` and `.zenith-btn`
+   in ui.css — the four bordered boxes that used to sit across the top of this
+   view are gone, and so is this module's private copy of a header. */
 
 .zenith-root button.zenith-projects__search-clear {
     display: inline-flex;
@@ -136,7 +106,9 @@
 /* ── The grid ────────────────────────────────────── */
 .zenith-projects__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    /* min() so a container narrower than a card gives a card the container's
+       width instead of overflowing it by the difference. */
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
     gap: var(--zenith-space-md);
 }
 
@@ -266,37 +238,18 @@
     color: var(--zenith-text-faint);
 }
 
-/* ── How far along ───────────────────────────────────
+/* ── How far along ───────────────────────────────
    The bar IS the percentage. It used to be drawn under a line reading
    "1 / 3 completed" on the left and "33%" on the right: the same fraction
-   three times, in three notations, on three different parts of the card. */
+   three times, in three notations, on three different parts of the card.
+
+   The bar itself is `.zenith-meter`, shared with every other bar in the
+   plugin; this module no longer has an opinion about how tall it is. */
 .zenith-project-card__meter {
     display: flex;
     align-items: center;
     gap: var(--zenith-space-sm);
     min-width: 0;
-}
-
-.zenith-project-progress-track {
-    display: block;
-    flex: 1;
-    height: 5px;
-    min-width: 0;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--zenith-text-faint) 28%, transparent);
-    overflow: hidden;
-}
-
-.zenith-project-progress-fill {
-    display: block;
-    height: 100%;
-    border-radius: 999px;
-    background: var(--zenith-accent);
-    transition: width var(--zenith-transition);
-}
-
-.zenith-project-progress-fill.is-complete {
-    background: var(--zenith-success);
 }
 
 .zenith-project-card__count {
@@ -358,20 +311,17 @@
 .zenith-project-task-item {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 5px;
     min-height: 24px;
     min-width: 0;
     border-radius: var(--zenith-radius-sm);
 }
 
-.zenith-root button.zenith-project-task-check {
-    display: inline-flex;
-    flex: none;
-    padding: 0;
-    border: none;
-    background: none;
-    box-shadow: none;
-    cursor: pointer;
+/* The tasks module's control, sized to a card row: its default 28px button is
+   for a task list, where the row is the task. */
+.zenith-project-task-item .zenith-status__btn {
+    width: 24px;
+    height: 24px;
 }
 
 .zenith-project-task-text {
@@ -491,26 +441,12 @@
     font-weight: 600;
 }
 
-.zenith-pw__track {
-    display: block;
+/* The bar is the shared `.zenith-meter`; on a widget row it is fixed-width
+   rather than greedy, because the name is what the reader is scanning for and
+   it should get the space that is left. */
+.zenith-pw .zenith-pw__track {
     flex: none;
     width: 44px;
-    height: 3px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--zenith-text-faint) 28%, transparent);
-    overflow: hidden;
-}
-
-.zenith-pw__fill {
-    display: block;
-    height: 100%;
-    border-radius: 999px;
-    background: var(--zenith-accent);
-    transition: width var(--zenith-transition);
-}
-
-.zenith-pw__fill.is-complete {
-    background: var(--zenith-success);
 }
 
 .zenith-pw__count {
@@ -533,43 +469,8 @@
     font-size: 0.82rem;
 }
 
-.zenith-pw__footer {
-    display: flex;
-    align-items: center;
-    gap: var(--zenith-space-sm);
-    flex: none;
-    flex-wrap: wrap;
-    font-size: 0.7rem;
-    color: var(--zenith-text-faint);
-}
-
-.zenith-pw__count-note {
-    font-variant-numeric: tabular-nums;
-}
-
-.zenith-root button.zenith-pw__open {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    flex: none;
-    margin-left: auto;
-    min-height: 24px;
-    padding: 3px 9px;
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-md);
-    background: transparent;
-    box-shadow: none;
-    color: var(--zenith-text-muted);
-    font-size: 0.72rem;
-    cursor: pointer;
-    transition: all var(--zenith-transition-fast);
-}
-
-.zenith-root button.zenith-pw__open:hover {
-    color: var(--zenith-text-normal);
-    border-color: var(--zenith-accent);
-    background: var(--zenith-bg-hover);
-}
+/* The footer is `.zenith-wfoot` and the button is `.zenith-btn--ghost--sm`,
+   both in ui.css. */
 
 /* A finger: nothing here hides behind hover, so only the sizes change. */
 @media (pointer: coarse) {
@@ -578,14 +479,16 @@
         padding: 5px 7px;
     }
 
-    .zenith-root button.zenith-pw__open {
-        min-height: 36px;
-        padding: 6px 12px;
-    }
-
     .zenith-project-task-item,
     .zenith-root button.zenith-project-card__toggle {
         min-height: 36px;
+    }
+
+    /* The row is 36 under a finger; the control fills it rather than leaving
+       a two-pixel dead margin on each side of the thing being aimed at. */
+    .zenith-project-task-item .zenith-status__btn {
+        width: 36px;
+        height: 36px;
     }
 }
 
@@ -593,7 +496,50 @@
    line, which is backwards — the name is what you are looking for. The meter
    goes first: the count beside it says the same thing exactly. */
 @container zenith-pw (max-width: 300px) {
-    .zenith-pw__track {
+    .zenith-pw .zenith-pw__track {
         display: none;
+    }
+}
+
+/* ── Narrow: a phone, or a sidebar ────────────────────
+   The header is a title, a caption and one button trying to share a line that
+   is no longer wide enough for three things. The button keeps its place beside
+   the title — it is the action — and the caption, which is a footnote, takes
+   the line below. */
+@container zenith-projects (max-width: 560px) {
+    .zenith-projects {
+        padding: var(--zenith-space-md);
+    }
+
+    .zenith-projects .zenith-vhead__caption {
+        order: 3;
+        flex-basis: 100%;
+        gap: 2px 12px;
+    }
+
+    .zenith-projects__controls {
+        padding: var(--zenith-space-sm);
+    }
+
+    .zenith-projects__search-box {
+        min-width: 0;
+        max-width: none;
+        flex-basis: 100%;
+    }
+
+    /* The strip scrolls instead of wrapping into three rows of pills, and it
+       stops at a tab rather than between two. */
+    .zenith-projects__status-tabs {
+        flex-basis: 100%;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+    }
+
+    .zenith-projects__status-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .zenith-projects__tab {
+        scroll-snap-align: start;
     }
 }

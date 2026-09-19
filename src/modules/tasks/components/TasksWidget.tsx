@@ -477,9 +477,13 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
             )}
 
             {layout.hidden > 0 && (
-                <span className="zenith-tw__link zenith-tw__foot" onClick={openTasks} role="button">
+                <button
+                    type="button"
+                    className="zenith-tw__link zenith-tw__foot"
+                    onClick={openTasks}
+                >
                     {t('tasks.widget.moreN', { count: layout.hidden })}
-                </span>
+                </button>
             )}
 
             {showStats && (
@@ -526,9 +530,14 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                                     </span>
                                 </div>
                             ))}
-                        <span className="zenith-tw__link" data-figure="link" onClick={openTasks} role="button">
+                        <button
+                            type="button"
+                            className="zenith-tw__link"
+                            data-figure="link"
+                            onClick={openTasks}
+                        >
                             {t('tasks.widget.allTasks')}
-                        </span>
+                        </button>
                     </div>
                 </div>
             )}

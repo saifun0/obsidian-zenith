@@ -6,6 +6,7 @@ import { useTranslation } from '../../../core/i18n';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import type { Project } from '../projectsTypes';
 import { dueLabel } from '../services/projectStats';
+import { Meter } from '../../../components/shared';
 
 /**
  * The projects card: what is running, and how close each one is to done.
@@ -88,14 +89,11 @@ export const ProjectsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
                                 {due && (
                                     <span className={`zenith-pw__due ${due.tone}`}>{due.text}</span>
                                 )}
-                                <span className="zenith-pw__track">
-                                    <span
-                                        className={`zenith-pw__fill ${
-                                            p.stats.progressPercent === 100 ? 'is-complete' : ''
-                                        }`}
-                                        style={{ width: `${p.stats.progressPercent}%` }}
-                                    />
-                                </span>
+                                <Meter
+                                    percent={p.stats.progressPercent}
+                                    size="xs"
+                                    className="zenith-pw__track"
+                                />
                                 <span className="zenith-pw__count">
                                     {p.stats.totalTasks > 0
                                         ? `${p.stats.completedTasks}/${p.stats.totalTasks}`
@@ -113,13 +111,13 @@ export const ProjectsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
                 for five and up, wrong in every other language, and it never
                 said that the number it was counting was the ACTIVE projects
                 while the view beside it counted all of them. */}
-            <div className="zenith-pw__footer">
-                <span className="zenith-pw__count-note">
+            <div className="zenith-wfoot">
+                <span className="zenith-wfoot__note">
                     {t('projects.summary.active', { count: active.length })}
                 </span>
                 <button
                     type="button"
-                    className="zenith-pw__open"
+                    className="zenith-btn zenith-btn--ghost zenith-btn--sm zenith-wfoot__open"
                     onClick={openView}
                     title={t('projects.widget.open')}
                 >

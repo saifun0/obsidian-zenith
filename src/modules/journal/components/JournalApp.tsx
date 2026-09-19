@@ -8,6 +8,7 @@ import { getTodayString } from '../../../core/dateUtils';
 import { activeTrackers, type JournalTracker } from '../../../core/journalConfig';
 import type { TrackerValue } from '../../../store/journalSlice';
 import { IconButton } from '../../../components/shared/IconButton';
+import { ViewHeader } from '../../../components/shared';
 import { entriesByDate } from '../services/journalStats';
 import { setTrackerValue, openDailyNote, createDailyNote } from '../services/journalActions';
 import { addDays } from '../services/journalDates';
@@ -110,12 +111,7 @@ export const JournalApp: FC = () => {
 
     return (
         <div className="zenith-journal">
-            <div className="zenith-journal__header">
-                <div className="zenith-journal__header-left">
-                    <CalendarDays size={22} className="zenith-journal__header-icon" />
-                    <h2 className="zenith-journal__title">{t('journal.title')}</h2>
-                </div>
-                <div className="zenith-journal__header-actions">
+            <ViewHeader icon={CalendarDays} title={t('journal.title')}>
                     <IconButton
                         icon={CalendarCheck}
                         tooltip={t('journal.goToday')}
@@ -142,8 +138,7 @@ export const JournalApp: FC = () => {
                         variant="ghost"
                         size="md"
                     />
-                </div>
-            </div>
+            </ViewHeader>
 
             {/* Always on screen. It used to hide behind a toggle, which meant
                 the month you are actually keeping was one click further away
