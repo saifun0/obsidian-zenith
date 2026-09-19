@@ -445,8 +445,11 @@
     text-overflow: ellipsis;
 }
 
-/* The note, as prose. */
-.zenith-jday__note {
+/* The note, as prose. Scoped through the panel because it is a <p> when it is
+   only being read and a <button> when it opens the note — and a lone class
+   loses to Obsidian's `button:not(.clickable-icon)`, which would paint the
+   button one a grey plate and leave the paragraph one unpainted. */
+.zenith-jday .zenith-jday__note {
     margin: 0;
     padding: 11px 13px;
     border: 1px solid var(--zenith-border);

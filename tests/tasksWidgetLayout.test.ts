@@ -328,6 +328,40 @@ describe('the bottom strip in a narrow card', () => {
         expect(fitFigures(ALL, WIDTHS, spanOf(ALL))).toEqual(ALL);
     });
 
+    /**
+     * The same card, at the same width, in two languages.
+     *
+     * These are measured widths, not invented ones: an lg card 621px wide
+     * leaves the figures 295px once the week strip and its gap are paid for.
+     * With the label free to run to whatever length the dictionary gives it,
+     * "next due" measured 48px and "ближайший срок" 98, "closed today"
+     * 73 and "завершено сегодня" 109 — so the English card showed two
+     * figures and the Russian one showed one, with 38px of the difference
+     * being nothing but longer words.
+     *
+     * The label is capped and wraps now, which puts every figure at 76 and
+     * makes what the strip can hold a question about the card rather than
+     * about the language it is being read in.
+     */
+    const ROOM_AT_621 = 295;
+    const KEYS = ['overdue', 'active', 'nextDue', 'done', 'cancelled', 'subtasks', 'link'];
+
+    it('held fewer figures in Russian than in English, before the cap', () => {
+        const loose = (nextDue: number, done: number) => ({
+            active: 54, overdue: 68, cancelled: 104, subtasks: 55, link: 74, nextDue, done,
+        });
+        expect(fitFigures(KEYS, loose(48, 73), ROOM_AT_621)).toEqual(['nextDue', 'done', 'link']);
+        expect(fitFigures(KEYS, loose(98, 109), ROOM_AT_621)).toEqual(['done', 'link']);
+    });
+
+    it('holds the same figures in both, once the label is capped', () => {
+        const capped = { active: 54, overdue: 68, cancelled: 76, subtasks: 55, link: 74 };
+        const en = { ...capped, nextDue: 48, done: 73 };
+        const ru = { ...capped, nextDue: 76, done: 76 };
+        expect(fitFigures(KEYS, ru, ROOM_AT_621)).toEqual(['nextDue', 'done', 'link']);
+        expect(fitFigures(KEYS, en, ROOM_AT_621)).toEqual(fitFigures(KEYS, ru, ROOM_AT_621));
+    });
+
     it('never returns more than the width allows', () => {
         for (const available of [560, 430, 300, 210, 120, 40, 0]) {
             const kept = fitFigures(ALL, WIDTHS, available);

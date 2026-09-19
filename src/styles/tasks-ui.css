@@ -116,7 +116,7 @@
     /* Four 22px buttons (drag, edit, add, delete) plus their 2px gaps. */
     max-width: 120px;
 }
-.zenith-subtask__action {
+button.zenith-subtask__action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -127,6 +127,7 @@
     color: var(--text-muted);
     border-radius: 5px;
     cursor: pointer;
+    box-shadow: none;
 }
 .zenith-subtask__action:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
 .zenith-subtask__action--danger:hover {
@@ -254,7 +255,7 @@
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
     padding: 4px;
 }
-.zenith-autocomplete__item {
+button.zenith-autocomplete__item {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -266,12 +267,13 @@
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.85rem;
+    box-shadow: none;
 }
 .zenith-autocomplete__item:hover { background: var(--background-modifier-hover); }
 .zenith-autocomplete__count { color: var(--text-faint); font-size: 0.78rem; }
 
 .zenith-subtask-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
-.zenith-icon-ghost {
+button.zenith-icon-ghost {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -283,9 +285,10 @@
     color: var(--text-muted);
     border-radius: 7px;
     cursor: pointer;
+    box-shadow: none;
 }
 .zenith-icon-ghost:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
-.zenith-add-row {
+button.zenith-add-row {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -298,6 +301,7 @@
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.85rem;
+    box-shadow: none;
 }
 .zenith-add-row:hover { color: var(--text-normal); border-color: var(--interactive-accent); }
 
@@ -392,7 +396,7 @@
     border-radius: 9px;
     background: var(--background-modifier-form-field);
 }
-.zenith-seg__btn {
+button.zenith-seg__btn {
     padding: 4px 12px;
     border: none;
     background: transparent;
@@ -400,6 +404,7 @@
     border-radius: 7px;
     cursor: pointer;
     font-size: 0.82rem;
+    box-shadow: none;
 }
 .zenith-seg__btn.is-active {
     background: var(--background-primary);
@@ -769,19 +774,25 @@
 .zenith-tw__due.is-past { color: var(--zenith-text-faint); }
 
 /* ── Links ───────────────────────────────────────── */
-.zenith-tw__link {
+/* The ghost button from ui.css, flush so it lines up with the text above it.
+   This block used to draw its own: a bare `font-size` and `color`, which is
+   fine on a span and a grey box the moment it becomes a button, because
+   Obsidian styles bare `button` at (0,1,1). That box cost the bottom strip
+   about thirty pixels of width, and the strip drops a figure when it runs out
+   of width — which is how a change of tag name came out looking like a
+   layout bug. */
+.zenith-root button.zenith-tw__link {
     flex: 0 0 auto;
-    font-size: 11.5px;
-    color: var(--zenith-text-muted);
-    white-space: nowrap;
-    cursor: pointer;
 }
-.zenith-tw__link:hover { color: var(--zenith-accent); }
-.zenith-tw__foot { align-self: flex-start; padding-top: 2px; }
-.zenith-tw__row--more .zenith-tw__link {
+.zenith-root button.zenith-tw__foot {
+    align-self: flex-start;
+    margin-top: 2px;
+}
+/* Inside the list, the row is the target and its height is set by the fitting
+   maths, so the button does not get to have a height of its own. */
+.zenith-root .zenith-tw__row--more .zenith-tw__link {
+    min-height: 0;
     font-family: var(--zenith-font-mono);
-    font-size: 11px;
-    color: var(--zenith-text-faint);
 }
 
 /* ── Bottom strip (lg) ───────────────────────────── */
@@ -882,6 +893,7 @@
 .zenith-tw__figure {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: 4px;
     flex: 0 0 auto;
 }
@@ -902,10 +914,23 @@
     padding-top: 2px;
     color: var(--zenith-text-muted);
 }
+/* The label wraps, and its column is capped.
+
+   It used to be one unbreakable line, which made a figure as wide as the
+   longest word for it in whatever language is loaded — and the strip drops
+   figures it cannot fit. "closed today" is twelve characters; "завершено
+   сегодня" is seventeen, so the same card at the same width showed two
+   figures in English and one in Russian. That is not a narrow card; that is a
+   budget written against English word lengths.
+
+   Capped rather than merely wrappable, because the fitting maths measures what
+   is drawn: a cap makes a figure's width a number this file decides rather
+   than one the dictionary decides. */
 .zenith-tw__figure-lab {
+    max-width: 76px;
     font-size: 9px;
+    line-height: 1.2;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--zenith-text-faint);
-    white-space: nowrap;
 }

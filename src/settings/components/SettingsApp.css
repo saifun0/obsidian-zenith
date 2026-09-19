@@ -415,7 +415,7 @@
     min-width: 0;
 }
 
-.zenith-settings__reveal {
+button.zenith-settings__reveal {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -450,7 +450,7 @@
     margin-left: 6px;
 }
 
-.zenith-settings__noteMark {
+button.zenith-settings__noteMark {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -679,7 +679,7 @@
     gap: 6px;
 }
 
-.zenith-settings__icon-btn {
+button.zenith-settings__icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -691,6 +691,7 @@
     color: var(--text-muted);
     cursor: pointer;
     transition: all 0.15s ease;
+    box-shadow: none;
 }
 
 .zenith-settings__icon-btn:hover:not(:disabled) {

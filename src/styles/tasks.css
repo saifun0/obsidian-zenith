@@ -314,7 +314,7 @@
     padding: 0 !important;
 }
 
-.zenith-tasks-search__clear {
+button.zenith-tasks-search__clear {
     border: none;
     background: transparent;
     color: var(--text-muted);
@@ -322,6 +322,7 @@
     font-size: 1.1rem;
     line-height: 1;
     padding: 0 4px;
+    box-shadow: none;
 }
 
 .zenith-tasks-search__clear:hover {
@@ -346,7 +347,7 @@
     opacity: 1;
 }
 
-.zenith-task-item__action {
+button.zenith-task-item__action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -358,6 +359,7 @@
     color: var(--text-muted);
     cursor: pointer;
     transition: all 0.15s ease;
+    box-shadow: none;
 }
 
 .zenith-task-item__action:hover {
@@ -711,7 +713,7 @@
     color: rgba(255, 255, 255, 0.75);
 }
 
-.zenith-lightbox__btn {
+button.zenith-lightbox__btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -724,6 +726,7 @@
     color: #fff;
     cursor: pointer;
     transition: background 0.15s ease;
+    box-shadow: none;
 }
 .zenith-lightbox__btn:hover {
     background: rgba(255, 255, 255, 0.22);

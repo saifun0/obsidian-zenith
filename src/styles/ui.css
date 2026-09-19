@@ -61,6 +61,11 @@
     justify-content: center;
     gap: 6px;
     flex: none;
+    /* Obsidian's bare `button` sets `height: var(--input-height)` — 30px — and
+       a `min-height` below that is simply ignored, so every `--sm` control came
+       out at 30 rather than the 24 it asked for. Nothing in the size scale
+       means anything until the height is handed back. */
+    height: auto;
     min-height: var(--zenith-ctl-lg);
     padding: 0 12px;
     border: 1px solid transparent;
@@ -173,6 +178,19 @@
     width: var(--zenith-ctl-md);
     height: var(--zenith-ctl-md);
     padding: 0;
+}
+
+/* A ghost button that has to line up with the text beside or above it: the
+   side padding is what a control needs to look like a control, and what a
+   label in a column of figures cannot afford. The target keeps its height. */
+.zenith-root button.zenith-btn--flush {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.zenith-root button.zenith-btn--flush:hover:not(:disabled) {
+    background: transparent;
+    color: var(--zenith-accent);
 }
 
 .zenith-root button.zenith-btn--active {

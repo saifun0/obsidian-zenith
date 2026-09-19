@@ -166,3 +166,87 @@ describe('one view header', () => {
         expect(own).toEqual([]);
     });
 });
+
+describe('a button the theme cannot repaint', () => {
+    /**
+     * Obsidian styles buttons in two rules, and the second one is the trap:
+     *
+     *     button                       { padding; height; border-radius }
+     *     button:not(.clickable-icon)  { background-color; box-shadow }
+     *
+     * `:not()` takes the specificity of its argument, so the second is (0,1,1)
+     * — which beats `.zenith-thing { background: transparent }` at (0,1,0).
+     *
+     * The symptom is specific and was on screen for months: the button wears
+     * Obsidian's grey plate and drop shadow at rest, then snaps to the colour
+     * this codebase asked for on hover, because `.zenith-thing:hover` is
+     * (0,2,0) and wins. Twenty-one rules had it, including the shared icon
+     * button in the header of every view — where even the variant named
+     * "ghost" was drawing a plate.
+     *
+     * Anything at (0,2,0) or better is safe. So is (0,1,1) — a tie that plugin
+     * CSS wins because it loads after the app's. So is `!important`.
+     */
+    const PAINTS = /(?:^|[\s;{])(background|background-color|box-shadow)\s*:([^;}]*)/g;
+
+    /** Classes on a `<button>` tag itself, not on anything nested inside it. */
+    function buttonClasses(src: string): Set<string> {
+        const out = new Set<string>();
+        for (const m of src.matchAll(/<button\b/g)) {
+            const from = (m.index ?? 0) + m[0].length;
+            const at = src.indexOf('className', from);
+            if (at < 0 || at - from > 300) continue;
+            let j = src.indexOf('=', at) + 1;
+            while (src[j] === ' ' || src[j] === '\n') j++;
+            let expr: string;
+            if (src[j] === '"') {
+                expr = src.slice(j + 1, src.indexOf('"', j + 1));
+            } else {
+                let depth = 0;
+                let k = j;
+                for (; k < src.length; k++) {
+                    if (src[k] === '{') depth++;
+                    else if (src[k] === '}' && --depth === 0) break;
+                }
+                expr = src.slice(j, k);
+            }
+            for (const c of expr.matchAll(/zenith-[a-z0-9_-]+/g)) out.add(c[0]);
+        }
+        return out;
+    }
+
+    /** The class/attribute/pseudo-class column of a selector's specificity. */
+    function columnB(selector: string): number {
+        const s = selector.replace(/::[a-z-]+/g, '');
+        const n = (re: RegExp) => (s.match(re) ?? []).length;
+        return n(/\.[a-zA-Z_-]/g) + n(/\[/g) + n(/(?<!:):[a-z-]+/g);
+    }
+
+    it('states its own background at a specificity the theme cannot beat', () => {
+        const onButtons = new Set<string>();
+        for (const f of tsx) for (const c of buttonClasses(read(f))) onButtons.add(c);
+
+        const weak: string[] = [];
+        for (const f of css) {
+            const body = read(f).replace(/\/\*[\s\S]*?\*\//g, '');
+            for (const rule of body.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+                const decls = [...rule[2].matchAll(PAINTS)];
+                if (decls.length === 0) continue;
+                // `!important` wins whatever the specificity.
+                if (decls.every((d) => d[2].includes('!important'))) continue;
+                for (const part of rule[1].split(',').map((p) => p.trim())) {
+                    if (part.includes('::')) continue;
+                    const classes = [...part.matchAll(/\.(zenith-[a-z0-9_-]+)/g)].map((m) => m[1]);
+                    if (!classes.some((c) => onButtons.has(c))) continue;
+                    const hasElement = /(^|[\s>+~])[a-z]+[.\s:[]/.test(' ' + part);
+                    const b = columnB(part);
+                    if (b >= 2 || (b === 1 && hasElement)) continue;
+                    weak.push(`${rel(f)}: ${part}`);
+                }
+            }
+        }
+        // `zenith-settings__noteBubble` is only ever on a <div>; it is in the
+        // set because the name appears inside a button's className expression.
+        expect(weak.filter((w) => !w.includes('noteBubble'))).toEqual([]);
+    });
+});

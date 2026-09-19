@@ -1109,7 +1109,7 @@ body.is-phone .zenith-dashboard__bg::before {
     font-size: 0.85rem;
 }
 
-.zenith-weather__retry {
+button.zenith-weather__retry {
     margin-top: 4px;
     padding: 4px 12px;
     border-radius: var(--zenith-radius-sm);
@@ -1118,6 +1118,7 @@ body.is-phone .zenith-dashboard__bg::before {
     color: var(--zenith-text-muted);
     font-size: 0.75rem;
     cursor: pointer;
+    box-shadow: none;
 }
 
 .zenith-weather__top {
@@ -3075,7 +3076,7 @@ body.is-phone .zenith-dashboard__bg::before {
     }
 }
 
-.zenith-cw__cta {
+button.zenith-cw__cta {
     margin-top: 4px;
     padding: 6px 16px;
     border-radius: var(--zenith-radius-md);
@@ -3085,6 +3086,7 @@ body.is-phone .zenith-dashboard__bg::before {
     font-size: 0.8rem;
     font-weight: 500;
     cursor: pointer;
+    box-shadow: none;
 }
 
 /* ── Content Widget (.zenith-cw) ─────────────────────

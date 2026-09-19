@@ -201,9 +201,13 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
         if (line.kind === 'more') {
             return (
                 <div key={line.key} className="zenith-tw__row zenith-tw__row--more" style={{ height: line.height }}>
-                    <span className="zenith-tw__link" onClick={openTasks} role="button">
+                    <button
+                        type="button"
+                        className="zenith-btn zenith-btn--ghost zenith-btn--sm zenith-btn--flush zenith-tw__link"
+                        onClick={openTasks}
+                    >
                         {t('tasks.widget.moreInList', { count: line.count })}
-                    </span>
+                    </button>
                 </div>
             );
         }
@@ -424,9 +428,13 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                     ))}
                 </div>
                 {headLink && (
-                    <span className="zenith-tw__link" onClick={openTasks} role="button">
+                    <button
+                        type="button"
+                        className="zenith-btn zenith-btn--ghost zenith-btn--sm zenith-btn--flush zenith-tw__link"
+                        onClick={openTasks}
+                    >
                         {headLink}
-                    </span>
+                    </button>
                 )}
             </div>
 
@@ -479,7 +487,7 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
             {layout.hidden > 0 && (
                 <button
                     type="button"
-                    className="zenith-tw__link zenith-tw__foot"
+                    className="zenith-btn zenith-btn--ghost zenith-btn--sm zenith-btn--flush zenith-tw__link zenith-tw__foot"
                     onClick={openTasks}
                 >
                     {t('tasks.widget.moreN', { count: layout.hidden })}
@@ -532,7 +540,7 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                             ))}
                         <button
                             type="button"
-                            className="zenith-tw__link"
+                            className="zenith-btn zenith-btn--ghost zenith-btn--sm zenith-btn--flush zenith-tw__link"
                             data-figure="link"
                             onClick={openTasks}
                         >

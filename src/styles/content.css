@@ -1160,12 +1160,13 @@
     flex-wrap: wrap;
     gap: 6px;
 }
-.zenith-content-modal__chip {
+button.zenith-content-modal__chip {
     font-size: 0.72rem;
     padding: 3px 9px;
     border-radius: 999px;
     background: var(--zenith-bg-tertiary);
     color: var(--zenith-text-muted);
+    box-shadow: none;
 }
 /* One control panel instead of three stacked fields.
    The 1px grid gap doubles as the hairline between cells: it survives wrapping,
@@ -1314,7 +1315,7 @@
     align-items: center;
     gap: 8px;
 }
-.zenith-ctype__icon {
+button.zenith-ctype__icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1325,6 +1326,7 @@
     border-radius: 8px;
     background: var(--background-secondary);
     cursor: pointer;
+    box-shadow: none;
 }
 .zenith-ctype__icon .zenith-obsidian-icon {
     display: inline-flex;
@@ -1350,7 +1352,7 @@
     background: none;
     cursor: pointer;
 }
-.zenith-ctype__remove {
+button.zenith-ctype__remove {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1362,6 +1364,7 @@
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
+    box-shadow: none;
 }
 .zenith-ctype__remove:hover {
     background: var(--background-modifier-hover);
@@ -1404,7 +1407,7 @@
     flex-wrap: wrap;
     gap: 6px;
 }
-.zenith-ctype__chip {
+button.zenith-ctype__chip {
     padding: 4px 10px;
     font-size: 0.78rem;
     border-radius: 999px;
@@ -1412,13 +1415,14 @@
     border: 1px solid var(--background-modifier-border);
     background: var(--background-secondary);
     color: var(--text-muted);
+    box-shadow: none;
 }
 .zenith-ctype__chip.is-on {
     background: color-mix(in srgb, var(--interactive-accent) 20%, transparent);
     border-color: var(--interactive-accent);
     color: var(--text-normal);
 }
-.zenith-ctype__add {
+button.zenith-ctype__add {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1430,6 +1434,7 @@
     color: var(--text-muted);
     cursor: pointer;
     font-size: 0.85rem;
+    box-shadow: none;
 }
 .zenith-ctype__add:hover {
     color: var(--text-normal);
@@ -1483,7 +1488,7 @@
     gap: 6px;
 }
 
-.zenith-content-stats__genre {
+.zenith-content-stats .zenith-content-stats__genre {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -1492,6 +1497,7 @@
     background: var(--zenith-bg-tertiary);
     color: var(--zenith-text-muted);
     font-size: 0.78rem;
+    box-shadow: none;
 }
 
 .zenith-content-stats__genre-count {

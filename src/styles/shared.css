@@ -120,6 +120,9 @@
     color: var(--zenith-text-normal);
     background: var(--zenith-bg-hover);
     border-color: color-mix(in srgb, var(--tab) 40%, var(--zenith-border));
+    /* Obsidian gives every hovered button a deeper shadow; this one has none
+       to deepen. */
+    box-shadow: none;
 }
 
 .zenith-tabs button.zenith-tabs__tab:active {
@@ -186,49 +189,71 @@
     }
 }
 
-/* ── Icon Button ────────────────────────────────── */
-.zenith-icon-btn {
+/* ── Icon Button ──────────────────────────────
+   Every one of these rules used to be a single class, and a single class is
+   not enough. Obsidian styles buttons in two rules:
+
+       button                          { padding; height; border-radius }
+       button:not(.clickable-icon)     { background-color; box-shadow }
+
+   The second is (0,1,1) — `:not()` takes the specificity of its argument — so
+   `.zenith-icon-btn--ghost { background: transparent }` at (0,1,0) loses to it.
+   The ghost variant has been wearing a grey plate and a drop shadow this whole
+   time, in the header of every view in the plugin, and so has every filter tab
+   in Projects. Nothing in this file was wrong; it was simply being outvoted.
+
+   So: `.zenith-root button.x`, (0,2,1), which is the pattern the rest of the
+   codebase already uses for exactly this reason. And the properties are stated
+   rather than left to default, because a default here is Obsidian's. */
+.zenith-root button.zenith-icon-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    padding: 0;
     border: none;
     border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-family: inherit;
     cursor: pointer;
-    transition: all var(--zenith-transition-fast);
-    flex-shrink: 0;
+    transition:
+        color var(--zenith-transition-fast),
+        background var(--zenith-transition-fast);
 }
 
-.zenith-icon-btn:disabled {
+.zenith-root button.zenith-icon-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
 
-.zenith-icon-btn--default {
+.zenith-root button.zenith-icon-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--zenith-accent) 45%, transparent);
+}
+
+/* The one that is meant to look like a control rather than a glyph — the "add"
+   button at the head of a view. */
+.zenith-root button.zenith-icon-btn--default {
     background: var(--zenith-bg-tertiary);
     color: var(--zenith-text-normal);
 }
 
-.zenith-icon-btn--default:hover:not(:disabled) {
+.zenith-root button.zenith-icon-btn--default:hover:not(:disabled) {
     background: var(--zenith-bg-hover);
+    box-shadow: none;
 }
 
-.zenith-icon-btn--ghost {
-    background: transparent;
-    color: var(--zenith-text-muted);
-}
-
-.zenith-icon-btn--ghost:hover:not(:disabled) {
-    background: var(--zenith-bg-tertiary);
+.zenith-root button.zenith-icon-btn--ghost:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
+    box-shadow: none;
     color: var(--zenith-text-normal);
 }
 
-.zenith-icon-btn--danger {
-    background: transparent;
-    color: var(--zenith-text-muted);
-}
-
-.zenith-icon-btn--danger:hover:not(:disabled) {
+.zenith-root button.zenith-icon-btn--danger:hover:not(:disabled) {
     background: var(--zenith-danger-bg);
+    box-shadow: none;
     color: var(--zenith-danger);
 }
 
