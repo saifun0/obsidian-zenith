@@ -297,6 +297,12 @@ export const JournalSettings: React.FC = () => {
                 </div>
             )}
 
+            {/* The four rows above the trackers are one run with nothing
+                between them, so they are one card — the same shape the schema
+                renderer now gives every other module. This page builds its own
+                markup rather than going through `SettingRow`, so the card is
+                written out here; converting the page is its own job. */}
+            <div className="zenith-settings__card">
             {/* ── Folder ── */}
             <div className="zenith-settings__item zenith-settings__item--stack">
                 <div className="zenith-settings__item-info">
@@ -390,6 +396,8 @@ export const JournalSettings: React.FC = () => {
                         <option value="sun">{t('settings.journalWeekStart.sun')}</option>
                     </select>
                 </div>
+            </div>
+
             </div>
 
             {/* ── Trackers ── */}

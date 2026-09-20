@@ -8,7 +8,8 @@ import { computeProjectStats } from './projectStats';
 export function normalizeProjectStatus(raw: unknown): ProjectStatus {
     if (typeof raw !== 'string') return 'active';
     const s = raw.trim().toLowerCase().replace(/_/g, '-');
-    if (['in-progress', 'inprogress', 'progress', 'doing', 'working'].includes(s)) return 'in-progress';
+    if (['in-progress', 'inprogress', 'progress', 'doing', 'working'].includes(s))
+        return 'in-progress';
     if (['done', 'completed', 'finished'].includes(s)) return 'completed';
     if (['paused', 'hold', 'on-hold', 'waiting'].includes(s)) return 'paused';
     if (['archived', 'archive', 'closed'].includes(s)) return 'archived';
@@ -26,58 +27,32 @@ export function normalizeProjectPriority(raw: unknown): Priority {
 }
 
 /**
- * Filter tasks that belong to a given project:
- * 1. Tasks located directly inside the project file.
- * 2. Tasks referencing the project via wikilink [[Project Title]] or [[filePath]].
- * 3. Tasks tagged with one of the project's tags.
+ * The tasks that belong to a project.
+ *
+ * Four rules, and the difference between them is the whole design. Three are
+ * statements the task itself makes — it lives in the project's note, it names
+ * the project in its text, or it links to the note from its detail block —
+ * and the fourth is a statement the PROJECT makes, in `taskTags`, about which
+ * tags mean it.
+ *
+ * What is gone is the rule that was nobody's statement: any shared tag counted,
+ * minus a blacklist of `project`/`todo`/`task` written into this function to
+ * stop `#project` from swallowing the vault. A rule that needs a blacklist of
+ * its own worst cases is a rule that is guessing, and it guessed both ways —
+ * correctly filing a task tagged `#logistics` under a house move, and just as
+ * confidently filing one tagged `#sport` under a marathon that had finished.
+ *
+ * Takes the project rather than four loose arguments. It used to accept three
+ * different argument shapes through overloads — including the project first
+ * and the project second — which is two orders of the same call, told apart at
+ * runtime by sniffing for a `filePath` property.
  */
-export function filterTasksForProject(
-    project: Project,
-    allTasks: Task[]
-): Task[];
-export function filterTasksForProject(
-    allTasks: Task[],
-    project: Project
-): Task[];
-export function filterTasksForProject(
-    filePath: string,
-    title: string,
-    tags: string[],
-    allTasks: Task[]
-): Task[];
-export function filterTasksForProject(
-    arg1: unknown,
-    arg2: unknown,
-    arg3?: unknown,
-    arg4?: unknown
-): Task[] {
-    let filePath = '';
-    let title = '';
-    let tags: string[] = [];
-    let allTasks: Task[] = [];
-
-    if (arg1 && typeof arg1 === 'object' && 'filePath' in arg1) {
-        const p = arg1 as Project;
-        filePath = p.filePath;
-        title = p.title;
-        tags = p.tags;
-        allTasks = (arg2 as Task[]) ?? [];
-    } else if (arg2 && typeof arg2 === 'object' && 'filePath' in arg2) {
-        const p = arg2 as Project;
-        allTasks = (arg1 as Task[]) ?? [];
-        filePath = p.filePath;
-        title = p.title;
-        tags = p.tags;
-    } else if (typeof arg1 === 'string' && typeof arg2 === 'string') {
-        filePath = arg1;
-        title = arg2;
-        tags = (arg3 as string[]) ?? [];
-        allTasks = (arg4 as Task[]) ?? [];
-    }
-
-    const titleLower = title.toLowerCase();
-    const basename = filePath.replace(/\.md$/i, '').split('/').pop()?.toLowerCase() ?? '';
-    const cleanTags = new Set(tags.map((t) => t.replace(/^#/, '').toLowerCase()));
+export function filterTasksForProject(project: Project, allTasks: Task[]): Task[] {
+    const titleLower = project.title.toLowerCase();
+    const basename = project.filePath.replace(/\.md$/i, '').split('/').pop()?.toLowerCase() ?? '';
+    const claimed = new Set(
+        project.taskTags.map((t) => t.replace(/^#/, '').trim().toLowerCase()).filter(Boolean)
+    );
 
     const seenIds = new Set<string>();
     const matched: Task[] = [];
@@ -85,18 +60,21 @@ export function filterTasksForProject(
     for (const task of allTasks) {
         if (seenIds.has(task.id)) continue;
 
-        // 1. Located in the project file
-        if (task.filePath === filePath) {
+        // 1. Written inside the project's own note.
+        if (task.filePath === project.filePath) {
             seenIds.add(task.id);
             matched.push(task);
             continue;
         }
 
-        // 2. Wikilinks in task text
+        // 2. Names the project in its text, by title or by file name.
         const textLower = task.title.toLowerCase();
         const hasWiki =
-            (titleLower && (textLower.includes(`[[${titleLower}]]`) || textLower.includes(`[[${titleLower}|`))) ||
-            (basename && (textLower.includes(`[[${basename}]]`) || textLower.includes(`[[${basename}|`)));
+            (titleLower &&
+                (textLower.includes(`[[${titleLower}]]`) ||
+                    textLower.includes(`[[${titleLower}|`))) ||
+            (basename &&
+                (textLower.includes(`[[${basename}]]`) || textLower.includes(`[[${basename}|`)));
 
         if (hasWiki) {
             seenIds.add(task.id);
@@ -104,10 +82,10 @@ export function filterTasksForProject(
             continue;
         }
 
-        // 3. Attachments pointing to this note
+        // 3. Links to the note from its detail block.
         const hasAttachment = task.attachments?.some(
             (att) =>
-                att.target.toLowerCase() === filePath.toLowerCase() ||
+                att.target.toLowerCase() === project.filePath.toLowerCase() ||
                 (titleLower && att.target.toLowerCase() === titleLower) ||
                 (basename && att.target.toLowerCase() === basename)
         );
@@ -118,16 +96,13 @@ export function filterTasksForProject(
             continue;
         }
 
-        // 4. Matching tags (only if project has specific non-generic tags)
-        if (cleanTags.size > 0 && task.tags.some((tt) => cleanTags.has(tt.replace(/^#/, '').toLowerCase()))) {
-            const specificMatch = task.tags.some((tt) => {
-                const t = tt.replace(/^#/, '').toLowerCase();
-                return cleanTags.has(t) && !['project', 'projects', 'todo', 'task'].includes(t);
-            });
-            if (specificMatch) {
-                seenIds.add(task.id);
-                matched.push(task);
-            }
+        // 4. Carries a tag the project has claimed.
+        if (
+            claimed.size > 0 &&
+            task.tags.some((tt) => claimed.has(tt.replace(/^#/, '').toLowerCase()))
+        ) {
+            seenIds.add(task.id);
+            matched.push(task);
         }
     }
 
@@ -181,33 +156,45 @@ export class ProjectParser {
             typeof fm.due === 'string'
                 ? fm.due.trim()
                 : typeof fm.targetDate === 'string'
-                ? fm.targetDate.trim()
-                : undefined;
+                  ? fm.targetDate.trim()
+                  : undefined;
         let tags: string[] = [];
         if (Array.isArray(fm.tags)) {
             tags = fm.tags.map(String);
         } else if (typeof fm.tags === 'string') {
             tags = [fm.tags];
         }
-        const projectTasks = filterTasksForProject(filePath, title, tags, allTasks);
-        const stats = computeProjectStats(projectTasks, due);
-        return {
+        let taskTags: string[] = [];
+        if (Array.isArray(fm.taskTags)) {
+            taskTags = fm.taskTags.map(String);
+        } else if (typeof fm.taskTags === 'string') {
+            taskTags = [fm.taskTags];
+        }
+
+        // The project is built before its tasks are found, because finding
+        // them is a question asked OF the project — see `filterTasksForProject`,
+        // which needs the title, the path and the claimed tags together.
+        const project: Project = {
             id: filePath,
             filePath,
             fileName,
             title,
             status,
             priority,
-            due,
             targetDate: due,
             tags,
+            taskTags,
             description: typeof fm.description === 'string' ? fm.description : undefined,
             color: typeof fm.color === 'string' ? fm.color : undefined,
             icon: typeof fm.icon === 'string' ? fm.icon : undefined,
             mtime,
-            tasks: projectTasks,
-            stats,
+            tasks: [],
+            stats: computeProjectStats([], due),
         };
+
+        project.tasks = filterTasksForProject(project, allTasks);
+        project.stats = computeProjectStats(project.tasks, due);
+        return project;
     }
 
     async parseProjects(folderPath: string, allTasks: Task[]): Promise<Project[]> {
@@ -228,14 +215,12 @@ export class ProjectParser {
         const startDate = toIsoDate(fm.startDate ?? fm.start);
         const targetDate = toIsoDate(fm.targetDate ?? fm.target ?? fm.dueDate ?? fm.due);
         const tags = toStringArray(fm.tags);
+        const taskTags = toStringArray(fm.taskTags);
         const description = typeof fm.description === 'string' ? fm.description.trim() : undefined;
         const color = typeof fm.color === 'string' ? fm.color.trim() : undefined;
         const icon = typeof fm.icon === 'string' ? fm.icon.trim() : undefined;
 
-        const projectTasks = filterTasksForProject(file.path, title, tags, allTasks);
-        const stats = computeProjectStats(projectTasks, targetDate);
-
-        return {
+        const project: Project = {
             id: file.path,
             filePath: file.path,
             fileName: file.name,
@@ -244,14 +229,18 @@ export class ProjectParser {
             priority,
             startDate,
             targetDate,
-            due: targetDate,
             tags,
+            taskTags,
             description,
             color,
             icon,
             mtime: file.stat?.mtime ?? 0,
-            tasks: projectTasks,
-            stats,
+            tasks: [],
+            stats: computeProjectStats([], targetDate),
         };
+
+        project.tasks = filterTasksForProject(project, allTasks);
+        project.stats = computeProjectStats(project.tasks, targetDate);
+        return project;
     }
 }

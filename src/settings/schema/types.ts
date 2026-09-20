@@ -108,6 +108,19 @@ export interface TextField<K extends string> extends FieldBase<K> {
     type: 'text';
     default: string;
     placeholder?: string;
+    /**
+     * A translated placeholder, for when the empty value means something.
+     *
+     * "Leave this empty and you get the whole vault" is a real fact about a
+     * setting and it used to be written underneath as a description — a line
+     * of grey text, permanently on screen, to explain a box that is already
+     * standing there empty. Said inside the box it costs no height at all and
+     * appears exactly when it applies, which is when the box is empty.
+     *
+     * Separate from `placeholder` because that one is for literals a
+     * translator must not touch: `my-vault`, `us-east-1`, `YYYY-MM-DD`.
+     */
+    placeholderKey?: string;
     monospace?: boolean;
     /**
      * Mask the value, with a control to reveal it.
@@ -130,6 +143,8 @@ export interface FolderField<K extends string> extends FieldBase<K> {
     type: 'folder';
     default: string;
     placeholder?: string;
+    /** See `TextField.placeholderKey`. */
+    placeholderKey?: string;
 }
 export interface ColorField<K extends string> extends FieldBase<K> {
     type: 'color';
@@ -175,6 +190,20 @@ export interface CustomField {
     type: 'custom';
     key: string;
     showIf?: Predicate;
+    /**
+     * This one draws a single settings row, not a surface of its own.
+     *
+     * The escape hatch covers two unlike things. Some custom fields are whole
+     * panels — the sync record, the content-type table — which bring their own
+     * boxes and must not be nested inside the form's card. Others are one
+     * ordinary row that merely needed bespoke innards: a place picker, an
+     * image chooser, a set of per-prayer offsets.
+     *
+     * Without the distinction the renderer has to guess, and it guessed wrong
+     * in the visible direction: every custom field was left outside the card,
+     * so four single rows floated between carded groups looking like mistakes.
+     */
+    row?: boolean;
     render: React.ComponentType<CustomFieldProps>;
 }
 
@@ -191,16 +220,24 @@ export type ValueField<K extends string> =
     | MultiselectField<K>;
 
 export type SettingField<K extends string = string> =
-    | ValueField<K>
-    | ActionField
-    | HeadingField
-    | CustomField;
+    ValueField<K> | ActionField | HeadingField | CustomField;
 
 export interface SettingsGroup<K extends string = string> {
     id: string;
     titleKey?: string;
     descKey?: string;
     showIf?: Predicate;
+    /**
+     * Mark the group's heading as wanting attention — e.g. it holds an invalid
+     * field.
+     *
+     * For a state the group's own fields cannot see: encryption is switched on
+     * and the password is empty, so sync is refusing to run, and no single
+     * field is wrong on its own terms. A mark rather than anything louder,
+     * because the group is on the page — the reader only has to be pointed at
+     * it, not taken there.
+     */
+    alertIf?: Predicate;
     fields: SettingField<K>[];
 }
 

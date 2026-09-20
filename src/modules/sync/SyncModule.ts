@@ -1,11 +1,11 @@
 import { Notice } from 'obsidian';
 import { BaseModule } from '../../core/IModule';
-import { VIEW_TYPE_SYNC } from '../../core/constants';
 import { useZenithStore } from '../../store';
-import { SyncView } from './SyncView';
+import { SyncQuickModal } from './SyncQuickModal';
 import { syncSettingsSchema } from './settings.schema';
 import { SettingsSyncService } from './services/settingsSync';
 import { FileSyncService } from './services/fileSync';
+import { FileSyncAuto } from './services/fileSyncAuto';
 import { SyncProgressNotice } from './SyncProgressNotice';
 import { DROPBOX_PROTOCOL_ACTION } from './services/remotes/appIds';
 import { DropboxRemote } from './services/remotes/dropboxRemote';
@@ -41,24 +41,30 @@ export class SyncModule extends BaseModule {
 
     private service: SettingsSyncService | null = null;
     private files: FileSyncService | null = null;
+    /** Presses the file engine's button so the user does not have to. */
+    private auto: FileSyncAuto | null = null;
     /** Reports a file run wherever the user is; see `SyncProgressNotice`. */
     private progress: SyncProgressNotice | null = null;
     private disposers: Array<() => void> = [];
 
     async onload(): Promise<void> {
-        this.registerView(VIEW_TYPE_SYNC, (leaf) => new SyncView(leaf, this.plugin));
-
         this.service = new SettingsSyncService(this.plugin);
         this.plugin.settingsSync = this.service;
 
-        // The file engine is constructed but never started: it has no timer and
-        // no listeners, and every run begins with the user asking for one.
         this.files = new FileSyncService(
             this.plugin,
             this.service.deviceId,
             () => this.service?.getStatus().deviceName ?? 'device'
         );
         this.plugin.fileSync = this.files;
+
+        // The engine still has no timer of its own — it is a thing that plans
+        // and applies, and it knows nothing about when. The scheduler above it
+        // is what turns "I will sync when you ask" into "it is already synced",
+        // and it is the only thing in the plugin allowed to start a run
+        // nobody asked for.
+        this.auto = new FileSyncAuto(this.plugin, this.files);
+        this.plugin.fileSyncAuto = this.auto;
 
         // A transfer takes minutes and the page it was started from is the one
         // page nobody stays on. The notice is how the run follows them out.
@@ -78,6 +84,31 @@ export class SyncModule extends BaseModule {
             )
         );
 
+        // The scheduler is restarted for the same reason: it holds a timer, a
+        // set of vault listeners and a focus handler, all built from settings
+        // that were read once. The backend fields are in the key as well as the
+        // switches, because editing a server address is how a configuration
+        // goes from unusable to usable, and the engine should start watching
+        // the moment it does rather than at the next reload.
+        this.disposers.push(
+            useZenithStore.subscribe(
+                (s) =>
+                    [
+                        s.settings.syncFilesEnabled,
+                        s.settings.syncFilesAuto,
+                        s.settings.syncFilesIntervalMinutes,
+                        s.settings.syncRemoteKind,
+                        s.settings.syncRemoteUrl,
+                        s.settings.syncS3Endpoint,
+                        s.settings.syncEncryptionEnabled,
+                    ].join('|'),
+                () => {
+                    this.files?.refresh();
+                    this.restartAuto();
+                }
+            )
+        );
+
         this.addCommand({
             id: 'open-sync',
             name: 'Open sync',
@@ -91,6 +122,16 @@ export class SyncModule extends BaseModule {
                 void this.syncNow();
             },
         });
+
+        this.addCommand({
+            id: 'sync-files-now',
+            name: 'Sync note files now',
+            callback: () => {
+                void this.auto?.run(true);
+            },
+        });
+
+        this.restartAuto();
 
         // Dropbox sends the user back here after they approve. Registered on the
         // plugin because the callback arrives whether or not anything of ours is
@@ -109,6 +150,17 @@ export class SyncModule extends BaseModule {
                 onClick: () => void this.activateView(),
             })
         );
+
+        // The ribbon, beside Zenith's own icon.
+        //
+        // Registered here rather than in `main.ts` — where the `brain` icon
+        // lives — so that it arrives and leaves with the module. An icon for a
+        // module somebody switched off is a button that reports on nothing,
+        // and `main.ts` has no way to know when that happened.
+        const ribbon = this.plugin.addRibbonIcon('refresh-cw', translateNow('sync.quick.title'), () =>
+            void this.activateView()
+        );
+        this.disposers.push(() => ribbon.remove());
     }
 
     async onunload(): Promise<void> {
@@ -116,15 +168,32 @@ export class SyncModule extends BaseModule {
         this.disposers = [];
         this.progress?.dispose();
         this.progress = null;
+        this.auto?.stop();
+        this.auto = null;
         this.service?.stop();
         this.service = null;
         this.files = null;
         this.plugin.settingsSync = null;
         this.plugin.fileSync = null;
+        this.plugin.fileSyncAuto = null;
     }
 
+    /** Rebuild the scheduler from the settings as they stand now. */
+    private restartAuto(): void {
+        this.auto?.stop();
+        this.auto?.start();
+    }
+
+    /**
+     * Open the quick dialog.
+     *
+     * Named `activateView` still, because that is the verb every caller in the
+     * plugin already uses for "show me this module" — the launcher, the
+     * command, the held-plan notice. What changed is that showing it no longer
+     * costs a tab.
+     */
     async activateView(): Promise<void> {
-        await this.openView(VIEW_TYPE_SYNC);
+        new SyncQuickModal(this.plugin.app, this.plugin).open();
     }
 
     getSettingsSchema(): SettingsSchema {

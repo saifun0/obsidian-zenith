@@ -23,6 +23,7 @@ import { useZenithStore, resetZenithStore } from './store';
 import type { ZenithSettings } from './store';
 import type { SettingsSyncService } from './modules/sync/services/settingsSync';
 import type { FileSyncService } from './modules/sync/services/fileSync';
+import type { FileSyncAuto } from './modules/sync/services/fileSyncAuto';
 import { PendingAuthStore } from './modules/sync/services/remotes/oauthPending';
 import { ZenithSettingTab } from './settings/ZenithSettingTab';
 import { registerQuickAddTaskCommand } from './modules/tasks/commands';
@@ -59,11 +60,20 @@ export default class ZenithPlugin extends Plugin {
     settingsSync: SettingsSyncService | null = null;
 
     /**
-     * The file engine. Also owned by `SyncModule`, and null while that module is
-     * off — nothing here starts on its own, by design: a file sync moves the
-     * user's notes and only runs when they ask.
+     * The file engine. Also owned by `SyncModule`, and null while that module
+     * is off. It plans and applies; it has no opinion about when, which is
+     * what keeps a run reproducible and testable.
      */
     fileSync: FileSyncService | null = null;
+
+    /**
+     * What decides when the file engine runs.
+     *
+     * Separated from the engine so that "should this happen now" and "what
+     * exactly would happen" stay two questions with two answers. Null while
+     * the sync module is off.
+     */
+    fileSyncAuto: FileSyncAuto | null = null;
 
     /**
      * The authorization the user is part-way through, if any.

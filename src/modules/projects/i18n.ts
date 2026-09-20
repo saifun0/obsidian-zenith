@@ -6,7 +6,8 @@ import type { TranslationTable } from '../../core/i18n';
 export const projectsTranslations: TranslationTable = {
     en: {
         'module.projects.name': 'Projects',
-        'module.projects.desc': 'Project management, task aggregation, progress tracking and deadlines.',
+        'module.projects.desc':
+            'Project management, task aggregation, progress tracking and deadlines.',
         'projects.card.openNote': 'Open note',
         // One card is one project, so the badge on it needs the singular the
         // filter tabs above do not: "Active projects" is a tab, "Active" is a
@@ -32,6 +33,60 @@ export const projectsTranslations: TranslationTable = {
         'projects.template.aboutHint': 'What this project is for.',
         'projects.template.tasks': 'Tasks',
         'projects.template.firstTask': 'Work out the first step',
+
+        // ── The form ──
+        // A project is described once and then lived with, so the form asks
+        // for everything the note can hold rather than the three fields that
+        // fit in a small window.
+        'projects.form.create': 'New project',
+        'projects.form.edit': 'Edit project',
+        'projects.form.name': 'Name',
+        'projects.form.name.placeholder': 'What are you building?',
+        // The file name is shown, not asked for: it follows the title, with
+        // anything a file name cannot hold replaced by a dash — and seeing the
+        // result is what keeps that substitution from being a surprise.
+        'projects.form.file': 'File: {name}',
+        'projects.form.status': 'Status',
+        'projects.form.priority': 'Priority',
+        'projects.form.startDate': 'Starts',
+        'projects.form.targetDate': 'Deadline',
+        'projects.form.tags': 'Tags',
+        'projects.form.tags.desc': 'Comma-separated. What the project itself is filed under.',
+        'projects.form.taskTags': 'Task tags',
+        // Said plainly, because the field only makes sense against the rule it
+        // replaced: any shared tag used to count, which filed a task tagged
+        // #sport under a marathon that had already finished.
+        'projects.form.taskTags.desc':
+            'Comma-separated. Tasks carrying one of these tags count as this project’s, on top of tasks written in this note or linking to it.',
+        'projects.form.description': 'Summary',
+        'projects.form.description.desc': 'One line, shown on the card.',
+        'projects.form.icon': 'Icon',
+        'projects.form.icon.pick': 'Choose an icon',
+        'projects.form.icon.none': 'No icon',
+        'projects.form.color': 'Colour',
+        'projects.form.submit.create': 'Create',
+        'projects.form.submit.save': 'Save',
+        'projects.form.cancel': 'Cancel',
+        'projects.form.preview': 'Preview',
+        'projects.form.name.required': 'A project needs a name.',
+
+        // ── The card's menu ──
+        'projects.menu.label': 'Project actions',
+        'projects.menu.edit': 'Edit',
+        'projects.menu.open': 'Open note',
+        'projects.menu.status': 'Status',
+        'projects.menu.archive': 'Archive',
+        'projects.card.addTask': 'Add task',
+        'projects.card.addTask.title': 'New task',
+        'projects.card.addTask.placeholder': 'What needs doing?',
+        // Only while it is still ahead: "started on 3 March" answers nothing
+        // about a project that is already running.
+        'projects.card.startsIn': 'starts in {count} d',
+        'projects.card.startsToday': 'starts today',
+        'projects.notice.created': 'Project created.',
+        'projects.notice.saved': 'Project saved.',
+        'projects.notice.saveFailed': 'Zenith: could not save the project.',
+        'projects.notice.taskAdded': 'Task added to the project.',
         'projects.notice.createFailed': 'Zenith: could not create the project.',
         'projects.notice.taskFailed': 'Zenith: could not update the task.',
         'projects.empty.desc': 'Create a note in your projects folder or adjust your filters.',
@@ -63,7 +118,8 @@ export const projectsTranslations: TranslationTable = {
     },
     ru: {
         'module.projects.name': 'Проекты',
-        'module.projects.desc': 'Управление проектами, агрегация задач, отслеживание прогресса и дедлайнов.',
+        'module.projects.desc':
+            'Управление проектами, агрегация задач, отслеживание прогресса и дедлайнов.',
         'projects.card.openNote': 'Открыть заметку',
         'projects.state.active': 'Активный',
         'projects.state.in-progress': 'В работе',
@@ -81,6 +137,49 @@ export const projectsTranslations: TranslationTable = {
         'projects.template.aboutHint': 'Зачем этот проект.',
         'projects.template.tasks': 'Задачи',
         'projects.template.firstTask': 'Продумать первый шаг',
+
+        // ── Форма ──
+        'projects.form.create': 'Новый проект',
+        'projects.form.edit': 'Правка проекта',
+        'projects.form.name': 'Название',
+        'projects.form.name.placeholder': 'Что вы затеваете?',
+        'projects.form.file': 'Файл: {name}',
+        'projects.form.status': 'Статус',
+        'projects.form.priority': 'Приоритет',
+        'projects.form.startDate': 'Старт',
+        'projects.form.targetDate': 'Дедлайн',
+        'projects.form.tags': 'Теги',
+        'projects.form.tags.desc': 'Через запятую. Под чем лежит сам проект.',
+        'projects.form.taskTags': 'Теги задач',
+        'projects.form.taskTags.desc':
+            'Через запятую. Задачи с такими тегами считаются задачами этого проекта — вдобавок к тем, что написаны в этой заметке или ссылаются на неё.',
+        'projects.form.description': 'Описание',
+        'projects.form.description.desc': 'Одна строка, её видно на карточке.',
+        'projects.form.icon': 'Иконка',
+        'projects.form.icon.pick': 'Выбрать иконку',
+        'projects.form.icon.none': 'Без иконки',
+        'projects.form.color': 'Цвет',
+        'projects.form.submit.create': 'Создать',
+        'projects.form.submit.save': 'Сохранить',
+        'projects.form.cancel': 'Отмена',
+        'projects.form.preview': 'Превью',
+        'projects.form.name.required': 'У проекта должно быть название.',
+
+        // ── Меню карточки ──
+        'projects.menu.label': 'Действия с проектом',
+        'projects.menu.edit': 'Править',
+        'projects.menu.open': 'Открыть заметку',
+        'projects.menu.status': 'Статус',
+        'projects.menu.archive': 'В архив',
+        'projects.card.addTask': 'Добавить задачу',
+        'projects.card.addTask.title': 'Новая задача',
+        'projects.card.addTask.placeholder': 'Что нужно сделать?',
+        'projects.card.startsIn': 'старт через {count} д',
+        'projects.card.startsToday': 'старт сегодня',
+        'projects.notice.created': 'Проект создан.',
+        'projects.notice.saved': 'Проект сохранён.',
+        'projects.notice.saveFailed': 'Zenith: не удалось сохранить проект.',
+        'projects.notice.taskAdded': 'Задача добавлена в проект.',
         'projects.notice.createFailed': 'Zenith: не удалось создать проект.',
         'projects.notice.taskFailed': 'Zenith: не удалось обновить задачу.',
         'projects.empty.desc': 'Создайте заметку в папке проектов или измените фильтры.',

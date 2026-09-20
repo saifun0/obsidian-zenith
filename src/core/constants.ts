@@ -16,7 +16,6 @@ export const VIEW_TYPE_CONTENT = 'zenith-content-view';
 export const VIEW_TYPE_MEDIA = 'zenith-media-view';
 export const VIEW_TYPE_JOURNAL = 'zenith-journal-view';
 export const VIEW_TYPE_TASKS_CALENDAR = 'zenith-tasks-calendar-view';
-export const VIEW_TYPE_SYNC = 'zenith-sync-view';
 export const VIEW_TYPE_PROJECTS = 'zenith-projects-view';
 /**
  * Retired: the prayer tracker is a modal now. Kept only so PrayerModule can

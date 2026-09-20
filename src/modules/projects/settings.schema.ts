@@ -11,7 +11,6 @@ export const projectsSettingsSchema = coreSchema({
                     type: 'folder',
                     key: 'projectsFolderPath',
                     labelKey: 'settings.projectsFolder',
-                    descKey: 'settings.projectsFolder.desc',
                     default: DEFAULT_PROJECTS_FOLDER,
                     placeholder: DEFAULT_PROJECTS_FOLDER,
                 },

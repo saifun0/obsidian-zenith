@@ -38,7 +38,6 @@ export const tasksSettingsSchema = coreSchema({
                     type: 'folder',
                     key: 'tasksFolderPath',
                     labelKey: 'settings.tasksFolder',
-                    descKey: 'settings.tasksFolder.desc',
                     default: DEFAULT_TASKS_FOLDER,
                     placeholder: DEFAULT_TASKS_FOLDER,
                     showIf: (v) => !v.journalCaptureTasks,
@@ -56,7 +55,6 @@ export const tasksSettingsSchema = coreSchema({
                     type: 'select',
                     key: 'taskImageAlign',
                     labelKey: 'settings.taskImageAlign',
-                    descKey: 'settings.taskImageAlign.desc',
                     default: 'left',
                     options: [
                         { value: 'left', labelKey: 'settings.align.left' },
@@ -68,7 +66,6 @@ export const tasksSettingsSchema = coreSchema({
                     type: 'number',
                     key: 'taskImageSize',
                     labelKey: 'settings.taskImageSize',
-                    descKey: 'settings.taskImageSize.desc',
                     default: 56,
                     min: 32,
                     max: 240,

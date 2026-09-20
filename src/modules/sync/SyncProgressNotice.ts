@@ -159,7 +159,10 @@ export class SyncProgressNotice {
         const fill = bar.createDiv({ cls: 'zenith-syncnotice__fill' });
 
         const rate = root.createDiv({ cls: 'zenith-syncnotice__rate' });
-        const file = root.createDiv({ cls: 'zenith-syncnotice__file' });
+        // The path goes inside a `<bdi>`: the line is `direction: rtl` so the
+        // ellipsis eats the start rather than the filename, and without the
+        // isolation that direction also reorders a path beginning with digits.
+        const file = root.createDiv({ cls: 'zenith-syncnotice__file' }).createEl('bdi');
 
         // Zero, so it stays up for as long as the run does. Every other exit
         // from this notice is `close()`.

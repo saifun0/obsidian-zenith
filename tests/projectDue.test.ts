@@ -38,7 +38,15 @@ const TODAY = Date.parse('2026-09-19T12:00:00Z');
 
 let seq = 0;
 const task = (status: TaskStatus): Task =>
-    ({ id: `t${seq++}`, title: 'x', status, tags: [], subtasks: [], lineNumber: 1, filePath: 'a.md' }) as unknown as Task;
+    ({
+        id: `t${seq++}`,
+        title: 'x',
+        status,
+        tags: [],
+        subtasks: [],
+        lineNumber: 1,
+        filePath: 'a.md',
+    }) as unknown as Task;
 
 function project(status: ProjectStatus, due: string, tasks: Task[]): Project {
     return {
@@ -48,8 +56,9 @@ function project(status: ProjectStatus, due: string, tasks: Task[]): Project {
         title: 'P',
         status,
         priority: 'medium',
-        due,
+        targetDate: due,
         tags: [],
+        taskTags: [],
         tasks,
         stats: computeProjectStats(tasks, due, TODAY),
     } as Project;

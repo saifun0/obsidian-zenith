@@ -48,7 +48,8 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
         provider === 'dropbox'
             ? dropboxClientId(settings.syncDropboxClientId)
             : onedriveClientId(settings.syncOnedriveClientId);
-    const tokens = provider === 'dropbox' ? settings.syncDropboxTokens : settings.syncOnedriveTokens;
+    const tokens =
+        provider === 'dropbox' ? settings.syncDropboxTokens : settings.syncOnedriveTokens;
     const tokenKey = provider === 'dropbox' ? 'syncDropboxTokens' : 'syncOnedriveTokens';
 
     const { plugin } = useApp();
@@ -229,7 +230,11 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
                 <p className="zenith-sync__hint">
                     <Check size={14} /> {t('auth.connected')}
                 </p>
-                <button type="button" className="zenith-sync__btn" onClick={disconnect}>
+                <button
+                    type="button"
+                    className="zenith-sync__btn is-dangerGhost"
+                    onClick={disconnect}
+                >
                     <LogOut size={13} />
                     {t('auth.disconnect')}
                 </button>
@@ -250,12 +255,13 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
                 <div className="zenith-sync__deviceCode">
                     <p className="zenith-sync__hint">{t('auth.device.instructions')}</p>
                     <code className="zenith-sync__userCode">{device.userCode}</code>
-                    <a
+                    <button
+                        type="button"
                         className="zenith-sync__inboxPath"
                         onClick={() => window.open(device.verificationUri, '_blank')}
                     >
                         {device.verificationUri}
-                    </a>
+                    </button>
                     <p className="zenith-sync__hint">{t('auth.device.waiting')}</p>
                 </div>
             )}

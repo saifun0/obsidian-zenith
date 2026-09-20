@@ -12,7 +12,6 @@ export const dashboardSettingsSchema = coreSchema({
                     type: 'segmented',
                     key: 'dashboardHeading',
                     labelKey: 'settings.dashHeading',
-                    descKey: 'settings.dashHeading.desc',
                     default: 'none',
                     options: [
                         { value: 'none', labelKey: 'settings.dashHeading.none' },
@@ -34,7 +33,6 @@ export const dashboardSettingsSchema = coreSchema({
                     type: 'toggle',
                     key: 'dashboardShowDate',
                     labelKey: 'settings.dashDate',
-                    descKey: 'settings.dashDate.desc',
                     default: false,
                 },
             ],
@@ -48,7 +46,6 @@ export const dashboardSettingsSchema = coreSchema({
                     type: 'segmented',
                     key: 'dashboardBgSource',
                     labelKey: 'settings.dashBgSource',
-                    descKey: 'settings.dashBgSource.desc',
                     default: 'none',
                     options: DASHBOARD_BG_SOURCES.map((id) => ({
                         value: id,
@@ -59,7 +56,6 @@ export const dashboardSettingsSchema = coreSchema({
                     type: 'text',
                     key: 'dashboardBgUrl',
                     labelKey: 'settings.dashBgUrl',
-                    descKey: 'settings.dashBgUrl.desc',
                     default: '',
                     layout: 'stack',
                     placeholder: 'https://…',
@@ -71,6 +67,7 @@ export const dashboardSettingsSchema = coreSchema({
                 {
                     type: 'custom',
                     key: 'dashboardBgPath',
+                    row: true,
                     render: vaultImageField(
                         'dashboardBgPath',
                         'settings.dashBgPath',
@@ -82,7 +79,6 @@ export const dashboardSettingsSchema = coreSchema({
                     type: 'segmented',
                     key: 'dashboardBgFit',
                     labelKey: 'settings.dashBgFit',
-                    descKey: 'settings.dashBgFit.desc',
                     default: 'cover',
                     options: DASHBOARD_BG_FITS.map((id) => ({
                         value: id,
@@ -106,7 +102,6 @@ export const dashboardSettingsSchema = coreSchema({
                     type: 'slider',
                     key: 'dashboardBgBlur',
                     labelKey: 'settings.dashBgBlur',
-                    descKey: 'settings.dashBgBlur.desc',
                     default: 0,
                     min: 0,
                     max: 24,

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Check, FileWarning, Merge, RefreshCw, Trash2 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
+import { SyncSection } from './SyncSection';
 import { vaultModuleFs } from '../../../core/moduleFs';
 import { ConflictInbox, type InboxEntry } from '../services/conflictInbox';
 import { openFileAtLine } from '../../../core/openInVault';
@@ -70,8 +71,7 @@ export const ConflictInboxPanel: React.FC = () => {
     if (scanned && entries.length === 0 && !note) return null;
 
     return (
-        <section className="zenith-sync__card">
-            <h3 className="zenith-sync__cardTitle">{t('inbox.title')}</h3>
+        <SyncSection title={t('inbox.title')}>
             <p className="zenith-sync__hint">{t('inbox.desc')}</p>
 
             {note && (
@@ -90,12 +90,19 @@ export const ConflictInboxPanel: React.FC = () => {
                         <li key={entry.path} className="zenith-sync__inboxRow">
                             <FileWarning size={14} className="zenith-sync__inboxIcon" />
                             <div className="zenith-sync__inboxText">
-                                <a
+                                {/* A button, not a bare anchor: it opens a file in the
+                                    vault rather than going to a URL, and an
+                                    anchor with no href cannot be reached from
+                                    the keyboard — which on this panel made the
+                                    one control naming WHICH file is in question
+                                    unreachable. */}
+                                <button
+                                    type="button"
                                     className="zenith-sync__inboxPath"
                                     onClick={() => void openFileAtLine(app, entry.path)}
                                 >
                                     {entry.path}
-                                </a>
+                                </button>
                                 <span className="zenith-sync__peerMeta">
                                     {t(`inbox.source.${entry.source}`)}
                                     {' · '}
@@ -149,6 +156,6 @@ export const ConflictInboxPanel: React.FC = () => {
                     {t('inbox.rescan')}
                 </button>
             </div>
-        </section>
+        </SyncSection>
     );
 };

@@ -3,7 +3,22 @@
    Bridges Obsidian theme variables for consistent styling.
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-.zenith-root {
+/* Declared on two hosts, not one.
+ *
+ * `.zenith-root` is every view, code block and modal. The settings tab is the
+ * exception: it mounts React into Obsidian's own dialog and deliberately does
+ * NOT carry `.zenith-root`, because that class also sets a height, a scroll
+ * and a background that belong to a view rather than to a page of a dialog —
+ * and because several hundred `.zenith-root .thing` rules would start applying
+ * to a form that was never laid out for them.
+ *
+ * The tokens themselves carry none of that risk: a custom property does
+ * nothing until something references it. So the settings wrapper gets the
+ * declarations and none of the layout. Without this, any Zenith component
+ * embedded in settings — the sync page is the one that does it — resolves
+ * every colour, radius and gap to nothing and renders as unstyled markup. */
+.zenith-root,
+.zenith-settings-wrapper {
     /* ── Surface Colors ─────────────────────────── */
     --zenith-bg-primary: var(--background-primary);
     --zenith-bg-secondary: var(--background-secondary);
@@ -111,7 +126,8 @@
 
 /* On a light card the same trick inverts: daylight is already the paper, so the
    readable signal is a cool tint over the night hours instead. */
-.theme-light .zenith-root {
+.theme-light .zenith-root,
+.theme-light .zenith-settings-wrapper {
     --zenith-sky-day: rgba(255, 186, 60, 0.10);
     --zenith-sky-night: rgba(40, 60, 120, 0.10);
     --zenith-star: #7385b5;
@@ -128,7 +144,8 @@
    Rescales the spacing tokens rather than overriding individual rules, so every
    surface follows without each one needing its own compact variant. Set on
    <body>, because `.zenith-root` is created per view and there are several. */
-body.zenith-density-compact .zenith-root {
+body.zenith-density-compact .zenith-root,
+body.zenith-density-compact .zenith-settings-wrapper {
     --zenith-space-xs: 3px;
     --zenith-space-sm: 6px;
     --zenith-space-md: 11px;
@@ -137,7 +154,8 @@ body.zenith-density-compact .zenith-root {
     --zenith-space-2xl: 32px;
 }
 
-body.zenith-density-spacious .zenith-root {
+body.zenith-density-spacious .zenith-root,
+body.zenith-density-spacious .zenith-settings-wrapper {
     --zenith-space-xs: 6px;
     --zenith-space-sm: 11px;
     --zenith-space-md: 20px;
@@ -150,13 +168,15 @@ body.zenith-density-spacious .zenith-root {
    Zeroes the transition tokens and kills animation outright. `!important` and
    the wildcard are deliberate: this has to beat every rule that sets its own
    animation, and a half-honoured motion setting is worse than none. */
-body.zenith-no-motion .zenith-root {
+body.zenith-no-motion .zenith-root,
+body.zenith-no-motion .zenith-settings-wrapper {
     --zenith-transition-fast: 0s;
     --zenith-transition: 0s;
     --zenith-transition-slow: 0s;
 }
 
 body.zenith-no-motion .zenith-root *,
+body.zenith-no-motion .zenith-settings-wrapper *,
 body.zenith-no-motion .zenith-dialog,
 body.zenith-no-motion .zenith-dialog * {
     animation: none !important;

@@ -14,7 +14,35 @@ import { DynamicIcon } from '../../components/shared/DynamicIcon';
  * All of them are presentational: value in, change out, no store access. That
  * is what lets the same components drive both core settings and a third-party
  * module's own bucket.
+ *
+ * ── How a control learns its own name ──
+ *
+ * Every row had a label and a control and nothing joining the two: the label
+ * was a span, so a screen reader announced "checkbox, unchecked" with no word
+ * about what it switched, and a pointer landing on the words did nothing.
+ * Passing an id down through a dozen call sites would mean every hand-rolled
+ * row in the plugin inventing one.
+ *
+ * So the row mints the ids and puts them in context; a control picks up
+ * whichever it needs and works without them when it is standing on its own.
+ * `id` is the control, `labelId` the words — a radio group cannot be the
+ * target of `for`, so it points back at the label instead — and `describedBy`
+ * gathers the description and the error the row is already drawing.
  */
+
+export interface FieldIds {
+    /** For the one form control this row labels. */
+    id: string;
+    /** The label element itself, for controls that are a group, not a field. */
+    labelId: string;
+    /** Description and error lines, already joined. */
+    describedBy?: string;
+}
+
+const FieldIdContext = React.createContext<FieldIds | null>(null);
+
+/** The ids of the row this control sits in, if it sits in one at all. */
+export const useFieldIds = (): FieldIds | null => React.useContext(FieldIdContext);
 
 /**
  * A caveat, folded into a mark beside the label.
@@ -56,7 +84,8 @@ export const InfoHint: React.FC<{ text: string; label?: string }> = ({ text, lab
         // Below by default, above when there is no room — the rows near the
         // bottom of a long settings page are the common case, not the corner one.
         const below = from.bottom + 8;
-        const top = below + box.height > window.innerHeight - edge ? from.top - box.height - 8 : below;
+        const top =
+            below + box.height > window.innerHeight - edge ? from.top - box.height - 8 : below;
 
         tip.style.left = `${left}px`;
         tip.style.top = `${top}px`;
@@ -105,10 +134,37 @@ interface RowProps {
     noteLabel?: string;
     error?: string;
     layout?: 'row' | 'stack';
+    /**
+     * The control is small enough to live beside the words at any width — a
+     * checkbox, a short number.
+     *
+     * It only matters on a narrow pane, where every other row gives up and
+     * stacks: a checkbox stacked under its own label would put it back at the
+     * bottom-left corner this layout exists to get it out of.
+     */
+    compact?: boolean;
+    /**
+     * The control is several elements rather than one field — a radio group, a
+     * row of chips, a button.
+     *
+     * A `for` attribute may only point at a single labelable element, and
+     * pointing it at a button would mean a click on the words fires the
+     * action. Those rows get a plain span that the group names with
+     * `aria-labelledby` instead.
+     */
+    group?: boolean;
     disabled?: boolean;
     children: React.ReactNode;
 }
 
+/**
+ * One setting: what it is on the left, the control on the right.
+ *
+ * The control cell is pinned to the end of the row rather than merely placed
+ * after the label — see `--zs-*` in the stylesheet for why a row with a long
+ * description used to drop its checkbox onto a line of its own, at its own
+ * left edge, while the row above kept its own at the right.
+ */
 export const SettingRow: React.FC<RowProps> = ({
     label,
     desc,
@@ -116,47 +172,100 @@ export const SettingRow: React.FC<RowProps> = ({
     noteLabel,
     error,
     layout = 'row',
+    compact,
+    group,
     disabled,
     children,
-}) => (
-    <div
-        className={[
-            'zenith-settings__item',
-            layout === 'stack' ? 'zenith-settings__item--stack' : '',
-            disabled ? 'is-disabled' : '',
-        ]
-            .filter(Boolean)
-            .join(' ')}
-    >
-        <div className="zenith-settings__item-info">
-            <span className="zenith-settings__item-name">
-                {label}
-                {note && <InfoHint text={note} label={noteLabel} />}
-            </span>
-            {desc && <span className="zenith-settings__item-desc">{desc}</span>}
+}) => {
+    const base = React.useId();
+    const descId = desc ? `${base}-desc` : undefined;
+    const errorId = error ? `${base}-error` : undefined;
+
+    const ids = React.useMemo<FieldIds>(
+        () => ({
+            id: `${base}-control`,
+            labelId: `${base}-label`,
+            describedBy: [descId, errorId].filter(Boolean).join(' ') || undefined,
+        }),
+        [base, descId, errorId]
+    );
+
+    const name = (
+        <>
+            {label}
+            {note && <InfoHint text={note} label={noteLabel} />}
+        </>
+    );
+
+    return (
+        <div
+            className={[
+                'zenith-settings__item',
+                layout === 'stack' ? 'zenith-settings__item--stack' : '',
+                compact ? 'zenith-settings__item--compact' : '',
+                disabled ? 'is-disabled' : '',
+            ]
+                .filter(Boolean)
+                .join(' ')}
+        >
+            <div className="zenith-settings__item-info">
+                {group ? (
+                    <span className="zenith-settings__item-name" id={ids.labelId}>
+                        {name}
+                    </span>
+                ) : (
+                    <label className="zenith-settings__item-name" id={ids.labelId} htmlFor={ids.id}>
+                        {name}
+                    </label>
+                )}
+                {desc && (
+                    <span className="zenith-settings__item-desc" id={descId}>
+                        {desc}
+                    </span>
+                )}
+            </div>
+            <div className="zenith-settings__item-control">
+                <FieldIdContext.Provider value={ids}>{children}</FieldIdContext.Provider>
+            </div>
+            {/* An error stays on the page rather than hiding behind a mark. A note
+                is background someone can choose to read; an error is the reason the
+                thing in front of them is not working. */}
+            {error && (
+                <div
+                    className="zenith-settings__hint zenith-settings__hint--warn"
+                    id={errorId}
+                    role="alert"
+                >
+                    {error}
+                </div>
+            )}
         </div>
-        <div className="zenith-settings__item-control">{children}</div>
-        {/* An error stays on the page rather than hiding behind a mark. A note
-            is background someone can choose to read; an error is the reason the
-            thing in front of them is not working. */}
-        {error && <div className="zenith-settings__hint zenith-settings__hint--warn">{error}</div>}
-    </div>
-);
+    );
+};
 
 export const Toggle: React.FC<{
     checked: boolean;
     disabled?: boolean;
     onChange: (v: boolean) => void;
-}> = ({ checked, disabled, onChange }) => (
-    <label className="zenith-settings__toggle-label">
-        <input
-            type="checkbox"
-            checked={checked}
-            disabled={disabled}
-            onChange={(e) => onChange(e.target.checked)}
-        />
-    </label>
-);
+}> = ({ checked, disabled, onChange }) => {
+    const ids = useFieldIds();
+
+    // A span, not a second label element: the row already draws one and points
+    // it at this input by id, and nesting the box inside another label gave it
+    // two names, the outer of which named nothing.
+    return (
+        <span className="zenith-settings__toggle-label">
+            <input
+                type="checkbox"
+                id={ids?.id}
+                aria-describedby={ids?.describedBy}
+                checked={checked}
+                disabled={disabled}
+                onChange={(e) => onChange(e.target.checked)}
+            />
+        </span>
+    );
+};
 
 export interface ChoiceOption {
     value: string;
@@ -169,50 +278,106 @@ export const Select: React.FC<{
     options: ChoiceOption[];
     disabled?: boolean;
     onChange: (v: string) => void;
-}> = ({ value, options, disabled, onChange }) => (
-    <select
-        className="zenith-settings__select"
-        value={value}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-    >
-        {options.map((o) => (
-            <option key={o.value} value={o.value}>
-                {o.label}
-            </option>
-        ))}
-    </select>
-);
+}> = ({ value, options, disabled, onChange }) => {
+    const ids = useFieldIds();
+
+    return (
+        <select
+            className="zenith-settings__select"
+            id={ids?.id}
+            aria-describedby={ids?.describedBy}
+            value={value}
+            disabled={disabled}
+            onChange={(e) => onChange(e.target.value)}
+        >
+            {options.map((o) => (
+                <option key={o.value} value={o.value}>
+                    {o.label}
+                </option>
+            ))}
+        </select>
+    );
+};
 
 /**
- * A short list of choices, shown all at once. Better than a `<select>` for two
- * or three options — the alternatives are visible without opening anything,
- * which on a phone saves a modal.
+ * A short list of choices, shown all at once. Better than a select for two or
+ * three options — the alternatives are visible without opening anything, which
+ * on a phone saves a modal.
+ *
+ * A real radio group, which means one tab stop and not four: the arrow keys
+ * move between the options and select as they go, which is what a radio group
+ * does everywhere else and what a keyboard user will try first. Without the
+ * roving `tabIndex` every backend on the sync page was its own stop, and
+ * tabbing past the control took as many presses as it had options.
  */
 export const Segmented: React.FC<{
     value: string;
     options: ChoiceOption[];
     disabled?: boolean;
     onChange: (v: string) => void;
-}> = ({ value, options, disabled, onChange }) => (
-    <div className="zenith-seg" role="radiogroup">
-        {options.map((o) => (
-            <button
-                key={o.value}
-                type="button"
-                role="radio"
-                aria-checked={o.value === value}
-                disabled={disabled}
-                className={`zenith-seg__opt${o.value === value ? ' is-active' : ''}`}
-                onClick={() => onChange(o.value)}
-            >
-                {o.icon && <DynamicIcon name={o.icon} size={13} />}
-                {o.label}
-            </button>
-        ))}
-    </div>
-);
+}> = ({ value, options, disabled, onChange }) => {
+    const ids = useFieldIds();
+    const box = React.useRef<HTMLDivElement>(null);
 
+    const active = Math.max(
+        0,
+        options.findIndex((o) => o.value === value)
+    );
+
+    const step = (from: number, by: number) => {
+        const to = (from + by + options.length) % options.length;
+        const next = options[to];
+        if (!next) return;
+        onChange(next.value);
+        // Focus follows selection, or an arrow key would move the mark and
+        // leave the focus ring behind on the option just left.
+        box.current?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[to]?.focus();
+    };
+
+    return (
+        <div
+            ref={box}
+            className="zenith-seg"
+            role="radiogroup"
+            aria-labelledby={ids?.labelId}
+            aria-describedby={ids?.describedBy}
+        >
+            {options.map((o, i) => (
+                <button
+                    key={o.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={o.value === value}
+                    tabIndex={i === active ? 0 : -1}
+                    disabled={disabled}
+                    className={`zenith-seg__opt${o.value === value ? ' is-active' : ''}`}
+                    onClick={() => onChange(o.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            step(i, 1);
+                        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            step(i, -1);
+                        }
+                    }}
+                >
+                    {o.icon && <DynamicIcon name={o.icon} size={13} />}
+                    {o.label}
+                </button>
+            ))}
+        </div>
+    );
+};
+
+/**
+ * A number and the unit it is counted in, as one field.
+ *
+ * The unit used to be a loose word after the box, which read as a caption
+ * rather than as part of the control and sat off the input's baseline whenever
+ * either changed size. It is a suffix inside the same border now, so "15 min"
+ * is one object to look at and one focus ring goes round the whole of it.
+ */
 export const NumberInput: React.FC<{
     value: number;
     min?: number;
@@ -221,26 +386,40 @@ export const NumberInput: React.FC<{
     unit?: string;
     disabled?: boolean;
     onChange: (v: number) => void;
-}> = ({ value, min, max, step, unit, disabled, onChange }) => (
-    <div className="zenith-settings__num">
-        <input
-            type="number"
-            className="zenith-settings__input"
-            value={value}
-            min={min}
-            max={max}
-            step={step}
-            disabled={disabled}
-            onChange={(e) => {
-                const next = Number(e.target.value);
-                // An empty or half-typed box parses to NaN; keep the last good
-                // value rather than writing NaN into settings.
-                if (Number.isFinite(next)) onChange(next);
-            }}
-        />
-        {unit && <span className="zenith-settings__num-unit">{unit}</span>}
-    </div>
-);
+}> = ({ value, min, max, step, unit, disabled, onChange }) => {
+    const ids = useFieldIds();
+    const unitId = ids && unit ? `${ids.id}-unit` : undefined;
+
+    return (
+        <div className={`zenith-settings__num${disabled ? ' is-disabled' : ''}`}>
+            <input
+                type="number"
+                className="zenith-settings__input"
+                id={ids?.id}
+                // The unit is part of the question — "every 15" is not an
+                // answer without it — so it is announced with the field rather
+                // than left as decoration beside it.
+                aria-describedby={[ids?.describedBy, unitId].filter(Boolean).join(' ') || undefined}
+                value={value}
+                min={min}
+                max={max}
+                step={step}
+                disabled={disabled}
+                onChange={(e) => {
+                    const next = Number(e.target.value);
+                    // An empty or half-typed box parses to NaN; keep the last good
+                    // value rather than writing NaN into settings.
+                    if (Number.isFinite(next)) onChange(next);
+                }}
+            />
+            {unit && (
+                <span className="zenith-settings__num-unit" id={unitId}>
+                    {unit}
+                </span>
+            )}
+        </div>
+    );
+};
 
 export const Slider: React.FC<{
     value: number;
@@ -250,25 +429,34 @@ export const Slider: React.FC<{
     unit?: string;
     disabled?: boolean;
     onChange: (v: number) => void;
-}> = ({ value, min, max, step = 1, unit, disabled, onChange }) => (
-    <div className="zenith-settings__slider">
-        <input
-            type="range"
-            value={value}
-            min={min}
-            max={max}
-            step={step}
-            disabled={disabled}
-            onChange={(e) => onChange(Number(e.target.value))}
-        />
-        {/* The readout is the whole reason a slider is usable for a numeric
-            setting — without it the user is dragging at an unknown value. */}
-        <span className="zenith-settings__slider-value">
-            {value}
-            {unit ? ` ${unit}` : ''}
-        </span>
-    </div>
-);
+}> = ({ value, min, max, step = 1, unit, disabled, onChange }) => {
+    const ids = useFieldIds();
+
+    return (
+        <div className="zenith-settings__slider">
+            <input
+                type="range"
+                id={ids?.id}
+                aria-describedby={ids?.describedBy}
+                aria-valuetext={unit ? `${value} ${unit}` : undefined}
+                value={value}
+                min={min}
+                max={max}
+                step={step}
+                disabled={disabled}
+                onChange={(e) => onChange(Number(e.target.value))}
+            />
+            {/* The readout is the whole reason a slider is usable for a numeric
+                setting — without it the user is dragging at an unknown value.
+                Hidden from the reader, which has `aria-valuetext` for the same
+                fact and would otherwise say the number twice. */}
+            <span className="zenith-settings__slider-value" aria-hidden="true">
+                {value}
+                {unit ? ` ${unit}` : ''}
+            </span>
+        </div>
+    );
+};
 
 /**
  * A text field, optionally a masked one.
@@ -291,11 +479,14 @@ export const TextInput: React.FC<{
     onChange: (v: string) => void;
 }> = ({ value, placeholder, monospace, secret, revealLabel, hideLabel, disabled, onChange }) => {
     const [revealed, setRevealed] = React.useState(false);
+    const ids = useFieldIds();
 
     const input = (
         <input
             type={secret && !revealed ? 'password' : 'text'}
             className={`zenith-settings__input${monospace ? ' is-mono' : ''}`}
+            id={ids?.id}
+            aria-describedby={ids?.describedBy}
             value={value}
             placeholder={placeholder}
             disabled={disabled}
@@ -320,6 +511,7 @@ export const TextInput: React.FC<{
                 disabled={disabled}
                 aria-label={label}
                 aria-pressed={revealed}
+                aria-controls={ids?.id}
                 title={label}
             >
                 <DynamicIcon name={revealed ? 'eye-off' : 'eye'} size={15} />
@@ -335,16 +527,22 @@ export const TextArea: React.FC<{
     monospace?: boolean;
     disabled?: boolean;
     onChange: (v: string) => void;
-}> = ({ value, rows = 4, placeholder, monospace, disabled, onChange }) => (
-    <textarea
-        className={`zenith-settings__textarea${monospace ? ' is-mono' : ''}`}
-        value={value}
-        rows={rows}
-        placeholder={placeholder}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-    />
-);
+}> = ({ value, rows = 4, placeholder, monospace, disabled, onChange }) => {
+    const ids = useFieldIds();
+
+    return (
+        <textarea
+            className={`zenith-settings__textarea${monospace ? ' is-mono' : ''}`}
+            id={ids?.id}
+            aria-describedby={ids?.describedBy}
+            value={value}
+            rows={rows}
+            placeholder={placeholder}
+            disabled={disabled}
+            onChange={(e) => onChange(e.target.value)}
+        />
+    );
+};
 
 export const ColorInput: React.FC<{
     value: string;
@@ -353,63 +551,81 @@ export const ColorInput: React.FC<{
     resetLabel: string;
     disabled?: boolean;
     onChange: (v: string) => void;
-}> = ({ value, fallback = '#7c6cff', allowEmpty, resetLabel, disabled, onChange }) => (
-    <div className="zenith-settings__color-control">
-        <input
-            type="color"
-            className="zenith-settings__color"
-            value={value || fallback}
-            disabled={disabled}
-            onChange={(e) => onChange(e.target.value)}
-        />
-        <input
-            type="text"
-            className="zenith-settings__input"
-            value={value}
-            placeholder={fallback}
-            disabled={disabled}
-            onChange={(e) => onChange(e.target.value)}
-        />
-        {allowEmpty && (
-            <button
-                type="button"
-                className="zenith-settings__inline-btn"
+}> = ({ value, fallback = '#7c6cff', allowEmpty, resetLabel, disabled, onChange }) => {
+    const ids = useFieldIds();
+
+    return (
+        <div className="zenith-settings__color-control">
+            <input
+                type="color"
+                className="zenith-settings__color"
+                id={ids?.id}
+                aria-describedby={ids?.describedBy}
+                value={value || fallback}
                 disabled={disabled}
-                onClick={() => onChange('')}
-            >
-                {resetLabel}
-            </button>
-        )}
-    </div>
-);
+                onChange={(e) => onChange(e.target.value)}
+            />
+            {/* The same setting twice, so the second box borrows the first's
+                name rather than being announced as an unlabelled text field. */}
+            <input
+                type="text"
+                className="zenith-settings__input"
+                aria-labelledby={ids?.labelId}
+                value={value}
+                placeholder={fallback}
+                disabled={disabled}
+                onChange={(e) => onChange(e.target.value)}
+            />
+            {allowEmpty && (
+                <button
+                    type="button"
+                    className="zenith-settings__inline-btn"
+                    disabled={disabled}
+                    onClick={() => onChange('')}
+                >
+                    {resetLabel}
+                </button>
+            )}
+        </div>
+    );
+};
 
 export const MultiSelect: React.FC<{
     value: string[];
     options: ChoiceOption[];
     disabled?: boolean;
     onChange: (v: string[]) => void;
-}> = ({ value, options, disabled, onChange }) => (
-    <div className="zenith-settings__chips">
-        {options.map((o) => {
-            const on = value.includes(o.value);
-            return (
-                <button
-                    key={o.value}
-                    type="button"
-                    aria-pressed={on}
-                    disabled={disabled}
-                    className={`zenith-settings__chip${on ? ' is-active' : ''}`}
-                    onClick={() =>
-                        onChange(on ? value.filter((v) => v !== o.value) : [...value, o.value])
-                    }
-                >
-                    {o.icon && <DynamicIcon name={o.icon} size={12} />}
-                    {o.label}
-                </button>
-            );
-        })}
-    </div>
-);
+}> = ({ value, options, disabled, onChange }) => {
+    const ids = useFieldIds();
+
+    return (
+        <div
+            className="zenith-settings__chips"
+            role="group"
+            aria-labelledby={ids?.labelId}
+            aria-describedby={ids?.describedBy}
+        >
+            {options.map((o) => {
+                const on = value.includes(o.value);
+                return (
+                    <button
+                        key={o.value}
+                        type="button"
+                        aria-pressed={on}
+                        disabled={disabled}
+                        className={`zenith-settings__chip${on ? ' is-active' : ''}`}
+                        onClick={() =>
+                            onChange(on ? value.filter((v) => v !== o.value) : [...value, o.value])
+                        }
+                    >
+                        {o.icon && <DynamicIcon name={o.icon} size={12} />}
+                        {o.label}
+                    </button>
+                );
+            })}
+        </div>
+    );
+};
 
 export const ActionButton: React.FC<{
     label: string;
@@ -417,19 +633,24 @@ export const ActionButton: React.FC<{
     danger?: boolean;
     disabled?: boolean;
     onClick: () => void;
-}> = ({ label, cta, danger, disabled, onClick }) => (
-    <button
-        type="button"
-        className={[
-            'zenith-settings__inline-btn',
-            cta ? 'zenith-settings__inline-btn--cta' : '',
-            danger ? 'zenith-settings__inline-btn--danger' : '',
-        ]
-            .filter(Boolean)
-            .join(' ')}
-        disabled={disabled}
-        onClick={onClick}
-    >
-        {label}
-    </button>
-);
+}> = ({ label, cta, danger, disabled, onClick }) => {
+    const ids = useFieldIds();
+
+    return (
+        <button
+            type="button"
+            className={[
+                'zenith-settings__inline-btn',
+                cta ? 'zenith-settings__inline-btn--cta' : '',
+                danger ? 'zenith-settings__inline-btn--danger' : '',
+            ]
+                .filter(Boolean)
+                .join(' ')}
+            aria-describedby={ids?.describedBy}
+            disabled={disabled}
+            onClick={onClick}
+        >
+            {label}
+        </button>
+    );
+};

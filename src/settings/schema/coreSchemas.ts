@@ -22,6 +22,7 @@ export const generalSchema: CoreSettingsSchema = coreSchema({
                 {
                     type: 'custom',
                     key: 'location',
+                    row: true,
                     render: createPlaceField({
                         settingsKey: 'location',
                         labelKey: 'settings.location',
@@ -47,7 +48,6 @@ export const generalSchema: CoreSettingsSchema = coreSchema({
                     type: 'select',
                     key: 'language',
                     labelKey: 'settings.language',
-                    descKey: 'settings.language.desc',
                     default: 'auto',
                     options: [
                         { value: 'auto', labelKey: 'settings.language.auto' },
@@ -81,7 +81,6 @@ export const appearanceSchema: CoreSettingsSchema = coreSchema({
                     type: 'segmented',
                     key: 'uiDensity',
                     labelKey: 'settings.density',
-                    descKey: 'settings.density.desc',
                     default: 'comfortable',
                     options: [
                         { value: 'compact', labelKey: 'settings.density.compact' },

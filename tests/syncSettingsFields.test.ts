@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { DEFAULT_SETTINGS } from '../src/store/settingsSlice';
 import { syncSettingsSchema } from '../src/modules/sync/settings.schema';
-import { flattenFields } from '../src/settings/schema/helpers';
+import { flattenFields, visibleGroups } from '../src/settings/schema/helpers';
 import { isValueField, type SettingsBag } from '../src/settings/schema/types';
 
 /**
@@ -25,11 +25,21 @@ const S3 = [
     'syncS3PathStyle',
 ];
 
+/**
+ * The keys the form would actually draw for these values.
+ *
+ * Goes through `visibleGroups` rather than filtering flattened fields, because
+ * that is what `SettingsForm` calls and a group carries a `showIf` of its own.
+ * Filtering the flat list saw only half the rule: the encryption and safety
+ * groups are hidden wholesale when file sync is off, and a test that did not
+ * know about group predicates reported every field inside them as on screen.
+ *
+ * A folded group counts as visible. It is one press away and, unlike a hidden
+ * field, it says its own name — which is the property these tests are about.
+ */
 function visible(values: Partial<SettingsBag>): string[] {
     const bag = { ...DEFAULT_SETTINGS, syncFilesEnabled: true, ...values } as SettingsBag;
-    return flattenFields(syncSettingsSchema)
-        .filter((field) => !field.showIf || field.showIf(bag))
-        .map((field) => field.key);
+    return visibleGroups(syncSettingsSchema, bag).flatMap((g) => g.fields.map((f) => f.key));
 }
 
 describe('sync settings show only what the chosen backend needs', () => {
@@ -67,9 +77,9 @@ describe('sync settings show only what the chosen backend needs', () => {
 
     it('shows nothing but the switch until file sync is turned on', () => {
         const bag = { ...DEFAULT_SETTINGS, syncFilesEnabled: false } as SettingsBag;
-        const keys = flattenFields(syncSettingsSchema)
-            .filter((field) => !field.showIf || field.showIf(bag))
-            .map((field) => field.key);
+        const keys = visibleGroups(syncSettingsSchema, bag).flatMap((g) =>
+            g.fields.map((f) => f.key)
+        );
 
         expect(keys).toContain('syncFilesEnabled');
         for (const key of [...WEBDAV, ...S3, 'syncRemoteKind', 'syncEncryptionEnabled']) {

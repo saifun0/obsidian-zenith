@@ -21,7 +21,6 @@ export const navigatorSettingsSchema = coreSchema({
                     type: 'segmented',
                     key: 'navigatorLayout',
                     labelKey: 'settings.navLayout',
-                    descKey: 'settings.navLayout.desc',
                     default: 'grid',
                     options: [
                         { value: 'grid', labelKey: 'settings.navLayout.grid' },
@@ -32,7 +31,6 @@ export const navigatorSettingsSchema = coreSchema({
                     type: 'toggle',
                     key: 'navigatorShowLabels',
                     labelKey: 'settings.navLabels',
-                    descKey: 'settings.navLabels.desc',
                     default: true,
                     // The list layout is nothing but labels, so the switch only
                     // means something for the grid.
@@ -49,7 +47,6 @@ export const navigatorSettingsSchema = coreSchema({
                     type: 'multiselect',
                     key: 'navigatorHiddenActions',
                     labelKey: 'settings.navHidden',
-                    descKey: 'settings.navHidden.desc',
                     default: [],
                     options: ({ t }) =>
                         navActions.getSnapshot().map((a) => ({

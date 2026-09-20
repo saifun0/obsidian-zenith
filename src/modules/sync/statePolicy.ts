@@ -218,6 +218,8 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // device and every backup of the vault rather than keeping it where it was
     // entered.
     syncFilesEnabled: { scope: 'device' },
+    syncFilesAuto: { scope: 'device' },
+    syncFilesIntervalMinutes: { scope: 'device' },
     syncRemoteKind: { scope: 'device' },
     syncRemoteUrl: { scope: 'device' },
     syncS3Endpoint: { scope: 'device' },
