@@ -23,53 +23,18 @@
 
 /* Inside the settings dialog the page is a section of a longer form, not a
    view: the dialog supplies the outer padding, and a second inset inside it
-   reads as a box drawn around one group for no reason. */
+   reads as a box drawn around one group for no reason.
+
+   `display: block` is the part that matters, and it looks like a downgrade.
+   Every child here is either a section heading or a settings card, both of
+   which carry the form's own vertical margins — and margins only collapse in
+   a block container. As a flex column this panel got those margins ADDED to
+   its own gap, so its headings sat at one distance from the cards they name
+   and the cards at another from the next heading, while the identical markup
+   ten pixels below in the same dialog sat correctly. */
 .zenith-sync.is-embedded {
+    display: block;
     padding: 0;
-    gap: var(--zenith-space-md);
-}
-
-/* ── Header ──────────────────────────────────────── */
-.zenith-sync__head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--zenith-space-md);
-    flex-wrap: wrap;
-}
-
-.zenith-sync__title {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-.zenith-sync__sub {
-    margin: var(--zenith-space-xs) 0 0;
-    color: var(--zenith-text-muted);
-    font-size: 0.85rem;
-}
-
-.zenith-sync button.zenith-sync__cta {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--zenith-space-xs);
-    padding: var(--zenith-space-xs) var(--zenith-space-md);
-    border: none;
-    border-radius: var(--zenith-radius-md);
-    background: var(--zenith-accent);
-    color: #fff;
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
-.zenith-sync button.zenith-sync__cta:hover:not(:disabled) {
-    background: var(--zenith-accent-hover);
-}
-
-.zenith-sync button.zenith-sync__cta:disabled {
-    opacity: 0.5;
-    cursor: default;
 }
 
 /* The refresh glyph turns only while a run is in flight, so the control says
@@ -96,40 +61,38 @@
     }
 }
 
-/* ── Cards ───────────────────────────────────────── */
-.zenith-sync__card {
-    padding: var(--zenith-space-md);
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-lg);
-    background: var(--zenith-bg-secondary);
-}
-
-/* A card reporting nothing keeps its title and loses its body — see the `Card`
-   component. Tightened here as well, so an empty section is one line tall
-   rather than one line inside a box built for a list. */
-.zenith-sync__card.is-quiet {
-    padding: var(--zenith-space-sm) var(--zenith-space-md);
-    background: none;
-}
-
-.zenith-sync__cardHead {
+/* ── Sections ─────────────────────────────────────
+   The heading of a sync section, which is a settings section label that also
+   has to carry a tick or a control. Flex rather than a block, and the actions
+   are pushed to the far end so a "show all 40" sits where the eye already
+   expects a control on this page. */
+.zenith-sync__sectionHead {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: var(--zenith-space-sm);
-    min-width: 0;
 }
 
-.zenith-sync__cardTitle {
-    margin: 0 0 var(--zenith-space-sm);
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--zenith-text-muted);
+/* A control in the heading goes to the far end; a tick stays beside the words
+   it qualifies. Said as two rules rather than one clever one, because "the
+   last child unless it is also the first" is a sentence nobody should have to
+   reconstruct from a selector. */
+.zenith-sync__sectionHead button {
+    margin-left: auto;
 }
 
-.zenith-sync__cardHead .zenith-sync__cardTitle {
-    margin-bottom: 0;
+/* The label is uppercase, and that inherits. "Nothing collided." is a
+   sentence, not a label. */
+.zenith-sync__sectionHead .zenith-sync__quiet {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+}
+
+/* The card's inside. The settings card is built for rows that bring their own
+   padding; the sync record's contents are lists and paragraphs, so the padding
+   is declared here once instead of on each of them. */
+.zenith-sync__panel {
+    padding: var(--zenith-space-md);
 }
 
 /* "Nothing collided." — the whole body of a section, set beside its title. */
@@ -143,63 +106,6 @@
 
 .zenith-sync__quiet svg {
     color: var(--zenith-success);
-}
-
-/* ── The state row ───────────────────────────────────
-   The page's first claim, and the only one set at this size: is sync running,
-   when did it last run, and the one button that makes it run now. Everything
-   below is detail about this line, which is why it is a row of its own rather
-   than the last line of a card. */
-.zenith-sync__state {
-    display: flex;
-    align-items: center;
-    gap: var(--zenith-space-md);
-    flex-wrap: wrap;
-    padding: var(--zenith-space-md);
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-lg);
-    background: var(--zenith-bg-secondary);
-}
-
-.zenith-sync__state.is-error {
-    border-color: color-mix(in srgb, var(--zenith-danger) 45%, var(--zenith-border));
-}
-
-.zenith-sync__state .zenith-sync__dot {
-    flex: none;
-    width: 0.6rem;
-    height: 0.6rem;
-    margin: 0;
-}
-
-.zenith-sync__stateText {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1 1 12rem;
-    min-width: 0;
-}
-
-.zenith-sync__stateLine {
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.zenith-sync__state.is-error .zenith-sync__stateLine {
-    color: var(--zenith-danger);
-}
-
-/* The times, and the error's own text when there is one. Wraps rather than
-   ellipsises: a server's complaint is worth reading in full. */
-.zenith-sync__stateMeta {
-    color: var(--zenith-text-muted);
-    font-size: 0.78rem;
-    overflow-wrap: break-word;
-}
-
-.zenith-sync__state .zenith-sync__cta {
-    flex: none;
-    margin-left: auto;
 }
 
 .zenith-sync__row {
@@ -228,25 +134,6 @@
     margin: var(--zenith-space-sm) 0 0;
     color: var(--zenith-text-muted);
     font-size: 0.8rem;
-}
-
-/* State is carried by a dot beside the word, not by colouring the word — the
-   text has to stay readable on both themes, and green-on-green does not. */
-.zenith-sync__dot {
-    display: inline-block;
-    width: 0.5rem;
-    height: 0.5rem;
-    margin-right: var(--zenith-space-xs);
-    border-radius: 50%;
-    vertical-align: baseline;
-}
-
-.zenith-sync__dot.is-on {
-    background: var(--zenith-success);
-}
-
-.zenith-sync__dot.is-off {
-    background: var(--zenith-text-faint);
 }
 
 /* ── Lists ───────────────────────────────────────── */
@@ -401,6 +288,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    /* `rtl` clips the START of the line, so the filename — the part that says
+       which file this is — survives. It also reorders the run of digits and
+       punctuation a vault of numbered folders begins with, which put the "30"
+       of "30 Projects/..." at the far end of the line. The `<bdi>` at the call
+       site isolates the text so it keeps its own direction inside a container
+       that has the opposite one. */
     direction: rtl;
     text-align: left;
     color: var(--zenith-text-faint);
@@ -480,6 +373,86 @@
 
 .zenith-sync button.zenith-sync__btn.is-primary:hover:not(:disabled) {
     background: var(--zenith-accent-hover);
+}
+
+/* ── The two that are not steps ───────────────────
+   Test and Forget, at the foot of the card, below a rule so nothing above
+   them looks like it continues here. Two weights rather than one: testing the
+   connection is what you press while setting a server up and belongs to the
+   ordinary button vocabulary, while forgetting the sync history is a once-a-
+   year decision and stays text, where it cannot be pressed by mistake on the
+   way to something else. */
+.zenith-sync__footActions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--zenith-space-md);
+    margin-top: var(--zenith-space-md);
+    padding-top: var(--zenith-space-sm);
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-sync button.zenith-sync__quietBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zenith-space-xs);
+    height: auto;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+.zenith-sync button.zenith-sync__quietBtn:hover:not(:disabled) {
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-sync button.zenith-sync__quietBtn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* ── The escape hatch ─────────────────────────────
+   Forcing one side over the other. Set off by a rule and its own label so it
+   reads as a different kind of action from the sync above it, but on the page
+   rather than behind a disclosure — the first version folded these away and
+   they turned out to be unfindable rather than discreet. */
+.zenith-sync__force {
+    margin-top: var(--zenith-space-md);
+    padding-top: var(--zenith-space-sm);
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-sync__forceLabel {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--zenith-text-faint);
+}
+
+/* Outlined, not filled. These sit on screen permanently, and two solid red
+   plates beside the primary action would read as the page's main business.
+   The filled danger treatment is kept for the confirmation, which is the
+   press that actually moves files. */
+.zenith-sync button.zenith-sync__btn.is-dangerGhost {
+    border-color: color-mix(in srgb, var(--zenith-danger) 45%, transparent);
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-danger);
+}
+
+.zenith-sync button.zenith-sync__btn.is-dangerGhost:hover:not(:disabled) {
+    border-color: var(--zenith-danger);
+    background: var(--zenith-danger-bg);
+    box-shadow: none;
 }
 
 /* Overriding a blocked plan gets the danger treatment: the button is the last
@@ -621,15 +594,30 @@
     min-width: 0;
 }
 
-.zenith-sync__inboxPath {
+/* A path that opens the file it names. It was an anchor with no href, which
+   looks like a link, is not one, and cannot be tabbed to; as a button it needs
+   the plate and the padding Obsidian gives bare buttons taken back off, at the
+   parent-plus-tag weight the rest of this file uses. */
+.zenith-sync button.zenith-sync__inboxPath {
+    display: inline;
+    width: auto;
+    height: auto;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
     overflow-wrap: anywhere;
+    text-align: left;
     font-family: var(--zenith-font-mono);
     font-size: 0.8rem;
     cursor: pointer;
     color: var(--zenith-accent);
 }
 
-.zenith-sync__inboxPath:hover {
+.zenith-sync button.zenith-sync__inboxPath:hover {
+    background: none;
+    box-shadow: none;
     text-decoration: underline;
 }
 
@@ -737,12 +725,29 @@
     font-variant-numeric: normal;
 }
 
+/* The way out of a notice that is reporting a plan rather than a transfer.
+   A held run has somewhere to go — the sync page, where the plan is waiting —
+   and a notice that named the problem without offering that would be telling
+   the user about a page they then have to go and find. */
+.zenith-syncnotice__link {
+    margin-top: 6px;
+    color: var(--text-accent, var(--interactive-accent));
+    font-size: 0.85em;
+    cursor: pointer;
+}
+
+.zenith-syncnotice__link:hover {
+    text-decoration: underline;
+}
+
 /* The file in flight. Ellipsised from the left, because the end of a path is
    the part that says which file this is. */
 .zenith-syncnotice__file {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    /* See `zenith-sync__progressFile`: the direction is for the ellipsis, and
+       the `<bdi>` inside is what stops it reordering the path. */
     direction: rtl;
     text-align: left;
     color: var(--text-faint);
@@ -761,4 +766,349 @@ body.zenith-no-motion .zenith-syncnotice__fill {
     .zenith-sync__barFill {
         transition: none;
     }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Sync, the quick dialog
+
+   Four lines and three buttons, opened from the ribbon. It replaced a
+   workspace tab, and the point of the replacement is that it costs nothing to
+   open and nothing to close — so it is sized to its content rather than to the
+   screen, and the first screen never scrolls.
+
+   Buttons go through the block root (parent + tag, 0,2,1) like the rest of
+   Zenith: Obsidian styles bare button:not(.clickable-icon) at (0,1,1) with its
+   own plate and shadow, and a plain class selector ties with that and loses on
+   source order.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.zenith-syncq-modal .modal-content {
+    padding-top: var(--zenith-space-sm);
+}
+
+.zenith-syncq {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-sm);
+    min-width: 0;
+    font-family: var(--zenith-font);
+}
+
+/* The one fact the dialog exists to state. The time carries the emphasis, not
+   the word before it — somebody opening this already knows they are looking at
+   sync, and wants to know when. */
+.zenith-syncq__when {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--zenith-space-md);
+    margin: 0 0 var(--zenith-space-xs);
+    color: var(--zenith-text-muted);
+    font-size: 0.85rem;
+}
+
+.zenith-syncq__when strong {
+    color: var(--zenith-text-normal);
+    font-weight: 600;
+}
+
+.zenith-syncq button.zenith-syncq__go {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--zenith-space-sm);
+    width: 100%;
+    height: auto;
+    padding: var(--zenith-space-sm) var(--zenith-space-md);
+    border: none;
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-accent);
+    box-shadow: none;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.zenith-syncq button.zenith-syncq__go:hover:not(:disabled) {
+    background: var(--zenith-accent-hover);
+    box-shadow: none;
+}
+
+.zenith-syncq button.zenith-syncq__go:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.zenith-syncq__pair {
+    display: flex;
+    gap: var(--zenith-space-sm);
+}
+
+/* Outlined rather than filled: these overrule the comparison, and two solid
+   red plates under the primary action would read as the dialog's main
+   business. The filled treatment is saved for the confirmation. */
+.zenith-syncq button.zenith-syncq__side {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--zenith-space-xs);
+    flex: 1 1 0;
+    min-width: 0;
+    height: auto;
+    padding: var(--zenith-space-xs) var(--zenith-space-sm);
+    border: 1px solid color-mix(in srgb, var(--zenith-danger) 40%, transparent);
+    border-radius: var(--zenith-radius-md);
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-danger);
+    font-size: 0.8rem;
+    white-space: normal;
+    cursor: pointer;
+}
+
+.zenith-syncq button.zenith-syncq__side:hover:not(:disabled) {
+    border-color: var(--zenith-danger);
+    background: var(--zenith-danger-bg);
+    box-shadow: none;
+}
+
+.zenith-syncq button.zenith-syncq__side:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* ── The review screen ───────────────────────────── */
+
+/* Back is the heading. One element rather than a chevron beside a title,
+   because the title here always names the thing you would be going back from,
+   and two controls for one idea is one too many. */
+.zenith-syncq button.zenith-syncq__back {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--zenith-space-xs);
+    width: 100%;
+    height: auto;
+    padding: 0 0 var(--zenith-space-xs);
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: left;
+    white-space: normal;
+    cursor: pointer;
+}
+
+.zenith-syncq button.zenith-syncq__back:hover {
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-syncq__counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-md);
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-syncq__counts .is-danger {
+    color: var(--zenith-danger);
+    font-weight: 600;
+}
+
+/* Every deletion by name. This list is the reason the screen exists, so it is
+   the one thing here allowed to scroll. */
+.zenith-syncq__deletions {
+    list-style: none;
+    margin: 0;
+    padding: var(--zenith-space-sm);
+    max-height: 13rem;
+    overflow-y: auto;
+    border: 1px solid color-mix(in srgb, var(--zenith-danger) 30%, transparent);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-danger-bg);
+}
+
+.zenith-syncq__deletions li {
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-xs);
+    min-width: 0;
+    padding: 2px 0;
+    font-size: 0.78rem;
+}
+
+.zenith-syncq__deletions li svg {
+    flex: none;
+    color: var(--zenith-danger);
+}
+
+/* Wrapped, not truncated. Everywhere else a path is a passing detail and
+   losing its middle costs nothing; here the list IS the safeguard, and a
+   deletion the user could not read is a deletion they did not consent to. */
+.zenith-syncq__deletions li span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.zenith-syncq__deletions li.is-more {
+    color: var(--zenith-text-muted);
+    font-style: italic;
+}
+
+.zenith-syncq__all {
+    font-size: 0.8rem;
+}
+
+.zenith-syncq__all > summary {
+    width: fit-content;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+    list-style: none;
+}
+
+.zenith-syncq__all > summary::-webkit-details-marker {
+    display: none;
+}
+
+.zenith-syncq__all > summary:hover {
+    color: var(--zenith-text-normal);
+}
+
+.zenith-syncq__rows {
+    list-style: none;
+    margin: var(--zenith-space-xs) 0 0;
+    padding: 0;
+    max-height: 11rem;
+    overflow-y: auto;
+}
+
+.zenith-syncq__rows li {
+    display: flex;
+    gap: var(--zenith-space-sm);
+    min-width: 0;
+    padding: 2px 0;
+    font-size: 0.76rem;
+}
+
+.zenith-syncq__rowAct {
+    flex: none;
+    width: 7.5rem;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-syncq__rowKey {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--zenith-text-muted);
+}
+
+/* Cancel first and Confirm last, but Cancel is the one that looks pressable at
+   rest. The user arrived here by pressing something already; this row's job is
+   to offer them somewhere to stop. */
+.zenith-syncq__decide {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--zenith-space-sm);
+    margin-top: var(--zenith-space-xs);
+}
+
+.zenith-syncq button.zenith-syncq__cancel {
+    height: auto;
+    padding: var(--zenith-space-xs) var(--zenith-space-md);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-bg-primary);
+    box-shadow: none;
+    font-size: 0.83rem;
+    cursor: pointer;
+}
+
+.zenith-syncq button.zenith-syncq__cancel:hover {
+    background: var(--zenith-bg-hover);
+    box-shadow: none;
+}
+
+.zenith-syncq button.zenith-syncq__confirm {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zenith-space-xs);
+    height: auto;
+    padding: var(--zenith-space-xs) var(--zenith-space-md);
+    border: none;
+    border-radius: var(--zenith-radius-md);
+    background: var(--zenith-danger);
+    box-shadow: none;
+    color: #fff;
+    font-size: 0.83rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.zenith-syncq button.zenith-syncq__confirm:hover {
+    background: color-mix(in srgb, var(--zenith-danger) 85%, #000);
+    box-shadow: none;
+}
+
+.zenith-syncq__progress {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-xs);
+}
+
+.zenith-syncq__bar {
+    height: 5px;
+    border-radius: 999px;
+    background: var(--zenith-bg-tertiary);
+    overflow: hidden;
+}
+
+.zenith-syncq__barFill {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--zenith-accent);
+    transition: width 240ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.zenith-syncq__meta,
+.zenith-syncq__hint {
+    margin: 0;
+    color: var(--zenith-text-muted);
+    font-size: 0.8rem;
+}
+
+.zenith-syncq__error {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--zenith-space-xs);
+    margin: 0;
+    color: var(--zenith-danger);
+    font-size: 0.8rem;
+    overflow-wrap: break-word;
+}
+
+.zenith-syncq__error svg {
+    flex: none;
+    margin-top: 2px;
+}
+
+/* ── Focus ──
+   The same ring the settings form draws, in the same accent, on the buttons
+   this page adds to it. Scoped through `.zenith-sync` for the same reason the
+   buttons themselves are: Obsidian styles bare buttons at a specificity a
+   plain class only ties with. */
+.zenith-sync button:focus-visible,
+.zenith-sync a:focus-visible {
+    outline: 2px solid var(--zenith-accent);
+    outline-offset: 2px;
+    border-radius: var(--zenith-radius-sm);
 }

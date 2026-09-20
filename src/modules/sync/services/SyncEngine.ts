@@ -2,12 +2,13 @@ import type { ModuleFs } from '../../../core/moduleFs';
 import {
     ACTIONABLE_DECISIONS,
     type FileEntity,
+    type ForceDirection,
     type PlanOptions,
     type PrevSyncRecord,
     type SyncPlan,
     type SyncPlanItem,
 } from '../fileSyncTypes';
-import { buildSyncPlan, toPrevRecord } from './syncPlan';
+import { buildForcedPlan, buildSyncPlan, toPrevRecord } from './syncPlan';
 import { mergeMarkdown, type MergeNote } from './conflictResolve';
 import { mergeCanvas } from './canvasMerge';
 import { PrevSyncStore } from './prevSyncStore';
@@ -131,6 +132,36 @@ export class SyncEngine {
         ]);
 
         return buildSyncPlan(local, remote, prev, {
+            conflictAction: this.opts.conflictAction,
+            protectModifyRatio: this.opts.protectModifyRatio,
+            protectMinFiles: PROTECT_MIN_FILES,
+            maxFileSize: this.opts.maxFileSize,
+            mtimeToleranceMs: MTIME_TOLERANCE_MS,
+            isExcluded: this.excluder(),
+            isMergeable: isMergeableKey,
+            deviceLabel: this.opts.deviceLabel,
+            now,
+            firstRun: prev.length === 0,
+        });
+    }
+
+    /**
+     * Work out what overwriting one side with the other would do.
+     *
+     * Same three listings as `plan()`, handed to a builder that has been told
+     * the answer instead of working it out — see `buildForcedPlan`. It is a
+     * separate entry point rather than a flag on `plan()` because the two
+     * answer different questions, and a boolean deep in a call chain is how
+     * "what changed" quietly becomes "delete the other side".
+     */
+    async forcePlan(direction: ForceDirection, now = Date.now()): Promise<SyncPlan> {
+        const [local, remote, prev] = await Promise.all([
+            this.listLocal(),
+            this.remote.list(),
+            this.prevStore.read(this.deviceId, this.remote.id),
+        ]);
+
+        return buildForcedPlan(local, remote, prev, direction, {
             conflictAction: this.opts.conflictAction,
             protectModifyRatio: this.opts.protectModifyRatio,
             protectMinFiles: PROTECT_MIN_FILES,

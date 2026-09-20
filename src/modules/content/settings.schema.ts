@@ -12,7 +12,6 @@ export const contentSettingsSchema = coreSchema({
                     type: 'folder',
                     key: 'contentFolderPath',
                     labelKey: 'settings.contentFolder',
-                    descKey: 'settings.contentFolder.desc',
                     default: DEFAULT_CONTENT_FOLDER,
                     placeholder: DEFAULT_CONTENT_FOLDER,
                 },

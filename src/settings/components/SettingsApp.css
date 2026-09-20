@@ -9,12 +9,28 @@
     overflow-y: auto;
 }
 
+/* ── The scale everything on this page is measured in ──
+   One 4px grid, declared once. Every surface here had grown its own numbers —
+   a card 20px from the next, rows 14px tall, radii of 6, 8, 10 and 12 on
+   controls that sit side by side — and none of them were wrong so much as
+   unrelated, which is what makes a form look assembled rather than designed.
+   Two radii is the other half of it: one for surfaces, one for the controls
+   that sit on them, and nothing in between. */
 .zenith-settings {
+    --zs-gap-section: 24px;
+    --zs-gap-label: 8px;
+    --zs-pad-card: 16px;
+    --zs-row-y: 12px;
+    --zs-radius-card: 12px;
+    --zs-radius-control: 8px;
+
     padding: 24px 32px; /* Restored safe padding */
     max-width: 700px; /* Restored max-width so it's not edge-to-edge on large screens */
     margin: 0 auto;
     box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-family:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
     color: var(--text-normal);
 }
 
@@ -209,7 +225,9 @@
 
 .zenith-settings__menu-chevron {
     color: var(--text-faint);
-    transition: transform 0.2s ease, color 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        color 0.2s ease;
 }
 
 .zenith-settings__menu-item:hover .zenith-settings__menu-chevron {
@@ -223,19 +241,62 @@
 }
 
 @keyframes zenithFadeIn {
-    from { opacity: 0; transform: translateX(10px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+        opacity: 0;
+        transform: translateX(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ── The card, and the rows inside it ──
+   A group of settings is a card with rows in it, the same shape the root menu
+   of this dialog already uses: a label above, a rounded panel below, hairlines
+   between the rows and none after the last.
+
+   That last clause is the whole reason the card exists. The rhythm used to be
+   `margin-bottom: 20px; padding-bottom: 20px; border-bottom` on every row —
+   41px and a line — cancelled on `:last-child`. But rows were siblings of
+   section labels, block descriptions and custom fields inside one flat
+   fragment, so "last row of the group" and "last child of the container" were
+   different elements the moment a group was followed by anything. The
+   separator under the final row therefore stayed, and so did the 41px, which
+   is where the uneven spacing came from: two groups in a row were 41px apart,
+   a group followed by a heading was 41 + 8, and a group followed by a custom
+   field was 41 plus whatever that field brought with it.
+
+   A card is a real container, so `:last-child` is now a fact about the markup
+   rather than a hope about the order. See `segment()` in `SettingsForm`. */
+.zenith-settings__card {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--zs-gap-section);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--zs-radius-card);
+    background: var(--background-primary);
+    overflow: hidden;
+}
+
+.zenith-settings__card:last-child {
+    margin-bottom: 0;
 }
 
 .zenith-settings__item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid color-mix(in srgb, var(--background-modifier-border) 40%, transparent);
+    /* Standalone by default, inset by the card. Twelve places in the plugin
+       still build this markup by hand rather than going through `SettingRow`,
+       and they have no card around them; giving the base rule a horizontal
+       inset would leave those rows indented from nothing. The card adds it
+       back, which is the one context where there is an edge to be inset
+       from. */
+    padding: var(--zs-row-y) 0;
+    border-bottom: 1px solid var(--background-modifier-border);
     column-gap: 24px;
-    row-gap: 12px;
+    row-gap: 10px;
     /* A row reads: label and description on the left, the control on the right,
        and any note or error on its own full-width line beneath. Without the wrap
        a note becomes a third column and squeezes the label into a strip — which
@@ -244,17 +305,57 @@
     flex-wrap: wrap;
 }
 
-.zenith-settings__item:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
+.zenith-settings__card > .zenith-settings__item {
+    padding: var(--zs-row-y) var(--zs-pad-card);
+}
+
+/* Only inside a card, where the container's own edge finishes the group. A
+   free-standing final row still needs its line, because nothing else is there
+   to say the list ended. */
+.zenith-settings__card > .zenith-settings__item:last-child {
     border-bottom: none;
 }
 
+/* ── Why the checkbox kept moving ──
+   `flex: 1 1 0`, and the zero is the whole point.
+
+   With `flex-basis: auto` this column's hypothetical size is its longest line
+   left unwrapped, and a one-sentence description measures several hundred
+   pixels. Flex breaks lines on hypothetical sizes — BEFORE anything shrinks —
+   so a row whose description happened to be long took the first line by
+   itself and dropped its control onto a second one, at the left edge, while
+   the identical row above it with only a short label kept its checkbox at the
+   right. That is the entirety of "the checkbox is somewhere different in every
+   card": not two designs, one line-breaking rule.
+
+   A zero basis asks for no room, so the column grows into whatever is left
+   after the control instead of claiming the line first, and every compact
+   control stays on its label's line. Wide controls that genuinely need the
+   width say `layout: 'stack'` and get a line of their own on purpose. */
 .zenith-settings__item-info {
-    flex: 1 1 auto;
+    flex: 1 1 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 4px;
+}
+
+/* And whatever does still wrap — a segmented strip, a colour picker — ends at
+   the right edge rather than the left, so the control column is one line down
+   the page no matter what is in it. */
+.zenith-settings__item:not(.zenith-settings__item--stack) > .zenith-settings__item-control {
+    margin-left: auto;
+}
+
+/* The label is a real `<label>` now, pointing at the control by id: the words
+   are part of the hit area, which for a 20px checkbox is most of the hit area
+   there is. */
+label.zenith-settings__item-name {
+    cursor: pointer;
+}
+
+.zenith-settings__item.is-disabled label.zenith-settings__item-name {
+    cursor: default;
 }
 
 .zenith-settings__item-name {
@@ -288,7 +389,7 @@
     padding: 0 12px !important;
     margin: 0 !important;
     border: 1px solid var(--background-modifier-border) !important;
-    border-radius: 6px !important;
+    border-radius: var(--zs-radius-control) !important;
     background: var(--background-primary) !important;
     color: var(--text-normal) !important;
     font-family: inherit !important;
@@ -296,14 +397,27 @@
     line-height: 30px !important;
     box-sizing: border-box !important;
     transition: all 0.2s ease !important;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
+/* One ring, everywhere something takes focus. Declared as a pair so the
+   keyboard ring and the typing state are the same colour and the same weight
+   — they were an outline on some controls, a shadow on others, and nothing at
+   all on the segmented strip. */
 .zenith-settings__input:focus,
 .zenith-settings__select:focus {
     border-color: var(--interactive-accent) !important;
     outline: none !important;
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent) !important;
+}
+
+/* A placeholder is a hint, not a value. It read at full text colour in some
+   fields and at the theme's own faint grey in others, which made an empty
+   field look filled in. */
+.zenith-settings__input::placeholder,
+.zenith-settings__textarea::placeholder {
+    color: var(--text-faint);
+    opacity: 1;
 }
 
 /* ── Toggles ── */
@@ -322,68 +436,90 @@
     cursor: pointer;
 }
 
-/* Drawn here rather than left to the platform. `accent-color` hands the tick to
-   Chromium, which draws it for a ~13px box; forced to 20px the glyph stretches
-   and its tick sits visibly off-centre. This is the same square, border radius
-   and mark as the module tiles, so the two checkboxes on the modules page are
-   one control rather than two that nearly match. */
-.zenith-settings__toggle-label input[type="checkbox"] {
+/* ── The switch ──
+   A track that fills and a thumb that travels, at the proportions Obsidian
+   gives its own, so a Zenith row and a core settings row read as the same
+   control. It was a 20px tick-box before, chosen to match the checkboxes on
+   the module tiles; those are a multi-select — you tick several of a list —
+   and these are one setting that is on or off, which is what a switch says and
+   a checkbox only implies.
+
+   Drawn here rather than left to the platform: `appearance: none` makes the
+   input our own surface, and the thumb is its `::before`. `::after` is held
+   empty because Obsidian masks a checkmark into it for anything checked, and
+   ours would ride around inside the travelling circle. */
+.zenith-settings__toggle-label input[type='checkbox'] {
     appearance: none !important;
     -webkit-appearance: none !important;
+    position: relative;
     box-sizing: border-box;
+    flex: none;
     cursor: pointer;
-    width: 20px !important;
-    height: 20px !important;
+    width: 38px !important;
+    height: 22px !important;
     margin: 0 !important;
     padding: 0 !important;
-    border: 1px solid var(--text-muted) !important;
-    border-radius: 6px !important;
-    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 999px !important;
+    background: var(--background-modifier-border) !important;
     box-shadow: none !important;
-    transition:
-        background 0.2s ease,
-        border-color 0.2s ease;
+    transition: background 0.18s ease;
 }
 
-/* The tick is a path with its bounding box centred on 10,10 of a 20-unit
-   square, so it lands dead centre whatever the box is scaled to. */
-.zenith-settings__toggle-label input[type="checkbox"]:checked {
-    border-color: var(--interactive-accent) !important;
-    background-color: var(--interactive-accent) !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.5 10.2 8.6 13.3 14.5 6.7' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    background-size: 100% 100% !important;
+.zenith-settings__toggle-label input[type='checkbox']::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--background-primary);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 35%);
+    transition: transform 0.18s ease;
 }
 
-/* Obsidian draws its own tick on a checked box with a masked `::after`. Ours is
-   a background-image, so without this the two stack slightly apart and the box
-   shows a doubled check. */
-.zenith-settings__toggle-label input[type="checkbox"]::before,
-.zenith-settings__toggle-label input[type="checkbox"]::after {
+.zenith-settings__toggle-label input[type='checkbox']:checked {
+    background: var(--interactive-accent) !important;
+}
+
+/* 38 wide, less 2px of inset at each end, less the 16px thumb. */
+.zenith-settings__toggle-label input[type='checkbox']:checked::before {
+    transform: translateX(16px);
+}
+
+.zenith-settings__toggle-label input[type='checkbox']::after {
     content: none !important;
     display: none !important;
 }
 
-.zenith-settings__toggle-label input[type="checkbox"]:hover:not(:disabled) {
-    border-color: var(--interactive-accent) !important;
+.zenith-settings__toggle-label input[type='checkbox']:hover:not(:disabled) {
+    background: var(--background-modifier-border-hover, var(--text-faint)) !important;
 }
 
-.zenith-settings__toggle-label input[type="checkbox"]:focus-visible {
+.zenith-settings__toggle-label input[type='checkbox']:checked:hover:not(:disabled) {
+    background: var(--interactive-accent-hover, var(--interactive-accent)) !important;
+}
+
+.zenith-settings__toggle-label input[type='checkbox']:focus-visible {
     outline: 2px solid var(--interactive-accent);
     outline-offset: 2px;
 }
 
-.zenith-settings__toggle-label input[type="checkbox"]:disabled {
+.zenith-settings__toggle-label input[type='checkbox']:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
 /* ── Stacked items (label above full-width control) ── */
+/* `row-gap`, not `gap`. The shorthand also rewrites `column-gap`, so a stacked
+   row was quietly dropping the 24px column gap it inherits from the rule above
+   — and it won that argument only by being later in the file, since the two
+   selectors have identical specificity. */
 .zenith-settings__item--stack {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    row-gap: 10px;
 }
 
 .zenith-settings__item--stack .zenith-settings__item-control {
@@ -421,10 +557,12 @@ button.zenith-settings__reveal {
     justify-content: center;
     flex: 0 0 auto;
     width: 32px;
-    height: 32px;
+    /* Same tie, same answer: at (0,1,1) this only DRAWS with Obsidian's own
+       button height, and a tie is decided by load order rather than by us. */
+    height: 32px !important;
     padding: 0 !important;
     border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
+    border-radius: var(--zs-radius-control);
     background: var(--background-secondary);
     color: var(--text-muted);
     cursor: pointer;
@@ -478,7 +616,7 @@ button.zenith-settings__noteMark {
     max-width: 320px;
     padding: 9px 11px;
     border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
+    border-radius: var(--zs-radius-control);
     background: var(--background-secondary);
     /* The bubble sits inside the label, which is larger and heavier. Both are
        reset rather than inherited, or the note reads as a second title. */
@@ -510,7 +648,7 @@ button.zenith-settings__noteMark {
     font-size: 0.82rem;
     color: var(--text-muted);
     padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: var(--zs-radius-control);
     background: var(--background-secondary);
     margin-bottom: 16px;
 }
@@ -538,7 +676,7 @@ button.zenith-settings__noteMark {
     gap: 6px;
     padding: 4px 10px !important;
     font-size: 0.8rem !important;
-    border-radius: 6px !important;
+    border-radius: var(--zs-radius-control) !important;
     border: 1px solid var(--background-modifier-border) !important;
     background: var(--background-primary) !important;
     color: var(--text-normal) !important;
@@ -582,20 +720,64 @@ button.zenith-settings__noteMark {
     height: 32px;
     padding: 2px;
     border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
+    border-radius: var(--zs-radius-control);
     background: var(--background-primary);
     cursor: pointer;
     flex: 0 0 auto;
 }
 
-/* ── Section label ── */
+/* ── Section label ──
+   A real heading element now — `h3` for a group, `h4` for a heading field
+   inside one — so the page has an outline a screen reader can jump through
+   instead of a column of shouting divs. Which means fighting the theme's own
+   heading type: `!important` on the two properties Obsidian sets from
+   `--h3-size` and `--h3-color`, because a settings label at heading size would
+   be three times the height of the card it names. */
 .zenith-settings__section-label {
-    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem !important;
+    line-height: 1.4;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--text-muted);
+    color: var(--text-muted) !important;
     font-weight: 600;
-    margin: 8px 0 4px;
+    /* The distance between one section and the next is paid for once, here,
+       and it meets the card's own bottom margin in a block container — where
+       equal adjacent margins collapse to one rather than stacking to two.
+
+       The top margin used to be 4px, with the whole rhythm leaning on the card
+       above. That works right up until a section ends in a paragraph instead
+       of a card — "what travels" is a heading and a description and nothing
+       else — and then the next heading arrived 12px later while every other
+       pair on the page stood 24px apart. */
+    margin: var(--zs-gap-section) 0 var(--zs-gap-label) !important;
+}
+
+/* Except at the very top, where the page header has already paid for it. */
+.zenith-settings__body > .zenith-settings__section-label:first-child {
+    margin-top: 0;
+}
+
+/* A group holding something that stops sync working says so on its heading,
+   beside the name of the section the reader then has to scroll to. */
+.zenith-settings__labelAlert {
+    flex: none;
+    color: var(--text-error, #ef4444);
+}
+
+/* Announced, not shown. */
+.zenith-settings__srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
 }
 
 /* Where a paragraph is worth keeping but not worth showing every time. Reads
@@ -640,7 +822,12 @@ button.zenith-settings__noteMark {
 
 .zenith-settings__item-desc--block {
     display: block;
-    margin-bottom: 12px;
+    /* A paragraph element now, and a paragraph brings a top margin of its own
+       that would double the gap the label below already pays for. */
+    margin-top: 0;
+    /* The same gap the label above it uses, so a group with a description and
+       a group without stand the same distance off their card. */
+    margin-bottom: var(--zs-gap-label);
 }
 
 /* ── Widget list ── */
@@ -685,7 +872,7 @@ button.zenith-settings__icon-btn {
     justify-content: center;
     width: 28px;
     height: 28px;
-    border-radius: 6px;
+    border-radius: var(--zs-radius-control);
     border: 1px solid var(--background-modifier-border);
     background: var(--background-primary);
     color: var(--text-muted);
@@ -838,19 +1025,37 @@ button.zenith-settings__icon-btn {
    because the alternatives need no tap to discover. */
 .zenith-seg {
     display: inline-flex;
+    box-sizing: border-box;
+    /* 28px option plus 2px of track at each end: the same 32px an input, a
+       select and a button in the neighbouring rows are. */
+    min-height: 32px;
+    max-width: 100%;
     padding: 2px;
     gap: 2px;
-    border-radius: 8px;
+    /* Two radii, nested: the strip is the control radius plus its own 2px of
+       padding, so the corner of an active option runs parallel to the corner
+       of the track instead of cutting across it. */
+    border-radius: calc(var(--zs-radius-control) + 2px);
     background: var(--background-secondary);
+    /* Four backends do not fit a phone in one line, and a strip that
+       overflowed took the whole dialog sideways with it. */
+    flex-wrap: wrap;
 }
 
 .zenith-seg__opt {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 12px !important;
+    /* `!important` on a height, which the rest of this rule already needs for
+       its padding and its plate: Obsidian styles `button:not(.clickable-icon)`
+       at (0,1,1) and this class is (0,1,0), so its 30px wins on specificity
+       whatever the order of the stylesheets — and a 30px strip beside a 32px
+       input is the kind of two-pixel mismatch that reads as broken without
+       anyone being able to name it. */
+    height: 28px !important;
+    padding: 0 12px !important;
     border: none !important;
-    border-radius: 6px !important;
+    border-radius: var(--zs-radius-control) !important;
     background: transparent !important;
     box-shadow: none !important;
     color: var(--text-muted) !important;
@@ -859,24 +1064,75 @@ button.zenith-settings__icon-btn {
     white-space: nowrap;
 }
 
+/* The group is one tab stop with the arrow keys moving inside it, so the ring
+   has to be on the option that has focus rather than on the strip — otherwise
+   a keyboard user sees nothing move as they arrow along it. */
+.zenith-seg__opt:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: -2px;
+}
+
 .zenith-seg__opt.is-active {
     background: var(--background-primary) !important;
     color: var(--text-normal) !important;
 }
 
+/* ── A number and the unit it counts, as one field ──
+   The unit used to be a loose word after the box, so it sat on the digits'
+   baseline instead of the box's centre and the two drifted apart whenever
+   either changed size. It is a suffix inside the same border now, with one
+   focus ring around the pair.
+
+   The width carries `!important` for a reason worth naming: the base input
+   rule declares `width: 260px !important`, so the 90px this rule always meant
+   to set has never once applied — every number field in the plugin has been
+   as wide as a URL, with its unit stranded at the far end of it. */
 .zenith-settings__num {
     display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    align-items: stretch;
+    /* Border-box, or the 1px border sits OUTSIDE the 32px and the field stands
+       two pixels taller than the text input in the row above it. */
+    box-sizing: border-box;
+    height: 32px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--zs-radius-control);
+    background: var(--background-primary);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    overflow: hidden;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
-.zenith-settings__num .zenith-settings__input {
-    width: 90px;
+.zenith-settings__num:focus-within {
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent);
+}
+
+.zenith-settings__num .zenith-settings__input,
+.zenith-settings__num .zenith-settings__input:focus {
+    width: 92px !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 .zenith-settings__num-unit {
-    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    border-left: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
     color: var(--text-muted);
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.zenith-settings__num.is-disabled {
+    opacity: 0.55;
 }
 
 .zenith-settings__slider {
@@ -906,7 +1162,7 @@ button.zenith-settings__icon-btn {
     width: 100%;
     max-width: 360px;
     padding: 8px 10px;
-    border-radius: 6px;
+    border-radius: var(--zs-radius-control);
     resize: vertical;
 }
 
@@ -1350,4 +1606,47 @@ button.zenith-settings__icon-btn {
     flex-shrink: 0;
     font-size: 0.75rem;
     color: var(--text-normal);
+}
+
+/* ── Focus, said once ──
+   Every control that is a button rather than a field draws the same ring, in
+   the same accent, at the same offset. `:focus-visible` and not `:focus`, so a
+   pointer press does not leave a ring behind on a button somebody has already
+   finished with. */
+.zenith-settings__inline-btn:focus-visible,
+.zenith-settings__chip:focus-visible,
+button.zenith-settings__reveal:focus-visible {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 2px;
+}
+
+/* ── Narrow panes ──
+   Obsidian's settings on a phone, and a split window on a laptop, are both
+   narrower than the two columns a row assumes. Below that, the control goes
+   under its label rather than fighting it for room — a four-option strip
+   beside 250px of description is not a layout, it is a column of single words.
+
+   Except the compact ones. A checkbox stacked under its own label lands
+   exactly where this page spent its effort getting it away from, so a toggle
+   row stays a row at every width it can. */
+@media (max-width: 620px) {
+    .zenith-settings__item:not(.zenith-settings__item--compact) {
+        flex-direction: column;
+        align-items: stretch;
+        row-gap: 10px;
+    }
+
+    .zenith-settings__item:not(.zenith-settings__item--compact) > .zenith-settings__item-control {
+        justify-content: flex-start;
+        margin-left: 0;
+    }
+
+    .zenith-settings__input,
+    .zenith-settings__select {
+        width: 100% !important;
+    }
+
+    .zenith-settings__num .zenith-settings__input {
+        width: 92px !important;
+    }
 }

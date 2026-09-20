@@ -1,70 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, Check, Eye, PlugZap, RotateCcw, X } from 'lucide-react';
+import { AlertTriangle, PlugZap, RotateCcw } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
-import { useTranslation, type Translator } from '../../../core/i18n';
+import { useTranslation } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
 import { RemoteAuthPanel } from './RemoteAuthPanel';
+import { SyncSection } from './SyncSection';
 import { countLine, progressRatio, rateLine } from '../progressFormat';
 import type { FileSyncStatus } from '../services/fileSync';
 import type { SyncProgress, SyncRunResult } from '../services/SyncEngine';
-import {
-    ACTIONABLE_DECISIONS,
-    type SyncDecision,
-    type SyncPlan,
-    type SyncPlanItem,
-} from '../fileSyncTypes';
 
 /**
- * The file engine's face: test the server, look at what a run would do, then
- * decide.
+ * What the file engine has been doing, in settings.
  *
- * Preview is the primary action rather than "sync now", and that ordering is the
- * whole design. This engine deletes files; a button that starts moving them
- * before the user has seen the list would make every safety rail behind it
- * decorative.
+ * Deliberately not where anything is started any more. This page went through
+ * being a three-press workflow (test, preview, apply) and then a page with one
+ * obvious button on it; both were wrong in the same way, which is that a
+ * settings page is somewhere you arrive to configure a thing and read about
+ * it, not somewhere you stand while several hundred files move.
+ *
+ * So the doing left for the ribbon's dialog — sync now, force a direction,
+ * confirm a plan — and what stayed is the reading: whether it is connected,
+ * what it does unattended, how the last run went, and the error if there was
+ * one. Test and Forget stayed too, because they answer "why is this not
+ * working" and "start over", which are questions asked here and rarely.
  */
-
-/** How many rows to draw before collapsing the rest into a count. */
-const MAX_ROWS = 200;
-
-/** Rows that would change something, worst-first so deletions are read first. */
-const DECISION_ORDER: SyncDecision[] = [
-    'remote_is_deleted_thus_also_delete_local',
-    'local_is_deleted_thus_also_delete_remote',
-    'conflict_created_then_keep_local',
-    'conflict_created_then_keep_remote',
-    'conflict_created_then_keep_both',
-    'remote_is_modified_then_pull',
-    'remote_is_created_then_pull',
-    'local_is_modified_then_push',
-    'local_is_created_then_push',
-];
-
-function severity(decision: SyncDecision): 'danger' | 'warn' | 'plain' {
-    if (decision.includes('delete')) return 'danger';
-    if (decision.startsWith('conflict')) return 'warn';
-    return 'plain';
-}
-
-function actionableRows(plan: SyncPlan): SyncPlanItem[] {
-    const rank = new Map(DECISION_ORDER.map((d, i) => [d, i]));
-    return plan.items
-        .filter((i) => ACTIONABLE_DECISIONS.has(i.decision))
-        .sort((a, b) => {
-            const byRank = (rank.get(a.decision) ?? 99) - (rank.get(b.decision) ?? 99);
-            return byRank !== 0 ? byRank : a.key.localeCompare(b.key);
-        });
-}
-
-function blockedMessage(t: Translator, plan: SyncPlan): string {
-    const b = plan.blocked;
-    if (!b) return '';
-    return t(`sync.files.blocked.${b.kind}`, {
-        actionable: String(b.actionable ?? 0),
-        known: String(b.known ?? 0),
-        limit: String(Math.round((b.limit ?? 0) * 100)),
-    });
-}
 
 export const FileSyncPanel: React.FC = () => {
     const t = useTranslation();
@@ -73,6 +32,8 @@ export const FileSyncPanel: React.FC = () => {
     const filesEnabled = useZenithStore((s) => s.settings.syncFilesEnabled);
 
     const remoteKind = useZenithStore((s) => s.settings.syncRemoteKind);
+    const autoOn = useZenithStore((s) => s.settings.syncFilesAuto);
+    const everyMinutes = useZenithStore((s) => s.settings.syncFilesIntervalMinutes);
     const [status, setStatus] = useState<FileSyncStatus | null>(service?.getStatus() ?? null);
     const [note, setNote] = useState<string | null>(null);
 
@@ -100,9 +61,7 @@ export const FileSyncPanel: React.FC = () => {
     };
 
     return (
-        <section className="zenith-sync__card">
-            <h3 className="zenith-sync__cardTitle">{t('sync.files.title')}</h3>
-
+        <SyncSection title={t('sync.files.title')}>
             {/* The OAuth backends need a connection before anything else can
                 be true of them, so the authorization step comes first and the
                 rest of the panel waits for it. */}
@@ -116,35 +75,15 @@ export const FileSyncPanel: React.FC = () => {
                 <p className="zenith-sync__hint">{t('sync.files.notConfigured')}</p>
             ) : (
                 <>
-                    <div className="zenith-sync__actions">
-                        <button
-                            type="button"
-                            className="zenith-sync__btn"
-                            onClick={() => void test()}
-                            disabled={busy}
-                        >
-                            <PlugZap size={14} />
-                            {t('sync.files.test')}
-                        </button>
-                        <button
-                            type="button"
-                            className="zenith-sync__btn is-primary"
-                            onClick={() => void service.preview()}
-                            disabled={busy}
-                        >
-                            <Eye size={14} />
-                            {t('sync.files.preview')}
-                        </button>
-                        <button
-                            type="button"
-                            className="zenith-sync__btn"
-                            onClick={() => void forget()}
-                            disabled={busy}
-                        >
-                            <RotateCcw size={14} />
-                            {t('sync.files.forget')}
-                        </button>
-                    </div>
+                    {/* What it does when nobody is here. Said on the page as
+                        well as in settings: this is where somebody comes to
+                        find out whether their vault is being looked after, and
+                        "there is a button" is not an answer to that. */}
+                    <p className="zenith-sync__meta">
+                        {autoOn
+                            ? t('sync.files.autoOn', { minutes: String(everyMinutes) })
+                            : t('sync.files.autoOff')}
+                    </p>
 
                     {note && <p className="zenith-sync__hint">{note}</p>}
 
@@ -162,12 +101,37 @@ export const FileSyncPanel: React.FC = () => {
                             <p className="zenith-sync__hint">{t('sync.files.working')}</p>
                         ))}
 
-                    {plan && <PlanReview plan={plan} />}
-
                     {!plan && status.lastResult && <RunReport result={status.lastResult} />}
+
+                    {/* The two questions that are not steps: why is this not
+                        working, and can I start over. Set apart at the foot of
+                        the card, and set at two different weights — testing the
+                        connection is something you do while setting a server
+                        up, forgetting the history is something you do once a
+                        year and regret more often than that. */}
+                    <div className="zenith-sync__footActions">
+                        <button
+                            type="button"
+                            className="zenith-sync__btn"
+                            onClick={() => void test()}
+                            disabled={busy}
+                        >
+                            <PlugZap size={13} />
+                            {t('sync.files.test')}
+                        </button>
+                        <button
+                            type="button"
+                            className="zenith-sync__quietBtn"
+                            onClick={() => void forget()}
+                            disabled={busy}
+                        >
+                            <RotateCcw size={13} />
+                            {t('sync.files.forget')}
+                        </button>
+                    </div>
                 </>
             )}
-        </section>
+        </SyncSection>
     );
 };
 
@@ -208,7 +172,9 @@ const SyncProgressBar: React.FC<{ progress: SyncProgress }> = ({ progress }) => 
             <div className="zenith-sync__bar">
                 <div className="zenith-sync__barFill" style={{ width: `${percent}%` }} />
             </div>
-            <span className="zenith-sync__progressFile">{progress.key}</span>
+            <span className="zenith-sync__progressFile">
+                <bdi>{progress.key}</bdi>
+            </span>
         </div>
     );
 };
@@ -266,86 +232,5 @@ const RunReport: React.FC<{ result: SyncRunResult }> = ({ result }) => {
                 </ul>
             )}
         </>
-    );
-};
-
-const PlanReview: React.FC<{ plan: SyncPlan }> = ({ plan }) => {
-    const t = useTranslation();
-    const { plugin } = useApp();
-    const service = plugin.fileSync;
-
-    const rows = actionableRows(plan);
-    const hidden = Math.max(0, rows.length - MAX_ROWS);
-
-    if (plan.actionable === 0) {
-        return (
-            <p className="zenith-sync__hint">
-                <Check size={14} /> {t('sync.files.nothing')}
-            </p>
-        );
-    }
-
-    return (
-        <div className="zenith-sync__plan">
-            <p className="zenith-sync__meta">
-                {t('sync.files.summary', {
-                    push: String(plan.stats.push),
-                    pull: String(plan.stats.pull),
-                    deleteLocal: String(plan.stats.deleteLocal),
-                    deleteRemote: String(plan.stats.deleteRemote),
-                    conflict: String(plan.stats.conflict),
-                })}
-                {plan.stats.skipped > 0 && (
-                    <> · {t('sync.files.skipped', { count: String(plan.stats.skipped) })}</>
-                )}
-            </p>
-
-            {plan.blocked && (
-                <p className="zenith-sync__error">
-                    <AlertTriangle size={14} />
-                    <span>{blockedMessage(t, plan)}</span>
-                </p>
-            )}
-
-            <ul className="zenith-sync__planList">
-                {rows.slice(0, MAX_ROWS).map((item) => (
-                    <li
-                        key={item.key}
-                        className={`zenith-sync__planRow is-${severity(item.decision)}`}
-                    >
-                        <span className="zenith-sync__planAction">
-                            {t(`sync.decision.${item.decision}`)}
-                        </span>
-                        <span className="zenith-sync__planKey">{item.key}</span>
-                        <span className="zenith-sync__peerMeta">{item.reason}</span>
-                    </li>
-                ))}
-            </ul>
-
-            {hidden > 0 && (
-                <p className="zenith-sync__hint">
-                    {t('sync.files.more', { count: String(hidden) })}
-                </p>
-            )}
-
-            <div className="zenith-sync__actions">
-                <button
-                    type="button"
-                    className={`zenith-sync__btn ${plan.blocked ? 'is-danger' : 'is-primary'}`}
-                    onClick={() => void service?.apply(plan, !!plan.blocked)}
-                >
-                    <Check size={14} />
-                    {plan.blocked ? t('sync.files.applyAnyway') : t('sync.files.apply')}
-                </button>
-                <button
-                    type="button"
-                    className="zenith-sync__btn"
-                    onClick={() => service?.discard()}
-                >
-                    <X size={14} />
-                    {t('sync.files.discard')}
-                </button>
-            </div>
-        </div>
     );
 };

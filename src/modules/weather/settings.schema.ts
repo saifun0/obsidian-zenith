@@ -21,6 +21,7 @@ export const weatherSettingsSchema = coreSchema({
                 {
                     type: 'custom',
                     key: 'weatherPlace',
+                    row: true,
                     render: createPlaceField({
                         settingsKey: 'weatherPlace',
                         labelKey: 'settings.weatherPlace',
@@ -53,7 +54,6 @@ export const weatherSettingsSchema = coreSchema({
                     type: 'segmented',
                     key: 'weatherUnit',
                     labelKey: 'settings.weatherUnit',
-                    descKey: 'settings.weatherUnit.desc',
                     default: 'c',
                     options: [
                         { value: 'c', label: '°C' },
@@ -84,14 +84,12 @@ export const weatherSettingsSchema = coreSchema({
                     type: 'toggle',
                     key: 'weatherShowHourly',
                     labelKey: 'settings.weatherHourly',
-                    descKey: 'settings.weatherHourly.desc',
                     default: true,
                 },
                 {
                     type: 'toggle',
                     key: 'weatherShowSun',
                     labelKey: 'settings.weatherSun',
-                    descKey: 'settings.weatherSun.desc',
                     default: true,
                 },
                 {

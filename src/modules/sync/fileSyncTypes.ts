@@ -121,7 +121,27 @@ export type SyncPlanBlockKind =
     /** The plan touches more of the vault than the safety limit allows. */
     | 'too_many_changes'
     /** Nothing has ever been synced against this remote. */
-    | 'first_run_requires_review';
+    | 'first_run_requires_review'
+    /**
+     * The user asked for one side to be overwritten with the other.
+     *
+     * Blocked by construction rather than by measurement. The other two kinds
+     * are the engine noticing something alarming; this one is the engine
+     * repeating back an instruction whose whole purpose is to ignore what the
+     * comparison says. There is no threshold at which that stops being worth
+     * reading first, so there is no threshold here.
+     */
+    | 'forced_overwrite';
+
+/**
+ * Which side wins when the user stops asking the engine to work it out.
+ *
+ * `push` makes the server match this device; `pull` makes this device match
+ * the server. Both are whole-side overwrites — the escape hatch for when the
+ * two have diverged past the point where reconciling them is worth anyone's
+ * afternoon, or when one side is simply known to be right.
+ */
+export type ForceDirection = 'push' | 'pull';
 
 export interface SyncPlanBlock {
     kind: SyncPlanBlockKind;

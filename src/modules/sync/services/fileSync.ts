@@ -1,6 +1,6 @@
 import { vaultModuleFs } from '../../../core/moduleFs';
 import { useZenithStore } from '../../../store';
-import type { SyncPlan } from '../fileSyncTypes';
+import type { ForceDirection, SyncPlan } from '../fileSyncTypes';
 import { syncPaths } from '../syncTypes';
 import { dropboxClientId, onedriveClientId } from './remotes/appIds';
 import { CryptoRemote } from './crypto/cryptoRemote';
@@ -83,6 +83,29 @@ export class FileSyncService {
 
     /** Work out what a run would do. Reads both sides, writes nothing. */
     async preview(): Promise<SyncPlan | null> {
+        return this.planWith((engine) => engine.plan());
+    }
+
+    /**
+     * Work out what overwriting one side with the other would do.
+     *
+     * Produces a plan and nothing else — exactly like `preview`, and that
+     * sameness is deliberate. A forced overwrite reaches the disk through the
+     * one `apply` path every other run uses, so it inherits the progress
+     * notice, the failure handling and the previous-sync bookkeeping rather
+     * than growing its own copies of all three.
+     *
+     * The plan comes back `blocked`, so the only button that can carry it out
+     * is the red one under the list of what it would do.
+     */
+    async forcePreview(direction: ForceDirection): Promise<SyncPlan | null> {
+        return this.planWith((engine) => engine.forcePlan(direction));
+    }
+
+    /** Shared plumbing: run a planner, park the result, report a failure. */
+    private async planWith(
+        make: (engine: SyncEngine) => Promise<SyncPlan>
+    ): Promise<SyncPlan | null> {
         const engine = this.engine();
         if (!engine) {
             this.patch({ error: 'No server configured.' });
@@ -91,7 +114,7 @@ export class FileSyncService {
 
         this.patch({ running: true, error: null, progress: null });
         try {
-            const plan = await engine.plan();
+            const plan = await make(engine);
             this.patch({ plan, running: false });
             return plan;
         } catch (err) {

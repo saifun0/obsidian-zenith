@@ -26,6 +26,7 @@ export const prayerSettingsSchema = coreSchema({
                 {
                     type: 'custom',
                     key: 'prayerPlace',
+                    row: true,
                     render: createPlaceField({
                         settingsKey: 'prayerPlace',
                         labelKey: 'settings.prayerPlace',
@@ -142,7 +143,7 @@ export const prayerSettingsSchema = coreSchema({
                         labelKey: `prayer.highLat.${rule}`,
                     })),
                 },
-                { type: 'custom', key: 'prayerAdjustments', render: PrayerAdjustField },
+                { type: 'custom', key: 'prayerAdjustments', row: true, render: PrayerAdjustField },
             ],
         },
         {
@@ -188,7 +189,6 @@ export const prayerSettingsSchema = coreSchema({
                     type: 'toggle',
                     key: 'prayerNotify',
                     labelKey: 'settings.prayerNotify',
-                    descKey: 'settings.prayerNotify.desc',
                     default: false,
                     noteKey: 'settings.prayerNotify.note',
                 },

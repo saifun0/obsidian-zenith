@@ -80,3 +80,21 @@ export function fieldValue<T>(
     const stored = values[field.key];
     return (stored === undefined ? field.default : stored) as T;
 }
+
+/**
+ * Does this group hold something the user needs to look at?
+ *
+ * Two sources, and they answer the same question from different ends. A group
+ * declares `alertIf` for a state its own fields cannot see — encryption is on
+ * and the password is empty, so sync is refusing to run — and a field declares
+ * `validate` for a value that is wrong on its own terms. Either one earns the
+ * mark on a fold's header, and either one is reason enough for that fold to be
+ * open when the page arrives rather than hiding the problem behind a chevron.
+ *
+ * Call it with a group from `visibleGroups`: a field that `showIf` has already
+ * taken off the page is not something anybody can go and fix.
+ */
+export function groupNeedsAttention(group: SettingsGroup, values: Readonly<SettingsBag>): boolean {
+    if (group.alertIf?.(values)) return true;
+    return group.fields.some((f) => isValueField(f) && !!f.validate?.(values[f.key], values));
+}

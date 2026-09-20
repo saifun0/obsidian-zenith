@@ -417,6 +417,17 @@ export interface ZenithSettings {
      * to a server is a decision with its own consequences.
      */
     syncFilesEnabled: boolean;
+    /**
+     * Run file sync by itself, instead of waiting to be asked.
+     *
+     * On by default, but only meaningful once `syncFilesEnabled` is on and a
+     * server is configured — both of which are deliberate acts. What it
+     * automates is the pressing of the button, not the judgement behind it: a
+     * run that wants review still stops and waits. See `autoPolicy`.
+     */
+    syncFilesAuto: boolean;
+    /** Minutes between automatic file runs. Also runs on focus and after edits. */
+    syncFilesIntervalMinutes: number;
     /** Which backend the file engine talks to. */
     syncRemoteKind: 'webdav' | 's3' | 'dropbox' | 'onedrive';
     /** WebDAV endpoint, e.g. `https://host/remote.php/dav/files/me`. */
@@ -711,6 +722,8 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     syncEnabled: true,
     syncPollSeconds: 20,
     syncFilesEnabled: false,
+    syncFilesAuto: true,
+    syncFilesIntervalMinutes: 15,
     syncRemoteKind: 'webdav',
     syncRemoteUrl: '',
     syncRemoteUser: '',

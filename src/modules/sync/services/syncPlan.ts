@@ -2,6 +2,7 @@ import {
     ACTIONABLE_DECISIONS,
     DESTRUCTIVE_DECISIONS,
     type FileEntity,
+    type ForceDirection,
     type PlanOptions,
     type PrevSide,
     type PrevSyncRecord,
@@ -55,6 +56,135 @@ export function buildSyncPlan(
     return { items, stats, actionable, blocked: block(items, actionable, keys.length, opts) };
 }
 
+/**
+ * A plan that stops asking which side is right and is told.
+ *
+ * The ordinary builder above exists to work out what happened. Sometimes there
+ * is nothing to work out: the vault was restored from a backup, a device was
+ * offline for a month, `prev` was lost, or two sides diverged so far that
+ * reconciling them file by file is not worth anybody's afternoon. What the
+ * user wants then is not a better comparison — it is for one side to win.
+ *
+ * So this ignores `prev` entirely for the decision, and derives every item
+ * from presence alone:
+ *
+ *   · `push` — every local file goes up, and every remote file with no local
+ *     counterpart is removed from the server;
+ *   · `pull` — every remote file comes down, and every local file with no
+ *     remote counterpart is removed from the vault.
+ *
+ * Three things it deliberately keeps from the ordinary path. Excluded and
+ * oversized files are still skipped, via the same `guard` — scope is a promise
+ * about which files this engine touches at all, not a preference that a
+ * different button overrules. `prev` is still carried on each item, so
+ * `recordPrev` writes correct bookkeeping afterwards and the NEXT ordinary run
+ * has a truthful baseline. And identical files are still marked `equal` rather
+ * than re-uploaded, because a forced push of an unchanged vault should cost
+ * nothing.
+ *
+ * The result is always `blocked` when it would do anything — see
+ * `forced_overwrite`. That is not a safety rail bolted on; it is the whole
+ * interaction. The button produces a plan, the plan is read, and the user
+ * presses the red one. Nothing here can run unattended.
+ */
+export function buildForcedPlan(
+    local: FileEntity[],
+    remote: FileEntity[],
+    prev: PrevSyncRecord[],
+    direction: ForceDirection,
+    opts: PlanOptions
+): SyncPlan {
+    const localMap = byKey(local);
+    const remoteMap = byKey(remote);
+    const prevMap = new Map(prev.map((p) => [p.key, p]));
+
+    // `prev` keys are left out on purpose. A path both sides have forgotten is
+    // already gone everywhere, and the ordinary builder only visits it to drop
+    // its stale record — which a forced run has no business doing, because it
+    // would show the user a row about a file that does not exist.
+    const keys = [...new Set([...localMap.keys(), ...remoteMap.keys()])].sort();
+
+    const items: SyncPlanItem[] = keys.map((key) => {
+        const base = {
+            key,
+            local: localMap.get(key),
+            remote: remoteMap.get(key),
+            prev: prevMap.get(key),
+        };
+
+        const skipped = guard(base, opts);
+        if (skipped) return skipped;
+
+        return { ...base, ...forcedVerdict(base.local, base.remote, direction, opts) };
+    });
+
+    const stats = tally(items);
+    const actionable = items.filter((i) => ACTIONABLE_DECISIONS.has(i.decision)).length;
+
+    return {
+        items,
+        stats,
+        actionable,
+        // Nothing to do is never worth interrupting for — the same exemption
+        // `block()` makes, and for the same reason.
+        blocked: actionable === 0 ? null : { kind: 'forced_overwrite', actionable, known: keys.length },
+    };
+}
+
+/** One path, once the direction has already been decided for it. */
+function forcedVerdict(
+    local: FileEntity | undefined,
+    remote: FileEntity | undefined,
+    direction: ForceDirection,
+    opts: PlanOptions
+): Verdict {
+    const winner = direction === 'push' ? local : remote;
+    const loser = direction === 'push' ? remote : local;
+
+    // Present on both, and the same file. Saying `equal` rather than
+    // transferring it is what keeps "force push a vault that was already in
+    // step" a cheap no-op instead of a full re-upload.
+    if (local && remote && sameContent(local, remote, opts.mtimeToleranceMs)) {
+        return { decision: 'equal', reason: 'already identical on both sides' };
+    }
+
+    if (winner) {
+        return direction === 'push'
+            ? {
+                  decision: loser ? 'local_is_modified_then_push' : 'local_is_created_then_push',
+                  reason: loser ? 'forced: this device wins' : 'forced: missing on the server',
+              }
+            : {
+                  decision: loser ? 'remote_is_modified_then_pull' : 'remote_is_created_then_pull',
+                  reason: loser ? 'forced: the server wins' : 'forced: missing on this device',
+              };
+    }
+
+    // Only the losing side has it, so the overwrite removes it.
+    return direction === 'push'
+        ? {
+              decision: 'local_is_deleted_thus_also_delete_remote',
+              reason: 'forced: not on this device',
+          }
+        : {
+              decision: 'remote_is_deleted_thus_also_delete_local',
+              reason: 'forced: not on the server',
+          };
+}
+
+/**
+ * Whether two sides hold what is almost certainly the same bytes.
+ *
+ * Deliberately weaker than the ordinary path's reasoning, which has `prev` to
+ * compare each side against its own past. Here there is no past, so this is
+ * size plus a timestamp within tolerance — enough to skip the obvious no-ops,
+ * and never used to decide that something should be deleted.
+ */
+function sameContent(local: FileEntity, remote: FileEntity, tol: number): boolean {
+    if (local.size !== remote.size) return false;
+    return Math.abs(local.mtimeCli - remote.mtimeCli) <= tol;
+}
+
 // ── One path ─────────────────────────────────────────
 
 function planFor(
@@ -66,21 +196,40 @@ function planFor(
 ): SyncPlanItem {
     const base = { key, local, remote, prev };
 
-    if (opts.isExcluded(key)) {
+    const skipped = guard(base, opts);
+    if (skipped) return skipped;
+
+    const { decision, reason, conflictCopyKey } = decide(local, remote, prev, opts, key);
+    return { ...base, decision, reason, conflictCopyKey };
+}
+
+/**
+ * The two reasons a path is left alone whatever else is true of it.
+ *
+ * Shared by both plan builders, and that sharing is the point: scope and the
+ * size limit are promises about which files this engine will ever touch, and a
+ * forced overwrite is still a sync run rather than a licence to ignore them.
+ * A user who excluded a folder did not mean "unless I press the other button".
+ *
+ * Size is checked before any decision so an oversized file is left alone on
+ * BOTH sides — half-applying a decision to it would be worse than skipping.
+ */
+function guard(
+    base: { key: string; local?: FileEntity; remote?: FileEntity; prev?: PrevSyncRecord },
+    opts: PlanOptions
+): SyncPlanItem | null {
+    if (opts.isExcluded(base.key)) {
         return { ...base, decision: 'skipped_excluded', reason: 'outside the configured scope' };
     }
 
-    // Size is checked before anything else so an oversized file is left alone on
-    // BOTH sides — half-applying a decision to it would be worse than skipping.
     if (opts.maxFileSize > 0) {
-        const biggest = Math.max(local?.size ?? 0, remote?.size ?? 0);
+        const biggest = Math.max(base.local?.size ?? 0, base.remote?.size ?? 0);
         if (biggest > opts.maxFileSize) {
             return { ...base, decision: 'skipped_too_large', reason: `larger than the size limit` };
         }
     }
 
-    const { decision, reason, conflictCopyKey } = decide(local, remote, prev, opts, key);
-    return { ...base, decision, reason, conflictCopyKey };
+    return null;
 }
 
 interface Verdict {

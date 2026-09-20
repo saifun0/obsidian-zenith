@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, ChevronDown, Laptop, RefreshCw, Smartphone, HelpCircle, Undo2 } from 'lucide-react';
+import { ChevronDown, Laptop, Smartphone, HelpCircle, Undo2 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import { FileSyncPanel } from './FileSyncPanel';
 import { ConflictInboxPanel } from './ConflictInboxPanel';
+import { SyncSection } from './SyncSection';
 import { groupHistory, type HistoryGroup } from './historyGroups';
 import type { SyncStatus } from '../services/settingsSync';
 import type { DevicePlatform, JournalEntry } from '../syncTypes';
@@ -32,11 +33,6 @@ import type { DevicePlatform, JournalEntry } from '../syncTypes';
  * padding, so the component drops its own.
  */
 
-interface SyncAppProps {
-    /** Rendered inside the settings tab rather than as a full view. */
-    embedded?: boolean;
-}
-
 /** How many history rows to draw before the rest wait behind a press. */
 const HISTORY_PREVIEW = 5;
 const HISTORY_MAX = 40;
@@ -61,46 +57,13 @@ const PlatformIcon: React.FC<{ platform: DevicePlatform; size?: number }> = ({
     return <Smartphone size={size} />;
 };
 
-/**
- * A section that is worth a line when empty and a list when it is not.
- *
- * Every card on this page had the same skeleton — a title, then either a hint
- * or a list — and the hint was the usual case. One tick beside the title says
- * the same thing in a tenth of the room, and what is left is a page where the
- * sections that DO have something to report are the ones taking up space.
- */
-const Card: React.FC<{
-    title: string;
-    /** Shown beside the title instead of the body when nothing happened. */
-    quiet?: string;
-    children?: React.ReactNode;
-    actions?: React.ReactNode;
-}> = ({ title, quiet, children, actions }) => (
-    <section className={`zenith-sync__card ${quiet ? 'is-quiet' : ''}`}>
-        <div className="zenith-sync__cardHead">
-            <h3 className="zenith-sync__cardTitle">{title}</h3>
-            {quiet && (
-                <span className="zenith-sync__quiet">
-                    <Check size={13} />
-                    {quiet}
-                </span>
-            )}
-            {actions}
-        </div>
-        {!quiet && children}
-    </section>
-);
-
-export const SyncApp: React.FC<SyncAppProps> = ({ embedded = false }) => {
+export const SyncApp: React.FC = () => {
     const t = useTranslation();
     const { plugin } = useApp();
     const service = plugin.settingsSync;
 
     const [status, setStatus] = useState<SyncStatus | null>(service?.getStatus() ?? null);
     const [history, setHistory] = useState<JournalEntry[]>([]);
-    const [busy, setBusy] = useState(false);
-    /** What the last press of the button actually did. */
-    const [outcome, setOutcome] = useState<string | null>(null);
     const [expanded, setExpanded] = useState(false);
     const [nameDraft, setNameDraft] = useState(service?.getStatus().deviceName ?? '');
     const nameTouched = useRef(false);
@@ -128,39 +91,6 @@ export const SyncApp: React.FC<SyncAppProps> = ({ embedded = false }) => {
 
     const groups = useMemo(() => groupHistory(history).slice(0, HISTORY_MAX), [history]);
 
-    /**
-     * Pull, publish, and say what came of it.
-     *
-     * The saying is the point. A device syncing on its own has nothing to
-     * merge and nothing to be told about, so the page looked identical before
-     * and after — which is indistinguishable from a button that does not work,
-     * and it is the state every new setup is in.
-     */
-    const syncNow = async () => {
-        if (!service) return;
-        setBusy(true);
-        setOutcome(null);
-        try {
-            const pulled = await service.pull();
-            const published = await service.publish();
-            await refreshHistory();
-
-            // An error of its own is already on the page; adding a second
-            // sentence about it here would just be saying it twice.
-            if (!pulled || published === null) return;
-
-            if (pulled.received > 0) {
-                setOutcome(t.plural('sync.result.received', pulled.received));
-            } else if (pulled.peers === 0) {
-                setOutcome(t('sync.result.alone'));
-            } else {
-                setOutcome(t('sync.result.agreed'));
-            }
-        } finally {
-            setBusy(false);
-        }
-    };
-
     const undo = async (entry: JournalEntry) => {
         if (!(await service?.rollback(entry))) return;
         await refreshHistory();
@@ -173,7 +103,7 @@ export const SyncApp: React.FC<SyncAppProps> = ({ embedded = false }) => {
 
     if (!service || !status) {
         return (
-            <div className={`zenith-sync ${embedded ? 'is-embedded' : ''}`}>
+            <div className="zenith-sync is-embedded">
                 <p className="zenith-sync__hint">{t('sync.disabled')}</p>
             </div>
         );
@@ -182,60 +112,12 @@ export const SyncApp: React.FC<SyncAppProps> = ({ embedded = false }) => {
     const shown = expanded ? groups : groups.slice(0, HISTORY_PREVIEW);
 
     return (
-        <div className={`zenith-sync ${embedded ? 'is-embedded' : ''}`}>
-            {!embedded && (
-                <header className="zenith-sync__head">
-                    <div>
-                        <h2 className="zenith-sync__title">{t('sync.title')}</h2>
-                        <p className="zenith-sync__sub">{t('sync.desc')}</p>
-                    </div>
-                </header>
-            )}
-
-            {/* The state, first and largest. Everything under it is detail
-                about a claim this line has already made. */}
-            <section className={`zenith-sync__state ${status.error ? 'is-error' : ''}`}>
-                <span
-                    className={`zenith-sync__dot ${status.enabled ? 'is-on' : 'is-off'}`}
-                    aria-hidden
-                />
-                <div className="zenith-sync__stateText">
-                    <span className="zenith-sync__stateLine">
-                        {status.error
-                            ? t('sync.error')
-                            : outcome
-                              ? outcome
-                              : status.enabled
-                                ? t('sync.status.on')
-                                : t('sync.status.off')}
-                    </span>
-                    <span className="zenith-sync__stateMeta">
-                        {status.error ? (
-                            status.error
-                        ) : (
-                            <>
-                                {t('sync.lastPublish')}: {relative(t, status.lastPublishAt)}
-                                {' · '}
-                                {t('sync.lastPull')}: {relative(t, status.lastPullAt)}
-                            </>
-                        )}
-                    </span>
-                </div>
-                <button
-                    type="button"
-                    className="zenith-sync__cta"
-                    onClick={() => void syncNow()}
-                    disabled={busy || !status.enabled}
-                >
-                    <RefreshCw size={14} className={busy ? 'is-spinning' : undefined} />
-                    {t('sync.syncNow')}
-                </button>
-            </section>
+        <div className="zenith-sync is-embedded">
 
             {/* One list, not two cards. This device is a device — the only
                 thing that makes it special is that its name is editable and
                 that it is always first. */}
-            <Card title={t('sync.devices')}>
+            <SyncSection title={t('sync.devices')}>
                 <ul className="zenith-sync__list">
                     <li className="zenith-sync__peer is-self">
                         <PlatformIcon platform="desktop" />
@@ -271,13 +153,13 @@ export const SyncApp: React.FC<SyncAppProps> = ({ embedded = false }) => {
                 {status.peers.length === 0 && (
                     <p className="zenith-sync__hint">{t('sync.peers.empty')}</p>
                 )}
-            </Card>
+            </SyncSection>
 
             <ConflictInboxPanel />
 
             <FileSyncPanel />
 
-            <Card
+            <SyncSection
                 title={t('sync.conflicts')}
                 quiet={status.conflicts.length === 0 ? t('sync.conflicts.empty') : undefined}
             >
@@ -296,9 +178,9 @@ export const SyncApp: React.FC<SyncAppProps> = ({ embedded = false }) => {
                         </li>
                     ))}
                 </ul>
-            </Card>
+            </SyncSection>
 
-            <Card
+            <SyncSection
                 title={t('sync.history')}
                 quiet={groups.length === 0 ? t('sync.history.empty') : undefined}
                 actions={
@@ -322,7 +204,7 @@ export const SyncApp: React.FC<SyncAppProps> = ({ embedded = false }) => {
                         <HistoryRow key={group.id} group={group} onUndo={undo} />
                     ))}
                 </ul>
-            </Card>
+            </SyncSection>
         </div>
     );
 };

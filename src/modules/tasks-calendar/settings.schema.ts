@@ -36,7 +36,6 @@ export const tasksCalendarSettingsSchema = coreSchema({
                     type: 'select',
                     key: 'calendarWidgetRowLabel',
                     labelKey: 'settings.calendarRowLabel',
-                    descKey: 'settings.calendarRowLabel.desc',
                     default: 'countdown',
                     options: [
                         { value: 'countdown', labelKey: 'settings.calendarRowLabel.countdown' },
@@ -49,7 +48,6 @@ export const tasksCalendarSettingsSchema = coreSchema({
                     type: 'segmented',
                     key: 'calendarHorizonDays',
                     labelKey: 'settings.calendarHorizon',
-                    descKey: 'settings.calendarHorizon.desc',
                     default: 7,
                     numeric: true,
                     options: [
@@ -61,7 +59,6 @@ export const tasksCalendarSettingsSchema = coreSchema({
                     type: 'toggle',
                     key: 'calendarShowOverdue',
                     labelKey: 'settings.calendarOverdue',
-                    descKey: 'settings.calendarOverdue.desc',
                     default: true,
                 },
                 {
