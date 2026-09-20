@@ -101,9 +101,13 @@ export default class ZenithPlugin extends Plugin {
      * changes (e.g. typing a folder path) collapses into one write ~500 ms
      * after the last change. `.cancel()`-able + flushed on unload.
      */
-    private persistData = debounce(() => {
-        void this.saveData(this.pluginData);
-    }, 500, true);
+    private persistData = debounce(
+        () => {
+            void this.saveData(this.pluginData);
+        },
+        500,
+        true
+    );
 
     /** Injected <style> that carries the user's custom accent color. */
     private accentStyleEl: HTMLStyleElement | null = null;
@@ -136,10 +140,18 @@ export default class ZenithPlugin extends Plugin {
     async onload(): Promise<void> {
         const startedAt = Date.now();
 
+        // The store is a module-level singleton that outlives the plugin, so a
+        // re-enable would otherwise start on whatever the last instance left
+        // in it. Cleaned here rather than on the way out: unload cannot own
+        // this ordering, because Obsidian does not await it — see `onunload`.
+        resetZenithStore();
+
         // ── Restore persisted settings ───────────────
         this.pluginData = (await this.loadData()) ?? {};
         if (this.pluginData.settings) {
-            useZenithStore.getState().loadSettings(this.pluginData.settings as Partial<ZenithSettings>);
+            useZenithStore
+                .getState()
+                .loadSettings(this.pluginData.settings as Partial<ZenithSettings>);
         }
 
         // ── Register built-in modules ───────────────
@@ -251,7 +263,9 @@ export default class ZenithPlugin extends Plugin {
         this.disposers.push(
             useZenithStore.subscribe(
                 (state) => state.settings.activeModuleIds,
-                (activeIds) => { void this.syncActiveModules(activeIds); }
+                (activeIds) => {
+                    void this.syncActiveModules(activeIds);
+                }
             )
         );
 
@@ -283,13 +297,17 @@ export default class ZenithPlugin extends Plugin {
         this.disposers.push(
             useZenithStore.subscribe(
                 (state) => state.settings.tasksFolderPath,
-                () => { void this.dataService.reloadTasks(); }
+                () => {
+                    void this.dataService.reloadTasks();
+                }
             )
         );
         this.disposers.push(
             useZenithStore.subscribe(
                 (state) => state.settings.contentFolderPath,
-                () => { void this.dataService.reloadContent(); }
+                () => {
+                    void this.dataService.reloadContent();
+                }
             )
         );
         // The journal folder and its filename pattern both decide which files
@@ -297,7 +315,8 @@ export default class ZenithPlugin extends Plugin {
         // change to either re-parses both collections.
         this.disposers.push(
             useZenithStore.subscribe(
-                (state) => `${state.settings.journalFolderPath}\0${state.settings.journalDateFormat}`,
+                (state) =>
+                    `${state.settings.journalFolderPath}\0${state.settings.journalDateFormat}`,
                 () => {
                     void this.dataService.reloadJournal();
                     void this.dataService.reloadTasks();
@@ -314,28 +333,43 @@ export default class ZenithPlugin extends Plugin {
         // did not write is in the mix; all three fit on one line.
         const modules = this.moduleManager.getLoadedModuleIds().length;
         const outside = this.moduleManager.getThirdPartyModuleIds();
-        const from = outside.length > 0 ? `, ${outside.length} third-party: ${outside.join(', ')}` : '';
+        const from =
+            outside.length > 0 ? `, ${outside.length} third-party: ${outside.join(', ')}` : '';
         console.log(
             `Zenith ${this.manifest.version}: ready in ${Date.now() - startedAt} ms (${modules} modules${from})`
         );
     }
 
-    async onunload(): Promise<void> {
+    /**
+     * Teardown, synchronously — because that is the only kind Obsidian runs.
+     *
+     * `Plugin.onunload()` is declared `void` in the API and is not awaited, so
+     * anything written after an `await` in here does not run during unload at
+     * all: it resumes whenever the event loop gets round to it, which on a
+     * disable-then-enable is after the NEXT instance has already called
+     * `onload()` and filled the store.
+     *
+     * This method used to be `async` and to end by resetting that store. The
+     * sequence that produced was: save starts and yields, the new instance
+     * loads and restores the user's settings, the old continuation wakes up
+     * and resets the store to defaults, and the new instance's own settings
+     * subscriber — now live — sees that change and writes the defaults to
+     * `data.json`. Cleaning the slate moved to the top of `onload`, which can
+     * own the ordering because it is the one Obsidian waits for.
+     */
+    onunload(): void {
         // Stop listening BEFORE tearing down so late store writes don't persist.
         this.disposers.forEach((d) => d());
         this.disposers = [];
 
-        // Flush any pending settings write so we don't lose the last change.
+        // Started rather than awaited: the data is already assembled, and the
+        // write either lands or the process is going away regardless.
         this.persistData.cancel();
-        await this.saveData(this.pluginData);
+        void this.saveData(this.pluginData);
 
-        await this.moduleManager.unloadAll();
-
-        // The store is a module-level singleton that outlives the plugin. Reset
-        // it so a later enable/re-load starts from a clean slate (otherwise
-        // stale tasks/content/modules linger and subscriptions could double up).
-        resetZenithStore();
-
+        // Nothing below depends on this finishing any more, which is what
+        // makes it safe to let go of.
+        void this.moduleManager.unloadAll();
     }
 
     /**

@@ -105,7 +105,11 @@ export const TaskItem: FC<TaskItemProps> = ({
         [task.subtasks, task.filePath]
     );
 
-    const moveSubtask = async (source: SortableRow, target: SortableRow, position: DropPosition) => {
+    const moveSubtask = async (
+        source: SortableRow,
+        target: SortableRow,
+        position: DropPosition
+    ) => {
         try {
             const ok = await new TaskWriter(app).moveTask(
                 source.filePath,
@@ -139,7 +143,11 @@ export const TaskItem: FC<TaskItemProps> = ({
         setTaskStatus(task.id, status); // optimistic
         if (!task.filePath) return;
         try {
-            const ok = await new TaskWriter(app).setStatusInFile(task.filePath, task.lineNumber, status);
+            const ok = await new TaskWriter(app).setStatusInFile(
+                task.filePath,
+                task.lineNumber,
+                status
+            );
             if (!ok) {
                 setTaskStatus(task.id, prev);
                 new Notice(t('tasks.error.update'));
@@ -154,7 +162,6 @@ export const TaskItem: FC<TaskItemProps> = ({
         }
     };
 
-
     const handleOpen = () => {
         if (task.filePath) void openFileAtLine(app, task.filePath, task.lineNumber - 1);
     };
@@ -163,7 +170,11 @@ export const TaskItem: FC<TaskItemProps> = ({
         if (!task.filePath) return;
         removeTask(task.id); // optimistic
         try {
-            const ok = await new TaskWriter(app).deleteTaskInFile(task.filePath, task.lineNumber);
+            const ok = await new TaskWriter(app).deleteTaskInFile(
+                task.filePath,
+                task.lineNumber,
+                task.title
+            );
             if (!ok) {
                 new Notice(t('tasks.error.delete'));
                 await plugin.dataService.reloadTasks();
@@ -213,7 +224,9 @@ export const TaskItem: FC<TaskItemProps> = ({
                             </span>
                         )}
                         {task.dueDate && (
-                            <span className={`zenith-task-pill zenith-task-pill--date ${overdue ? 'is-overdue' : ''} ${today ? 'is-today' : ''}`}>
+                            <span
+                                className={`zenith-task-pill zenith-task-pill--date ${overdue ? 'is-overdue' : ''} ${today ? 'is-today' : ''}`}
+                            >
                                 <Calendar size={12} />
                                 {formatDueDate(task.dueDate, t)}
                                 {/* The hour rides with the date rather than in a
@@ -255,9 +268,7 @@ export const TaskItem: FC<TaskItemProps> = ({
                         ))}
                     </div>
 
-                    {task.description && (
-                        <p className="zenith-task-notes">{task.description}</p>
-                    )}
+                    {task.description && <p className="zenith-task-notes">{task.description}</p>}
 
                     {task.attachments && task.attachments.length > 0 && (
                         <TaskAttachments attachments={task.attachments} />
