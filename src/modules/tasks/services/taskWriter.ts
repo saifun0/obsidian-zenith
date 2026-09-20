@@ -53,6 +53,20 @@ export type NewTaskInput = TaskInput;
  * Uses `vault.process` (atomic read-modify-write) so concurrent edits don't
  * clobber each other.
  */
+/**
+ * Is this checkbox line still the task the caller was shown?
+ *
+ * The comparison is of TITLES, not of raw lines. A line legitimately changes
+ * without the task changing — a completion date gets stamped, a priority
+ * marker is added, a tag is edited elsewhere — and a raw comparison would
+ * refuse a delete the user is entitled to, which trains them to ignore the
+ * refusal. The title is the part they read and pointed at.
+ */
+function titlesMatch(body: string, expected: string): boolean {
+    const found = parseTaskText(body, { priority: 'none', tags: [] }).title.trim();
+    return found === expected.trim();
+}
+
 export class TaskWriter {
     constructor(private readonly app: App) {}
 
@@ -128,7 +142,9 @@ export class TaskWriter {
             tags: parsed.tags,
             recurrence: parsed.recurrence,
             dueDate: parsed.dueDate ? shiftIsoDate(parsed.dueDate, delta) : undefined,
-            scheduledDate: parsed.scheduledDate ? shiftIsoDate(parsed.scheduledDate, delta) : undefined,
+            scheduledDate: parsed.scheduledDate
+                ? shiftIsoDate(parsed.scheduledDate, delta)
+                : undefined,
             startDate: parsed.startDate ? shiftIsoDate(parsed.startDate, delta) : undefined,
             // The hour repeats with the day: a weekly class is at the same time
             // next week, and dropping ⏰ here would empty the hour grid one
@@ -200,7 +216,9 @@ export class TaskWriter {
         const folder = folderPath.trim().replace(/\/+$/, '');
         await this.ensureFolder(folder);
 
-        const filePath = normalizePath(folder ? `${folder}/${DEFAULT_TASK_FILE}` : DEFAULT_TASK_FILE);
+        const filePath = normalizePath(
+            folder ? `${folder}/${DEFAULT_TASK_FILE}` : DEFAULT_TASK_FILE
+        );
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) {
             await this.app.vault.create(filePath, `${block}\n`);
@@ -339,11 +357,7 @@ export class TaskWriter {
      * simpler and would silently drop any marker this plugin doesn't know
      * about — and the timer stops on a line the user may be editing by hand.
      */
-    async setSpentInFile(
-        filePath: string,
-        lineNumber: number,
-        spent: string
-    ): Promise<boolean> {
+    async setSpentInFile(filePath: string, lineNumber: number, spent: string): Promise<boolean> {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return false;
 
@@ -372,8 +386,33 @@ export class TaskWriter {
         return ok;
     }
 
-    /** Delete a task line from a file. Returns true on success. */
-    async deleteTaskInFile(filePath: string, lineNumber: number): Promise<boolean> {
+    /**
+     * Remove a task and the lines that belong to it.
+     *
+     * `expectedTitle` is not a convenience, it is the safety catch, and it is
+     * required so that no caller can quietly do without one. A line number is
+     * a fact about the file as it was when it was last parsed, and this method
+     * deletes the checkbox line AND its whole indented block — so if the note
+     * has since gained a line somewhere above, an unchecked number takes out a
+     * different task together with its description, silently, in a file the
+     * user is not looking at. The window is small (the vault watcher re-parses
+     * on change) and it is wide open exactly when it matters: a note being
+     * edited in another pane, or a sync run that has just rewritten it.
+     *
+     * So the line has to still say what the user was shown before it is
+     * destroyed. Comparing the parsed title rather than the raw line is what
+     * makes that check survive the things that legitimately change without the
+     * task changing — a due date being stamped, a priority marker moving.
+     *
+     * Returns false on a mismatch, which both callers already treat as "tell
+     * them and re-read the file" — the right answer to "the note moved under
+     * us".
+     */
+    async deleteTaskInFile(
+        filePath: string,
+        lineNumber: number,
+        expectedTitle: string
+    ): Promise<boolean> {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return false;
 
@@ -382,7 +421,10 @@ export class TaskWriter {
             const lines = data.split('\n');
             const idx = lineNumber - 1;
             if (idx < 0 || idx >= lines.length) return data;
-            if (!CHECKBOX_LINE_RE.test(lines[idx])) return data;
+
+            const parts = lines[idx].match(CHECKBOX_PARTS_RE);
+            if (!parts) return data;
+            if (!titlesMatch(parts[3], expectedTitle)) return data;
 
             // The description and attachments go with it: they are the task's
             // own lines, and left behind they would read as loose prose in the

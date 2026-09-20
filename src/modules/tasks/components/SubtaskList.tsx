@@ -37,7 +37,11 @@ export function flattenSubtasks(subtasks: SubTask[], filePath: string): Sortable
     const rows: SortableRow[] = [];
     const walk = (list: SubTask[]) => {
         for (const sub of list) {
-            rows.push({ key: `${filePath}:${sub.lineNumber}`, filePath, lineNumber: sub.lineNumber });
+            rows.push({
+                key: `${filePath}:${sub.lineNumber}`,
+                filePath,
+                lineNumber: sub.lineNumber,
+            });
             walk(sub.subtasks);
         }
     };
@@ -117,7 +121,8 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
 
     const remove = async (sub: SubTask) => {
         try {
-            if (await writer().deleteTaskInFile(filePath, sub.lineNumber)) await reload();
+            if (await writer().deleteTaskInFile(filePath, sub.lineNumber, sub.title))
+                await reload();
         } catch (err) {
             console.error('Zenith: failed to delete subtask:', err);
             new Notice(t('tasks.error.delete'));
@@ -165,7 +170,9 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
                 const isEditing = editingLine === sub.lineNumber;
                 const key = `${filePath}:${sub.lineNumber}`;
                 const dropEdge =
-                    dropTarget?.kind === 'row' && dropTarget.key === key ? dropTarget.position : null;
+                    dropTarget?.kind === 'row' && dropTarget.key === key
+                        ? dropTarget.position
+                        : null;
                 return (
                     <li key={sub.lineNumber} className="zenith-subtask-group">
                         <div
@@ -185,7 +192,11 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
                                 .filter(Boolean)
                                 .join(' ')}
                         >
-                            <TaskStatusControl status={sub.status} onChange={(s) => setStatus(sub, s)} size={14} />
+                            <TaskStatusControl
+                                status={sub.status}
+                                onChange={(s) => setStatus(sub, s)}
+                                size={14}
+                            />
                             {isEditing ? (
                                 <input
                                     className="zenith-subtask__input"
@@ -247,18 +258,31 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
                                     >
                                         <GripVertical size={12} />
                                     </button>
-                                    <button className="zenith-subtask__action" onClick={() => setDetailing(sub)} aria-label={t('common.edit')} title={t('common.edit')}>
+                                    <button
+                                        className="zenith-subtask__action"
+                                        onClick={() => setDetailing(sub)}
+                                        aria-label={t('common.edit')}
+                                        title={t('common.edit')}
+                                    >
                                         <Pencil size={12} />
                                     </button>
                                     <button
                                         className="zenith-subtask__action"
-                                        onClick={() => { setAddUnder(sub.lineNumber); setAddText(''); }}
+                                        onClick={() => {
+                                            setAddUnder(sub.lineNumber);
+                                            setAddText('');
+                                        }}
                                         aria-label={t('tasks.subtask.add')}
                                         title={t('tasks.subtask.add')}
                                     >
                                         <Plus size={12} />
                                     </button>
-                                    <button className="zenith-subtask__action zenith-subtask__action--danger" onClick={() => remove(sub)} aria-label={t('common.delete')} title={t('common.delete')}>
+                                    <button
+                                        className="zenith-subtask__action zenith-subtask__action--danger"
+                                        onClick={() => remove(sub)}
+                                        aria-label={t('common.delete')}
+                                        title={t('common.delete')}
+                                    >
                                         <Trash2 size={12} />
                                     </button>
                                 </div>
@@ -277,7 +301,9 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
                         )}
 
                         {addUnder === sub.lineNumber && (
-                            <div className="zenith-subtask zenith-subtask--nested-add">{addInput(true)}</div>
+                            <div className="zenith-subtask zenith-subtask--nested-add">
+                                {addInput(true)}
+                            </div>
                         )}
 
                         {sub.subtasks.length > 0 && (
