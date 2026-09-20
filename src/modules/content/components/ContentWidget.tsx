@@ -174,6 +174,7 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
         return () => ro.disconnect();
     }, []);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Deliberately every render: it measures a row that only exists after layout. The functional update returns `prev` unchanged when nothing moved, and React stops there — so there is no chain.
     useLayoutEffect(() => {
         const row = firstRowRef.current?.offsetHeight ?? 0;
         if (row > 0) setRoom((prev) => (Math.abs(prev.row - row) > 1 ? { ...prev, row } : prev));
@@ -194,7 +195,10 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
         // to show, so it may honestly show no rows at all. One that is not
         // must never draw nothing.
         return Math.max(layout.spotlight ? 0 : 1, fits);
-    }, [room, layout, shelf.spotlight, shelf.upNext.length]);
+        // Not `shelf.spotlight`: what this reads is `layout.spotlight`, the
+        // decision about whether a spotlight is drawn, and the two parted
+        // company when that flag moved onto the layout.
+    }, [room, layout, shelf.upNext.length]);
 
     /**
      * The rows the spotlight left room for.

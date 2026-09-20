@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 /**
  * Zenith ESLint (flat config).
@@ -51,6 +52,29 @@ export default tseslint.config(
             ],
             '@typescript-eslint/no-explicit-any': 'warn',
             'no-empty': ['warn', { allowEmptyCatch: true }],
+        },
+    },
+    {
+        // ── The two rules that are about bugs ──
+        //
+        // `rules-of-hooks` is an error because breaking it is not a style
+        // question: a hook called conditionally reads another hook's state on
+        // the next render, and React has no way to tell you except by
+        // misbehaving. `exhaustive-deps` is a warning because it is right
+        // about the risk and occasionally wrong about the fix — a dependency
+        // left out on purpose is a thing that happens, and it should be
+        // argued with in a comment rather than silenced by turning the rule
+        // off for everyone.
+        //
+        // Deliberately NOT the plugin's `recommended` set, which in v7 pulls
+        // in the React Compiler rules. Those describe a stricter language than
+        // this codebase was written in, and switching them on wholesale turns
+        // a bug hunt into a migration.
+        files: ['src/**/*.{ts,tsx}'],
+        plugins: { 'react-hooks': reactHooks },
+        rules: {
+            'react-hooks/rules-of-hooks': 'error',
+            'react-hooks/exhaustive-deps': 'warn',
         },
     },
     {

@@ -3631,5 +3631,6 @@ export function useTranslation(): Translator {
         translationsRevision
     );
     const locale = resolveLocale(language);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `revision` is not read by `translatorFor`; it changes when a module registers strings, which is exactly when this must be recomputed.
     return useMemo(() => translatorFor(locale), [locale, revision]);
 }

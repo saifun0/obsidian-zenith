@@ -297,7 +297,7 @@ export default class ZenithPlugin extends Plugin {
         // change to either re-parses both collections.
         this.disposers.push(
             useZenithStore.subscribe(
-                (state) => `${state.settings.journalFolderPath} ${state.settings.journalDateFormat}`,
+                (state) => `${state.settings.journalFolderPath}\0${state.settings.journalDateFormat}`,
                 () => {
                     void this.dataService.reloadJournal();
                     void this.dataService.reloadTasks();

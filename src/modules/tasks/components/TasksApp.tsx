@@ -148,7 +148,10 @@ export const TasksApp: FC = () => {
             }
             return { id: tab.id, label: t(`tasks.tab.${tab.i18n}`), count };
         });
-    }, [tasks]);
+        // `t` included: it is memoised per locale, so this recomputes only
+        // when the language actually changes — which is precisely when a tab
+        // labelled "Сегодня" must stop saying "Today".
+    }, [tasks, t]);
 
     // ── All existing tags (for autocomplete) ─────────
 

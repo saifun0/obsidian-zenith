@@ -39,7 +39,11 @@ export const SettingsApp: React.FC = () => {
     const t = useTranslation();
 
     const settings = useZenithStore((state) => state.settings);
-    const discovered = useZenithStore((state) => state.availableModules) || [];
+    // No `|| []` here. `availableModules` is typed as an array and starts as
+    // one, and an array — empty or not — is truthy, so that fallback could
+    // never run: it defended against a state the store cannot be in, while
+    // making every static analyser assume a fresh array each render.
+    const discovered = useZenithStore((state) => state.availableModules);
     const updateSettings = useZenithStore((state) => state.updateSettings);
 
     // Every list on this page reads the translated name, including the one that
