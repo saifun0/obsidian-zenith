@@ -72,7 +72,11 @@ export const ImageLightbox: FC<ImageLightboxProps> = ({ attachment, src, onClose
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <img className="zenith-lightbox__img" src={src} alt={attachment.label ?? attachment.target} />
+            <img
+                className="zenith-lightbox__img"
+                src={src}
+                alt={attachment.label ?? attachment.target}
+            />
 
             <div className="zenith-lightbox__bar">
                 <span className="zenith-lightbox__name" title={attachment.target}>

@@ -53,11 +53,7 @@ function fileLabel(path: string): string {
     return base.replace(/\.md$/i, '');
 }
 
-function buildGroups(
-    tasks: Task[],
-    groupMode: 'smart' | 'file' | 'none',
-    t: Translator
-): Group[] {
+function buildGroups(tasks: Task[], groupMode: 'smart' | 'file' | 'none', t: Translator): Group[] {
     if (groupMode === 'none') return [{ id: 'all', tasks }];
 
     if (groupMode === 'file') {
@@ -187,18 +183,28 @@ export const TaskList: FC<TaskListProps> = ({ tasks, groupMode = 'none', reorder
             // Dates first, then status: marking done stamps a ✅ and may insert
             // the next occurrence of a recurring task, so it has to go last.
             if (patch.dueDate !== undefined) {
-                await writer.updateTaskInFile(task.filePath, task.lineNumber, {
-                    title: task.title,
-                    priority: task.priority,
-                    tags: task.tags,
-                    dueDate: patch.dueDate ?? undefined,
-                    startDate: task.startDate,
-                    scheduledDate: task.scheduledDate,
-                    recurrence: task.recurrence,
-                });
+                await writer.updateTaskInFile(
+                    task.filePath,
+                    task.lineNumber,
+                    {
+                        title: task.title,
+                        priority: task.priority,
+                        tags: task.tags,
+                        dueDate: patch.dueDate ?? undefined,
+                        startDate: task.startDate,
+                        scheduledDate: task.scheduledDate,
+                        recurrence: task.recurrence,
+                    },
+                    task.title
+                );
             }
             if (patch.status && patch.status !== task.status) {
-                await writer.setStatusInFile(task.filePath, task.lineNumber, patch.status);
+                await writer.setStatusInFile(
+                    task.filePath,
+                    task.lineNumber,
+                    patch.status,
+                    task.title
+                );
             }
         } catch (err) {
             console.error('Zenith: failed to apply drop:', err);
@@ -275,7 +281,11 @@ export const TaskList: FC<TaskListProps> = ({ tasks, groupMode = 'none', reorder
                 className="zenith-tasks-empty"
                 style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}
             >
-                <ClipboardList size={48} strokeWidth={1} style={{ opacity: 0.5, marginBottom: '16px' }} />
+                <ClipboardList
+                    size={48}
+                    strokeWidth={1}
+                    style={{ opacity: 0.5, marginBottom: '16px' }}
+                />
                 <div style={{ fontSize: '1.1rem', fontWeight: 500, color: 'var(--text-normal)' }}>
                     {t('tasks.empty')}
                 </div>

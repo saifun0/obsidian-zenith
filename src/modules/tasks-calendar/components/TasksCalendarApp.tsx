@@ -190,7 +190,8 @@ export const TasksCalendarApp: FC = () => {
     );
 
     const openSpan = useCallback(
-        (segment: SpanSegment) => openTask(segment.span.task.filePath, segment.span.task.lineNumber),
+        (segment: SpanSegment) =>
+            openTask(segment.span.task.filePath, segment.span.task.lineNumber),
         [openTask]
     );
 
@@ -199,7 +200,9 @@ export const TasksCalendarApp: FC = () => {
         updateSettings({ calendarView: { ...view, view: 'week' } });
     };
 
-    const openDay = journalOn ? (date: string) => void openDailyNote(app, settings, date) : undefined;
+    const openDay = journalOn
+        ? (date: string) => void openDailyNote(app, settings, date)
+        : undefined;
 
     /** Optimistic status change, rolled back if the write fails. */
     const changeStatus = async (entry: CalendarEntry, status: TaskStatus) => {
@@ -207,7 +210,12 @@ export const TasksCalendarApp: FC = () => {
         const previous = task.status;
         setTaskStatus(task.id, status);
         try {
-            const ok = await new TaskWriter(app).setStatusInFile(task.filePath, task.lineNumber, status);
+            const ok = await new TaskWriter(app).setStatusInFile(
+                task.filePath,
+                task.lineNumber,
+                status,
+                task.title
+            );
             if (!ok) {
                 setTaskStatus(task.id, previous);
                 new Notice(t('calendar.error.status'));

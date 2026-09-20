@@ -146,7 +146,8 @@ export const TaskItem: FC<TaskItemProps> = ({
             const ok = await new TaskWriter(app).setStatusInFile(
                 task.filePath,
                 task.lineNumber,
-                status
+                status,
+                task.title
             );
             if (!ok) {
                 setTaskStatus(task.id, prev);

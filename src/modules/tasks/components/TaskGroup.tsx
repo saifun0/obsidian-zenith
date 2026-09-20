@@ -50,7 +50,9 @@ export const TaskGroup: FC<TaskGroupProps> = ({
             )}
 
             {empty ? (
-                <div className="zenith-task-group__placeholder">{group.hint ?? t('tasks.drop.here')}</div>
+                <div className="zenith-task-group__placeholder">
+                    {group.hint ?? t('tasks.drop.here')}
+                </div>
             ) : (
                 <div className="zenith-task-list">
                     {group.tasks.map((task) => (

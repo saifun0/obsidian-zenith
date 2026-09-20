@@ -176,6 +176,11 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                     editTask.filePath,
                     editTask.lineNumber,
                     input,
+                    // The title as it was when the dialog opened, not the one
+                    // being saved: the check is that the line is still the
+                    // task the user opened, and renaming it is the commonest
+                    // edit there is.
+                    editTask.title,
                     details
                 );
                 if (!ok) {

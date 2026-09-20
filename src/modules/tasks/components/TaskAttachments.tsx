@@ -67,7 +67,9 @@ export const TaskAttachments: FC<{ attachments: TaskAttachment[] }> = ({ attachm
     const { app } = useApp();
     const align = useZenithStore((s) => s.settings.taskImageAlign);
     const size = useZenithStore((s) => s.settings.taskImageSize);
-    const [viewing, setViewing] = useState<{ attachment: TaskAttachment; src: string } | null>(null);
+    const [viewing, setViewing] = useState<{ attachment: TaskAttachment; src: string } | null>(
+        null
+    );
 
     const images = attachments.filter((a) => a.kind === 'image');
     const rest = attachments.filter((a) => a.kind !== 'image');
