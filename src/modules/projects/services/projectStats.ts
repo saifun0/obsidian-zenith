@@ -59,14 +59,46 @@ export function computeProjectStats(
  * get a phrase rather than a number with a word after it.
  */
 export function dueLabel(project: Project, t: Translator): { text: string; tone: string } | null {
-    if (!project.due) return null;
+    if (!project.targetDate) return null;
     if (project.status === 'completed' || project.status === 'archived') return null;
 
     const days = project.stats.daysRemaining;
     if (days === undefined) return null;
     if (project.stats.isOverdue || days < 0) {
-        return { text: t('projects.stats.overdueDays', { count: Math.abs(days) }), tone: 'is-overdue' };
+        return {
+            text: t('projects.stats.overdueDays', { count: Math.abs(days) }),
+            tone: 'is-overdue',
+        };
     }
     if (days === 0) return { text: t('projects.stats.today'), tone: 'is-today' };
     return { text: t('projects.stats.daysLeftN', { count: days }), tone: '' };
+}
+
+/**
+ * A project's start date, on the days it still means something.
+ *
+ * Silent for anything already running, which is most of them: "started on 3
+ * March" answers no question a card is asked. Ahead of its start, though, the
+ * date is the whole story — a project with four open tasks and a start date
+ * next Monday is not late, it has not begun.
+ *
+ * Silent too for finished and shelved projects, for the same reason `dueLabel`
+ * is: a date in the future on something nobody is doing is a countdown to
+ * nothing.
+ */
+export function startLabel(
+    project: Project,
+    t: Translator,
+    now: number = Date.now()
+): string | null {
+    if (!project.startDate) return null;
+    if (project.status === 'completed' || project.status === 'archived') return null;
+
+    const todayStr = toLocalIsoDate(new Date(now));
+    if (project.startDate < todayStr) return null;
+    if (project.startDate === todayStr) return t('projects.card.startsToday');
+
+    const days = Math.round((Date.parse(project.startDate) - Date.parse(todayStr)) / DAY_MS);
+    if (!Number.isFinite(days)) return null;
+    return t('projects.card.startsIn', { count: days });
 }

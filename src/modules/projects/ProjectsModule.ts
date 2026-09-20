@@ -3,6 +3,7 @@ import { projectsSettingsSchema } from './settings.schema';
 import type { SettingsSchema } from '../../settings/schema/types';
 import { VIEW_TYPE_PROJECTS } from '../../core/constants';
 import { ProjectsView } from './ProjectsView';
+import { ProjectFormModal } from './ProjectFormModal';
 import { ProjectsWidget } from './components/ProjectsWidget';
 import type ZenithPlugin from '../../main';
 import { projectsTranslations } from './i18n';
@@ -34,6 +35,15 @@ export class ProjectsModule extends BaseModule {
             id: 'open-projects',
             name: 'Open Projects',
             callback: () => this.activateView(),
+        });
+
+        // Reachable without the view, the way a task is: the form is where a
+        // project is described, and wanting to describe one does not imply
+        // wanting to look at the other six first.
+        this.addCommand({
+            id: 'new-project',
+            name: 'New project',
+            callback: () => new ProjectFormModal(this.plugin.app, this.plugin).open(),
         });
 
         // Register Projects widget on the dashboard

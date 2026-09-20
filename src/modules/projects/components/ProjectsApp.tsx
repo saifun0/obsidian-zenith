@@ -1,24 +1,43 @@
 import React, { useCallback, useMemo, useState, type FC } from 'react';
-import { ChevronDown, FolderKanban, Plus, Search, X } from 'lucide-react';
-import { Notice } from 'obsidian';
+import { FolderKanban, Plus, Search, X } from 'lucide-react';
+import { Notice, TFile } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
+import { PromptModal } from '../../../core/PromptModal';
 import type { Project, ProjectStatus } from '../projectsTypes';
 import { filterTasksForProject } from '../services/projectParser';
-import { dueLabel } from '../services/projectStats';
+import { ProjectWriter } from '../services/projectWriter';
+import { ProjectFormModal } from '../ProjectFormModal';
+import { ProjectCard } from './ProjectCard';
 import { TaskWriter } from '../../tasks/services/taskWriter';
-import { Meter, ViewHeader } from '../../../components/shared';
+import { ViewHeader } from '../../../components/shared';
 import type { Task } from '../../../store/taskSlice';
 import type { TaskStatus } from '../../../core/constants';
-import { TaskStatusControl } from '../../tasks/components/taskStatusUi';
 
-/** Priorities worth a word on the card. The other three are the ordinary case. */
-const LOUD_PRIORITIES = new Set(['urgent', 'high']);
+/**
+ * Sort projects the way the dashboard widget already sorts them.
+ *
+ * The grid used to render them in whatever order the parser produced, which is
+ * the folder's alphabetical order — while the widget six inches away put the
+ * nearest deadline first and explained in a comment why an undated project is
+ * not urgent but undated. Two orders for one set of data in one plugin is not
+ * a preference, it is a bug that nobody had written down.
+ */
+export function sortProjects(projects: Project[]): Project[] {
+    return [...projects].sort((a, b) => {
+        const x = a.stats.daysRemaining;
+        const y = b.stats.daysRemaining;
+        if (x !== undefined && y !== undefined && x !== y) return x - y;
+        if (x !== undefined && y === undefined) return -1;
+        if (x === undefined && y !== undefined) return 1;
+        return a.title.localeCompare(b.title);
+    });
+}
 
 export const ProjectsApp: FC = () => {
     const t = useTranslation();
-    const { app } = useApp();
+    const { app, plugin } = useApp();
 
     const projects = useZenithStore((s) => s.projects);
     const tasks = useZenithStore((s) => s.tasks);
@@ -27,13 +46,12 @@ export const ProjectsApp: FC = () => {
     const setStatusFilter = useZenithStore((s) => s.setProjectStatusFilter);
     const setSearchQuery = useZenithStore((s) => s.setProjectSearchQuery);
     const setTaskStatus = useZenithStore((s) => s.setTaskStatus);
-    const projectsFolderPath = useZenithStore((s) => s.settings.projectsFolderPath);
 
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
     const filtered = useMemo(() => {
         const q = searchQuery.trim().toLowerCase();
-        return projects.filter((p) => {
+        const matching = projects.filter((p) => {
             if (statusFilter !== 'all' && p.status !== statusFilter) return false;
             if (!q) return true;
             return (
@@ -41,6 +59,7 @@ export const ProjectsApp: FC = () => {
                 p.tags.some((tag) => tag.toLowerCase().includes(q))
             );
         });
+        return sortProjects(matching);
     }, [projects, statusFilter, searchQuery]);
 
     const summary = useMemo(() => {
@@ -59,49 +78,59 @@ export const ProjectsApp: FC = () => {
         [app]
     );
 
-    const createProject = useCallback(async () => {
-        try {
-            const folder = projectsFolderPath || '20 Projects';
-            if (!app.vault.getAbstractFileByPath(folder)) await app.vault.createFolder(folder);
+    const openForm = useCallback(
+        (project?: Project) => new ProjectFormModal(app, plugin, project).open(),
+        [app, plugin]
+    );
 
-            const title = t('projects.template.title');
-            let filename = `${folder}/${title}.md`;
-            let counter = 1;
-            while (app.vault.getAbstractFileByPath(filename)) {
-                filename = `${folder}/${title} ${counter++}.md`;
+    const changeProjectStatus = useCallback(
+        async (project: Project, status: ProjectStatus) => {
+            const file = app.vault.getAbstractFileByPath(project.filePath);
+            if (!(file instanceof TFile)) return;
+            try {
+                await new ProjectWriter(app).setStatus(file, status);
+            } catch (err) {
+                console.error('Zenith: failed to change the project status:', err);
+                new Notice(t('projects.notice.saveFailed'));
             }
+        },
+        [app, t]
+    );
 
-            // The note the user lands in is theirs to speak, so every word of
-            // it comes from the dictionary rather than from this file — which
-            // is where the Russian used to be hardcoded, in an English source
-            // file, for an English user.
-            const body = [
-                '---',
-                `title: ${title}`,
-                'status: active',
-                'priority: medium',
-                `due: ${new Date().toISOString().slice(0, 10)}`,
-                'tags:',
-                '  - project',
-                '---',
-                '',
-                `# ${title}`,
-                '',
-                `## ${t('projects.template.about')}`,
-                t('projects.template.aboutHint'),
-                '',
-                `## ${t('projects.template.tasks')}`,
-                `- [ ] ${t('projects.template.firstTask')}`,
-                '',
-            ].join('\n');
+    /**
+     * A task, written into the project's own note.
+     *
+     * Straight into the note rather than into the inbox with a link back,
+     * because the note is the least ambiguous of the ways a task can belong to
+     * a project — no wikilink to keep pointing at the right file, nothing to
+     * break when the project is renamed. `addTask` aims at the template's
+     * tasks heading and falls back to the end of the file, which is where a
+     * project whose heading was renamed or translated will collect them.
+     */
+    const addTask = useCallback(
+        async (project: Project) => {
+            const title = await new PromptModal(app, {
+                title: t('projects.card.addTask.title'),
+                placeholder: t('projects.card.addTask.placeholder'),
+                confirmText: t('projects.card.addTask'),
+                cancelText: t('projects.form.cancel'),
+            }).ask();
+            if (!title?.trim()) return;
 
-            const file = await app.vault.create(filename, body);
-            await app.workspace.openLinkText(file.path, '', false);
-        } catch (err) {
-            console.error('Zenith: failed to create project:', err);
-            new Notice(t('projects.notice.createFailed'));
-        }
-    }, [app, projectsFolderPath, t]);
+            try {
+                await new TaskWriter(app).addTask(
+                    '',
+                    { title: title.trim(), priority: 'none', tags: [] },
+                    { filePath: project.filePath, heading: t('projects.template.tasks') }
+                );
+                new Notice(t('projects.notice.taskAdded'));
+            } catch (err) {
+                console.error('Zenith: failed to add the task:', err);
+                new Notice(t('projects.notice.taskFailed'));
+            }
+        },
+        [app, t]
+    );
 
     /**
      * A checkbox here used to flip between done and not-done, so the two
@@ -110,7 +139,7 @@ export const ProjectsApp: FC = () => {
      * control now, with the tasks module's own menu, and all four are one
      * click away wherever a task is drawn.
      */
-    const changeStatus = useCallback(
+    const changeTaskStatus = useCallback(
         async (task: Task, next: TaskStatus) => {
             if (next === task.status) return;
             const prev = task.status;
@@ -172,7 +201,7 @@ export const ProjectsApp: FC = () => {
                     <button
                         type="button"
                         className="zenith-btn zenith-btn--cta"
-                        onClick={createProject}
+                        onClick={() => openForm()}
                     >
                         <Plus size={15} />
                         <span>{t('projects.new')}</span>
@@ -226,133 +255,25 @@ export const ProjectsApp: FC = () => {
                     </div>
                 ) : (
                     <div className="zenith-projects__grid">
-                        {filtered.map((project) => {
-                            const projectTasks = filterTasksForProject(tasks, project);
-                            const open = expanded[project.id] ?? false;
-                            const due = dueLabel(project, t);
-                            const loud = LOUD_PRIORITIES.has(project.priority);
-
-                            return (
-                                <article key={project.id} className="zenith-project-card">
-                                    {/* The title is the way into the note. It used
-                                    to share that job with a bordered "open
-                                    note" button in the corner — the loudest
-                                    control on the card, for the one action its
-                                    own heading already performs. */}
-                                    <div className="zenith-project-card__top">
-                                        <a
-                                            className="zenith-project-card__title"
-                                            href="#"
-                                            title={t('projects.card.openNote')}
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                openNote(project);
-                                            }}
-                                        >
-                                            {project.title}
-                                        </a>
-                                        {due && (
-                                            <span className={`zenith-project-due ${due.tone}`}>
-                                                {due.text}
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {/* One quiet line instead of two filled pills.
-                                    The status was set in a coloured box and the
-                                    priority in English capitals beside it —
-                                    `priority.toUpperCase()`, which is how
-                                    "URGENT" ended up shouting in a Russian
-                                    interface. A priority is only worth a word
-                                    when it is one of the two that mean hurry;
-                                    the rest is the ordinary case and says
-                                    nothing by saying "MEDIUM". */}
-                                    <div className="zenith-project-card__meta">
-                                        <span
-                                            className={`zenith-project-state zenith-project-state--${project.status}`}
-                                        >
-                                            {t(`projects.state.${project.status}`)}
-                                        </span>
-                                        {loud && (
-                                            <span
-                                                className={`zenith-project-prio zenith-project-prio--${project.priority}`}
-                                            >
-                                                {t(`priority.${project.priority}`)}
-                                            </span>
-                                        )}
-                                        {project.tags.map((tag) => (
-                                            <span key={tag} className="zenith-project-tag">
-                                                #{tag}
-                                            </span>
-                                        ))}
-                                    </div>
-
-                                    {/* The bar IS the percentage. It used to be
-                                    drawn under "1 / 3 выполнено" and "33%",
-                                    which is the same fraction three times in
-                                    three notations. */}
-                                    <div className="zenith-project-card__meter">
-                                        <Meter percent={project.stats.progressPercent} />
-                                        <span className="zenith-project-card__count">
-                                            {project.stats.completedTasks} /{' '}
-                                            {project.stats.totalTasks}
-                                        </span>
-                                    </div>
-
-                                    {projectTasks.length > 0 && (
-                                        <div className="zenith-project-card__tasks">
-                                            <button
-                                                type="button"
-                                                className={`zenith-project-card__toggle ${open ? 'is-open' : ''}`}
-                                                aria-expanded={open}
-                                                onClick={() =>
-                                                    setExpanded((prev) => ({
-                                                        ...prev,
-                                                        [project.id]: !open,
-                                                    }))
-                                                }
-                                            >
-                                                <ChevronDown size={13} />
-                                                {t('projects.card.tasksN', {
-                                                    count: projectTasks.length,
-                                                })}
-                                            </button>
-
-                                            {open && (
-                                                <ul className="zenith-project-card__task-list">
-                                                    {projectTasks.map((task) => (
-                                                        <li
-                                                            key={task.id}
-                                                            className={`zenith-project-task-item ${
-                                                                task.status === 'done'
-                                                                    ? 'is-done'
-                                                                    : ''
-                                                            }`}
-                                                        >
-                                                            {/* The same control the tasks
-                                                            module draws, menu and
-                                                            all, so one glyph means
-                                                            one thing everywhere and
-                                                            one click does. */}
-                                                            <TaskStatusControl
-                                                                status={task.status}
-                                                                size={15}
-                                                                onChange={(next) =>
-                                                                    void changeStatus(task, next)
-                                                                }
-                                                            />
-                                                            <span className="zenith-project-task-text">
-                                                                {task.title}
-                                                            </span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
-                                        </div>
-                                    )}
-                                </article>
-                            );
-                        })}
+                        {filtered.map((project) => (
+                            <ProjectCard
+                                key={project.id}
+                                project={project}
+                                tasks={filterTasksForProject(project, tasks)}
+                                expanded={expanded[project.id] ?? false}
+                                onToggleTasks={() =>
+                                    setExpanded((prev) => ({
+                                        ...prev,
+                                        [project.id]: !(prev[project.id] ?? false),
+                                    }))
+                                }
+                                onOpenNote={() => openNote(project)}
+                                onEdit={() => openForm(project)}
+                                onStatus={(s) => void changeProjectStatus(project, s)}
+                                onAddTask={() => void addTask(project)}
+                                onTaskStatus={(task, next) => void changeTaskStatus(task, next)}
+                            />
+                        ))}
                     </div>
                 )}
             </div>

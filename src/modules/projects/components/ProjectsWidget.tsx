@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, type FC } from 'react';
-import { ArrowRight, FolderKanban } from 'lucide-react';
+import { ArrowRight, FolderKanban, Plus } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
@@ -7,6 +7,7 @@ import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import type { Project } from '../projectsTypes';
 import { dueLabel } from '../services/projectStats';
 import { Meter } from '../../../components/shared';
+import { ProjectFormModal } from '../ProjectFormModal';
 
 /**
  * The projects card: what is running, and how close each one is to done.
@@ -115,6 +116,18 @@ export const ProjectsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
                 <span className="zenith-wfoot__note">
                     {t('projects.summary.active', { count: active.length })}
                 </span>
+                {/* A project is started thinking about it, not looking at a
+                    list of the others — so the form opens from here as well as
+                    from the view and the palette. */}
+                <button
+                    type="button"
+                    className="zenith-btn zenith-btn--ghost zenith-btn--sm"
+                    onClick={() => new ProjectFormModal(app, plugin).open()}
+                    title={t('projects.new')}
+                    aria-label={t('projects.new')}
+                >
+                    <Plus size={13} />
+                </button>
                 <button
                     type="button"
                     className="zenith-btn zenith-btn--ghost zenith-btn--sm zenith-wfoot__open"

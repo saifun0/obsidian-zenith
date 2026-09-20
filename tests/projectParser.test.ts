@@ -121,7 +121,9 @@ This is a test project.
         expect(project.title).toBe('Project Zenith Demo');
         expect(project.status).toBe('in-progress');
         expect(project.priority).toBe('high');
-        expect(project.due).toBe('2026-12-31');
+        // Read from `due`, which is one of four spellings older notes use, and
+        // surfaced under the one name the object now carries.
+        expect(project.targetDate).toBe('2026-12-31');
         expect(project.tags).toEqual(['zenith', 'dev']);
     });
 
@@ -145,6 +147,7 @@ describe('filterTasksForProject', () => {
         status: 'active',
         priority: 'none',
         tags: ['apollo'],
+        taskTags: [],
         tasks: [],
         mtime: 100,
         stats: {
@@ -172,7 +175,7 @@ describe('filterTasksForProject', () => {
             }),
         ];
 
-        const matched = filterTasksForProject(tasks, project);
+        const matched = filterTasksForProject(project, tasks);
         expect(matched.map((t) => t.id)).toEqual(['1']);
     });
 
@@ -186,12 +189,24 @@ describe('filterTasksForProject', () => {
             }),
         ];
 
-        const matched = filterTasksForProject(tasks, project);
+        const matched = filterTasksForProject(project, tasks);
         expect(matched.length).toBe(1);
         expect(matched[0].id).toBe('ext-1');
     });
 
-    it('includes tasks matching project tags', () => {
+    /**
+     * The rule this replaced counted any tag the project and the task had in
+     * common, with `project`/`projects`/`todo`/`task` blacklisted in the
+     * parser to stop `#project` from swallowing the vault. A blacklist of a
+     * rule's own worst cases is the rule admitting it guesses — and it guessed
+     * both ways, correctly filing a task tagged `#logistics` under a house
+     * move and just as confidently filing one tagged `#sport` under a marathon
+     * that had already finished.
+     *
+     * So what a project is filed under and what its tasks are tagged with are
+     * two separate fields now, and only the second one claims anything.
+     */
+    it('ignores a tag the project is merely filed under', () => {
         const tasks: Task[] = [
             makeTask({
                 id: 'tag-1',
@@ -202,8 +217,44 @@ describe('filterTasksForProject', () => {
             }),
         ];
 
-        const matched = filterTasksForProject(tasks, project);
-        expect(matched.length).toBe(1);
-        expect(matched[0].id).toBe('tag-1');
+        expect(filterTasksForProject(project, tasks)).toEqual([]);
+    });
+
+    it('claims a task carrying a tag the project asked for', () => {
+        const claiming: Project = { ...project, taskTags: ['apollo'] };
+        const tasks: Task[] = [
+            makeTask({
+                id: 'tag-1',
+                title: 'Fix critical bug',
+                status: 'todo',
+                tags: ['apollo'],
+                filePath: '10 Inbox/Notes.md',
+            }),
+            makeTask({
+                id: 'tag-2',
+                title: 'Unrelated',
+                status: 'todo',
+                tags: ['garden'],
+                filePath: '10 Inbox/Notes.md',
+            }),
+        ];
+
+        expect(filterTasksForProject(claiming, tasks).map((t) => t.id)).toEqual(['tag-1']);
+    });
+
+    /** The hash is how a tag is written in a note and not part of its name. */
+    it('matches claimed tags whether or not either side wrote the hash', () => {
+        const claiming: Project = { ...project, taskTags: ['#Apollo'] };
+        const tasks: Task[] = [
+            makeTask({
+                id: 'tag-1',
+                title: 'Fix critical bug',
+                status: 'todo',
+                tags: ['#apollo'],
+                filePath: '10 Inbox/Notes.md',
+            }),
+        ];
+
+        expect(filterTasksForProject(claiming, tasks).map((t) => t.id)).toEqual(['tag-1']);
     });
 });
