@@ -137,7 +137,9 @@ export const TasksApp: FC = () => {
                     count = tasks.length;
                     break;
                 case 'active':
-                    count = tasks.filter((t) => t.status === 'todo' || t.status === 'in-progress').length;
+                    count = tasks.filter(
+                        (t) => t.status === 'todo' || t.status === 'in-progress'
+                    ).length;
                     break;
                 case 'in-progress':
                     count = tasks.filter((t) => t.status === 'in-progress').length;
@@ -165,7 +167,6 @@ export const TasksApp: FC = () => {
 
     return (
         <div className="zenith-tasks">
-            
             <div className="zenith-tasks-header-wrapper">
                 {/* Header */}
                 <div className="zenith-tasks-header">
@@ -247,11 +248,7 @@ export const TasksApp: FC = () => {
                 </div>
 
                 {/* Tabs */}
-                <Tabs
-                    tabs={tabsWithCounts}
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                />
+                <Tabs tabs={tabsWithCounts} activeTab={activeTab} onTabChange={setActiveTab} />
 
                 {/* Search */}
                 <div className="zenith-tasks-search">

@@ -1,4 +1,12 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FC } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+    type FC,
+} from 'react';
 import { Notice } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
@@ -71,7 +79,9 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
         if (!host || typeof ResizeObserver === 'undefined') return;
         const ro = new ResizeObserver(([entry]) => {
             const { height: h, width: w } = entry.contentRect;
-            setBox((prev) => (Math.abs(prev.h - h) > 1 || Math.abs(prev.w - w) > 1 ? { h, w } : prev));
+            setBox((prev) =>
+                Math.abs(prev.h - h) > 1 || Math.abs(prev.w - w) > 1 ? { h, w } : prev
+            );
         });
         ro.observe(host);
         return () => ro.disconnect();
@@ -90,7 +100,12 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
         setTaskStatus(task.id, status);
         if (!task.filePath) return;
         try {
-            const ok = await new TaskWriter(app).setStatusInFile(task.filePath, task.lineNumber, status);
+            const ok = await new TaskWriter(app).setStatusInFile(
+                task.filePath,
+                task.lineNumber,
+                status,
+                task.title
+            );
             if (!ok) {
                 setTaskStatus(task.id, prev);
                 new Notice(translateNow('notice.taskUpdateFailed'));
@@ -104,7 +119,14 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
 
     const changeSubStatus = async (filePath: string, sub: SubTask, status: TaskStatus) => {
         try {
-            if (await new TaskWriter(app).setStatusInFile(filePath, sub.lineNumber, status)) {
+            if (
+                await new TaskWriter(app).setStatusInFile(
+                    filePath,
+                    sub.lineNumber,
+                    status,
+                    sub.title
+                )
+            ) {
                 void plugin.dataService.reloadTasks();
             }
         } catch (err) {
@@ -170,9 +192,11 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
             month: 'short',
             day: 'numeric',
         });
-        if (task.status === 'done' || task.status === 'cancelled') return { text: date, tone: 'past' };
+        if (task.status === 'done' || task.status === 'cancelled')
+            return { text: date, tone: 'past' };
         const d = daysUntil(task.dueDate, today);
-        if (d < 0) return { text: t('tasks.widget.due.overdueDays', { count: -d }), tone: 'overdue' };
+        if (d < 0)
+            return { text: t('tasks.widget.due.overdueDays', { count: -d }), tone: 'overdue' };
         if (d === 0) return { text: t('tasks.widget.due.today'), tone: 'today' };
         if (d === 1) return { text: t('tasks.widget.due.tomorrow'), tone: 'soon' };
         return { text: date, tone: 'later' };
@@ -192,7 +216,8 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
         }
         const { done, total } = countSubtasks(task.subtasks);
         const toggles = !m.detailed && total > 0;
-        if (total > 0) parts.push(`${done}/${total}${toggles ? (expanded === task.id ? ' ⌄' : ' ›') : ''}`);
+        if (total > 0)
+            parts.push(`${done}/${total}${toggles ? (expanded === task.id ? ' ⌄' : ' ›') : ''}`);
         if (parts.length === 0) return null;
         return { text: parts.join(' · '), toggles };
     };
@@ -200,7 +225,11 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
     const renderLine = (line: Line): React.ReactNode => {
         if (line.kind === 'more') {
             return (
-                <div key={line.key} className="zenith-tw__row zenith-tw__row--more" style={{ height: line.height }}>
+                <div
+                    key={line.key}
+                    className="zenith-tw__row zenith-tw__row--more"
+                    style={{ height: line.height }}
+                >
                     <button
                         type="button"
                         className="zenith-btn zenith-btn--ghost zenith-btn--sm zenith-btn--flush zenith-tw__link"
@@ -214,7 +243,11 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
         if (line.kind === 'sub') {
             const { sub, task } = line;
             return (
-                <div key={line.key} className="zenith-tw__row zenith-tw__row--sub" style={{ height: line.height }}>
+                <div
+                    key={line.key}
+                    className="zenith-tw__row zenith-tw__row--sub"
+                    style={{ height: line.height }}
+                >
                     <TaskStatusControl
                         status={sub.status}
                         size={13}
@@ -241,7 +274,11 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                 className={`zenith-tw__row is-prio-${task.priority}`}
                 style={{ height: line.height }}
             >
-                <TaskStatusControl status={task.status} size={m.box} onChange={(s) => void changeStatus(task, s)} />
+                <TaskStatusControl
+                    status={task.status}
+                    size={m.box}
+                    onChange={(s) => void changeStatus(task, s)}
+                />
                 <span
                     className={`zenith-tw__title ${struck ? 'is-struck' : ''}`}
                     onClick={openTasks}
@@ -253,7 +290,11 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                 {info && (
                     <span
                         className={`zenith-tw__info ${info.toggles ? 'is-toggle' : ''} ${expanded === task.id ? 'is-open' : ''}`}
-                        onClick={info.toggles ? () => setExpanded((v) => (v === task.id ? null : task.id)) : undefined}
+                        onClick={
+                            info.toggles
+                                ? () => setExpanded((v) => (v === task.id ? null : task.id))
+                                : undefined
+                        }
                         role={info.toggles ? 'button' : undefined}
                     >
                         {info.text}
@@ -307,7 +348,11 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
     }
 
     // On `lg` the summary strip carries the link, so the heading doesn't repeat it.
-    const headLink = showStats ? '' : size === 'sm' ? t('tasks.widget.allShort') : t('tasks.widget.allTasks');
+    const headLink = showStats
+        ? ''
+        : size === 'sm'
+          ? t('tasks.widget.allShort')
+          : t('tasks.widget.allTasks');
 
     /** Proportions of the day: overdue, due today, running, waiting. */
     const load = [
@@ -328,7 +373,9 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                 label:
                     i === 0
                         ? t('tasks.widget.week.today')
-                        : new Date(`${iso}T00:00:00`).toLocaleDateString(t.locale, { weekday: 'short' }),
+                        : new Date(`${iso}T00:00:00`).toLocaleDateString(t.locale, {
+                              weekday: 'short',
+                          }),
                 bars: due.slice(0, 3).map((task) => task.status),
             };
         });
@@ -351,7 +398,11 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
         // and the same number twice on one card is a number you stop reading.
         const out = [
             { key: 'active', value: String(split.active.length), cls: '' },
-            { key: 'overdue', value: String(split.overdue), cls: split.overdue > 0 ? 'is-danger' : 'is-faint' },
+            {
+                key: 'overdue',
+                value: String(split.overdue),
+                cls: split.overdue > 0 ? 'is-danger' : 'is-faint',
+            },
         ];
         // The day's outcome, only on a day that had one: a nought here would
         // spend the width of a whole figure to report that nothing happened.
@@ -365,7 +416,10 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
         out.push({
             key: 'nextDue',
             value: dues.length
-                ? new Date(`${dues[0]}T00:00:00`).toLocaleDateString(t.locale, { month: 'short', day: 'numeric' })
+                ? new Date(`${dues[0]}T00:00:00`).toLocaleDateString(t.locale, {
+                      month: 'short',
+                      day: 'numeric',
+                  })
                 : '—',
             cls: 'is-date',
         });
@@ -441,7 +495,11 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
             {load.length > 0 && (
                 <div className="zenith-tw__load" aria-hidden="true">
                     {load.map((seg) => (
-                        <i key={seg.cls} className={`zenith-tw__load-seg ${seg.cls}`} style={{ flexGrow: seg.n }} />
+                        <i
+                            key={seg.cls}
+                            className={`zenith-tw__load-seg ${seg.cls}`}
+                            style={{ flexGrow: seg.n }}
+                        />
                     ))}
                 </div>
             )}
@@ -451,7 +509,9 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                     {layout.groups.map((g) => (
                         <div key={g.label} className="zenith-tw__group" style={{ gap: layout.gap }}>
                             <div className="zenith-tw__group-head">
-                                <span className="zenith-tw__group-num">{String(g.count).padStart(2, '0')}</span>
+                                <span className="zenith-tw__group-num">
+                                    {String(g.count).padStart(2, '0')}
+                                </span>
                                 <span className="zenith-tw__group-label">
                                     {t(`tasks.widget.group.${g.label}`)}
                                 </span>
@@ -476,7 +536,9 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                             {/* An empty label still occupies its line: the two
                                 columns have to start at the same height. */}
                             <span className="zenith-tw__col-label">
-                                {layout.columns?.[1] ? t(`tasks.widget.group.${layout.columns[1]}`) : ' '}
+                                {layout.columns?.[1]
+                                    ? t(`tasks.widget.group.${layout.columns[1]}`)
+                                    : ' '}
                             </span>
                             {layout.lines2.map(renderLine)}
                         </div>
@@ -516,7 +578,9 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                             >
                                 <span className="zenith-tw__week-num">−{split.overdue}</span>
                                 <i className="zenith-tw__week-rule" />
-                                <span className="zenith-tw__week-label">{t('tasks.widget.week.overdue')}</span>
+                                <span className="zenith-tw__week-label">
+                                    {t('tasks.widget.week.overdue')}
+                                </span>
                             </div>
                         )}
                         {week.map((day) => (
@@ -539,12 +603,18 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                             </div>
                         ))}
                     </div>
-                    <div className="zenith-tw__figures" ref={figuresRef} style={{ gap: FIGURE_GAP }}>
+                    <div
+                        className="zenith-tw__figures"
+                        ref={figuresRef}
+                        style={{ gap: FIGURE_GAP }}
+                    >
                         {figures
                             .filter((f) => visible(f.key))
                             .map((f) => (
                                 <div key={f.key} className="zenith-tw__figure" data-figure={f.key}>
-                                    <span className={`zenith-tw__figure-num ${f.cls}`}>{f.value}</span>
+                                    <span className={`zenith-tw__figure-num ${f.cls}`}>
+                                        {f.value}
+                                    </span>
                                     <span className="zenith-tw__figure-lab">
                                         {t(`tasks.widget.stat.${f.key}`)}
                                     </span>

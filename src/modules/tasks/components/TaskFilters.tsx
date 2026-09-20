@@ -17,11 +17,7 @@ interface TaskFiltersProps {
 
 // ── Component ────────────────────────────────────────
 
-export const TaskFilters: FC<TaskFiltersProps> = ({
-    filters,
-    onFilterChange,
-    allTags,
-}) => {
+export const TaskFilters: FC<TaskFiltersProps> = ({ filters, onFilterChange, allTags }) => {
     const t = useTranslation();
     const [tagInput, setTagInput] = useState(filters.tag);
     // The suggestion list was a div positioned inside the field's own box, with
@@ -137,10 +133,18 @@ export const TaskFilters: FC<TaskFiltersProps> = ({
                     })
                 }
             >
-                <option value="manual">{t('content.sortBy', { name: t('tasks.sort.manual') })}</option>
-                <option value="created">{t('content.sortBy', { name: t('tasks.sort.created') })}</option>
-                <option value="dueDate">{t('content.sortBy', { name: t('tasks.sort.dueDate') })}</option>
-                <option value="priority">{t('content.sortBy', { name: t('tasks.sort.priority') })}</option>
+                <option value="manual">
+                    {t('content.sortBy', { name: t('tasks.sort.manual') })}
+                </option>
+                <option value="created">
+                    {t('content.sortBy', { name: t('tasks.sort.created') })}
+                </option>
+                <option value="dueDate">
+                    {t('content.sortBy', { name: t('tasks.sort.dueDate') })}
+                </option>
+                <option value="priority">
+                    {t('content.sortBy', { name: t('tasks.sort.priority') })}
+                </option>
             </select>
 
             {/* Group (applies on the All tab) */}
@@ -154,9 +158,15 @@ export const TaskFilters: FC<TaskFiltersProps> = ({
                     })
                 }
             >
-                <option value="smart">{t('tasks.filter.groupBy', { name: t('tasks.group.smart') })}</option>
-                <option value="file">{t('tasks.filter.groupBy', { name: t('tasks.group.file') })}</option>
-                <option value="none">{t('tasks.filter.groupBy', { name: t('tasks.group.none') })}</option>
+                <option value="smart">
+                    {t('tasks.filter.groupBy', { name: t('tasks.group.smart') })}
+                </option>
+                <option value="file">
+                    {t('tasks.filter.groupBy', { name: t('tasks.group.file') })}
+                </option>
+                <option value="none">
+                    {t('tasks.filter.groupBy', { name: t('tasks.group.none') })}
+                </option>
             </select>
         </>
     );

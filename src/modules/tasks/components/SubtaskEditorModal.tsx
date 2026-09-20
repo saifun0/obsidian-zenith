@@ -137,7 +137,9 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
                         />
                     </div>
                     <div className="zenith-field">
-                        <label className="zenith-field__label">{t('tasks.editor.dueEndTime')}</label>
+                        <label className="zenith-field__label">
+                            {t('tasks.editor.dueEndTime')}
+                        </label>
                         <input
                             type="time"
                             className="zenith-field__input"

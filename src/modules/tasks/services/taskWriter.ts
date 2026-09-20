@@ -83,7 +83,8 @@ export class TaskWriter {
     async setStatusInFile(
         filePath: string,
         lineNumber: number,
-        status: TaskStatus
+        status: TaskStatus,
+        expectedTitle: string
     ): Promise<boolean> {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return false;
@@ -96,6 +97,12 @@ export class TaskWriter {
 
             const m = lines[idx].match(CHECKBOX_PARTS_RE);
             if (!m) return data;
+            // Same catch as `deleteTaskInFile`, for the same reason: a line
+            // number is only true of the file as it was last parsed. Stamping
+            // the wrong task done writes a completion date into somebody's
+            // note for work they did not do — and for a recurring line, adds
+            // the next occurrence of a task they never had.
+            if (!titlesMatch(m[3], expectedTitle)) return data;
 
             const [, prefix, , rawBody] = m;
             const char = charFromStatus(status);
@@ -154,24 +161,6 @@ export class TaskWriter {
             dueEndTime: parsed.dueEndTime,
         };
         return `${prefix}[ ] ${buildTaskBody(shifted)}`;
-    }
-
-    /**
-     * Toggle a task between done and todo (checkbox click). Returns the new
-     * `completed` state, or null if the line couldn't be located.
-     */
-    async toggleTaskInFile(filePath: string, lineNumber: number): Promise<boolean | null> {
-        const file = this.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof TFile)) return null;
-
-        // Read current status to decide the target.
-        const data = await this.app.vault.read(file);
-        const line = data.split('\n')[lineNumber - 1] ?? '';
-        const m = line.match(CHECKBOX_PARTS_RE);
-        if (!m) return null;
-        const isDone = m[2].toLowerCase() === 'x';
-        const ok = await this.setStatusInFile(filePath, lineNumber, isDone ? 'todo' : 'done');
-        return ok ? !isDone : null;
     }
 
     /**
@@ -241,6 +230,7 @@ export class TaskWriter {
         filePath: string,
         lineNumber: number,
         input: NewTaskInput,
+        expectedTitle: string,
         details?: TaskDetails
     ): Promise<boolean> {
         const file = this.app.vault.getAbstractFileByPath(filePath);
@@ -254,6 +244,9 @@ export class TaskWriter {
 
             const m = lines[idx].match(CHECKBOX_PARTS_RE);
             if (!m) return data;
+            // This one replaces the whole line and its block, so a stale
+            // number does not corrupt a neighbouring task — it overwrites it.
+            if (!titlesMatch(m[3], expectedTitle)) return data;
 
             const [, prefix, char] = m;
             lines[idx] = `${prefix}[${char}] ${buildTaskBody(input)}`;

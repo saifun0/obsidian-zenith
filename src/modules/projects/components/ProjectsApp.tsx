@@ -149,7 +149,8 @@ export const ProjectsApp: FC = () => {
                 const ok = await new TaskWriter(app).setStatusInFile(
                     task.filePath,
                     task.lineNumber,
-                    next
+                    next,
+                    task.title
                 );
                 if (!ok) {
                     setTaskStatus(task.id, prev);

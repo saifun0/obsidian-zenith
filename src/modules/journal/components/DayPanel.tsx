@@ -71,7 +71,8 @@ export const DayPanel: FC<DayPanelProps> = ({
             const ok = await new TaskWriter(app).setStatusInFile(
                 task.filePath,
                 task.lineNumber,
-                status
+                status,
+                task.title
             );
             if (!ok) {
                 setTaskStatus(task.id, previous);
@@ -110,7 +111,9 @@ export const DayPanel: FC<DayPanelProps> = ({
                         </button>
                     </div>
                     <span className="zenith-jday__sub">
-                        {date === today && <span className="zenith-jday__badge">{t('journal.today')}</span>}
+                        {date === today && (
+                            <span className="zenith-jday__badge">{t('journal.today')}</span>
+                        )}
                         {entry ? t.plural('journal.words', entry.words) : t('journal.noNote')}
                     </span>
                 </div>

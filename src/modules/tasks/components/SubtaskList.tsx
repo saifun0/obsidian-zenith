@@ -96,7 +96,8 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
 
     const setStatus = async (sub: SubTask, status: TaskStatus) => {
         try {
-            if (await writer().setStatusInFile(filePath, sub.lineNumber, status)) await reload();
+            if (await writer().setStatusInFile(filePath, sub.lineNumber, status, sub.title))
+                await reload();
         } catch (err) {
             console.error('Zenith: failed to set subtask status:', err);
         }

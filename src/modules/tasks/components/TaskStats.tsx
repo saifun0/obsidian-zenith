@@ -17,8 +17,16 @@ const RANGES: { id: StatsRange; label: string }[] = [
 
 // Distinct, theme-neutral colors for tag segments.
 const TAG_PALETTE = [
-    '#7c6cff', '#4c9be8', '#3fb950', '#e0913b', '#e5534b',
-    '#d9b02a', '#c678dd', '#2bb0a3', '#e06c9f', '#8a94a6',
+    '#7c6cff',
+    '#4c9be8',
+    '#3fb950',
+    '#e0913b',
+    '#e5534b',
+    '#d9b02a',
+    '#c678dd',
+    '#2bb0a3',
+    '#e06c9f',
+    '#8a94a6',
 ];
 
 function heatLevel(count: number): number {
@@ -43,14 +51,22 @@ export const TaskStats: FC<TaskStatsProps> = ({ tasks }) => {
         () =>
             (Object.keys(stats.byStatus) as TaskStatus[])
                 .filter((s) => stats.byStatus[s] > 0)
-                .map((s) => ({ label: STATUS_META[s].label, value: stats.byStatus[s], color: STATUS_COLOR[s] })),
+                .map((s) => ({
+                    label: STATUS_META[s].label,
+                    value: stats.byStatus[s],
+                    color: STATUS_COLOR[s],
+                })),
         [stats]
     );
 
     const tagData = useMemo(() => {
         const top = stats.byTag.slice(0, 9);
         const rest = stats.byTag.slice(9).reduce((sum, t) => sum + t.count, 0);
-        const data = top.map((t, i) => ({ label: t.tag, value: t.count, color: TAG_PALETTE[i % TAG_PALETTE.length] }));
+        const data = top.map((t, i) => ({
+            label: t.tag,
+            value: t.count,
+            color: TAG_PALETTE[i % TAG_PALETTE.length],
+        }));
         if (rest > 0) data.push({ label: 'Other', value: rest, color: '#5a6373' });
         return data;
     }, [stats]);
@@ -75,7 +91,10 @@ export const TaskStats: FC<TaskStatsProps> = ({ tasks }) => {
             {/* Stat tiles */}
             <div className="zenith-taskstats__tiles">
                 <div className="zenith-stat-tile zenith-stat-tile--done">
-                    <div className="zenith-stat-tile__value">{stats.done}<span className="zenith-stat-tile__sub"> / {stats.total}</span></div>
+                    <div className="zenith-stat-tile__value">
+                        {stats.done}
+                        <span className="zenith-stat-tile__sub"> / {stats.total}</span>
+                    </div>
                     <div className="zenith-stat-tile__label">{t('tasks.stats.done')}</div>
                 </div>
                 <div className="zenith-stat-tile zenith-stat-tile--progress">
@@ -94,19 +113,29 @@ export const TaskStats: FC<TaskStatsProps> = ({ tasks }) => {
 
             {/* Progress bar */}
             <div className="zenith-taskstats__progress">
-                <div className="zenith-taskstats__progress-label">{stats.done} of {stats.total} tasks done</div>
+                <div className="zenith-taskstats__progress-label">
+                    {stats.done} of {stats.total} tasks done
+                </div>
                 <div className="zenith-taskstats__progress-track">
-                    <div className="zenith-taskstats__progress-fill" style={{ width: `${stats.progress}%` }} />
+                    <div
+                        className="zenith-taskstats__progress-fill"
+                        style={{ width: `${stats.progress}%` }}
+                    />
                 </div>
             </div>
 
             {/* Chips */}
             <div className="zenith-taskstats__chips">
-                <span className="zenith-chip">{stats.completedInRange} done this {range === 'all' ? 'time' : range}</span>
+                <span className="zenith-chip">
+                    {stats.completedInRange} done this {range === 'all' ? 'time' : range}
+                </span>
                 <span className="zenith-chip">{stats.activeDays} active days</span>
                 <span className="zenith-chip">{stats.streak} streak</span>
                 {stats.avgOffsetDays !== null && (
-                    <span className="zenith-chip">{stats.avgOffsetDays > 0 ? '+' : ''}{stats.avgOffsetDays}d avg vs due</span>
+                    <span className="zenith-chip">
+                        {stats.avgOffsetDays > 0 ? '+' : ''}
+                        {stats.avgOffsetDays}d avg vs due
+                    </span>
                 )}
             </div>
 
@@ -114,11 +143,21 @@ export const TaskStats: FC<TaskStatsProps> = ({ tasks }) => {
             <div className="zenith-taskstats__charts">
                 <div className="zenith-taskstats__chart">
                     <div className="zenith-taskstats__chart-title">{t('tasks.stats.byStatus')}</div>
-                    <PieChart data={statusData} size={150} centerLabel={stats.total} centerCaption="tasks" />
+                    <PieChart
+                        data={statusData}
+                        size={150}
+                        centerLabel={stats.total}
+                        centerCaption="tasks"
+                    />
                 </div>
                 <div className="zenith-taskstats__chart">
                     <div className="zenith-taskstats__chart-title">{t('tasks.stats.byTag')}</div>
-                    <PieChart data={tagData} size={150} centerLabel={`${stats.progress}%`} centerCaption="done" />
+                    <PieChart
+                        data={tagData}
+                        size={150}
+                        centerLabel={`${stats.progress}%`}
+                        centerCaption="done"
+                    />
                 </div>
             </div>
 
