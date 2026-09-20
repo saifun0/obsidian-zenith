@@ -4,6 +4,7 @@ import type { Task } from '../../../store/taskSlice';
 import type { Priority } from '../../../core/constants';
 import type { Project, ProjectStatus } from '../projectsTypes';
 import { computeProjectStats } from './projectStats';
+import { linkNamesProject } from './projectLink';
 
 export function normalizeProjectStatus(raw: unknown): ProjectStatus {
     if (typeof raw !== 'string') return 'active';
@@ -82,12 +83,12 @@ export function filterTasksForProject(project: Project, allTasks: Task[]): Task[
             continue;
         }
 
-        // 3. Links to the note from its detail block.
+        // 3. Links to the note from its detail block. The same predicate the
+        //    task editor uses to work out which project is already chosen —
+        //    see `linkNamesProject`, which is where the three spellings of a
+        //    link to a note are decided once.
         const hasAttachment = task.attachments?.some(
-            (att) =>
-                att.target.toLowerCase() === project.filePath.toLowerCase() ||
-                (titleLower && att.target.toLowerCase() === titleLower) ||
-                (basename && att.target.toLowerCase() === basename)
+            (att) => att.kind === 'note' && linkNamesProject(att.target, project)
         );
 
         if (hasAttachment) {
