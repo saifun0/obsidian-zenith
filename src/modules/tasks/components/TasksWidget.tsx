@@ -112,8 +112,13 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
             } else if (status === 'done' && task.recurrence) {
                 void plugin.dataService.reloadTasks();
             }
-        } catch {
+        } catch (err) {
+            // Said out loud, like the `!ok` branch above. A thrown write was
+            // the quieter of the two failures, which is backwards: the
+            // checkbox flipped back with no word about why.
+            console.error('Zenith: failed to update the task:', err);
             setTaskStatus(task.id, prev);
+            new Notice(translateNow('notice.taskUpdateFailed'));
         }
     };
 

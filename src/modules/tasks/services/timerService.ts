@@ -3,13 +3,7 @@ import { useZenithStore } from '../../../store';
 import { translate, resolveLocale } from '../../../core/i18n';
 import { TaskWriter } from './taskWriter';
 import { parseTaskText, formatDuration } from './taskFormat';
-import {
-    isDue,
-    isWorthWriting,
-    startSession,
-    totalAfter,
-    type TimerSession,
-} from './taskTimer';
+import { isDue, isWorthWriting, startSession, totalAfter, type TimerSession } from './taskTimer';
 
 /**
  * The running timer, and the two things it has to do off-screen: announce a
@@ -99,6 +93,16 @@ export class TimerService {
      *
      * Returns the minutes written, or 0 when the session was too short to
      * round up to one — in which case the file is left untouched.
+     *
+     * The session is cleared before the write, so the button answers the press
+     * immediately — and put back if the write does not land. That second half
+     * was missing: the session was dropped first and never restored, so a
+     * failed write did not lose the update, it lost the RECORD of the work.
+     * Twenty tracked minutes with nothing left to retry from, because the only
+     * copy of the start time had already been thrown away.
+     *
+     * Restoring it resumes from the original start rather than from now, which
+     * is the honest reading: nothing was written, so the timer never stopped.
      */
     async stopRunning(): Promise<number> {
         const session = this.session;
@@ -109,8 +113,20 @@ export class TimerService {
         if (!isWorthWriting(session, now)) return 0;
 
         const total = totalAfter(session, now);
-        const ok = await this.writeSpent(session.filePath, session.lineNumber, total);
-        if (!ok) {
+        try {
+            const ok = await this.writeSpent(session.filePath, session.lineNumber, total);
+            if (!ok) {
+                this.setSession(session);
+                new Notice(this.t('tasks.error.update'));
+                return 0;
+            }
+        } catch (err) {
+            // `setSpentInFile` reaches the vault, so this can throw rather than
+            // return false — a sync writing the same file, a disk that said no.
+            // Uncaught it became an unhandled rejection in a click handler: no
+            // notice, no log, and a timer that appeared to stop.
+            console.error('Zenith: failed to write the tracked time:', err);
+            this.setSession(session);
             new Notice(this.t('tasks.error.update'));
             return 0;
         }

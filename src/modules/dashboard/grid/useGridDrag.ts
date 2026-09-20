@@ -190,8 +190,17 @@ export function useGridDrag(opts: DragOptions): GridDragApi {
     const update = useCallback(() => {
         const d = drag.current;
         if (!d.id) return;
-        const { layout, stackItems, stackTops, stackHeights, colWidth, cols, rowHeight, gap, stacked } =
-            latest.current;
+        const {
+            layout,
+            stackItems,
+            stackTops,
+            stackHeights,
+            colWidth,
+            cols,
+            rowHeight,
+            gap,
+            stacked,
+        } = latest.current;
 
         // Fold in how far the pane has scrolled since the drag began, so the
         // widget stays glued to the pointer while auto-scrolling.
@@ -202,7 +211,11 @@ export function useGridDrag(opts: DragOptions): GridDragApi {
 
         if (stacked) {
             const index = stackDropIndex(stackTops, stackHeights, d.stackIndex, dy);
-            const next = reorderIds(stackItems.map((i) => i.id), d.id, index);
+            const next = reorderIds(
+                stackItems.map((i) => i.id),
+                d.id,
+                index
+            );
             live.current.stackPreview = next;
             setStackPreview(next);
             return;
@@ -260,10 +273,7 @@ export function useGridDrag(opts: DragOptions): GridDragApi {
 
         if (speed !== 0) {
             const before = el.scrollTop;
-            el.scrollTop = Math.max(
-                0,
-                Math.min(before + speed, el.scrollHeight - el.clientHeight)
-            );
+            el.scrollTop = Math.max(0, Math.min(before + speed, el.scrollHeight - el.clientHeight));
             if (el.scrollTop !== before) update();
         }
         d.raf = requestAnimationFrame(step);
@@ -362,11 +372,18 @@ export function useGridDrag(opts: DragOptions): GridDragApi {
         };
     }, [detach, finishDrag, update]);
 
-    // Never leave an animation frame or a window listener behind if the view
-    // unmounts mid-drag.
+    // Never leave an animation frame, a window listener OR a timer behind if
+    // the view unmounts mid-drag.
+    //
+    // The two timers were the gap. Both fire into `useState` setters, which
+    // React 18 turns into a silent no-op once the component is gone — so
+    // nothing was visibly wrong, and the cleanup quietly depended on that
+    // rather than on doing what its own first line claims.
     useEffect(
         () => () => {
             if (drag.current.raf) cancelAnimationFrame(drag.current.raf);
+            if (drag.current.dwellTimer) window.clearTimeout(drag.current.dwellTimer);
+            if (drag.current.longPressTimer) window.clearTimeout(drag.current.longPressTimer);
             drag.current.teardown?.();
             drag.current.teardown = null;
         },
@@ -415,7 +432,10 @@ export function useGridDrag(opts: DragOptions): GridDragApi {
                 d.lastY = e.clientY;
                 d.originX = item.x;
                 d.originY = item.y;
-                d.stackIndex = Math.max(0, stackItems.findIndex((i) => i.id === id));
+                d.stackIndex = Math.max(
+                    0,
+                    stackItems.findIndex((i) => i.id === id)
+                );
                 d.scrollEl = findScrollParent(el);
                 d.startScrollTop = d.scrollEl?.scrollTop ?? 0;
 
