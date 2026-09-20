@@ -209,6 +209,7 @@ export const DashboardApp: React.FC = () => {
     const bgStyle = useMemo(
         () => backgroundStyle(bg, (path) => app.vault.adapter.getResourcePath(path)),
         // Every field of `bg` is read; the object itself is new each render.
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- Listing `bg` itself would defeat this: the object is rebuilt every render, so the fields are named one by one on purpose.
         [
             app,
             bg.dashboardBgSource,

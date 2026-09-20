@@ -137,7 +137,7 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
             console.error('Zenith: Failed to save progress:', err);
             new Notice(t('content.error.progress'));
         }
-    }, [item.filePath]);
+    }, [item.filePath, t]);
 
     const changeProgress = (next: ProgressValue) => {
         setProgress(next);

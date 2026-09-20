@@ -409,7 +409,9 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
             description: def.description,
             defaultSize: widgetSizes(def).defaultSize,
         }),
-        []
+        // `widgetLabel` reads the translator, so an empty list froze every
+        // widget name in the language the dashboard first rendered in.
+        [t]
     );
 
     /** Registered widgets that aren't currently on the grid. */

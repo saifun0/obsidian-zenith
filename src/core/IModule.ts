@@ -177,12 +177,12 @@ export abstract class BaseModule implements IModule {
 
         const existing = workspace.getLeavesOfType(viewType);
         if (existing.length > 0) {
-            workspace.revealLeaf(existing[0]);
+            await workspace.revealLeaf(existing[0]);
             return;
         }
 
         const leaf = workspace.getLeaf('tab');
         await leaf.setViewState({ type: viewType, active: true });
-        workspace.revealLeaf(leaf);
+        await workspace.revealLeaf(leaf);
     }
 }

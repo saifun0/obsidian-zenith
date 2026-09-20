@@ -115,6 +115,7 @@ export function useDayTimes(iso: string): DayTimes | null {
         // `revision` is a dependency without being read: it changes when a
         // month lands, which is what changes the answer `dayTimesFor` finds in
         // the cache.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `revision` invalidates rather than being read — see the comment above it.
     }, [place, iso, settings, revision]);
 }
 
@@ -136,6 +137,7 @@ export function useTimesFallback(iso: string): boolean {
             !prayerApiPending(place, date, settings)
         );
         // Same as above: the counter is here to recompute, not to be read.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Same again.
     }, [place, iso, settings, revision]);
 }
 

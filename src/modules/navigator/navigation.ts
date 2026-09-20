@@ -109,13 +109,13 @@ export async function runNavAction(
             if (!opts.newTab) {
                 const existing = workspace.getLeavesOfType(def.viewType);
                 if (existing.length > 0) {
-                    workspace.revealLeaf(existing[0]);
+                    await workspace.revealLeaf(existing[0]);
                     return;
                 }
             }
             const leaf = workspace.getLeaf('tab');
             await leaf.setViewState({ type: def.viewType, active: true });
-            workspace.revealLeaf(leaf);
+            await workspace.revealLeaf(leaf);
             return;
         }
 

@@ -17,6 +17,7 @@ export function useCustomIcon(name: string | undefined): string | undefined {
     return useMemo(
         // `revision` is the dependency that matters; the lookup itself is a map hit.
         () => (name && isCustomIconId(name) ? iconRegistry.svg(name) : undefined),
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- `revision` is the whole point of this list: it is not read by the callback, it is what tells React the registry changed.
         [name, revision]
     );
 }
@@ -33,6 +34,7 @@ export function useIconRegistryRevision(): number {
 /** Installed packs and module-supplied icons, grouped by source. */
 export function useIconSources(): IconSource[] {
     const revision = useIconRegistryRevision();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Same: the counter invalidates, the call re-reads the registry.
     return useMemo(() => iconRegistry.listSources(), [revision]);
 }
 
