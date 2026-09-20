@@ -24,8 +24,6 @@ export interface HijriDate {
 /** Ramadan's index, for the methods that stretch isha during it. */
 export const RAMADAN_MONTH = 9;
 
-const MS_PER_DAY = 86_400_000;
-
 /**
  * Built once and reused: constructing an `Intl.DateTimeFormat` is expensive
  * enough to matter in a widget that re-renders every second.
@@ -62,7 +60,14 @@ export function hijriDate(date: Date, offsetDays = 0): HijriDate | null {
     const fmt = hijriFormatter();
     if (!fmt) return null;
 
-    const shifted = new Date(date.getTime() + offsetDays * MS_PER_DAY);
+    // Shifted by calendar field, not by milliseconds. A day is not always
+    // 86_400_000 ms long: on the date a DST-observing zone falls back it is an
+    // hour longer, so adding a day’s worth of milliseconds to local midnight
+    // lands at 23:00 on the SAME date. The offset then silently does nothing,
+    // on one day a year, for the users who set it. `addDays` in
+    // `core/calendarDates` shifts this way for exactly this reason.
+    const shifted = new Date(date.getTime());
+    shifted.setDate(shifted.getDate() + offsetDays);
     const parts = fmt.formatToParts(shifted);
 
     const read = (type: Intl.DateTimeFormatPartTypes): number => {

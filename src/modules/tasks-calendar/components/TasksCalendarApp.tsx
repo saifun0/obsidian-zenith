@@ -224,8 +224,11 @@ export const TasksCalendarApp: FC = () => {
                 // the next occurrence lands on the calendar straight away.
                 void plugin.dataService.reloadTasks();
             }
-        } catch {
+        } catch (err) {
+            // Said out loud, like the `!ok` branch above.
+            console.error('Zenith: failed to update the task:', err);
             setTaskStatus(task.id, previous);
+            new Notice(t('calendar.error.status'));
         }
     };
 
