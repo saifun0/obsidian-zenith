@@ -970,6 +970,11 @@ const EN: Dict = {
     'tasks.editor.descriptionPlaceholder': 'What needs to be done?',
     'tasks.editor.status': 'Status',
     'tasks.editor.priority': 'Priority',
+    // The project a task belongs to. Written as a link to the project's note
+    // in the task's own detail block, which is one of the three ways a task
+    // can name its project — and the one that leaves the task's text alone.
+    'tasks.editor.project': 'Project',
+    'tasks.editor.project.none': 'No project',
     'tasks.editor.tags': 'Tags',
     'tasks.editor.tagPlaceholder': 'Add tag…',
     'tasks.editor.due': 'Due',
@@ -2636,6 +2641,8 @@ const RU: Dict = {
     'tasks.editor.descriptionPlaceholder': 'Что нужно сделать?',
     'tasks.editor.status': 'Статус',
     'tasks.editor.priority': 'Приоритет',
+    'tasks.editor.project': 'Проект',
+    'tasks.editor.project.none': 'Без проекта',
     'tasks.editor.tags': 'Теги',
     'tasks.editor.tagPlaceholder': 'Добавить тег…',
     'tasks.editor.due': 'Срок',

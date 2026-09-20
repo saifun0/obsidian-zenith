@@ -11,6 +11,7 @@ import { resolveTaskTarget } from '../services/taskTarget';
 import { formatDuration, normalizeTimeOfDay, parseDuration } from '../services/taskFormat';
 import type { TaskAttachment, TaskDetails } from '../services/taskDetails';
 import { AttachmentField } from './AttachmentField';
+import { splitProjectLink, withProjectLink } from '../../projects/services/projectLink';
 import { Modal } from '../../../components/shared/Modal';
 import { useTranslation } from '../../../core/i18n';
 
@@ -72,7 +73,39 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
         editTask?.timerMinutes ? formatDuration(editTask.timerMinutes) : ''
     );
     const [notes, setNotes] = useState(editTask?.description ?? '');
-    const [attachments, setAttachments] = useState<TaskAttachment[]>(editTask?.attachments ?? []);
+    const projects = useZenithStore((s) => s.projects);
+
+    /**
+     * The project comes out of the attachment list and into a field of its own.
+     *
+     * Split once, at mount, rather than on every render: while this dialog is
+     * open the project is a choice in a select, and leaving its link in the
+     * attachment list below would be one fact with two controls — with nothing
+     * to stop somebody changing it in one of them and saving the other.
+     */
+    const [initial] = useState(() => splitProjectLink(editTask?.attachments ?? [], projects));
+    const [attachments, setAttachments] = useState<TaskAttachment[]>(initial.rest);
+    const [projectPath, setProjectPath] = useState(initial.project?.filePath ?? '');
+
+    /**
+     * The projects worth offering, by name.
+     *
+     * Alphabetical rather than by deadline: the grid and the widget sort by
+     * what is most urgent because they are being read, and this is being
+     * searched — you arrive knowing the name.
+     *
+     * Archived ones are left out, because a shelved project is not where a new
+     * task goes. Except the one this task is already in: a select whose
+     * current value is missing from its own options does not show nothing, it
+     * shows the first option — and would quietly move the task on save.
+     */
+    const projectOptions = useMemo(
+        () =>
+            projects
+                .filter((p) => p.status !== 'archived' || p.filePath === projectPath)
+                .sort((a, b) => a.title.localeCompare(b.title)),
+        [projects, projectPath]
+    );
 
     // Existing tags with usage counts, for the autocomplete.
     const tagCounts = useMemo(() => {
@@ -124,7 +157,16 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
             recurrence: recurrence.trim() || undefined,
             subtasks: isEdit ? undefined : subtasks.filter((s) => s.trim()),
         };
-        const details: TaskDetails = { description: notes.trim(), attachments };
+        // The chosen project goes back in beside the attachments the user
+        // keeps for their own reasons; `withProjectLink` rewrites only the
+        // one line that ever named a project.
+        const details: TaskDetails = {
+            description: notes.trim(),
+            attachments: withProjectLink(
+                attachments,
+                projects.find((p) => p.filePath === projectPath)
+            ),
+        };
 
         setSubmitting(true);
         try {
@@ -223,6 +265,32 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                     </div>
                 </div>
 
+                {/* Which project this belongs to.
+                    A select over the projects that exist rather than a path to
+                    type: attaching a note already worked here, but only by
+                    writing "20 Projects/Flat Move" out by hand, which is both
+                    the slowest way to say it and the only one that can be
+                    misspelt. Saved as a link in the task's detail block, so the
+                    task's own text stays what the user wrote. */}
+                <div className="zenith-field">
+                    <label className="zenith-field__label" htmlFor="zenith-task-project">
+                        {t('tasks.editor.project')}
+                    </label>
+                    <select
+                        id="zenith-task-project"
+                        className="zenith-field__input"
+                        value={projectPath}
+                        onChange={(e) => setProjectPath(e.target.value)}
+                    >
+                        <option value="">{t('tasks.editor.project.none')}</option>
+                        {projectOptions.map((p) => (
+                            <option key={p.filePath} value={p.filePath}>
+                                {p.title}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
                 {/* Tags */}
                 <div className="zenith-field">
                     <label className="zenith-field__label">{t('tasks.editor.tags')}</label>
@@ -312,7 +380,9 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                         />
                     </div>
                     <div className="zenith-field">
-                        <label className="zenith-field__label">{t('tasks.editor.dueEndTime')}</label>
+                        <label className="zenith-field__label">
+                            {t('tasks.editor.dueEndTime')}
+                        </label>
                         <input
                             type="time"
                             className="zenith-field__input"
