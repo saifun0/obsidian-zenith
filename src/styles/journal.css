@@ -691,44 +691,6 @@
     color: var(--zenith-text-muted);
 }
 
-/* ── The plot ─────────────────────────────────────────
-   One column per day of the window, against the tracker's own scale. A day
-   that recorded nothing keeps a hairline rather than collapsing to nothing:
-   "not tracked" and "tracked as none" are different facts, and this is the one
-   place both are visible at once. */
-.zenith-jplot {
-    display: flex;
-    align-items: flex-end;
-    gap: 1px;
-    min-width: 0;
-}
-
-.zenith-jplot__slot {
-    display: flex;
-    align-items: flex-end;
-    flex: 1;
-    height: 100%;
-    min-width: 0;
-}
-
-.zenith-jplot__bar {
-    width: 100%;
-    min-height: 2px;
-    border-radius: 2px;
-}
-
-.zenith-jplot__bar.is-blank {
-    height: 2px;
-    background: color-mix(in srgb, var(--zenith-text-faint) 30%, transparent);
-}
-
-/* ── Per-day plot ─────────────────────────────────── */
-/* Drawn against the tracker's OWN scale, so a count of reps is a count of reps
-   rather than a share of some shared denominator. */
-/* The per-tracker bar plot that used to live here went with `TrackerPlot`:
-   the widget draws a fused chain of days instead, in the same alphabet as the
-   habit month, and the journal view draws the month itself. */
-
 /* ── Coverage strip ───────────────────────────────── */
 /* Where the entries are, not just how many. Also absorbs the streak, which used
    to float in a corner with nothing to relate to. */
@@ -1635,12 +1597,8 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
 }
 
 /* The stats card fills its cell; the check-in card beside it is as tall as its
-   own content, which is why this is not on `.zenith-jw`.
-
-   The difference is the deck. Its faces are stacked in one grid cell so they
-   can cross-fade, and it is a size container — without a height here it had
-   nothing to measure: its `flex: 1` would have no free space to grow into and
-   the container would report zero. */
+   own content, which is why this is not on `.zenith-jw`. The habit list is
+   what takes the height — see `.zenith-jhab`. */
 .zenith-jw--stats {
     height: 100%;
     min-height: 0;
@@ -1684,21 +1642,6 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
     font-size: 0.85rem;
     color: var(--zenith-text-muted);
 }
-/* How much room each size gives the two fixed side columns. Fixed rather than
-   sized to content so every row's plot is the same width. */
-.zenith-jw--sm {
-    --jw-name-w: 74px;
-    --jw-fig-w: 58px;
-}
-.zenith-jw--md {
-    --jw-name-w: 88px;
-    --jw-fig-w: 78px;
-}
-.zenith-jw--lg {
-    --jw-name-w: 100px;
-    --jw-fig-w: 82px;
-}
-
 /* ── The stats card's footnote ────────────────────────
    Two numbers and a door, on one thin line.
 
@@ -1837,719 +1780,205 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
 }
 
 /* ══════════════════════════════════════════════════════
-   The tracker deck — one tracker at a time, and a way through them
+   Habits at a glance — every tracker, one row each
    ──────────────────────────────────────────────────────
-   This was a ring with every tracker standing on it, a light travelling round
-   the track to whichever one was showing, and the figure in the hole in the
-   middle. It said three things — how many trackers, which one, how to reach
-   another — and took the whole height of the card to say them, on a card whose
-   job is to report numbers.
+   This was a deck: one tracker's figure at a time, the rest behind pips and a
+   timer, with a panel of tiles beside it whose labels were cut off on every
+   card narrow enough to be on a dashboard. Eight trackers took a minute of
+   watching to read.
 
-   The icon says them instead. One tracker's icon stands over its figure and
-   swaps for the next one's: the old face slides out, the new one slides in
-   behind it, and its icon lands with a small rise. The pips under it carry the
-   count, and the arrows at the edges are how a pointer steers it.
+   Now it is a table without the lines. Icon, name, the recent days as marks,
+   one figure. The columns are shared between the rows (a subgrid), so the day
+   marks stand in columns and the figures line up on their right edge however
+   long any one name is.
 
-   Nothing here is drawn in a circle, so nothing needs the stage to be square
-   and nothing has to be clipped to a box: the card can be any shape the board
-   gives it.
+   The rows share the card's height: each one grows towards a comfortable
+   height when there is room and gives it back when there is not, and a card
+   holding more trackers than it can seat scrolls rather than squeezing a row
+   below what a line of text needs. The floor is set so eight trackers — the
+   default set plus one — still fit a two-row card without a scrollbar.
    ══════════════════════════════════════════════════════ */
-.zenith-jdeck {
-    /* How wide the face's column is, and it is deliberately NOT the width of
-       whatever face happens to be standing on it.
-
-       Sized to its content, the column was a different width for every
-       tracker — "15/30" is not "3.8 of 5" is not "12 glasses" — so stepping
-       through them shoved the panel beside it left and right, and the arrows
-       with it. A control that moves while you are using it is not one.
-
-       It scales with the card and stops at both ends: a bare percentage
-       leaves no room for the arrows on a narrow card and a wasteful gutter on
-       a wide one. */
-    --jdeck-stage-w: clamp(148px, 42%, 190px);
-
-    /* The colour of whichever tracker is showing. Each face sets its own copy
-       while it is on screen — see `DeckFace` — so a layer on its way out is
-       not repainted in the incoming tracker's colour halfway through a swap.
-       This one is the ambient copy: the wash behind the stage, the panel's
-       icons, the pips. */
-    --jdeck-color: var(--zenith-accent);
-
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-height: 0;
-    /* The deck reads its own card: a card two rows tall has very different
-       room for a face and a panel than a card four rows tall. Safe because the
-       height comes from the cell, never from the contents. */
-    container-type: size;
-    container-name: zenith-jdeck;
-}
-
-/* Face and panel side by side. On a card too narrow to seat both, the panel is
-   dropped (see the query near the bottom of this file) and the face re-centres.
-   The strip under it says the same things on one line. */
-.zenith-jdeck__body {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    justify-content: center;
-    gap: var(--zenith-space-md);
-    min-height: 0;
-    min-width: 0;
-    width: 100%;
-}
-
-/* The face, the two arrows and the wash behind them.
-
-   `touch-action: pan-y` is the whole reason a swipe can work at all: the board
-   scrolls vertically, so sideways is ours to claim and up-and-down is not. */
-.zenith-jdeck__stage {
-    position: relative;
-    display: flex;
-    /* The whole row when the face stands alone; the panel query below hands it
-       a fixed column instead. Never sized to its own content — see
-       `--jdeck-stage-w`. */
-    flex: 0 0 100%;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-width: 0;
-    min-height: 0;
-    padding: 4px 2px;
-    touch-action: pan-y;
-}
-
-/* One grid cell holding every layer, so the stack is as tall as the tallest
-   face and nothing has to be positioned absolutely to overlap.
-
-   It fills the stage rather than sizing to the face, and its column is capped
-   at the width it is handed — that is what makes a long tracker name ellipsize
-   instead of widening the card, and what keeps every face exactly as wide as
-   the one before it. */
-.zenith-jdeck__deck {
-    position: relative;
-    z-index: 1;
+.zenith-jhab {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    flex: 1 1 auto;
-    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-auto-rows: minmax(18px, 34px);
+    align-content: center;
+    column-gap: 8px;
+    row-gap: 1px;
+    flex: 1 1 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    /* The day marks answer to the card's width — see the queries below. */
+    container-type: inline-size;
+    container-name: zenith-jhab;
 }
 
-.zenith-jdeck__layer {
-    grid-area: 1 / 1;
-    display: flex;
+.zenith-jhab__row {
+    --jhab-dot: 9px;
+    --jhab-gap: 3px;
+    /* Fallback for an engine without subgrid: fixed side columns keep the
+       figures aligned, if not quite as snugly. */
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) auto 4.8em;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
     align-items: center;
-    justify-content: center;
+    column-gap: 8px;
     min-width: 0;
+    margin: 0;
+    padding: 0 6px;
+    border-radius: var(--zenith-radius-sm);
+    font-size: 0.8rem;
+    line-height: 1.2;
+    animation: zenith-jhab-in 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+    animation-delay: calc(var(--jhab-at, 0) * 35ms);
+    transition: background var(--zenith-transition-fast);
 }
 
-.zenith-jdeck__face {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    min-width: 0;
-    max-width: 100%;
-    text-align: center;
+/* Not a control — the row does nothing when clicked. The tint is a reading
+   aid: on a wide card the name and its figure are a long way apart. */
+.zenith-jhab__row:hover {
+    background: var(--zenith-bg-hover);
 }
 
-/* The icon, and the largest mark on the card. It is what changes when the deck
-   moves on, so it is what has to be seen changing: it rises into place and
-   turns the last few degrees as it lands. Both animations are tied to the
-   mount — a face is keyed by its tracker, so a swap mounts a new one and plays
-   them, while a value edited in the journal under a card that is already open
-   updates without anything jumping.
-
-   The glyph, and nothing behind it. It used to stand on a tinted rounded plate
-   with a glow under it, and the glow was doing the ring's old job of colouring
-   the card — a job the icon does by itself, in the tracker's own colour,
-   without putting a second shape on a card that is otherwise made of text. */
-.zenith-jdeck__badge {
+.zenith-jhab__icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: none;
-    margin-bottom: 2px;
-    color: var(--jdeck-color, var(--zenith-accent));
-    animation: zenith-jdeck-pop 460ms cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
+    width: 16px;
+    color: var(--jhab-color, var(--zenith-accent));
 }
 
-.zenith-jdeck__badge svg {
-    width: 30px;
-    height: 30px;
-    animation: zenith-jdeck-glyph 460ms cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
-}
-
-@keyframes zenith-jdeck-pop {
-    0% {
-        opacity: 0;
-        transform: translateY(7px) scale(0.74);
-    }
-    62% {
-        opacity: 1;
-        transform: translateY(0) scale(1.06);
-    }
-    100% {
-        opacity: 1;
-        transform: none;
-    }
-}
-
-@keyframes zenith-jdeck-glyph {
-    0% {
-        opacity: 0;
-        transform: rotate(-16deg) scale(0.78);
-    }
-    100% {
-        opacity: 1;
-        transform: none;
-    }
-}
-
-.zenith-jdeck__value {
-    display: flex;
-    align-items: baseline;
-    justify-content: center;
-    gap: 3px;
-    font-size: 1.9rem;
-    font-weight: 750;
-    line-height: 1;
+.zenith-jhab__name {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     color: var(--zenith-text-normal);
-    letter-spacing: -0.02em;
+}
+
+.zenith-jhab__days {
+    display: flex;
+    align-items: center;
+    gap: var(--jhab-gap);
+}
+
+/* The month grid's four states at the size of a dot, plus today.
+
+   Kept: filled. Recorded short of the goal: a ring round a tint, fuller the
+   closer it came. Journalled without it: an empty ring in the tracker's own
+   colour. No note at all: a speck — the grid draws that as a grey ring, and at
+   this size thirty grey rings a row are a texture rather than a reading. */
+.zenith-jhab__day {
+    flex: none;
+    box-sizing: border-box;
+    width: var(--jhab-dot);
+    height: var(--jhab-dot);
+    border-radius: 50%;
+}
+
+.zenith-jhab__day.is-done {
+    background: var(--jhab-color, var(--zenith-accent));
+}
+
+.zenith-jhab__day.is-partial {
+    border: 1.5px solid var(--jhab-color, var(--zenith-accent));
+    background: color-mix(in srgb, var(--jhab-color, var(--zenith-accent)) 30%, transparent);
+    opacity: calc(0.45 + var(--jhab-fill, 0) * 0.55);
+}
+
+.zenith-jhab__day.is-miss {
+    border: 1.5px solid color-mix(in srgb, var(--jhab-color, var(--zenith-accent)) 45%, transparent);
+}
+
+.zenith-jhab__day.is-empty {
+    background: color-mix(in srgb, var(--zenith-text-faint) 40%, transparent);
+    transform: scale(0.4);
+}
+
+/* Today, not marked yet. A day that has not ended cannot have been skipped, so
+   it is a full-strength ring — the place a mark is still expected — rather
+   than the faded ring of a miss. */
+.zenith-jhab__day.is-open {
+    border: 1.5px solid var(--jhab-color, var(--zenith-accent));
+}
+
+.zenith-jhab__figure {
+    justify-self: end;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-weight: 650;
+    color: var(--zenith-text-normal);
     font-variant-numeric: tabular-nums;
 }
 
-.zenith-jdeck__unit {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--zenith-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-/* Plain text, where it used to be a tinted pill with the icon inside it. The
-   badge above carries both the icon and the colour now, and a second coloured
-   shape under it was the card saying the same thing twice. */
-.zenith-jdeck__name {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--zenith-text-normal);
-}
-
-.zenith-jdeck__basis {
-    font-size: 0.65rem;
+.zenith-jhab__suffix {
+    margin-left: 1px;
+    font-size: 0.82em;
     font-weight: 500;
     color: var(--zenith-text-faint);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
 }
 
-/* ── The arrows ──
-   Hidden until the pointer is on the card, because a card at rest is something
-   to read rather than a control panel — and there the instant they might be
-   wanted.
-
-   In the row rather than over it: the stage is three columns — arrow, face,
-   arrow — and the arrows only fade and slide a few pixels within the room they
-   already hold. Floated over the face instead, they either sat on the figure
-   on a narrow card or shoved it sideways every time the pointer crossed the
-   card, and a number that moves when you point at it is worse than no arrows.
-
-   A coarse pointer cannot hover, so the media query near the bottom of this
-   file hands them over permanently; that is the same rule that makes the swipe
-   discoverable rather than secret. */
-.zenith-jdeck button.zenith-jdeck__nav {
-    flex: none;
-    z-index: 3;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    padding: 0;
-    border: 1px solid var(--zenith-border);
-    border-radius: 50%;
-    background: var(--zenith-bg-secondary);
-    color: var(--zenith-text-muted);
-    box-shadow: var(--zenith-shadow-xs);
-    cursor: pointer;
-    opacity: 0;
-    pointer-events: none;
-    transition:
-        opacity 170ms ease,
-        transform 170ms cubic-bezier(0.34, 1.28, 0.64, 1),
-        color var(--zenith-transition-fast),
-        border-color var(--zenith-transition-fast),
-        background var(--zenith-transition-fast);
-}
-
-.zenith-jdeck button.zenith-jdeck__nav--prev {
-    transform: translateX(-5px);
-}
-
-.zenith-jdeck button.zenith-jdeck__nav--next {
-    transform: translateX(5px);
-}
-
-/* `:has(:focus-visible)` rather than `:focus-within`, and the difference is
-   the whole bug it fixes: clicking an arrow leaves it focused, so a card that
-   answered to plain focus kept its arrows lit after the pointer had gone and
-   only let go of them when something else was clicked. A mouse click does not
-   make a button `:focus-visible`; a Tab to it does. */
-.zenith-jdeck:hover button.zenith-jdeck__nav,
-.zenith-jdeck:has(:focus-visible) button.zenith-jdeck__nav {
-    opacity: 1;
-    pointer-events: auto;
-    transform: none;
-}
-
-.zenith-jdeck button.zenith-jdeck__nav:hover {
-    color: var(--jdeck-color, var(--zenith-accent));
-    border-color: color-mix(in srgb, var(--jdeck-color, var(--zenith-accent)) 55%, var(--zenith-border));
-    background: var(--zenith-bg-hover);
-}
-
-.zenith-jdeck button.zenith-jdeck__nav:active {
-    transform: scale(0.9);
-}
-
-.zenith-jdeck button.zenith-jdeck__nav:focus-visible {
-    opacity: 1;
-    pointer-events: auto;
-    transform: none;
-    outline: 2px solid var(--zenith-accent);
-    outline-offset: 2px;
-}
-
-/* ── The panel ──
-   The one tracker's window, in figures, beside its face. */
-.zenith-jdeck__panel {
-    display: none;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-    align-content: center;
-    flex: 1 1 0;
-    min-width: 0;
-    min-height: 0;
-}
-
-.zenith-jstat {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 3px;
-    padding: 7px 9px;
-    border-radius: var(--zenith-radius-sm);
-    background: color-mix(in srgb, var(--zenith-bg-secondary) 85%, transparent);
-    border: 1px solid var(--zenith-border);
-    min-width: 0;
-    box-shadow: var(--zenith-shadow-xs);
-    transition:
-        border-color var(--zenith-transition-fast),
-        background var(--zenith-transition-fast),
-        transform var(--zenith-transition-fast);
-}
-
-.zenith-jstat:hover {
-    background: var(--zenith-bg-hover);
-    border-color: color-mix(in srgb, var(--jdeck-color, var(--zenith-accent)) 40%, var(--zenith-border));
-}
-
-.zenith-jstat__header {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    min-width: 0;
-}
-
-.zenith-jstat__icon {
-    flex-shrink: 0;
-    color: var(--jdeck-color, var(--zenith-accent));
-    opacity: 0.9;
-}
-
-.zenith-jstat__label {
-    font-size: 0.62rem;
-    font-weight: 600;
-    line-height: 1.2;
-    color: var(--zenith-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.zenith-jstat__value {
-    font-size: 1.05rem;
-    font-weight: 700;
-    line-height: 1.15;
-    color: var(--zenith-text-normal);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.zenith-jstat:first-child:nth-last-child(3),
-.zenith-jstat:only-child {
-    grid-column: 1 / -1;
-}
-
-.zenith-jstat--lead {
-    background: color-mix(in srgb, var(--jdeck-color, var(--zenith-accent)) 8%, var(--zenith-bg-secondary));
-    border-color: color-mix(in srgb, var(--jdeck-color, var(--zenith-accent)) 26%, var(--zenith-border));
-}
-
-.zenith-jstat--lead:hover {
-    background: color-mix(in srgb, var(--jdeck-color, var(--zenith-accent)) 14%, var(--zenith-bg-secondary));
-    border-color: color-mix(in srgb, var(--jdeck-color, var(--zenith-accent)) 50%, var(--zenith-border));
-}
-
-.zenith-jstat--lead .zenith-jstat__value {
-    font-size: 1.18rem;
-    font-weight: 800;
-    color: var(--jdeck-color, var(--zenith-accent));
-}
-
-.zenith-jstat__plot {
-    grid-column: 1 / -1;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-
-/* ── The line under the deck ──
-   The pips are always on it: they are what says how many trackers there are
-   and which one this is, now that no ring does. The strip joins them only on a
-   card too narrow for the panel — the two say the same three things, and a card
-   showing both would be saying them twice. */
-.zenith-jdeck__foot {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
-    flex-wrap: wrap;
-    /* Wider than the gap between the chips themselves, so the pips read as the
-       other thing on the line rather than as a fourth fact. */
-    gap: 2px 15px;
-    max-width: 100%;
-    min-width: 0;
-}
-
-.zenith-jdeck__strip {
-    display: none;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-    overflow: hidden;
-}
-
-/* One fact: an icon, a figure, and the word that says what the figure counts.
-   The icon is what makes the line scan as three separate readings rather than
-   as a sentence — at this size a middle dot between them is a smudge. */
-.zenith-jfact {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    min-width: 0;
-    white-space: nowrap;
-    font-size: 0.68rem;
-    line-height: 1.2;
-    /* Backwards, so a chip holds its first frame through its own delay rather
-       than standing there finished until its turn comes. */
-    animation: zenith-jfact-in 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
-    animation-delay: calc(var(--jfact-at, 0) * 70ms);
-}
-
-/* The one coloured thing in the line. Three small marks in the tracker's own
-   colour tie the strip to the face above it without accenting a figure — a
-   strip where a number is coloured has a lead, and these three are equals. */
-.zenith-jfact svg {
-    flex: none;
-    color: color-mix(in srgb, var(--jdeck-color, var(--zenith-accent)) 72%, transparent);
-}
-
-.zenith-jfact__value {
-    font-weight: 600;
-    color: var(--zenith-text-normal);
-    font-variant-numeric: tabular-nums;
-}
-
-.zenith-jfact__unit {
-    color: var(--zenith-text-faint);
-}
-
-@keyframes zenith-jfact-in {
+/* A fade and nothing else. A row that rose into place counted its offset as
+   overflow while it moved, and a list that exactly fills its card flashed a
+   scrollbar for the length of the entrance. */
+@keyframes zenith-jhab-in {
     from {
         opacity: 0;
-        transform: translateY(5px);
     }
     to {
         opacity: 1;
-        transform: none;
     }
 }
 
-/* ── The pips ── */
-.zenith-jdeck__pips {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    flex: none;
-}
-
-.zenith-jdeck .zenith-jdeck__pip {
-    display: flex;
-    align-items: center;
-    /* Generous vertically so the tap target survives on a phone while the dot
-       it draws stays small. The padding is the target; the dot is the mark. */
-    padding: 6px 2px;
-    border: none;
-    border-radius: var(--zenith-radius-xs);
-    background: none;
-    box-shadow: none;
-    cursor: pointer;
-}
-
-.zenith-jdeck__pip-dot {
-    display: block;
-    width: 5px;
-    height: 5px;
-    border-radius: 999px;
-    background: var(--zenith-text-muted);
-    transition:
-        width 200ms cubic-bezier(0.4, 0, 0.2, 1),
-        background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.zenith-jdeck .zenith-jdeck__pip.is-active .zenith-jdeck__pip-dot {
-    width: 14px;
-    background: var(--jdeck-color, var(--zenith-accent));
-}
-
-/* ── Room for the panel ──
-   Two conditions, and each rules out a card the panel would spoil. Narrow: the
-   column beside the face would be two words wide and wrap every label into
-   three lines. Short: a panel beside a bare number is a table with one row in
-   it.
-
-   Stated as the condition for SHOWING rather than for hiding, because the
-   panel is the addition — a card that cannot take it must land exactly where it
-   would have stood without one. */
-@container zenith-jdeck (min-width: 320px) and (min-height: 118px) {
-    .zenith-jdeck__panel {
-        display: grid;
-    }
-
-    .zenith-jdeck__stage {
-        flex: 0 0 var(--jdeck-stage-w);
-    }
-
-    /* Left, not centred: the face and the panel are one composition, and a row
-       that centres its own contents leaves the face drifting whenever the
-       panel's labels happen to be short. */
-    .zenith-jdeck__body {
-        justify-content: flex-start;
-    }
-}
-
-/* ── No room for the panel ──
-   The exact complement of the query above, written as one rather than as two
-   thresholds a pixel apart: the strip and the panel are the same reading, and a
-   card must never be able to fall between them and show neither.
-
-   The basis goes when the strip arrives. "avg · 11 d" and "11/30 d" are the
-   same day count twice, and the strip's version is the one with a denominator
-   under it. */
-@container zenith-jdeck not ((min-width: 320px) and (min-height: 118px)) {
-    .zenith-jdeck__strip {
-        display: flex;
-    }
-
-    .zenith-jdeck__basis {
+/* ── How many days fit ──
+   Every row carries thirty days, and the oldest go first as the card narrows:
+   thirty, then two weeks, then one. Whole weeks, so the marks for any weekday
+   stay in the same column from row to row. */
+@container zenith-jhab (max-width: 560px) {
+    .zenith-jhab__day:nth-child(-n + 16) {
         display: none;
     }
 }
 
-/* ── The compact panel ── */
-@container zenith-jdeck (max-height: 200px) {
-    .zenith-jdeck__panel {
-        gap: 4px;
-    }
-
-    .zenith-jstat {
-        padding: 5px 7px;
-    }
-
-    .zenith-jstat--lead .zenith-jstat__value {
-        font-size: 1.05rem;
-    }
-
-    .zenith-jstat__value {
-        font-size: 0.92rem;
-    }
-}
-
-/* The plot is the first thing out of the panel. Three figures and a chart in
-   the height of a paragraph makes the chart four pixels tall, which is a
-   decoration of a chart rather than one — and the figures are the reading. */
-@container zenith-jdeck (max-height: 210px) {
-    .zenith-jstat__plot {
+@container zenith-jhab (max-width: 300px) {
+    .zenith-jhab__day:nth-child(-n + 23) {
         display: none;
     }
 }
 
-/* The line gives up its facts from the end as the card narrows, and it is the
-   end that can afford it: the first chip is whichever reading the face is NOT
-   already showing, and the last is the staleness — which a run of zero has half
-   implied anyway. `n+3` rather than a chip apiece because how many there are is
-   the tracker's kind's business: a number has four, a scale and a check three. */
-@container zenith-jdeck (max-width: 340px) {
-    .zenith-jfact:nth-child(n + 4) {
-        display: none;
-    }
-}
-
-@container zenith-jdeck (max-width: 250px) {
-    .zenith-jfact:nth-child(n + 3) {
-        display: none;
-    }
-}
-
-/* ── A short card ──
-   The badge comes down with the card, and it comes down before the figure does:
-   the icon says WHICH tracker, the figure says how much, and on a card with
-   room for one of them at full size it is the number. */
-@container zenith-jdeck (max-height: 150px) {
-    .zenith-jdeck {
-        --jdeck-stage-w: clamp(140px, 40%, 176px);
-    }
-
-    .zenith-jdeck__badge {
-        margin-bottom: 0;
-    }
-
-    .zenith-jdeck__badge svg {
-        width: 23px;
-        height: 23px;
-    }
-
-    .zenith-jdeck__value {
-        font-size: 1.55rem;
-    }
-
-    .zenith-jdeck__face {
-        gap: 3px;
-    }
-}
-
-@container zenith-jdeck (max-height: 108px) {
-    .zenith-jdeck__badge svg {
-        width: 19px;
-        height: 19px;
-    }
-
-    .zenith-jdeck__value {
-        font-size: 1.3rem;
-    }
-
-    .zenith-jdeck__name {
-        font-size: 0.7rem;
-    }
-
-    .zenith-jdeck__stage {
-        padding: 2px;
+/* A wide card has room for the grid's own dot size, and a strip of thirty
+   specks across nine hundred pixels would be the smallest thing on it. */
+@container zenith-jhab (min-width: 680px) {
+    .zenith-jhab__row {
+        --jhab-dot: 11px;
+        --jhab-gap: 4px;
     }
 }
 
 /* ── A tall card ──
-   Room to let the icon be the thing you see from across the room. */
-@container zenith-jdeck (min-height: 240px) {
-    .zenith-jdeck {
-        --jdeck-stage-w: clamp(164px, 44%, 210px);
-    }
-
-    .zenith-jdeck__badge {
-        margin-bottom: 4px;
-    }
-
-    .zenith-jdeck__badge svg {
-        width: 36px;
-        height: 36px;
-    }
-
-    .zenith-jdeck__value {
-        font-size: 2.4rem;
-    }
-
-    .zenith-jdeck__name {
-        font-size: 0.86rem;
-    }
+   Taller rows, bigger type, the same reading. */
+.zenith-jw--lg .zenith-jhab {
+    grid-auto-rows: minmax(24px, 42px);
 }
 
-/* ── A finger ──
-   No hover to wait for, so the arrows are simply there — dimmed, so they read
-   as available rather than as the point of the card — and bigger, because a
-   26px circle is under the size a thumb can hit. The swipe is the quicker way
-   and it is undiscoverable on its own; the arrows are what say the card can be
-   stepped through at all. */
-@media (pointer: coarse) {
-    .zenith-jdeck button.zenith-jdeck__nav,
-    .zenith-jdeck button.zenith-jdeck__nav--prev,
-    .zenith-jdeck button.zenith-jdeck__nav--next {
-        width: 30px;
-        height: 30px;
-        opacity: 0.72;
-        pointer-events: auto;
-        transform: none;
-    }
-
-    .zenith-jdeck__stage {
-        gap: 8px;
-    }
-
-    /* A wider dot and a wider target: a pip is 5px of paint, and a finger is
-       not aiming at the paint. */
-    .zenith-jdeck .zenith-jdeck__pip {
-        padding: 8px 3px;
-    }
+.zenith-jw--lg .zenith-jhab__row {
+    font-size: 0.88rem;
 }
 
-/* Motion off means off — the user's own switch (`is-still`) and the system's
-   say the same thing here. The deck also stops advancing on its own; that part
-   is the hook's, and it reads the same two switches. */
-.zenith-jdeck.is-still .zenith-jdeck__badge,
-.zenith-jdeck.is-still .zenith-jdeck__badge svg,
-.zenith-jdeck.is-still .zenith-jfact {
+/* Motion off means off — the user's own switch and the system's. */
+.zenith-jhab.is-still .zenith-jhab__row {
     animation: none;
 }
 
-.zenith-jdeck.is-still .zenith-jdeck__pip-dot,
-.zenith-jdeck.is-still button.zenith-jdeck__nav {
-    transition: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .zenith-jdeck__badge,
-    .zenith-jdeck__badge svg,
-    .zenith-jfact {
+    .zenith-jhab__row {
         animation: none;
-    }
-
-    .zenith-jdeck__pip-dot,
-    .zenith-jdeck button.zenith-jdeck__nav {
-        transition: none;
     }
 }

@@ -4,6 +4,7 @@ import {
     keptOn,
     longestRun,
     monthDays,
+    recentHabits,
     runsOf,
     runsOfFlags,
     summarize,
@@ -231,6 +232,52 @@ describe('habitMonth', () => {
     it('draws the streak as one run', () => {
         expect(month().rows[0].runs).toEqual([{ from: 0, to: 2 }]);
         expect(month().rows[0].streak).toBe(3);
+    });
+});
+
+describe('recentHabits', () => {
+    // A window that crosses a month boundary — exactly what a calendar month
+    // cannot show on the 2nd.
+    const entries = [
+        entry('2026-06-29', { read: true }),
+        entry('2026-06-30', { read: true }),
+        entry('2026-07-01', { mood: 4 }),
+    ];
+    const rows = () => recentHabits(byDateOf(entries), [CHECK, SCALE], '2026-07-02', 7);
+
+    it('ends on today and reaches back across the month boundary', () => {
+        const [read] = rows();
+        expect(read.cells.map((c) => c.date)).toEqual([
+            '2026-06-26',
+            '2026-06-27',
+            '2026-06-28',
+            '2026-06-29',
+            '2026-06-30',
+            '2026-07-01',
+            '2026-07-02',
+        ]);
+        expect(read.cells[3].day).toBe(29);
+        expect(read.cells[6].day).toBe(2);
+    });
+
+    it('draws its days in the four states the grid uses, and none in the future', () => {
+        const [read, mood] = rows();
+        expect(read.cells.map((c) => c.state)).toEqual([
+            'empty',
+            'empty',
+            'empty',
+            'done',
+            'done',
+            'miss',
+            'empty',
+        ]);
+        expect(mood.cells[5].state).toBe('done');
+    });
+
+    it('rates against the whole window, since all of it has been lived', () => {
+        const [read] = rows();
+        expect(read.done).toBe(2);
+        expect(read.rate).toBeCloseTo(2 / 7);
     });
 });
 

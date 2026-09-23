@@ -19,7 +19,7 @@ interface HabitTrackProps {
 }
 
 /** What a cell's tooltip says the day recorded. */
-function valueLabel(row: HabitRow, cell: HabitCell, t: Translator): string {
+export function valueLabel(row: HabitRow, cell: HabitCell, t: Translator): string {
     const { tracker } = row;
     const value = coerceTrackerValue(tracker.kind, cell.value);
 

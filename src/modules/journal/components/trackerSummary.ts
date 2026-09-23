@@ -1,77 +1,65 @@
-import { SCALE_MAX } from '../../../core/journalConfig';
+import { SCALE_MAX, trackerGoal } from '../../../core/journalConfig';
 import type { Translator } from '../../../core/i18n';
 import type { TrackerStat } from '../services/journalStats';
+import { trackerWindow } from './trackerWindow';
 
 /**
- * How one tracker's window reads as a figure.
+ * How one tracker's window reads as a single figure at the end of its row.
  *
- * The three kinds answer different questions and now say so out loud: a scale
- * gives an average "of 5", a count gives its window sum in its own unit, a
- * habit gives how many days of the window it was ticked. `basis` carries the
- * number of days behind the figure, which is what stops "3.4" from looking like
- * the same claim whether it came from three days or thirty.
+ * Each kind is asked the question it can answer: a scale for its average, a
+ * count for what an ordinary recorded day comes to, a habit for the share of
+ * the window it was ticked on. It used to report a count's SUM, which is the
+ * one figure that grows just by leaving the window open — "105" said nothing
+ * about the tracker and everything about how long the window is.
  *
- * The old version normalised all three onto one 0–1 bar. That invited a
- * comparison the data never supported — a full "Exercise" bar beside a 40%
- * "Mood" bar read as a verdict on the person, not on the sampling.
+ * `suffix` is set smaller beside the figure, and it is what keeps "3.5" and
+ * "5.5" from reading as the same kind of number: "/5" is a score, "/10" is a
+ * count against its goal.
  */
 export interface TrackerSummary {
-    /** The figure itself, already formatted. */
+    /** The figure itself, already formatted. "—" when the window has nothing. */
     value: string;
-    /** Unit or scale suffix, set smaller beside the figure. */
+    /** "/5", "/10", " km" — or empty where the figure speaks for itself. */
     suffix: string;
-    /** "avg · 3 d" — what the figure is, and how many days it stands on. */
+    /** What the figure is, for the tooltip: "avg · 22 d". */
     basis: string;
-    /** Short label for the tracker's kind ("scale 1–5", "number", "yes/no"). */
-    tag: string;
-    /** Caption under the plot, naming the vertical axis. */
-    axisLabel: string;
-    /**
-     * Where the plot's reference line sits, as a percentage from the bottom.
-     * Null for kinds whose baseline is simply zero.
-     */
-    axisAt: number | null;
 }
 
-const trim = (n: number): string => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+/**
+ * An average, to the precision it deserves. A tenth is information on "5.5
+ * glasses" and noise on "32.1 reps", so two-digit figures are rounded whole.
+ */
+const trim = (n: number): string =>
+    Math.abs(n) >= 10 ? String(Math.round(n)) : Number.isInteger(n) ? String(n) : n.toFixed(1);
 
 export function summarizeTracker(stat: TrackerStat, t: Translator): TrackerSummary {
-    const { tracker, average, total, days, windowDays } = stat;
+    const { tracker, average, days } = stat;
     const dayShort = t('journal.stats.dayShort');
 
     if (tracker.kind === 'scale') {
         return {
             value: average === null ? '—' : average.toFixed(1),
-            suffix: average === null ? '' : ` ${t('journal.stats.outOfScale', { max: SCALE_MAX })}`,
+            suffix: average === null ? '' : `/${SCALE_MAX}`,
             basis: `${t('journal.stats.basisAvg')} · ${days} ${dayShort}`,
-            tag: t('journal.stats.tagScale', { max: SCALE_MAX }),
-            axisLabel: t('journal.stats.axisScale', { max: SCALE_MAX }),
-            // The midpoint of a 1–5 scale, so "above or below average day" is
-            // readable without counting pixels.
-            axisAt: 50,
         };
     }
 
     if (tracker.kind === 'check') {
+        const { percent, days: ticked, windowDays } = trackerWindow(stat, t);
         return {
-            value: String(total),
-            suffix: `/${windowDays}`,
-            // A habit's denominator is the whole window: a day without a tick is
-            // a real "no", not a gap in the data.
-            basis: `${t('journal.stats.basisFreq')} · ${windowDays} ${dayShort}`,
-            tag: t('journal.stats.tagCheck'),
-            axisLabel: t('journal.stats.axisCheck'),
-            axisAt: null,
+            value: `${percent}%`,
+            suffix: '',
+            // A habit's denominator is the whole window: a day without a tick
+            // is a real "no", not a gap in the data.
+            basis: t('journal.stats.coverageDays', { count: ticked, days: windowDays }),
         };
     }
 
+    const goal = trackerGoal(tracker);
     const unit = tracker.unit?.trim();
     return {
-        value: days === 0 ? '—' : trim(total),
-        suffix: days === 0 || !unit ? '' : ` ${unit}`,
-        basis: `${t('journal.stats.basisSum')} · ${days} ${dayShort}`,
-        tag: t('journal.stats.tagNumber'),
-        axisLabel: t('journal.stats.axisNumber', { unit: unit || t('journal.stats.tagNumber') }),
-        axisAt: null,
+        value: average === null ? '—' : trim(average),
+        suffix: average === null ? '' : goal > 0 ? `/${goal}` : unit ? ` ${unit}` : '',
+        basis: `${t('journal.stats.avgPerDay')} · ${days} ${dayShort}`,
     };
 }

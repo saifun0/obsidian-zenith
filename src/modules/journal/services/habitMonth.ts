@@ -164,6 +164,42 @@ export function longestRun(cells: HabitCell[]): number {
     return best;
 }
 
+/**
+ * One tracker across `days`, read the way the grid reads it.
+ *
+ * `elapsed` is what the rate divides by: the days already lived through, which
+ * for a month in progress is fewer than the month has.
+ */
+function habitRow(
+    byDate: Map<string, JournalEntry>,
+    tracker: JournalTracker,
+    days: readonly string[],
+    today: string,
+    elapsed: number
+): HabitRow {
+    const cells: HabitCell[] = days.map((date) => {
+        const entry = byDate.get(date);
+        const value = entry?.values[tracker.id];
+        return {
+            date,
+            day: Number(date.slice(8, 10)),
+            value,
+            state: cellState(tracker, entry, value, date, today),
+            fill: trackerFill(tracker, value),
+        };
+    });
+
+    const done = cells.filter((cell) => cell.state === 'done').length;
+    return {
+        tracker,
+        cells,
+        runs: runsOf(cells),
+        done,
+        streak: longestRun(cells),
+        rate: done / elapsed,
+    };
+}
+
 /** Build the grid for the month `anchor` falls in. */
 export function habitMonth(
     byDate: Map<string, JournalEntry>,
@@ -174,35 +210,33 @@ export function habitMonth(
     const days = monthDays(anchor);
     const elapsed = Math.max(1, days.filter((date) => date <= today).length);
 
-    const rows: HabitRow[] = trackers.map((tracker) => {
-        const cells: HabitCell[] = days.map((date, day) => {
-            const entry = byDate.get(date);
-            const value = entry?.values[tracker.id];
-            return {
-                date,
-                day: day + 1,
-                value,
-                state: cellState(tracker, entry, value, date, today),
-                fill: trackerFill(tracker, value),
-            };
-        });
-
-        const done = cells.filter((cell) => cell.state === 'done').length;
-        return {
-            tracker,
-            cells,
-            runs: runsOf(cells),
-            done,
-            streak: longestRun(cells),
-            rate: done / elapsed,
-        };
-    });
+    const rows = trackers.map((tracker) => habitRow(byDate, tracker, days, today, elapsed));
 
     const totals = days.map(
         (_, day) => rows.filter((row) => row.cells[day].state === 'done').length
     );
 
     return { days, rows, totals, elapsed };
+}
+
+/**
+ * Every tracker over the `days` days ending today, oldest first.
+ *
+ * The same rows the month grid draws, over a window that slides instead of one
+ * pinned to the calendar: on the 2nd of the month a calendar month has two days
+ * in it, and a card asking "how have my habits been going" needs the weeks
+ * before that too. Nothing in the window is in the future, so every day counts
+ * towards the rate.
+ */
+export function recentHabits(
+    byDate: Map<string, JournalEntry>,
+    trackers: JournalTracker[],
+    today: string,
+    days: number
+): HabitRow[] {
+    const count = Math.max(1, Math.floor(days));
+    const window = Array.from({ length: count }, (_, i) => addDays(today, i - count + 1));
+    return trackers.map((tracker) => habitRow(byDate, tracker, window, today, count));
 }
 
 /** Rank the rows. Ties break on the longer streak, then alphabetically. */
