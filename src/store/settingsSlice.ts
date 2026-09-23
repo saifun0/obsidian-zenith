@@ -137,9 +137,9 @@ export interface ZenithSettings {
      */
     journalTaskHeading: string;
     /**
-     * User-defined content types (label, icon, colour, metadata provider, shown
-     * fields). Empty = use the built-in `DEFAULT_CONTENT_TYPES`; editing in
-     * settings materializes the full list here.
+     * User-defined content types (label, icon, colour, shown fields). Empty =
+     * use the built-in `DEFAULT_CONTENT_TYPES`; editing in settings
+     * materializes the full list here.
      */
     contentTypes: ContentTypeConfig[];
     /** What the right-hand label on a Week Ahead row shows. */
