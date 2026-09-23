@@ -166,9 +166,7 @@ export default class ZenithPlugin extends Plugin {
 
         // ── Reminders ────────────────────────────────
         // Before the modules, which register what they want to be reminded
-        // of as they load; started once the layout is ready, so what was
-        // missed while Obsidian was closed is caught up with every source
-        // already in place.
+        // of as they load; started once they have (see below).
         this.scheduler = new Scheduler({
             now: () => Date.now(),
             setTimer: (fn, ms) => window.setTimeout(fn, ms),
@@ -180,7 +178,6 @@ export default class ZenithPlugin extends Plugin {
         this.notifications = new NotificationCenter(this, this.scheduler);
         this.disposers.push(this.scheduler.register(this.notifications));
         this.disposers.push(() => this.scheduler.stop());
-        this.app.workspace.onLayoutReady(() => this.scheduler.start());
 
         // ── Register built-in modules ───────────────
         this.moduleManager.init(this);
@@ -220,6 +217,12 @@ export default class ZenithPlugin extends Plugin {
         const activeIds = useZenithStore.getState().settings.activeModuleIds;
         await this.moduleManager.loadAll(activeIds);
         useZenithStore.getState().setLoadedModules(this.moduleManager.getLoadedModuleIds());
+
+        // Every module that wants reminders has registered its source by now,
+        // so what was missed while Obsidian was closed is caught up for all of
+        // them — including when the plugin is switched on mid-session and the
+        // layout is ready already.
+        this.app.workspace.onLayoutReady(() => this.scheduler.start());
 
         // ── Settings Tab ─────────────────────────────
         this.addSettingTab(new ZenithSettingTab(this.app, this));
