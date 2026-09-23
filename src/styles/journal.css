@@ -17,16 +17,50 @@
     margin: 0 auto;
 }
 
-/* The header is `.zenith-vhead` in ui.css now. */
+/* The header is `.zenith-vhead` in ui.css now. Its own bottom margin is for
+   views that stack by margin; here the column's gap already spaces it, and
+   the two together left a 32px hole above the first card. */
+.zenith-journal > .zenith-vhead {
+    margin-bottom: 0;
+}
+
+/* A phone has no pixels to spare on a frame around the cards. */
+body.is-phone .zenith-journal {
+    gap: 12px;
+    padding: 12px 12px var(--zenith-space-xl);
+}
+
+/* Every block on the page is the same surface, stated once. The habit grid
+   has to stay on `--zenith-bg-primary` in particular: its pinned label column
+   paints that colour to hide the days scrolling under it. */
+.zenith-jstats__overview,
+.zenith-hmon,
+.zenith-jcal,
+.zenith-jday {
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-lg);
+    background: var(--zenith-bg-primary);
+    box-shadow: var(--zenith-shadow-xs);
+}
 
 /* Two columns when the pane allows it, stacked when it doesn't. `auto-fit`
    rather than a media query: what matters is the pane's width, and a viewport
-   query would keep two cramped columns in a narrow sidebar. */
+   query would keep two cramped columns in a narrow sidebar.
+
+   `start`, not `stretch`: the day panel is nearly always the taller of the
+   two, and a calendar stretched to match it opened a gap between its last
+   week and its footer that looked like a missing row. */
 .zenith-journal__body {
+    container-type: inline-size;
+    container-name: zenith-jbody;
     display: grid;
     gap: var(--zenith-space-md);
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-    align-items: stretch;
+    align-items: start;
+}
+
+body.is-phone .zenith-journal__body {
+    gap: 12px;
 }
 
 /* ── Calendar ─────────────────────────────────────── */
@@ -36,10 +70,17 @@
     flex-direction: column;
     gap: 10px;
     padding: var(--zenith-space-md);
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-lg);
-    background: var(--zenith-bg-primary);
-    box-shadow: var(--zenith-shadow-xs);
+}
+
+/* Side by side (two 320px columns and the gap), the calendar stays in view
+   while the day beside it scrolls: it is how you move to another day, and the
+   day panel is where the scrolling happens. Stacked, it must not — it would
+   pin itself over the panel it sits above. */
+@container zenith-jbody (min-width: 656px) {
+    .zenith-jcal {
+        position: sticky;
+        top: var(--zenith-space-md);
+    }
 }
 
 .zenith-jcal__head {
@@ -81,12 +122,6 @@
     grid-template-columns: repeat(7, 1fr);
     gap: 4px;
 }
-/* Takes the slack so the footer sits at the bottom of the card rather than
-   directly under the last week. */
-.zenith-jcal__grid {
-    flex: 1;
-    align-content: start;
-}
 .zenith-jcal__weekday {
     text-align: center;
     font-size: 0.68rem;
@@ -99,30 +134,61 @@
 /* A day is a number inside two rings of meaning: the wash behind it is the
    mood, the arc around it is how much of that day was kept. Both were one
    tinted cell before, which made a cheerful day you did nothing on look
-   identical to a full one. */
+   identical to a full one.
+
+   The cell fills its column at a fixed height, and everything drawn in it is
+   a fixed-size disc CENTRED in it. It used to be an `aspect-ratio: 1` button,
+   and a grid item with an aspect ratio doesn't stretch: under Obsidian's
+   button height it came out a 38px square pinned to the left of a 70px
+   column, so every day sat visibly off-centre from its weekday. */
 .zenith-root button.zenith-jcal__day {
+    --jcal-disc: 34px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    aspect-ratio: 1;
-    min-height: 38px;
+    width: 100%;
+    height: 40px;
+    min-height: 0;
+    aspect-ratio: auto;
     padding: 0;
     border: none;
-    border-radius: var(--zenith-radius-md);
+    border-radius: 0;
     background: transparent;
     box-shadow: none;
     color: var(--zenith-text-normal);
     font-size: 0.82rem;
     cursor: pointer;
+}
+.zenith-root button.zenith-jcal__day:hover {
+    background: transparent;
+    box-shadow: none;
+}
+
+/* Hover and selection mark the day, not the column: a highlight the width of
+   a 70px cell turned a date into a pill. */
+.zenith-jcal__day::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(var(--jcal-disc) + 4px);
+    height: calc(var(--jcal-disc) + 4px);
+    margin: calc(var(--jcal-disc) / -2 - 2px) 0 0 calc(var(--jcal-disc) / -2 - 2px);
+    border-radius: var(--zenith-radius-md);
     transition:
         background var(--zenith-transition-fast),
         box-shadow var(--zenith-transition-fast);
+    pointer-events: none;
 }
-.zenith-root button.zenith-jcal__day:hover {
+.zenith-jcal__day:hover::before {
     background: var(--zenith-bg-hover);
-    box-shadow: none;
 }
+.zenith-jcal__day.is-selected::before {
+    background: color-mix(in srgb, var(--zenith-accent) 15%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--zenith-accent) 55%, transparent);
+}
+
 .zenith-jcal__day.is-outside {
     opacity: 0.4;
 }
@@ -135,28 +201,31 @@
     font-weight: 800;
     color: var(--zenith-accent);
 }
-.zenith-root button.zenith-jcal__day.is-selected {
-    background: color-mix(in srgb, var(--zenith-accent) 15%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--zenith-accent) 55%, transparent);
+
+.zenith-jcal__ring,
+.zenith-jcal__fill {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    pointer-events: none;
 }
 
 .zenith-jcal__ring {
-    position: absolute;
-    inset: 4px;
-    border-radius: 50%;
+    width: var(--jcal-disc);
+    height: var(--jcal-disc);
+    margin: calc(var(--jcal-disc) / -2) 0 0 calc(var(--jcal-disc) / -2);
     background: conic-gradient(var(--zenith-accent) var(--jcal-ring, 0%), transparent 0);
     /* A ring, not a pie: the number has to stay readable inside it. */
     -webkit-mask: radial-gradient(circle, transparent 62%, #000 66%);
     mask: radial-gradient(circle, transparent 62%, #000 66%);
-    pointer-events: none;
 }
 
 .zenith-jcal__fill {
-    position: absolute;
-    inset: 7px;
-    border-radius: 50%;
+    width: calc(var(--jcal-disc) - 6px);
+    height: calc(var(--jcal-disc) - 6px);
+    margin: calc(var(--jcal-disc) / -2 + 3px) 0 0 calc(var(--jcal-disc) / -2 + 3px);
     background: var(--zenith-bg-secondary);
-    pointer-events: none;
 }
 
 .zenith-jcal__num {
@@ -168,21 +237,23 @@
 /* Journalled without a mood to colour it by — the day still happened. */
 .zenith-jcal__dot {
     position: absolute;
-    bottom: 5px;
+    top: calc(50% + 8px);
     left: 50%;
-    transform: translateX(-50%);
     width: 4px;
     height: 4px;
+    margin-left: -2px;
     border-radius: 50%;
     background: var(--zenith-text-muted);
 }
 
+/* At the disc's shoulder rather than the cell's corner, which on a wide
+   column was a long way from the day it belongs to. */
 .zenith-jcal__task-dot {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 4px;
-    height: 4px;
+    top: calc(50% - var(--jcal-disc) / 2 + 1px);
+    left: calc(50% + var(--jcal-disc) / 2 - 5px);
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: var(--zenith-accent);
 }
@@ -193,7 +264,6 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
-    margin-top: auto;
     padding-top: 10px;
     border-top: 1px solid var(--zenith-border);
     color: var(--zenith-text-faint);
@@ -220,12 +290,8 @@
 .zenith-jday {
     display: flex;
     flex-direction: column;
-    gap: var(--zenith-space-md);
+    gap: 18px;
     padding: var(--zenith-space-md);
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-lg);
-    background: var(--zenith-bg-primary);
-    box-shadow: var(--zenith-shadow-xs);
 }
 
 .zenith-jday__head {
@@ -242,27 +308,28 @@
 }
 .zenith-jday__title {
     margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.05rem;
+    font-weight: 650;
     color: var(--zenith-text-normal);
     text-transform: capitalize;
 }
+/* Indented to the title's first letter, past the ‹ in front of it, so the
+   date and what it says about itself read as one block. */
 .zenith-jday__sub {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.78rem;
+    gap: 8px;
+    padding-left: 28px;
+    font-size: 0.76rem;
     color: var(--zenith-text-muted);
 }
 .zenith-jday__badge {
-    padding: 1px 7px;
+    padding: 1px 8px;
     border-radius: 999px;
     background: color-mix(in srgb, var(--zenith-accent) 16%, transparent);
     color: var(--zenith-accent);
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
 }
 
 /* A square icon button: it sits beside a date that has to be allowed to wrap,
@@ -317,17 +384,21 @@
 .zenith-jday__section {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
+/* Sentence case. Three shouted headings in one narrow panel were the loudest
+   type on the page, louder than the date they belong to. */
 .zenith-jday__section-title {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.72rem;
+    font-size: 0.76rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     color: var(--zenith-text-muted);
+}
+.zenith-jday__section-title svg {
+    flex: none;
+    color: var(--zenith-text-faint);
 }
 .zenith-jday__count {
     padding: 0 6px;
@@ -371,26 +442,25 @@
 
 /* ── The day's figures, its trackers and its note ──── */
 
+/* A caption over a bar, not a box: it is the day's one figure, and the grey
+   plate it sat on made it look like a control. */
 .zenith-jday__strip {
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 9px 11px;
-    border-radius: var(--zenith-radius-md);
-    background: var(--zenith-bg-secondary);
+    gap: 10px;
     color: var(--zenith-text-muted);
     font-size: 0.74rem;
 }
 .zenith-jday__strip-figure {
     flex: none;
-    color: var(--zenith-text-normal);
+    color: var(--zenith-text-muted);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
 .zenith-jday__strip-bar {
     flex: 1;
     min-width: 40px;
-    height: 5px;
+    height: 4px;
     border-radius: 999px;
     background: color-mix(in srgb, var(--zenith-text-faint) 25%, transparent);
     overflow: hidden;
@@ -411,17 +481,22 @@
 /* One row per tracker: name on the left, control on the right, everything on a
    single axis. The wrapping rail this replaced interleaved the two differently
    at every width, so no two panes read alike. */
+/* Every row the same height whatever its control, so a list mixing chips,
+   steppers and dots keeps one rhythm. The negative margin lines the names up
+   with the section title while the hover tint still has room either side. */
 .zenith-jday__trackers {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    margin: 0 -8px;
 }
 .zenith-jday__tracker {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 10px;
-    padding: 5px 7px;
+    box-sizing: border-box;
+    min-height: 38px;
+    padding: 2px 8px;
     border-radius: var(--zenith-radius-sm);
     transition: background var(--zenith-transition-fast);
 }
@@ -470,11 +545,15 @@
     color: var(--zenith-text-normal);
 }
 
+/* `height: auto` because Obsidian gives every button a fixed one, and in a
+   narrow pane the invitation wraps to two lines and lost the second. */
 .zenith-root button.zenith-jday__note--empty {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 9px;
     width: 100%;
+    height: auto;
     border-style: dashed;
     box-shadow: none;
     color: var(--zenith-text-faint);
@@ -802,134 +881,110 @@
    the PANE, and a viewport query keeps the wide layout in a 380px sidebar on a
    4K monitor while collapsing it on a phone that had room. `@container` asks
    the only question that matters — how much width is actually here. */
+/* A column of two cards — the journal's thirty days, then the month of habits.
+   It is no longer a card itself: one surface holding a headline, a strip, a
+   grid and three more cards was four layers of box, and the eye had no idea
+   where one subject ended and the next began. */
 .zenith-jstats {
     container-type: inline-size;
     container-name: zenith-jstats;
     display: flex;
     flex-direction: column;
     gap: var(--zenith-space-md);
-    padding: var(--zenith-space-md);
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-lg);
-    background: var(--zenith-bg-primary);
-    box-shadow: var(--zenith-shadow-xs);
 }
 
-/* Coverage is the headline: every figure below it is conditional on it. */
-.zenith-jstats__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--zenith-space-md);
+body.is-phone .zenith-jstats {
+    gap: 12px;
 }
-.zenith-jstats__coverage {
+
+/* Four figures of equal weight, then the strip they are read from.
+
+   The dividers are the card's own background showing through a 1px gap, not
+   borders on the cells: that way the same rule draws a row of four and a
+   two-by-two grid, with no cell needing to know where it landed. */
+.zenith-jstats__overview {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    overflow: hidden;
+    background: var(--zenith-border);
+    background-clip: padding-box;
+}
+.zenith-jstats__overview > * {
+    background: var(--zenith-bg-primary);
+}
+
+.zenith-jstats__metric {
     display: flex;
     flex-direction: column;
     gap: 4px;
     min-width: 0;
+    padding: 14px 18px;
 }
-.zenith-jstats__eyebrow {
-    font-size: 0.68rem;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--zenith-text-muted);
-}
-.zenith-jstats__figure {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    flex-wrap: wrap;
-    font-size: 2.4rem;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 1;
+.zenith-jstats__metric-value {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 1.4rem;
+    font-weight: 650;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
     color: var(--zenith-text-normal);
     font-variant-numeric: tabular-nums;
+}
+/* "вчера" is a figure here, not the middle of a sentence. */
+.zenith-jstats__metric-value::first-letter {
+    text-transform: uppercase;
 }
 .zenith-jstats__figure-of {
     color: var(--zenith-text-faint);
     font-weight: 500;
 }
-.zenith-jstats__figure-label {
-    font-size: 0.85rem;
-    font-weight: 400;
-    letter-spacing: 0;
-    color: var(--zenith-text-muted);
-}
-
-.zenith-jstats__metrics {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--zenith-space-lg);
-}
-.zenith-jstats__metric {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-.zenith-jstats__metric-value {
-    font-size: 1.15rem;
-    font-weight: 600;
-    line-height: 1.1;
-    color: var(--zenith-text-normal);
-    font-variant-numeric: tabular-nums;
-}
 .zenith-jstats__metric-label {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
+    line-height: 1.3;
     color: var(--zenith-text-muted);
 }
 
-/* Narrow, the head stops trying to be a row. Flex-wrap alone left the three
-   metrics dangling under a 2.4rem figure at ragged widths — one wrapped, two
-   didn't, and the block read as a mistake. A grid puts them on an even footing
-   and the figure loses the size it only had room for on a wide pane. */
-@container zenith-jstats (max-width: 620px) {
-    .zenith-jstats__head {
-        display: block;
-    }
-    .zenith-jstats__figure {
-        font-size: 1.8rem;
-        gap: 6px;
-    }
-    .zenith-jstats__figure-label {
-        flex-basis: 100%;
-    }
-    .zenith-jstats__metrics {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
-        gap: var(--zenith-space-sm);
-        margin-top: var(--zenith-space-sm);
-        padding-top: var(--zenith-space-sm);
-        border-top: 1px solid var(--zenith-border);
-    }
-    .zenith-jstats__metric-value {
-        font-size: 1rem;
-    }
-    .zenith-jstats__metric-label {
-        font-size: 0.66rem;
-        line-height: 1.25;
-    }
-}
-
+/* Where the entries are, with its two ends named on the same line. */
 .zenith-jstats__coverage-block {
+    grid-column: 1 / -1;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 10px 18px;
 }
 .zenith-jstats__coverage-block .zenith-jcov {
+    flex: 1;
     gap: 2px;
 }
 .zenith-jstats__coverage-block .zenith-jcov__cell {
     border-radius: 2px;
 }
-.zenith-jstats__axis-row {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--zenith-space-md);
+.zenith-jstats__axis {
+    flex: none;
     font-size: 0.68rem;
     color: var(--zenith-text-faint);
+    white-space: nowrap;
+}
+
+/* Two by two once four columns would wrap their labels — "последняя запись"
+   is the first to go, at about 110px a column. */
+@container zenith-jstats (max-width: 520px) {
+    .zenith-jstats__overview {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .zenith-jstats__metric {
+        padding: 12px 14px;
+    }
+    .zenith-jstats__metric-value {
+        font-size: 1.2rem;
+    }
+    .zenith-jstats__coverage-block {
+        gap: 10px;
+        padding: 10px 14px;
+    }
 }
 
 /* The per-tracker blocks that used to live here went with the plots they held:
@@ -964,6 +1019,12 @@
 
 .zenith-hmon {
     --hmon-col-w: 22px;
+    /* How far a day column may widen to take up the card. The grid used to
+       stop at 22px a column and leave a quarter of a wide card empty on its
+       right; the columns now share that room out, up to the width the narrow
+       layout already uses. The marks keep their size; only the gap between
+       them widens, and never further than a narrow pane already shows it. */
+    --hmon-col-max: 30px;
     --hmon-label-w: 168px;
     /* What the chain's colour drifts towards across the month. White on both
        themes: a pale tint of the habit's own colour reads as "further along"
@@ -973,7 +1034,8 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    padding: var(--zenith-space-md);
 }
 
 .zenith-hmon__head {
@@ -985,8 +1047,8 @@
 
 .zenith-hmon__title {
     margin: 0;
-    font-size: 0.92rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 650;
 }
 
 .zenith-hmon__month {
@@ -1010,16 +1072,21 @@
     padding-bottom: 4px;
 }
 
+/* `min-content` is the grid at 22px a column — the width below which it
+   scrolls rather than squeezes, exactly as before. Above it, `width: 100%`
+   hands the spare room to the day columns, each up to `--hmon-col-max`. */
 .zenith-hmon__grid {
     display: grid;
-    grid-template-columns: var(--hmon-label-w) repeat(var(--hmon-days, 31), var(--hmon-col-w));
+    grid-template-columns:
+        var(--hmon-label-w)
+        repeat(var(--hmon-days, 31), minmax(var(--hmon-col-w), var(--hmon-col-max)));
     align-items: center;
     /* No gap between rows: the sticky label column has to be continuous, and a
        gap is a stripe of scrolling marks showing through it. The spacing lives
        in the row heights instead. */
     row-gap: 0;
-    width: max-content;
-    min-width: 100%;
+    width: 100%;
+    min-width: min-content;
 }
 
 .zenith-hmon__day {
@@ -1395,19 +1462,33 @@
     cursor: default;
 }
 
-/* ── Summary cards ────────────────────────────────── */
+/* ── Summary ──────────────────────────────────────────
+   The month in three figures, as the foot of the habits card rather than three
+   cards of their own under it. Boxed, each carried a fill, a border, a ring
+   restating its own percentage and a coloured pill — twelve shapes to say
+   three numbers. Now it is the overview's form again: figures in columns with
+   a hairline between them. */
 
 .zenith-hcards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 10px;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    padding-top: 14px;
+    border-top: 1px solid var(--zenith-border);
 }
 
 .zenith-hcard {
-    padding: 11px 13px 12px;
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-md);
-    background: var(--zenith-bg-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: 0 18px;
+    border-left: 1px solid var(--zenith-border);
+}
+
+.zenith-hcard:first-child {
+    padding-left: 0;
+    border-left: none;
 }
 
 .zenith-hcard__label {
@@ -1417,46 +1498,35 @@
 
 .zenith-hcard__figure {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 2px 0 6px;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
 }
 
 .zenith-hcard__value {
-    font-size: 1.75rem;
+    flex: none;
+    font-size: 1.4rem;
     font-weight: 650;
     line-height: 1.1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
 }
 
-/* A ring rather than a bar: it reads as one figure's completeness, which is
-   what the number beside it already is, and it costs no width. */
-.zenith-hcard__ring {
-    flex: none;
-    width: 24px;
-    height: 24px;
-    margin-left: auto;
-    border-radius: 50%;
-    background: conic-gradient(var(--hmon-color) var(--hmon-pct, 0%), var(--zenith-border) 0);
-    -webkit-mask: radial-gradient(circle, transparent 7px, #000 8px);
-    mask: radial-gradient(circle, transparent 7px, #000 8px);
-}
-
-.zenith-hcard__pill {
+.zenith-hcard__who {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    max-width: 100%;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--hmon-color) 16%, transparent);
-    color: var(--hmon-color);
-    font-size: 0.7rem;
-    font-weight: 600;
+    min-width: 0;
+    color: var(--zenith-text-normal);
+    font-size: 0.8rem;
 }
 
-.zenith-hcard__pill-text {
+.zenith-hcard__who svg {
+    flex: none;
+    color: var(--hmon-color);
+}
+
+.zenith-hcard__who-text {
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
@@ -1464,9 +1534,8 @@
 }
 
 .zenith-hcard__foot {
-    margin: 7px 0 0;
     color: var(--zenith-text-faint);
-    font-size: 0.66rem;
+    font-size: 0.68rem;
 }
 
 /* ── Entrance ───────────────────────────────────────
@@ -1584,9 +1653,67 @@ body:not(.zenith-no-motion) .zenith-hpick.is-below {
         height: 9px;
         margin-top: -4.5px;
     }
+
+    /* The summary becomes a list: three columns of 100px wrap every label. */
     .zenith-hcards {
-        grid-template-columns: 1fr;
+        grid-auto-flow: row;
+        padding-top: 0;
     }
+    .zenith-hcard,
+    .zenith-hcard:first-child {
+        padding: 10px 0;
+        border-left: none;
+    }
+    .zenith-hcard + .zenith-hcard {
+        border-top: 1px solid var(--zenith-border);
+    }
+}
+
+/* ── Phones ───────────────────────────────────────────
+   Width is handled by the container queries above; this is about FINGERS.
+   Obsidian marks a touch device on <body>, and a desktop pane dragged narrow
+   is still driven by a mouse, so the two are asked separately. */
+body.is-phone .zenith-jcal,
+body.is-phone .zenith-jday,
+body.is-phone .zenith-hmon {
+    padding: 14px;
+}
+
+body.is-mobile .zenith-root button.zenith-jcal__day {
+    height: 44px;
+}
+
+body.is-mobile .zenith-root button.zenith-jcal__nav,
+body.is-mobile .zenith-root button.zenith-jday__step {
+    width: 36px;
+    height: 36px;
+}
+
+body.is-mobile .zenith-root button.zenith-jday__open {
+    width: 36px;
+    height: 36px;
+}
+
+body.is-mobile .zenith-jday__sub {
+    padding-left: 40px;
+}
+
+body.is-mobile .zenith-jday__tracker {
+    min-height: 44px;
+}
+
+/* Five 15px dots are a mouse target. At 22px with a wider gap each one can be
+   hit with a thumb without landing on its neighbour. */
+body.is-mobile .zenith-jday .zenith-tracker__steps {
+    gap: 7px;
+}
+body.is-mobile .zenith-jday button.zenith-tracker__step {
+    width: 22px;
+    height: 22px;
+}
+body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
+    width: 30px;
+    height: 30px;
 }
 /* ── Dashboard widget ─────────────────────────────── */
 

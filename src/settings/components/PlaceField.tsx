@@ -1,15 +1,22 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Crosshair, MapPin, X } from 'lucide-react';
 import { useZenithStore } from '../../store';
 import { resolveLocale, useTranslation } from '../../core/i18n';
-import { devicePosition, placeLabel, reverseGeocode, searchPlaces } from '../../services/geocode';
-import type { GeoPlace } from '../../services/geocode';
+import {
+    devicePosition,
+    placeLabel,
+    placeRegion,
+    reverseGeocode,
+    searchPlaces,
+} from '../../services/geocode';
+import type { GeoPlace, PlaceCandidate } from '../../services/geocode';
+import { foldName } from '../../services/placeNames';
 import type { ZenithSettings } from '../../store/settingsSlice';
 
 /** Let the typing settle before spending a request on it. */
-const DEBOUNCE_MS = 400;
+const DEBOUNCE_MS = 300;
 
-type Status = 'idle' | 'searching' | 'locating' | 'empty' | 'denied';
+type Status = 'idle' | 'searching' | 'locating' | 'empty' | 'failed' | 'denied';
 
 /** Settings keys that hold a place, so the factory can't be pointed at a number. */
 type PlaceKey = {
@@ -63,29 +70,59 @@ export function createPlaceField(config: PlaceFieldConfig): React.FC {
         const inherited = config.inheritsGlobal ? global : null;
 
         const [query, setQuery] = useState('');
-        const [hits, setHits] = useState<GeoPlace[]>([]);
+        const [hits, setHits] = useState<PlaceCandidate[]>([]);
+        /** The row the arrow keys are on; Enter takes it. */
+        const [active, setActive] = useState(0);
         const [status, setStatus] = useState<Status>('idle');
         /** Guards against an earlier search resolving after a later one. */
         const generation = useRef(0);
+        const listId = useId();
 
         useEffect(() => {
             const term = query.trim();
+            // Bumped here too: a request already on the wire when the box was
+            // cleared must not land and repopulate the list.
+            const mine = ++generation.current;
             if (term.length < 2) {
                 setHits([]);
                 setStatus('idle');
                 return;
             }
-            const mine = ++generation.current;
             setStatus('searching');
             const timer = window.setTimeout(() => {
                 void searchPlaces(term, lang).then((results) => {
                     if (generation.current !== mine) return;
-                    setHits(results);
-                    setStatus(results.length ? 'idle' : 'empty');
+                    setHits(results ?? []);
+                    setActive(0);
+                    setStatus(results === null ? 'failed' : results.length ? 'idle' : 'empty');
                 });
             }, DEBOUNCE_MS);
             return () => window.clearTimeout(timer);
         }, [query, lang]);
+
+        /** Country codes as names — "Россия", not "RU" — in the interface's language. */
+        const countries = useMemo(() => {
+            try {
+                return new Intl.DisplayNames([lang], { type: 'region' });
+            } catch {
+                return null;
+            }
+        }, [lang]);
+        const countryName = (code: string | undefined): string | undefined => {
+            if (!code) return undefined;
+            try {
+                return countries?.of(code) ?? code;
+            } catch {
+                return code;
+            }
+        };
+
+        /**
+         * "434 тыс." — enough to tell a city from the village that shares its
+         * name. Compact's own rounding: two significant figures, so "5,4 тыс."
+         * but never "433,9 тыс.".
+         */
+        const people = useMemo(() => new Intl.NumberFormat(lang, { notation: 'compact' }), [lang]);
 
         const clearKey = config.inheritsGlobal
             ? 'settings.place.useGlobal'
@@ -96,6 +133,40 @@ export function createPlaceField(config: PlaceFieldConfig): React.FC {
             setQuery('');
             setHits([]);
             setStatus('idle');
+        };
+
+        /**
+         * Arrows to move, Enter to take, Escape to put the list away. Escape
+         * is stopped here, or it would also close the settings dialog the
+         * picker sits in — two things dismissed for one key.
+         */
+        const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+            if (!hits.length) return;
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                const step = e.key === 'ArrowDown' ? 1 : -1;
+                setActive((i) => (i + step + hits.length) % hits.length);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                choose((hits[active] ?? hits[0]).place);
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.nativeEvent.stopImmediatePropagation();
+                setQuery('');
+            }
+        };
+
+        /** The typed part of a name in bold, when the name begins with it. */
+        const highlight = (name: string) => {
+            const typed = query.trim();
+            if (!typed || !foldName(name).startsWith(foldName(typed))) return name;
+            return (
+                <>
+                    <strong>{name.slice(0, typed.length)}</strong>
+                    {name.slice(typed.length)}
+                </>
+            );
         };
 
         const detect = async () => {
@@ -150,6 +221,12 @@ export function createPlaceField(config: PlaceFieldConfig): React.FC {
                         value={query}
                         placeholder={t('settings.place.search')}
                         onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={onKeyDown}
+                        role="combobox"
+                        aria-autocomplete="list"
+                        aria-expanded={hits.length > 0}
+                        aria-controls={listId}
+                        aria-activedescendant={hits.length ? `${listId}-${active}` : undefined}
                     />
                     <button
                         className="zenith-settings__inline-btn"
@@ -161,26 +238,54 @@ export function createPlaceField(config: PlaceFieldConfig): React.FC {
                     </button>
                 </div>
 
+                {/* Three facts a row, because three is what it takes to tell
+                    namesakes apart: the name, where it is (region and
+                    country, spelled out), and how big it is — the city of
+                    434 thousand and the village beside it no longer read the
+                    same. */}
                 {hits.length > 0 && (
-                    <ul className="zenith-wplace__hits">
-                        {hits.map((hit) => (
+                    <ul className="zenith-wplace__hits" id={listId} role="listbox">
+                        {hits.map(({ place: hit, population }, i) => (
                             <li key={`${hit.lat},${hit.lon}`}>
-                                <button className="zenith-wplace__hit" onClick={() => choose(hit)}>
-                                    <span className="zenith-wplace__hit-name">{hit.name}</span>
-                                    <span className="zenith-wplace__hit-where">
-                                        {[hit.admin1, hit.country].filter(Boolean).join(', ')}
+                                <button
+                                    id={`${listId}-${i}`}
+                                    className={`zenith-wplace__hit ${i === active ? 'is-active' : ''}`}
+                                    role="option"
+                                    aria-selected={i === active}
+                                    onMouseEnter={() => setActive(i)}
+                                    onClick={() => choose(hit)}
+                                >
+                                    <span className="zenith-wplace__hit-name">
+                                        {highlight(hit.name)}
                                     </span>
+                                    <span className="zenith-wplace__hit-where">
+                                        {[placeRegion(hit), countryName(hit.country)]
+                                            .filter(Boolean)
+                                            .join(', ')}
+                                    </span>
+                                    {population !== undefined && (
+                                        <span className="zenith-wplace__hit-pop">
+                                            {t('settings.place.people', {
+                                                count: people.format(population),
+                                            })}
+                                        </span>
+                                    )}
                                 </button>
                             </li>
                         ))}
                     </ul>
                 )}
 
-                {status === 'searching' && (
+                {status === 'searching' && hits.length === 0 && (
                     <div className="zenith-settings__hint">{t('settings.place.searching')}</div>
                 )}
                 {status === 'empty' && (
                     <div className="zenith-settings__hint">{t('settings.place.none')}</div>
+                )}
+                {status === 'failed' && (
+                    <div className="zenith-settings__hint zenith-settings__hint--warn">
+                        {t('settings.place.failed')}
+                    </div>
                 )}
                 {status === 'locating' && (
                     <div className="zenith-settings__hint">{t('settings.place.locating')}</div>

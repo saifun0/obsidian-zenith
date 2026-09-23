@@ -34,6 +34,15 @@ export interface FileSyncStatus {
     /** The plan currently being previewed, if any. */
     plan: SyncPlan | null;
     lastRunAt: number;
+    /**
+     * When this device was last known to match the server: a run that applied
+     * everything, or a look that found nothing to do. Zero until then.
+     *
+     * Not `lastRunAt`, which only moves when files do. An automatic check that
+     * finds the vault already up to date is the commonest outcome there is,
+     * and without this it left "last synced" saying never.
+     */
+    checkedAt: number;
     lastResult: SyncRunResult | null;
     progress: SyncProgress | null;
     error: string | null;
@@ -44,6 +53,7 @@ const EMPTY_STATUS: FileSyncStatus = {
     running: false,
     plan: null,
     lastRunAt: 0,
+    checkedAt: 0,
     lastResult: null,
     progress: null,
     error: null,
@@ -115,7 +125,11 @@ export class FileSyncService {
         this.patch({ running: true, error: null, progress: null });
         try {
             const plan = await make(engine);
-            this.patch({ plan, running: false });
+            this.patch({
+                plan,
+                running: false,
+                ...(plan.actionable === 0 ? { checkedAt: Date.now() } : {}),
+            });
             return plan;
         } catch (err) {
             this.patch({ running: false, error: describe(err) });
@@ -141,9 +155,14 @@ export class FileSyncService {
                 force,
                 onProgress: (progress) => this.patch({ progress }),
             });
+            const now = Date.now();
             this.patch({
                 running: false,
-                lastRunAt: Date.now(),
+                lastRunAt: now,
+                // A run that refused, or that finished with files it could not
+                // move, has not brought the two sides together.
+                checkedAt:
+                    !result.refused && result.failed.length === 0 ? now : this.status.checkedAt,
                 lastResult: result,
                 progress: null,
                 // The plan is spent: its entities describe a state that no longer
@@ -171,7 +190,7 @@ export class FileSyncService {
      */
     async forgetHistory(): Promise<void> {
         await this.engine()?.forgetHistory();
-        this.patch({ plan: null, lastResult: null });
+        this.patch({ plan: null, lastResult: null, checkedAt: 0 });
     }
 
     // ── Building from settings ───────────────────────

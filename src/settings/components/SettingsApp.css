@@ -1467,7 +1467,7 @@ button.zenith-settings__icon-btn {
 .zenith-wplace__hits {
     list-style: none;
     width: 100%;
-    max-width: 360px;
+    max-width: 460px;
     margin: 8px 0 12px;
     padding: 4px;
     border: 1px solid var(--background-modifier-border);
@@ -1490,13 +1490,37 @@ button.zenith-settings__icon-btn {
     cursor: pointer;
 }
 
+/* One highlighted row, whether the mouse or the arrow keys put it there — the
+   pointer sets the same index the keys move, so the two never disagree about
+   which row Enter would take. */
+.zenith-wplace__hit.is-active,
 .zenith-wplace__hit:hover {
     background: var(--background-modifier-hover) !important;
 }
 
 .zenith-wplace__hit-name {
+    flex: none;
     font-size: 0.88rem;
+    font-weight: 400;
     color: var(--text-normal);
+}
+
+/* The part that was typed, in bold; the rest is what the search completed it
+   to. Weight only, not colour — a name matched some other way ("Kazan" finding
+   Казань) has no bold part, and must not come out dimmed for it. */
+.zenith-wplace__hit-name strong {
+    font-weight: 700;
+}
+
+/* Size, on the right edge where the eye can run down it: the only column that
+   sorts a city from the village beside it at a glance. */
+.zenith-wplace__hit-pop {
+    flex: none;
+    margin-left: auto;
+    font-size: 0.74rem;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 /* Two places can share a name — the region is what tells them apart, so it is

@@ -1112,3 +1112,55 @@ body.zenith-no-motion .zenith-syncnotice__fill {
     outline-offset: 2px;
     border-radius: var(--zenith-radius-sm);
 }
+
+/* ── Status bar ───────────────────────────────────────
+   Bottom right, in Obsidian's own status bar. That bar lives outside every
+   `.zenith-root`, so none of the `--zenith-*` tokens reach it: the colours here
+   are Obsidian's variables, read directly, which is what the tokens would have
+   resolved to anyway.
+
+   The host is Obsidian's item and stays in the bar whatever we render; empty,
+   it would still take its padding. So it hides itself when the component has
+   nothing to say — file sync not set up. */
+.status-bar-item.zenith-syncbar-host:empty {
+    display: none;
+}
+
+.zenith-syncbar {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-syncbar svg {
+    flex: none;
+}
+
+.zenith-syncbar.is-quiet {
+    color: var(--text-faint);
+}
+
+.zenith-syncbar.is-held svg {
+    color: var(--text-warning);
+}
+
+.zenith-syncbar.is-error {
+    color: var(--text-error);
+}
+
+.zenith-syncbar .is-spinning {
+    animation: zenith-sync-spin 1s linear infinite;
+}
+
+/* The motion switch reaches `.zenith-root` only; this is outside it. */
+body.zenith-no-motion .zenith-syncbar .is-spinning {
+    animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-syncbar .is-spinning {
+        animation: none;
+    }
+}

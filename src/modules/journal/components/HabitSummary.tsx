@@ -25,27 +25,26 @@ const HabitCard: FC<CardProps> = ({ labelKey, percent, row, foot, color, animate
     const shown = useCountUp(percent, animate);
     const hue = color ?? row?.tracker.color;
 
+    // The habit is named in the reader's text colour, with only its icon in the
+    // habit's own. The name used to sit on a tint of that colour, in that
+    // colour, and a habit coloured dark purple came out as dark purple on
+    // dark purple — the one word on the card that says WHICH habit, unread.
     return (
         <div
             className="zenith-hcard"
             style={{ '--hmon-color': hue ?? 'var(--zenith-accent)' } as CSSProperties}
         >
             <span className="zenith-hcard__label">{t(labelKey)}</span>
-            <div className="zenith-hcard__figure">
+            <span className="zenith-hcard__figure">
                 <span className="zenith-hcard__value">{Math.round(shown)}%</span>
-                <span
-                    className="zenith-hcard__ring"
-                    style={{ '--hmon-pct': `${shown}%` } as CSSProperties}
-                    aria-hidden="true"
-                />
-            </div>
-            {row && (
-                <span className="zenith-hcard__pill">
-                    <DynamicIcon name={row.tracker.icon} size={11} />
-                    <span className="zenith-hcard__pill-text">{row.tracker.label}</span>
-                </span>
-            )}
-            <p className="zenith-hcard__foot">{foot}</p>
+                {row && (
+                    <span className="zenith-hcard__who">
+                        <DynamicIcon name={row.tracker.icon} size={13} />
+                        <span className="zenith-hcard__who-text">{row.tracker.label}</span>
+                    </span>
+                )}
+            </span>
+            <span className="zenith-hcard__foot">{foot}</span>
         </div>
     );
 };

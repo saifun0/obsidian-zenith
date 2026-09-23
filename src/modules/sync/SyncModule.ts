@@ -1,4 +1,6 @@
 import { Notice } from 'obsidian';
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
 import { BaseModule } from '../../core/IModule';
 import { useZenithStore } from '../../store';
 import { SyncQuickModal } from './SyncQuickModal';
@@ -7,6 +9,7 @@ import { SettingsSyncService } from './services/settingsSync';
 import { FileSyncService } from './services/fileSync';
 import { FileSyncAuto } from './services/fileSyncAuto';
 import { SyncProgressNotice } from './SyncProgressNotice';
+import { SyncStatusBar } from './components/SyncStatusBar';
 import { DROPBOX_PROTOCOL_ACTION } from './services/remotes/appIds';
 import { DropboxRemote } from './services/remotes/dropboxRemote';
 import type { SettingsSchema } from '../../settings/schema/types';
@@ -161,6 +164,29 @@ export class SyncModule extends BaseModule {
             void this.activateView()
         );
         this.disposers.push(() => ribbon.remove());
+
+        if (this.files) this.mountStatusBar(this.files);
+    }
+
+    /**
+     * The status bar item, bottom right. Removed by hand for the same reason
+     * the ribbon icon is: the module can be switched off while the plugin
+     * stays loaded, and the plugin's own cleanup would leave it behind.
+     *
+     * Obsidian does not show a status bar on phones, so there this is simply
+     * never seen — the progress notice and the dialog are what mobile has.
+     */
+    private mountStatusBar(files: FileSyncService): void {
+        const host = this.plugin.addStatusBarItem();
+        host.addClass('mod-clickable', 'zenith-syncbar-host');
+        host.addEventListener('click', () => void this.activateView());
+
+        const root = createRoot(host);
+        root.render(createElement(SyncStatusBar, { service: files }));
+        this.disposers.push(() => {
+            root.unmount();
+            host.remove();
+        });
     }
 
     async onunload(): Promise<void> {

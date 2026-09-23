@@ -198,8 +198,8 @@ export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) =
         if (place || !legacyCity.trim()) return;
         let cancelled = false;
         void searchPlaces(legacyCity, lang).then((hits) => {
-            if (!cancelled && hits[0]) {
-                updateSettings({ location: hits[0], weatherCity: '' });
+            if (!cancelled && hits?.[0]) {
+                updateSettings({ location: hits[0].place, weatherCity: '' });
             }
         });
         return () => {
