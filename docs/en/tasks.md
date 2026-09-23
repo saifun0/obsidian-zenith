@@ -134,3 +134,21 @@ URLs* `obsidian://zenith?do=log&tracker=water&value=%2B1`.
 Shortcuts* or *Tasker* (*Browse URL*): point a home-screen shortcut at
 `obsidian://zenith?do=log&tracker=water&value=%2B1`. To type a task, use the app's text
 prompt and put the (encoded) answer after `text=`.
+
+## Reminders
+
+With **Tasks → Reminders** on (it is off by default), tasks remind you through the
+[notification center](notifications.md):
+
+- **At a task's time.** A task with `⏰ 18:00` is announced at 18:00 — or earlier, by
+  **Warn before**. From the notice it can be opened, snoozed, or marked **done** — through the
+  same writer as the list, so a recurring task rolls over exactly as it would from a tick.
+- **A morning summary.** At the chosen hour (08:00 unless changed), the day's tasks that have
+  no time — the ones no reminder would mention — and how many are overdue: *5 tasks for
+  today · 2 overdue*. Nothing when there is nothing.
+
+Every reminder looks the task up again when it comes due: one done, moved or deleted since
+says nothing. Only while Obsidian is running; one that came while it was closed waits in the
+center as missed, and the morning summary read late the same day is still today's. If the
+**Reminder** plugin is on too, the settings say so — it reads `⏰` as well, and a task could
+be announced twice.

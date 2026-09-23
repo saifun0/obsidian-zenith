@@ -231,6 +231,10 @@ export interface ZenithSettings {
     prayerNotify: boolean;
     /** Minutes of warning before the time itself. */
     prayerNotifyBefore: number;
+    /** Task reminders: minutes before a task's `⏰` time. Zero reminds at the time. */
+    taskRemindBefore: number;
+    /** Hour of the morning summary of the day's tasks; -1 for none. */
+    taskDigestHour: number;
 
     /**
      * Quiet hours for the notification center: whole hours, the start taken
@@ -748,6 +752,8 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     prayerHijriOffset: 0,
     prayerNotify: false,
     prayerNotifyBefore: 10,
+    taskRemindBefore: 0,
+    taskDigestHour: 8,
     notifyQuietFrom: -1,
     notifyQuietTo: 7,
     notifySystem: false,

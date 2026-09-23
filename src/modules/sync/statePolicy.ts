@@ -135,6 +135,8 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // simply does nothing with it.
     prayerNotify: { scope: 'shared' },
     prayerNotifyBefore: { scope: 'shared' },
+    taskRemindBefore: { scope: 'shared' },
+    taskDigestHour: { scope: 'shared' },
 
     // ── Notification center ──
     // When not to be disturbed, and by what, is about the person. Whether this

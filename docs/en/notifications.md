@@ -2,7 +2,7 @@
 
 [← Documentation](../../README.md) · **English** · [Русский](../ru/notifications.md)
 
-Zenith's reminders — prayer times today, task reminders and rituals later — all go through
+Zenith's reminders — prayer times and [tasks](tasks.md#reminders) today, rituals later — all go through
 one place, *Settings → Notifications*.
 
 ## When they appear

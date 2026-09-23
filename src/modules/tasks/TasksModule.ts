@@ -4,6 +4,7 @@ import { TasksView } from './TasksView';
 import { TasksWidget } from './components/TasksWidget';
 import { watchFeature } from '../../core/useFeature';
 import { TimerService } from './services/timerService';
+import { TaskReminderService } from './services/taskReminders';
 import { tasksSettingsSchema } from './settings.schema';
 import type { SettingsSchema } from '../../settings/schema/types';
 import { tasksTranslations } from './i18n';
@@ -24,6 +25,7 @@ export class TasksModule extends BaseModule {
 
     private disposers: Array<() => void> = [];
     private timer: TimerService | null = null;
+    private reminders: TaskReminderService | null = null;
 
     async onload(): Promise<void> {
         // Register the Tasks view
@@ -50,6 +52,16 @@ export class TasksModule extends BaseModule {
             })
         );
         this.disposers.push(() => timer.stop());
+
+        // Registered whatever the feature says: the source answers "nothing"
+        // while it is off, and the scheduler asks again when it changes.
+        const reminders = new TaskReminderService(this.plugin);
+        reminders.start();
+        this.reminders = reminders;
+        this.disposers.push(() => {
+            reminders.stop();
+            this.reminders = null;
+        });
 
         // Register command to open Tasks
         this.addCommand({

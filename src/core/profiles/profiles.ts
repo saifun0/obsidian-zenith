@@ -116,6 +116,8 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     prayerExtras: 'yes',
     prayerHijriOffset: 'yes',
     prayerNotifyBefore: 'yes',
+    taskRemindBefore: 'yes',
+    taskDigestHour: 'yes',
     notifyQuietFrom: 'yes',
     notifyQuietTo: 'yes',
     notifySystem: 'yes',

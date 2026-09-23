@@ -1,6 +1,12 @@
 import { DEFAULT_TASKS_FOLDER } from '../../core/constants';
 import { coreSchema } from '../../settings/schema/types';
 import { whenFeature } from '../../settings/schema/featureGroup';
+import { ReminderPluginWarning } from './components/ReminderPluginWarning';
+
+const HOURS = Array.from({ length: 24 }, (_, h) => ({
+    value: String(h),
+    label: `${String(h).padStart(2, '0')}:00`,
+}));
 
 export const tasksSettingsSchema = coreSchema({
     moduleId: 'tasks',
@@ -68,6 +74,43 @@ export const tasksSettingsSchema = coreSchema({
                     min: 32,
                     max: 240,
                     step: 8,
+                },
+            ],
+        },
+        {
+            id: 'reminders',
+            titleKey: 'settings.taskRemindGroup',
+            fields: [
+                // Here rather than in the list at the top, beside how early
+                // the reminder comes — the way prayer reminders are placed.
+                { type: 'feature', key: 'tasks.reminders', noteKey: 'settings.taskRemind.note' },
+                {
+                    type: 'custom',
+                    key: 'taskReminderPlugin',
+                    row: true,
+                    render: ReminderPluginWarning,
+                },
+                {
+                    type: 'number',
+                    key: 'taskRemindBefore',
+                    labelKey: 'settings.taskRemindBefore',
+                    descKey: 'settings.taskRemindBefore.desc',
+                    default: 0,
+                    min: 0,
+                    max: 120,
+                    step: 5,
+                    unitKey: 'settings.minutesUnit',
+                    showIf: whenFeature('tasks.reminders'),
+                },
+                {
+                    type: 'select',
+                    key: 'taskDigestHour',
+                    labelKey: 'settings.taskDigestHour',
+                    descKey: 'settings.taskDigestHour.desc',
+                    default: 8,
+                    numeric: true,
+                    options: [{ value: '-1', labelKey: 'settings.taskDigest.off' }, ...HOURS],
+                    showIf: whenFeature('tasks.reminders'),
                 },
             ],
         },

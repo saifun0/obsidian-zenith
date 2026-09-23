@@ -34,6 +34,29 @@ export const TASK_STRINGS: { en: Record<string, string>; ru: Record<string, stri
         'uri.error.unknown-view': 'Zenith: the link asks for a view that does not exist.',
         'uri.error.unknown-tracker': 'Zenith: there is no tracker “{tracker}”.',
         'uri.error.module-off': 'Zenith: the link needs a module that is switched off.',
+
+        'feature.tasks.reminders': 'Reminders',
+        'feature.tasks.reminders.desc':
+            'At a task’s ⏰ time, and a morning summary of the day’s tasks without one. In the notification center; only while Obsidian is open.',
+        'settings.taskRemindGroup': 'Reminders',
+        'settings.taskRemind.note':
+            'Only while Obsidian is running — a plugin cannot wake a sleeping phone. What came while it was closed waits in the notification center.',
+        'settings.taskRemindBefore': 'Warn before',
+        'settings.taskRemindBefore.desc':
+            'Minutes before a task’s ⏰ time. Zero reminds at the time itself.',
+        'settings.taskDigestHour': 'Morning summary',
+        'settings.taskDigestHour.desc':
+            'Today’s tasks that have no time, and how many are overdue — the ones no reminder would mention.',
+        'settings.taskDigest.off': 'None',
+        'settings.taskReminderPlugin':
+            'The Reminder plugin is on too. Tasks it also reads may be reminded twice.',
+        'tasks.remind.at': 'Due at {time}',
+        'tasks.remind.in': 'In {minutes} min · {time}',
+        'tasks.digest.title': 'Today’s tasks',
+        'tasks.digest.today.one': '{count} task for today',
+        'tasks.digest.today.other': '{count} tasks for today',
+        'tasks.digest.overdue.one': '{count} overdue',
+        'tasks.digest.overdue.other': '{count} overdue',
     },
     ru: {
         'feature.tasks.naturalInput': 'Ввод обычной фразой',
@@ -66,5 +89,29 @@ export const TASK_STRINGS: { en: Record<string, string>; ru: Record<string, stri
         'uri.error.unknown-view': 'Zenith: ссылка просит вид, которого нет.',
         'uri.error.unknown-tracker': 'Zenith: трекера «{tracker}» нет.',
         'uri.error.module-off': 'Zenith: ссылке нужен модуль, который выключен.',
+
+        'feature.tasks.reminders': 'Напоминания',
+        'feature.tasks.reminders.desc':
+            'В ⏰-время задачи и утренняя сводка задач дня без времени. В центре уведомлений; только пока Obsidian открыт.',
+        'settings.taskRemindGroup': 'Напоминания',
+        'settings.taskRemind.note':
+            'Только пока Obsidian запущен — плагин не может разбудить спящий телефон. То, что пришлось на время, когда он был закрыт, ждёт в центре уведомлений.',
+        'settings.taskRemindBefore': 'Предупреждать за',
+        'settings.taskRemindBefore.desc': 'Минут до ⏰-времени задачи. Ноль — ровно в срок.',
+        'settings.taskDigestHour': 'Утренняя сводка',
+        'settings.taskDigestHour.desc':
+            'Задачи на сегодня без времени и сколько просрочено — то, о чём ни одно напоминание не скажет.',
+        'settings.taskDigest.off': 'Нет',
+        'settings.taskReminderPlugin':
+            'Плагин Reminder тоже включён. Задачи, которые читает и он, могут напоминаться дважды.',
+        'tasks.remind.at': 'Срок в {time}',
+        'tasks.remind.in': 'Через {minutes} мин · {time}',
+        'tasks.digest.title': 'Задачи на сегодня',
+        'tasks.digest.today.one': '{count} задача на сегодня',
+        'tasks.digest.today.few': '{count} задачи на сегодня',
+        'tasks.digest.today.many': '{count} задач на сегодня',
+        'tasks.digest.overdue.one': '{count} просрочена',
+        'tasks.digest.overdue.few': '{count} просрочены',
+        'tasks.digest.overdue.many': '{count} просрочено',
     },
 };

@@ -115,6 +115,9 @@ export const FEATURES = [
     feature('tasks.naturalInput', 'tasks'),
     // Off by default: any web page can open an `obsidian://` link.
     feature('tasks.uriCapture', 'tasks', { default: false }),
+    // Off by default, like prayer reminders: a plugin that starts interrupting
+    // after an update has not been asked to.
+    feature('tasks.reminders', 'tasks', { default: false }),
     feature('tasks.subtasks', 'tasks'),
     feature('tasks.attachments', 'tasks'),
     feature('tasks.timer', 'tasks'),
