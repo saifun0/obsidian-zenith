@@ -23,8 +23,11 @@ interface Hit {
  *
  * Shared rather than owned by the settings page: the same choice is made from
  * the back of a picture card, where there is no settings form to be a row of.
+ *
+ * Exported for the debug page's modal catalogue, which has to hold an unopened
+ * instance; everything else goes through {@link pickVaultImage}.
  */
-class ImagePickerModal extends SuggestModal<Hit> {
+export class ImagePickerModal extends SuggestModal<Hit> {
     constructor(
         app: App,
         placeholder: string,

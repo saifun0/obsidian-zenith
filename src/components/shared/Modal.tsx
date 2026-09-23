@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { translateNow } from '../../core/i18n';
@@ -25,6 +25,17 @@ interface ModalProps {
 }
 
 /**
+ * When true, a dialog draws where it stands instead of portalling over the app.
+ *
+ * Only the debug page's modal catalogue sets it, to show a dialog as a specimen
+ * inside the settings pane. In place, the shell drops everything that belongs
+ * to being on top of the app: the portal, the fixed scrim, Escape, the body
+ * scroll lock, the focus grab. A specimen that locked the page it is shown on
+ * would be a bug in the page, not a picture of the dialog.
+ */
+export const DialogInlineContext = createContext(false);
+
+/**
  * Modal — the shared portal dialog shell.
  *
  * Portals to `<body>`, so the root carries `zenith-root` to re-declare the
@@ -44,8 +55,15 @@ export const Modal: React.FC<ModalProps> = ({
     children,
 }) => {
     const panelRef = useRef<HTMLDivElement>(null);
+    const inline = useContext(DialogInlineContext);
+    // The window the user is working in, fixed for the dialog's life. Not the
+    // global `document`, which is always the main window's: a dialog opened
+    // from the settings window would otherwise open behind it.
+    const [host] = useState(() => activeDocument);
 
     useEffect(() => {
+        if (inline) return;
+        const win = host.defaultView ?? window;
         const onKey = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 onClose();
@@ -59,7 +77,7 @@ export const Modal: React.FC<ModalProps> = ({
             if (focusable.length === 0) return;
             const first = focusable[0];
             const last = focusable[focusable.length - 1];
-            const active = document.activeElement as HTMLElement | null;
+            const active = host.activeElement as HTMLElement | null;
             if (e.shiftKey && (active === first || !panelRef.current.contains(active))) {
                 e.preventDefault();
                 last.focus();
@@ -72,12 +90,12 @@ export const Modal: React.FC<ModalProps> = ({
         // Bubble phase, not capture: a control inside the dialog (the metadata
         // dropdown) can then take Escape for itself via stopPropagation. In
         // capture phase the dialog would always win and close out from under it.
-        window.addEventListener('keydown', onKey);
-        const prevOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
+        win.addEventListener('keydown', onKey);
+        const prevOverflow = host.body.style.overflow;
+        host.body.style.overflow = 'hidden';
 
         // Focus the first meaningful control, skipping the close button.
-        const timer = window.setTimeout(() => {
+        const timer = win.setTimeout(() => {
             const target = panelRef.current?.querySelector<HTMLElement>(
                 'input:not([type="hidden"]), textarea, select, [data-autofocus]'
             );
@@ -85,19 +103,23 @@ export const Modal: React.FC<ModalProps> = ({
         }, 0);
 
         return () => {
-            window.removeEventListener('keydown', onKey);
-            document.body.style.overflow = prevOverflow;
-            window.clearTimeout(timer);
+            win.removeEventListener('keydown', onKey);
+            host.body.style.overflow = prevOverflow;
+            win.clearTimeout(timer);
         };
-    }, [onClose]);
+    }, [onClose, inline, host]);
 
-    return createPortal(
-        <div className="zenith-root zenith-dialog" role="presentation" onMouseDown={onClose}>
+    const dialog = (
+        <div
+            className={`zenith-root zenith-dialog${inline ? ' zenith-dialog--inline' : ''}`}
+            role="presentation"
+            onMouseDown={inline ? undefined : onClose}
+        >
             <div
                 ref={panelRef}
                 className={`zenith-dialog__panel zenith-dialog__panel--${size} ${className}`}
                 role="dialog"
-                aria-modal="true"
+                aria-modal={!inline}
                 aria-label={title}
                 onMouseDown={(e) => e.stopPropagation()}
             >
@@ -130,7 +152,8 @@ export const Modal: React.FC<ModalProps> = ({
 
                 {footer && <div className="zenith-dialog__footer">{footer}</div>}
             </div>
-        </div>,
-        document.body
+        </div>
     );
+
+    return inline ? dialog : createPortal(dialog, host.body);
 };

@@ -123,11 +123,6 @@
 .zenith-sync input.zenith-sync__input {
     flex: 1 1 12rem;
     min-width: 0;
-    padding: var(--zenith-space-xs) var(--zenith-space-sm);
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-sm);
-    background: var(--zenith-bg-primary);
-    font-size: 0.9rem;
 }
 
 .zenith-sync__meta {
@@ -234,7 +229,6 @@
    that distinguishes it from the peers under it. */
 .zenith-sync__peer.is-self input.zenith-sync__input {
     flex: 1 1 10rem;
-    font-size: 0.85rem;
 }
 
 .zenith-sync__tag {

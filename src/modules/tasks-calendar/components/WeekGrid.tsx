@@ -12,6 +12,7 @@ import { splitTimed } from '../services/calendarTime';
 import { TaskChip } from './TaskChip';
 import { SpanRibbon } from './SpanRibbon';
 import { TimeGrid } from './TimeGrid';
+import { useSpotlight } from './useSpotlight';
 
 /** The hour gutter occupies column 1, so the first day starts at column 2. */
 const DAY_COLUMN_OFFSET = 2;
@@ -66,6 +67,9 @@ export const WeekGrid: FC<WeekGridProps> = ({
     const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
     const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' });
     const { segments, lanes } = layoutSpans(calendar.spans, days);
+    // Over all three bands: a task's all-day chip and its block on the hours
+    // are the same task, and light together.
+    const spotlight = useSpotlight<HTMLDivElement>();
 
     const split = useMemo(() => {
         const timed = new Map<string, CalendarEntry[]>();
@@ -83,7 +87,7 @@ export const WeekGrid: FC<WeekGridProps> = ({
     } as React.CSSProperties;
 
     return (
-        <div className="zenith-tcal__week">
+        <div className="zenith-tcal__week" {...spotlight}>
             <div className="zenith-tcal__week-heads" style={columns}>
                 <span className="zenith-tcal__gutter-head" aria-hidden="true" />
                 {days.map((date) => (
@@ -116,7 +120,8 @@ export const WeekGrid: FC<WeekGridProps> = ({
                     // A lane per ribbon, then one row for the chip stacks.
                     // `repeat()` rejects a count of zero, so a week with no bars
                     // states the chip row alone.
-                    gridTemplateRows: lanes > 0 ? `repeat(${lanes}, var(--tcal-lane-h)) auto` : 'auto',
+                    gridTemplateRows:
+                        lanes > 0 ? `repeat(${lanes}, var(--tcal-lane-h)) auto` : 'auto',
                 }}
             >
                 <span className="zenith-tcal__band-label">{t('calendar.allDay')}</span>

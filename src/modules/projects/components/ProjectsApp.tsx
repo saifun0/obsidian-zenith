@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, type FC } from 'react';
-import { FolderKanban, Plus, Search, X } from 'lucide-react';
+import { FolderKanban, Plus } from 'lucide-react';
 import { Notice, TFile } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
@@ -12,6 +12,7 @@ import { ProjectFormModal } from '../ProjectFormModal';
 import { ProjectCard } from './ProjectCard';
 import { TaskWriter } from '../../tasks/services/taskWriter';
 import { ViewHeader } from '../../../components/shared';
+import { SearchField } from '../../../components/ui/fields';
 import type { Task } from '../../../store/taskSlice';
 import type { TaskStatus } from '../../../core/constants';
 
@@ -210,25 +211,12 @@ export const ProjectsApp: FC = () => {
                 </ViewHeader>
 
                 <div className="zenith-projects__controls">
-                    <div className="zenith-projects__search-box">
-                        <Search size={14} />
-                        <input
-                            type="text"
-                            placeholder={t('projects.search')}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        {searchQuery && (
-                            <button
-                                type="button"
-                                className="zenith-projects__search-clear"
-                                aria-label={t('common.clear')}
-                                onClick={() => setSearchQuery('')}
-                            >
-                                <X size={14} />
-                            </button>
-                        )}
-                    </div>
+                    <SearchField
+                        className="zenith-projects__search-box"
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder={t('projects.search')}
+                    />
 
                     <div className="zenith-projects__status-tabs">
                         {statusTabs.map((tab) => (

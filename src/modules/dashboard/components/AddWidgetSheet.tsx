@@ -1,6 +1,7 @@
 import React, { useMemo, useState, type FC } from 'react';
-import { Plus, Check, Search, X, LayoutGrid } from 'lucide-react';
+import { Plus, Check, LayoutGrid } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
+import { SearchField } from '../../../components/ui/fields';
 import { sizeDims, type WidgetSize } from '../grid/gridTypes';
 import { useTranslation } from '../../../core/i18n';
 
@@ -134,25 +135,13 @@ export const AddWidgetSheet: FC<AddWidgetSheetProps> = ({
                 </div>
 
                 {showSearch && (
-                    <div className="zenith-add-sheet__search">
-                        <Search size={14} />
-                        <input
-                            type="text"
-                            placeholder={t('dashboard.widgets.searchPlaceholder')}
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            aria-label={t('dashboard.widgets.searchPlaceholder')}
-                        />
-                        {query && (
-                            <button
-                                type="button"
-                                aria-label={t('common.clear')}
-                                onClick={() => setQuery('')}
-                            >
-                                <X size={12} />
-                            </button>
-                        )}
-                    </div>
+                    <SearchField
+                        size="sm"
+                        className="zenith-add-sheet__search"
+                        value={query}
+                        onChange={setQuery}
+                        placeholder={t('dashboard.widgets.searchPlaceholder')}
+                    />
                 )}
             </div>
 

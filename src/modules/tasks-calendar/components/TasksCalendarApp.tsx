@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState, type FC } from 'react';
-import { Notice } from 'obsidian';
+import React, { useCallback, useEffect, useMemo, useRef, useState, type FC } from 'react';
+import { Notice, Platform } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
@@ -37,12 +37,13 @@ const MODES: CalendarViewMode[] = ['month', 'week', 'day', 'list'];
 
 /**
  * How far the scrolling month run reaches, in months either side of the
- * anchor, and how much more it takes on each time the scroll nears its end.
+ * anchor, and how much more it takes on each time the scroll nears an end.
  *
- * One month back rather than none, because the week a month starts in usually
- * belongs to the one before it, and arriving at a heading with nothing above it
- * reads as a rendering fault. Forward is where a calendar is read, so that is
- * the side that grows.
+ * Both ends grow now. One month back was the old starting reach and the whole
+ * of it: scrolling up stopped dead at the start of last month, which in a view
+ * whose entire point is that the weeks run on reads as a bug rather than a
+ * boundary. Forward still starts wider, because forward is where a calendar is
+ * usually read.
  */
 const RUN_BEHIND = 1;
 const RUN_AHEAD = 4;
@@ -53,6 +54,26 @@ const RUN_MAX = 60;
 /** Validate the persisted view mode — it comes back from `data.json`. */
 function toMode(raw: string): CalendarViewMode {
     return (MODES as string[]).includes(raw) ? (raw as CalendarViewMode) : 'month';
+}
+
+/**
+ * Days across the month grid, and what decides it before anyone chooses.
+ *
+ * Seven columns need about ninety pixels each before a task chip says more
+ * than its first letter. So the question is how wide the grid actually is, not
+ * what kind of machine it is on: a phone is narrow, and so is this view docked
+ * in a desktop sidebar, and both are unreadable at seven. `isMobile` only
+ * decides the first frame, before there is an element to measure.
+ */
+const WIDE = 7;
+const NARROW = 3;
+const WIDE_ENOUGH = 620;
+
+function toColumns(raw: number | undefined, roomy: boolean): number {
+    // A number that was written down was written down by the user, and outranks
+    // whatever the width would have said.
+    if (raw === WIDE || raw === NARROW) return raw;
+    return roomy ? WIDE : NARROW;
 }
 
 /**
@@ -78,19 +99,58 @@ export const TasksCalendarApp: FC = () => {
     const view = settings.calendarView;
     const mode = toMode(view.view);
     const weekStart = settings.journalWeekStart;
+
+    /**
+     * Is there room for a week across? Only the answer is state, not the width
+     * — dragging a window edge fires this continuously, and a re-render per
+     * pixel of a grid this size is felt.
+     */
+    const rootRef = useRef<HTMLDivElement>(null);
+    const [roomy, setRoomy] = useState(!Platform.isMobile);
+    useEffect(() => {
+        const el = rootRef.current;
+        if (!el || typeof ResizeObserver === 'undefined') return;
+        const ro = new ResizeObserver((entries) =>
+            setRoomy(entries[0].contentRect.width >= WIDE_ENOUGH)
+        );
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    const columns = toColumns(view.columns, roomy);
     const today = getTodayString();
+    const currentMonth = today.slice(0, 7);
 
     const [anchor, setAnchor] = useState(today);
     const [focus, setFocus] = useState<EntryKind | null>(null);
-    const [ahead, setAhead] = useState(RUN_AHEAD);
+    const [reach, setReach] = useState({ behind: RUN_BEHIND, ahead: RUN_AHEAD });
+    /**
+     * The month the month view has been scrolled to, reported by the grid.
+     * Null until it has something to say — on mount, and in the views that
+     * have no run to scroll.
+     */
+    const [visibleMonth, setVisibleMonth] = useState<string | null>(null);
+    /** Bumped to send the run back to the anchor even when the anchor stands. */
+    const [jump, setJump] = useState(0);
     const anchorMonth = anchor.slice(0, 7);
 
-    // Paging to a different month starts the run over from there, so the
-    // window does not creep wider every time the arrows are used.
-    useEffect(() => setAhead(RUN_AHEAD), [anchorMonth]);
+    // Moving the anchor starts the run over from there, so the window does not
+    // creep wider every time a different month is asked for.
+    useEffect(() => setReach({ behind: RUN_BEHIND, ahead: RUN_AHEAD }), [anchorMonth]);
 
-    const growRun = useCallback(
-        () => setAhead((n) => (n >= RUN_MAX ? n : Math.min(RUN_MAX, n + RUN_STEP))),
+    const growAhead = useCallback(
+        () =>
+            setReach((r) =>
+                r.ahead >= RUN_MAX ? r : { ...r, ahead: Math.min(RUN_MAX, r.ahead + RUN_STEP) }
+            ),
+        []
+    );
+
+    const growBehind = useCallback(
+        () =>
+            setReach((r) =>
+                r.behind >= RUN_MAX ? r : { ...r, behind: Math.min(RUN_MAX, r.behind + RUN_STEP) }
+            ),
         []
     );
 
@@ -120,26 +180,29 @@ export const TasksCalendarApp: FC = () => {
         [tasks, today, view.spanDays, view.showDailyNotes, view.hideDone, dailyNoteDate]
     );
 
-    // Which dates the current view covers — the grid, the counts and the agenda
-    // all derive from this one list, so they can never disagree. The month grid
-    // includes the neighbouring days that pad it out to whole weeks; the agenda
-    // has no grid to pad, so it stops at the month it names in the title.
+    /**
+     * The month the toolbar is speaking for. In the month view that's wherever
+     * the run has been scrolled to, not the anchor it was built around — the
+     * two part company the moment the reader scrolls, and a title that stayed
+     * on the anchor would name a month that had left the screen.
+     */
+    const shownMonth = mode === 'month' ? (visibleMonth ?? anchorMonth) : anchorMonth;
+
+    // Which dates the current view counts. The month and the agenda both count
+    // the month the toolbar names and nothing else: the run's padding weeks
+    // belong to the neighbouring months, and counting them under a heading
+    // that says September would be a different, wrong number.
     const days = useMemo(() => {
         if (mode === 'day') return [anchor];
         if (mode === 'week') return weekGrid(anchor, weekStart);
-        const grid = monthGrid(anchor, weekStart);
-        return mode === 'list' ? grid.filter((date) => sameMonth(date, anchor)) : grid;
-    }, [mode, anchor, weekStart]);
+        const base = mode === 'month' ? `${shownMonth}-01` : anchor;
+        return monthGrid(base, weekStart).filter((date) => sameMonth(date, base));
+    }, [mode, anchor, weekStart, shownMonth]);
 
-    /**
-     * What the month view actually draws: several months of whole weeks, run
-     * together. `days` stays the anchor month alone, because the figures in the
-     * toolbar are about the month it names — counting six months of tasks under
-     * a heading that says September would be a different, wrong number.
-     */
+    /** What the month view actually draws: several months of whole weeks. */
     const run = useMemo(
-        () => (mode === 'month' ? monthRun(anchor, weekStart, RUN_BEHIND, ahead) : []),
-        [mode, anchor, weekStart, ahead]
+        () => (mode === 'month' ? monthRun(anchor, weekStart, reach.behind, reach.ahead) : []),
+        [mode, anchor, weekStart, reach]
     );
 
     const counts = useMemo(() => countEntries(calendar, days), [calendar, days]);
@@ -152,15 +215,37 @@ export const TasksCalendarApp: FC = () => {
                     week: isoWeek(anchor).week,
                     month: monthLabel(anchor, locale),
                 })
-              : monthLabel(anchor, locale);
+              : monthLabel(`${shownMonth}-01`, locale);
 
-    // The arrows move by whatever the view is a view *of*.
+    /** Whether the title is naming the day, week or month we are living in. */
+    const atCurrent =
+        mode === 'day'
+            ? anchor === today
+            : mode === 'week'
+              ? startOfWeek(anchor, weekStart) === startOfWeek(today, weekStart)
+              : shownMonth === currentMonth;
+
+    // The arrows move by whatever the view is a view *of*. The month view has
+    // none: its months are a scroll, and a pager beside a scroll of the same
+    // thing only ever disagrees with it.
     const step = (delta: number) =>
         setAnchor((current) => {
             if (mode === 'day') return addDays(current, delta);
             if (mode === 'week') return addDays(current, delta * 7);
             return addMonths(current, delta);
         });
+
+    /**
+     * Back to today. In the month view the anchor is usually already today —
+     * the reader has scrolled away from it, not navigated — so `setAnchor`
+     * alone would be a no-op and nothing would move. The token is what makes
+     * the grid scroll home regardless.
+     */
+    const goToday = useCallback(() => {
+        setAnchor(today);
+        setVisibleMonth(currentMonth);
+        setJump((n) => n + 1);
+    }, [today, currentMonth]);
 
     const changeMode = (next: CalendarViewMode) => {
         updateSettings({ calendarView: { ...view, view: next } });
@@ -176,6 +261,15 @@ export const TasksCalendarApp: FC = () => {
 
     const toggle = (key: CalendarToggle) =>
         updateSettings({ calendarView: { ...view, [key]: !view[key] } });
+
+    /**
+     * Widen or narrow the grid. Writing the number down is also what stops the
+     * device deciding for this view again — which is the point of the button.
+     */
+    const changeColumns = () =>
+        updateSettings({
+            calendarView: { ...view, columns: columns === WIDE ? NARROW : WIDE },
+        });
 
     const openTask = useCallback(
         (filePath: string, lineNumber: number) => {
@@ -233,12 +327,15 @@ export const TasksCalendarApp: FC = () => {
     };
 
     return (
-        <div className="zenith-tcal">
+        <div className={`zenith-tcal ${columns === NARROW ? 'is-narrow' : ''}`} ref={rootRef}>
             <CalendarToolbar
                 t={t}
                 mode={mode}
                 title={title}
+                atCurrent={atCurrent}
                 counts={counts}
+                columns={columns}
+                onColumns={changeColumns}
                 hideDone={view.hideDone}
                 spanDays={view.spanDays}
                 showDailyNotes={view.showDailyNotes}
@@ -246,7 +343,7 @@ export const TasksCalendarApp: FC = () => {
                 focus={focus}
                 onMode={changeMode}
                 onStep={step}
-                onToday={() => setAnchor(today)}
+                onToday={goToday}
                 onToggle={toggle}
                 onFocus={setFocus}
             />
@@ -258,13 +355,17 @@ export const TasksCalendarApp: FC = () => {
                     today={today}
                     days={run}
                     weekStart={weekStart}
+                    columns={columns}
                     calendar={calendar}
                     focus={focus}
                     onOpenDay={openDay}
                     onOpenEntry={openEntry}
                     onOpenSpan={openSpan}
                     onOpenWeek={openWeek}
-                    onReachEnd={growRun}
+                    onReachEnd={growAhead}
+                    onReachStart={growBehind}
+                    onVisibleMonth={setVisibleMonth}
+                    jumpTo={jump}
                 />
             )}
 

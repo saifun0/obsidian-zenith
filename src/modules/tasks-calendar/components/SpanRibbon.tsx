@@ -58,6 +58,9 @@ export const SpanRibbon: FC<SpanRibbonProps> = ({
                 // two bars in one week are two visibly different projects.
                 ['--tcal-kind' as string]: spanColor(span.task),
             }}
+            // The same id in every row the bar crosses, which is what lets a
+            // hover light the whole bar rather than the one week under it.
+            data-task={span.task.id}
             onClick={(e) => {
                 e.stopPropagation();
                 onOpen(segment);

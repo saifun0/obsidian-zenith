@@ -1,5 +1,6 @@
 import React from 'react';
 import { DynamicIcon } from '../../components/shared/DynamicIcon';
+import { ColorField, Dropdown } from '../../components/ui/fields';
 
 /**
  * Settings form controls.
@@ -77,15 +78,18 @@ export const InfoHint: React.FC<{ text: string; label?: string }> = ({ text, lab
         const from = button.getBoundingClientRect();
         const box = tip.getBoundingClientRect();
         const edge = 8;
+        // The settings window's own size: settings open in a window of their
+        // own, and the global `window` is the main one behind it.
+        const win = button.ownerDocument.defaultView ?? window;
 
         const centred = from.left + from.width / 2 - box.width / 2;
-        const left = Math.max(edge, Math.min(centred, window.innerWidth - box.width - edge));
+        const left = Math.max(edge, Math.min(centred, win.innerWidth - box.width - edge));
 
         // Below by default, above when there is no room — the rows near the
         // bottom of a long settings page are the common case, not the corner one.
         const below = from.bottom + 8;
         const top =
-            below + box.height > window.innerHeight - edge ? from.top - box.height - 8 : below;
+            below + box.height > win.innerHeight - edge ? from.top - box.height - 8 : below;
 
         tip.style.left = `${left}px`;
         tip.style.top = `${top}px`;
@@ -281,21 +285,18 @@ export const Select: React.FC<{
 }> = ({ value, options, disabled, onChange }) => {
     const ids = useFieldIds();
 
+    // Zenith's dropdown, not `<select>`: the native list is drawn by the
+    // platform, and looked like a different program on every one of them.
     return (
-        <select
-            className="zenith-settings__select"
+        <Dropdown
+            className="zenith-settings__picker"
             id={ids?.id}
             aria-describedby={ids?.describedBy}
             value={value}
+            options={options}
             disabled={disabled}
-            onChange={(e) => onChange(e.target.value)}
-        >
-            {options.map((o) => (
-                <option key={o.value} value={o.value}>
-                    {o.label}
-                </option>
-            ))}
-        </select>
+            onChange={onChange}
+        />
     );
 };
 
@@ -556,14 +557,14 @@ export const ColorInput: React.FC<{
 
     return (
         <div className="zenith-settings__color-control">
-            <input
-                type="color"
-                className="zenith-settings__color"
+            <ColorField
                 id={ids?.id}
                 aria-describedby={ids?.describedBy}
-                value={value || fallback}
+                value={value}
+                fallback={fallback}
+                resetLabel={allowEmpty ? resetLabel : undefined}
                 disabled={disabled}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={onChange}
             />
             {/* The same setting twice, so the second box borrows the first's
                 name rather than being announced as an unlabelled text field. */}

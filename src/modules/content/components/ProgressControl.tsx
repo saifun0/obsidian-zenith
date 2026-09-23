@@ -57,7 +57,7 @@ export const ProgressControl: React.FC<ProgressControlProps> = ({
                     <Minus size={14} />
                 </button>
 
-                <div className="zenith-progress-control__inputs">
+                <div className="zenith-input zenith-progress-control__inputs">
                     <input
                         id={`${idPrefix}-current`}
                         type="number"

@@ -749,37 +749,17 @@
     gap: 8px;
     flex-wrap: wrap;
 }
+/* Two numbers and a unit inside one shared field (a `div.zenith-input`
+   composite): one border, one focus ring round the lot. */
 .zenith-progress-control__inputs {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-sm);
-    background: var(--zenith-bg-tertiary);
-}
-.zenith-progress-control__inputs:focus-within {
-    border-color: var(--zenith-accent);
+    flex: none;
 }
 .zenith-progress-control input.zenith-progress-control__num {
+    flex: none;
     width: 3.6em;
-    padding: 3px 0;
-    border: none;
-    background: transparent;
-    box-shadow: none;
-    color: var(--zenith-text-normal);
-    font-size: 0.92rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     text-align: center;
-    outline: none;
-    -moz-appearance: textfield;
-    appearance: textfield;
-}
-.zenith-progress-control input.zenith-progress-control__num::-webkit-outer-spin-button,
-.zenith-progress-control input.zenith-progress-control__num::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
 }
 .zenith-progress-control__sep {
     color: var(--zenith-text-faint);
@@ -948,90 +928,15 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* The search box is `SearchField`; the library only says how it flexes. */
 .zenith-content-gallery__search {
-    display: flex;
-    align-items: center;
-    gap: 8px;
     flex: 1;
     min-width: 160px;
-    padding: 0 10px;
-    height: 34px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    background: var(--background-primary);
-}
-
-/* Hovering lifts the hairline and nothing else.
-   Whatever the theme or Obsidian wanted to do to the input on hover is already
-   neutralised below, so without this the box had no hover state of its own —
-   it had one borrowed from somewhere else, which is why it flashed a filled
-   background at a field that is not a button. A border a shade brighter says
-   "you can type here" without repainting the box. */
-.zenith-content-gallery__search:hover:not(:focus-within) {
-    border-color: var(--background-modifier-border-hover, var(--text-faint));
-}
-
-.zenith-content-gallery__search:focus-within {
-    border-color: var(--interactive-accent);
-}
-
-.zenith-content-gallery__search-icon {
-    color: var(--text-muted);
-    flex-shrink: 0;
-}
-
-/* Obsidian styles bare inputs with a box-shadow — an inset hairline normally,
-   an accent ring on focus — and it survives resetting `border` and `outline`,
-   which is all this rule used to do. The wrapper already draws the border and
-   lights it on `:focus-within`, so the two stacked: a lit rounded rectangle
-   inside a lit rounded rectangle. Every state is named because Obsidian's
-   focus rule is as specific as ours, and losing the inner ring costs no focus
-   indication — the wrapper is the indicator. */
-.zenith-content-gallery__search input,
-.zenith-content-gallery__search input:hover,
-.zenith-content-gallery__search input:focus,
-.zenith-content-gallery__search input:focus-visible,
-.zenith-content-gallery__search input:active {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    background: transparent;
-    color: var(--text-normal);
-    font-size: 0.9rem;
-    outline: none;
-    box-shadow: none;
-}
-
-.zenith-content-gallery__search button.zenith-content-gallery__search-clear {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    box-shadow: none;
-    color: var(--text-muted);
-    cursor: pointer;
-}
-
-.zenith-content-gallery__search button.zenith-content-gallery__search-clear:hover {
-    background: var(--background-modifier-hover);
-    color: var(--text-normal);
 }
 
 .zenith-content-gallery__select {
-    height: 34px;
-    padding: 0 10px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-    font-size: 0.85rem;
-    cursor: pointer;
+    flex: none;
+    max-width: 240px;
 }
 
 /* Sort select + direction toggle read as one control. */
@@ -1041,17 +946,18 @@
     gap: 4px;
 }
 
+/* A field-sized square, so it reads as part of the sort field beside it. */
 .zenith-content-gallery__controls button.zenith-content-gallery__sortdir {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
+    width: var(--zenith-field-h);
+    height: var(--zenith-field-h);
     flex-shrink: 0;
     padding: 0;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    background: var(--background-primary);
+    border: 1px solid var(--zenith-field-border);
+    border-radius: var(--zenith-field-radius);
+    background: var(--zenith-field-bg);
     box-shadow: none;
     color: var(--text-muted);
     cursor: pointer;
@@ -1104,6 +1010,7 @@
     .zenith-content-gallery__select {
         flex: 1;
         min-width: 0;
+        max-width: none;
     }
 }
 
@@ -1202,15 +1109,9 @@ button.zenith-content-modal__chip {
     color: var(--zenith-text-faint);
     font-weight: 600;
 }
+/* A small shared dropdown whose value is drawn in the status's own colour. */
 .zenith-content-modal__status {
-    padding: 5px 8px;
-    border-radius: var(--zenith-radius-sm);
-    border: 1px solid var(--zenith-border);
-    background: var(--zenith-bg-secondary);
-    color: var(--zenith-text-normal);
-    font-size: 0.82rem;
     font-weight: 600;
-    cursor: pointer;
 }
 .zenith-content-modal__status.is-in-progress { color: var(--zenith-info, #3b82f6); }
 .zenith-content-modal__status.is-completed { color: var(--zenith-success, #10b981); }
@@ -1332,26 +1233,12 @@ button.zenith-ctype__icon {
 .zenith-ctype__icon .zenith-obsidian-icon {
     display: inline-flex;
 }
-.zenith-ctype__label {
+/* The type's name leads its card, so it is set heavier than a field's text;
+   everything else about it is the shared field skin. */
+input.zenith-input.zenith-ctype__label {
     flex: 1;
     min-width: 0;
-    padding: 6px 8px;
-    font-size: 0.9rem;
     font-weight: 600;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
-    background: var(--background-secondary);
-    color: var(--text-normal);
-}
-.zenith-ctype__color {
-    width: 34px;
-    height: 34px;
-    flex-shrink: 0;
-    padding: 2px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    background: none;
-    cursor: pointer;
 }
 button.zenith-ctype__remove {
     display: inline-flex;
@@ -1385,14 +1272,8 @@ button.zenith-ctype__remove {
     font-size: 0.76rem;
     color: var(--text-muted);
 }
-.zenith-ctype__field select,
-.zenith-ctype__field input {
-    padding: 6px 8px;
-    font-size: 0.85rem;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
-    background: var(--background-secondary);
-    color: var(--text-normal);
+.zenith-ctype__field .zenith-input {
+    width: 100%;
 }
 .zenith-ctype__fields {
     display: flex;

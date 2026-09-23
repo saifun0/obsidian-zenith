@@ -8,6 +8,7 @@ import { formatDuration, normalizeTimeOfDay, parseDuration } from '../services/t
 import type { TaskAttachment, TaskDetails } from '../services/taskDetails';
 import { AttachmentField } from './AttachmentField';
 import { Modal } from '../../../components/shared/Modal';
+import { TimeField } from '../../../components/ui/fields';
 
 /**
  * The same four extras a task has, on a subtask.
@@ -105,7 +106,7 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
                 <div className="zenith-field">
                     <label className="zenith-field__label">{t('tasks.editor.description')}</label>
                     <input
-                        className="zenith-field__input"
+                        className="zenith-input zenith-field__input"
                         placeholder={t('tasks.subtask.placeholder')}
                         value={title}
                         autoFocus
@@ -116,7 +117,7 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
                 <div className="zenith-field">
                     <label className="zenith-field__label">{t('tasks.editor.notes')}</label>
                     <textarea
-                        className="zenith-field__input zenith-field__textarea"
+                        className="zenith-input zenith-field__input zenith-field__textarea"
                         placeholder={t('tasks.editor.notesPlaceholder')}
                         rows={3}
                         value={notes}
@@ -129,30 +130,30 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
                 <div className="zenith-form__grid">
                     <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.dueTime')}</label>
-                        <input
-                            type="time"
-                            className="zenith-field__input"
+                        <TimeField
+                            className="zenith-input zenith-field__input"
+                            aria-label={t('tasks.editor.dueTime')}
                             value={dueTime}
-                            onChange={(e) => setDueTime(e.target.value)}
+                            onChange={setDueTime}
                         />
                     </div>
                     <div className="zenith-field">
                         <label className="zenith-field__label">
                             {t('tasks.editor.dueEndTime')}
                         </label>
-                        <input
-                            type="time"
-                            className="zenith-field__input"
+                        <TimeField
+                            className="zenith-input zenith-field__input"
+                            aria-label={t('tasks.editor.dueEndTime')}
                             value={dueEndTime}
                             disabled={!dueTime}
                             title={!dueTime ? t('tasks.editor.dueEndTimeHint') : undefined}
-                            onChange={(e) => setDueEndTime(e.target.value)}
+                            onChange={setDueEndTime}
                         />
                     </div>
                     <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.timer')}</label>
                         <input
-                            className="zenith-field__input"
+                            className="zenith-input zenith-field__input"
                             placeholder={t('tasks.editor.timerPlaceholder')}
                             value={timerText}
                             onChange={(e) => setTimerText(e.target.value)}

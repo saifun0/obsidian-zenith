@@ -123,24 +123,13 @@
 .zenith-media-picker__search {
     flex: 1;
     min-width: 0;
-    padding: 9px 12px;
-    font-size: 0.9rem;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-}
-.zenith-media-picker__input:focus,
-.zenith-media-picker__search:focus {
-    border-color: var(--interactive-accent);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent);
 }
 .zenith-media-picker__search {
     width: 100%;
 }
-.zenith-media-picker__add-btn {
+/* Element + class: Obsidian's `button:not(.clickable-icon)` outranks a bare
+   class, and would paint this its own grey instead of the accent. */
+button.zenith-media-picker__add-btn {
     flex-shrink: 0;
     padding: 0 16px;
     border: none;
@@ -151,7 +140,7 @@
     font-weight: 500;
     cursor: pointer;
 }
-.zenith-media-picker__add-btn:hover {
+button.zenith-media-picker__add-btn:hover {
     background: var(--interactive-accent-hover);
 }
 

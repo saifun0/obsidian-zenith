@@ -63,7 +63,11 @@ export const TimeGrid: FC<TimeGridProps> = ({
     );
 
     const visible = useMemo(
-        () => hourWindow(columns.flatMap((column) => column.blocks), allHours),
+        () =>
+            hourWindow(
+                columns.flatMap((column) => column.blocks),
+                allHours
+            ),
         [columns, allHours]
     );
 
@@ -84,13 +88,14 @@ export const TimeGrid: FC<TimeGridProps> = ({
     // every time the clock ticks — re-anchoring each minute would drag the
     // surface back under a reader who had scrolled somewhere else.
     const anchorRef = useRef(0);
-    anchorRef.current = showsToday ? nowMinutes : firstBlock ?? 9 * 60;
+    anchorRef.current = showsToday ? nowMinutes : (firstBlock ?? 9 * 60);
     const dayKey = days.join('|');
 
     useEffect(() => {
         const node = scrollRef.current;
         if (!node) return;
-        const target = (anchorRef.current - originMinutes) * pixelsPerMinute - node.clientHeight / 3;
+        const target =
+            (anchorRef.current - originMinutes) * pixelsPerMinute - node.clientHeight / 3;
         node.scrollTop = Math.max(0, target);
     }, [dayKey, originMinutes, pixelsPerMinute]);
 

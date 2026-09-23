@@ -68,7 +68,7 @@ export const PictureSettings: React.FC<WidgetSettingsProps> = ({ instanceId }) =
             <div className="zenith-picture-settings__field">
                 <input
                     type="text"
-                    className={`zenith-picture-settings__input ${missing && vault ? 'is-bad' : ''}`}
+                    className={`zenith-input zenith-input--sm is-mono zenith-picture-settings__input${missing && vault ? ' is-invalid' : ''}`}
                     value={vault ? config.picturePath : config.pictureUrl}
                     placeholder={t(vault ? 'picture.path.placeholder' : 'picture.url.placeholder')}
                     spellCheck={false}

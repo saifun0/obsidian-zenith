@@ -20,12 +20,14 @@ import { normalizeSession, type TimerSession } from '../modules/tasks/services/t
 import type { ContentTypeConfig } from '../core/contentTypes';
 import type { WeatherPlace } from '../modules/weather/weatherTypes';
 import type { GeoPlace } from '../services/geocode';
-import { DEFAULT_METHOD_ID, type AsrMadhab, type HighLatRule, type PrayerSource } from '../modules/prayer/prayerConfig';
+import {
+    DEFAULT_METHOD_ID,
+    type AsrMadhab,
+    type HighLatRule,
+    type PrayerSource,
+} from '../modules/prayer/prayerConfig';
 import type { ApiMidnight } from '../modules/prayer/prayerApi';
-import type {
-    DashboardBgFit,
-    DashboardBgSource,
-} from '../modules/dashboard/dashboardBackground';
+import type { DashboardBgFit, DashboardBgSource } from '../modules/dashboard/dashboardBackground';
 import type { ModuleSource } from '../core/moduleSources';
 import type { ZenithSliceCreator } from './types';
 
@@ -559,6 +561,16 @@ export interface CalendarViewState {
     showDailyNotes: boolean;
     /** Draw all 24 hour rows instead of the waking-hours window. */
     allHours: boolean;
+    /**
+     * Days across the month grid: 7, or 3 where a week will not fit.
+     *
+     * Unset until someone chooses, so the device decides — a phone opens on 3
+     * and everything else on 7. It has no entry in `DEFAULT_SETTINGS` for that
+     * reason: a default here would be a default for every device, and this one
+     * is about how wide the screen is. `calendarView` is device-scoped, so a
+     * choice made on the phone stays on the phone.
+     */
+    columns?: number;
 }
 
 // ── Settings Slice ───────────────────────────────────
@@ -594,7 +606,13 @@ export const CURRENT_SETTINGS_VERSION = 8;
  * Listed rather than detected, because ARRAY-valued settings must NOT be merged
  * — `journalTrackers: []` means "no trackers", not "use the defaults".
  */
-const NESTED_KEYS = ['contentView', 'taskView', 'calendarView', 'moduleSettings', 'widgetConfig'] as const;
+const NESTED_KEYS = [
+    'contentView',
+    'taskView',
+    'calendarView',
+    'moduleSettings',
+    'widgetConfig',
+] as const;
 
 /**
  * Drop keys explicitly set to `undefined` before merging.
@@ -858,11 +876,9 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             return { settings: merged };
         }),
 
-    setAvailableModules: (modules) =>
-        set(() => ({ availableModules: modules })),
+    setAvailableModules: (modules) => set(() => ({ availableModules: modules })),
 
-    setLoadedModules: (moduleIds) =>
-        set(() => ({ loadedModuleIds: moduleIds })),
+    setLoadedModules: (moduleIds) => set(() => ({ loadedModuleIds: moduleIds })),
 
     // All three write THROUGH `settings`, so the existing subscription in
     // main.ts persists them with no extra plumbing — a module's settings ride

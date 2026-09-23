@@ -14,6 +14,7 @@ import {
 import { providerLabel } from '../../modules/content/services/metadata';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
 import { IconPickerModal } from '../../core/IconPickerModal';
+import { ColorField, Dropdown } from '../../components/ui/fields';
 import { translateNow, useTranslation } from '../../core/i18n';
 
 /**
@@ -87,17 +88,16 @@ export const ContentTypesSettings: React.FC = () => {
                             <ObsidianIcon name={type.icon} size={18} />
                         </button>
                         <input
-                            className="zenith-ctype__label"
+                            className="zenith-input zenith-ctype__label"
                             value={type.label}
                             aria-label={t('ctypes.typeName')}
                             onChange={(e) => patch(type.id, { label: e.target.value })}
                         />
-                        <input
-                            type="color"
+                        <ColorField
                             className="zenith-ctype__color"
                             value={type.color}
                             aria-label={t('ctypes.colour')}
-                            onChange={(e) => patch(type.id, { color: e.target.value })}
+                            onChange={(color) => patch(type.id, { color })}
                         />
                         <button
                             type="button"
@@ -112,20 +112,20 @@ export const ContentTypesSettings: React.FC = () => {
                     <div className="zenith-ctype__row">
                         <label className="zenith-ctype__field">
                             <span>{t('ctypes.metadataSource')}</span>
-                            <select
+                            <Dropdown
+                                size="sm"
                                 value={normalizeProviderId(type.provider)}
-                                onChange={(e) => patch(type.id, { provider: e.target.value as MetadataProviderId })}
-                            >
-                                {METADATA_PROVIDER_IDS.map((p) => (
-                                    <option key={p} value={p}>
-                                        {providerLabel(p)}
-                                    </option>
-                                ))}
-                            </select>
+                                options={METADATA_PROVIDER_IDS.map((p) => ({
+                                    value: p,
+                                    label: providerLabel(p),
+                                }))}
+                                onChange={(p) => patch(type.id, { provider: p as MetadataProviderId })}
+                            />
                         </label>
                         <label className="zenith-ctype__field">
                             <span>{t('ctypes.creatorLabel')}</span>
                             <input
+                                className="zenith-input zenith-input--sm"
                                 value={type.creatorLabel ?? ''}
                                 placeholder={t('ctypes.defaultCreator')}
                                 onChange={(e) => patch(type.id, { creatorLabel: e.target.value })}
@@ -135,6 +135,7 @@ export const ContentTypesSettings: React.FC = () => {
                             <label className="zenith-ctype__field">
                                 <span>{t('ctypes.progressUnit')}</span>
                                 <input
+                                    className="zenith-input zenith-input--sm"
                                     value={type.progressUnit ?? ''}
                                     placeholder={t('ctypes.unitExample')}
                                     onChange={(e) => patch(type.id, { progressUnit: e.target.value })}

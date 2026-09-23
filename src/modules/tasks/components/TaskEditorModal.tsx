@@ -13,6 +13,7 @@ import type { TaskAttachment, TaskDetails } from '../services/taskDetails';
 import { AttachmentField } from './AttachmentField';
 import { splitProjectLink, withProjectLink } from '../../projects/services/projectLink';
 import { Modal } from '../../../components/shared/Modal';
+import { DateField, Dropdown, TimeField } from '../../../components/ui/fields';
 import { useTranslation } from '../../../core/i18n';
 
 interface TaskEditorModalProps {
@@ -232,7 +233,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                 <div className="zenith-field">
                     <label className="zenith-field__label">{t('tasks.editor.description')}</label>
                     <input
-                        className="zenith-field__input"
+                        className="zenith-input zenith-field__input"
                         placeholder={t('tasks.editor.descriptionPlaceholder')}
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -242,31 +243,23 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                 <div className="zenith-form__grid">
                     <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.status')}</label>
-                        <select
-                            className="zenith-field__input"
+                        <Dropdown
+                            className="zenith-input zenith-field__input"
+                            aria-label={t('tasks.editor.status')}
                             value={status}
-                            onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                        >
-                            {TASK_STATUSES.map((s) => (
-                                <option key={s} value={s}>
-                                    {t(STATUS_KEY[s])}
-                                </option>
-                            ))}
-                        </select>
+                            options={TASK_STATUSES.map((s) => ({ value: s, label: t(STATUS_KEY[s]) }))}
+                            onChange={(v) => setStatus(v as TaskStatus)}
+                        />
                     </div>
                     <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.priority')}</label>
-                        <select
-                            className="zenith-field__input"
+                        <Dropdown
+                            className="zenith-input zenith-field__input"
+                            aria-label={t('tasks.editor.priority')}
                             value={priority}
-                            onChange={(e) => setPriority(e.target.value as Priority)}
-                        >
-                            {PRIORITIES.map((p) => (
-                                <option key={p} value={p}>
-                                    {t(PRIORITY_KEY[p])}
-                                </option>
-                            ))}
-                        </select>
+                            options={PRIORITIES.map((p) => ({ value: p, label: t(PRIORITY_KEY[p]) }))}
+                            onChange={(v) => setPriority(v as Priority)}
+                        />
                     </div>
                 </div>
 
@@ -281,19 +274,16 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                     <label className="zenith-field__label" htmlFor="zenith-task-project">
                         {t('tasks.editor.project')}
                     </label>
-                    <select
+                    <Dropdown
                         id="zenith-task-project"
-                        className="zenith-field__input"
+                        className="zenith-input zenith-field__input"
                         value={projectPath}
-                        onChange={(e) => setProjectPath(e.target.value)}
-                    >
-                        <option value="">{t('tasks.editor.project.none')}</option>
-                        {projectOptions.map((p) => (
-                            <option key={p.filePath} value={p.filePath}>
-                                {p.title}
-                            </option>
-                        ))}
-                    </select>
+                        options={[
+                            { value: '', label: t('tasks.editor.project.none') },
+                            ...projectOptions.map((p) => ({ value: p.filePath, label: p.title })),
+                        ]}
+                        onChange={setProjectPath}
+                    />
                 </div>
 
                 {/* Tags */}
@@ -316,7 +306,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                     )}
                     <div className="zenith-autocomplete">
                         <input
-                            className="zenith-field__input"
+                            className="zenith-input zenith-field__input"
                             placeholder={t('tasks.editor.tagPlaceholder')}
                             value={tagInput}
                             onChange={(e) => setTagInput(e.target.value)}
@@ -352,7 +342,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                 <div className="zenith-field">
                     <label className="zenith-field__label">{t('tasks.editor.notes')}</label>
                     <textarea
-                        className="zenith-field__input zenith-field__textarea"
+                        className="zenith-input zenith-field__input zenith-field__textarea"
                         placeholder={t('tasks.editor.notesPlaceholder')}
                         rows={3}
                         value={notes}
@@ -365,44 +355,44 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                 <div className="zenith-form__grid">
                     <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.due')}</label>
-                        <input
-                            type="date"
-                            className="zenith-field__input"
+                        <DateField
+                            className="zenith-input zenith-field__input"
+                            aria-label={t('tasks.editor.due')}
                             value={dueDate}
-                            onChange={(e) => setDueDate(e.target.value)}
+                            onChange={setDueDate}
                         />
                     </div>
                     <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.dueTime')}</label>
-                        <input
-                            type="time"
-                            className="zenith-field__input"
+                        <TimeField
+                            className="zenith-input zenith-field__input"
+                            aria-label={t('tasks.editor.dueTime')}
                             value={dueTime}
                             // Without a day, an hour has nothing to be due on.
                             disabled={!dueDate}
                             title={!dueDate ? t('tasks.editor.dueTimeHint') : undefined}
-                            onChange={(e) => setDueTime(e.target.value)}
+                            onChange={setDueTime}
                         />
                     </div>
                     <div className="zenith-field">
                         <label className="zenith-field__label">
                             {t('tasks.editor.dueEndTime')}
                         </label>
-                        <input
-                            type="time"
-                            className="zenith-field__input"
+                        <TimeField
+                            className="zenith-input zenith-field__input"
+                            aria-label={t('tasks.editor.dueEndTime')}
                             value={dueEndTime}
                             // An end with no start is not a range, it's a second
                             // deadline nobody asked for.
                             disabled={!dueDate || !dueTime}
                             title={!dueTime ? t('tasks.editor.dueEndTimeHint') : undefined}
-                            onChange={(e) => setDueEndTime(e.target.value)}
+                            onChange={setDueEndTime}
                         />
                     </div>
                     <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.timer')}</label>
                         <input
-                            className="zenith-field__input"
+                            className="zenith-input zenith-field__input"
                             placeholder={t('tasks.editor.timerPlaceholder')}
                             value={timerText}
                             onChange={(e) => setTimerText(e.target.value)}
@@ -410,20 +400,20 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                     </div>
                     <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.start')}</label>
-                        <input
-                            type="date"
-                            className="zenith-field__input"
+                        <DateField
+                            className="zenith-input zenith-field__input"
+                            aria-label={t('tasks.editor.start')}
                             value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
+                            onChange={setStartDate}
                         />
                     </div>
                     <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.scheduled')}</label>
-                        <input
-                            type="date"
-                            className="zenith-field__input"
+                        <DateField
+                            className="zenith-input zenith-field__input"
+                            aria-label={t('tasks.editor.scheduled')}
                             value={scheduledDate}
-                            onChange={(e) => setScheduledDate(e.target.value)}
+                            onChange={setScheduledDate}
                         />
                     </div>
                 </div>
@@ -431,7 +421,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                 <div className="zenith-field">
                     <label className="zenith-field__label">{t('tasks.editor.recurrence')}</label>
                     <input
-                        className="zenith-field__input"
+                        className="zenith-input zenith-field__input"
                         placeholder={t('tasks.editor.recurrencePlaceholder')}
                         value={recurrence}
                         onChange={(e) => setRecurrence(e.target.value)}
@@ -445,7 +435,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                         {subtasks.map((s, i) => (
                             <div key={i} className="zenith-subtask-row">
                                 <input
-                                    className="zenith-field__input"
+                                    className="zenith-input zenith-field__input"
                                     placeholder={t('tasks.subtask.placeholder')}
                                     value={s}
                                     onChange={(e) => {

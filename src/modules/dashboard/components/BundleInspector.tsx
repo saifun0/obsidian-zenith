@@ -44,7 +44,7 @@ export const BundleInspector: FC<BundleInspectorProps> = ({
                     {t.plural('dashboard.bundle.count', bundle.members.length)}
                 </span>
                 <input
-                    className="zenith-bundle-inspector__name"
+                    className="zenith-input zenith-input--sm zenith-bundle-inspector__name"
                     value={bundle.name ?? ''}
                     placeholder={t('dashboard.bundle.namePlaceholder')}
                     onChange={(e) => onRename(e.target.value)}

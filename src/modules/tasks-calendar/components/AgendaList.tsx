@@ -54,9 +54,7 @@ export const AgendaList: FC<AgendaListProps> = ({
         <div className="zenith-tcal__agenda">
             {groups.map(({ date, entries }) => (
                 <section className="zenith-tcal__day" key={date}>
-                    <header
-                        className={`zenith-tcal__day-head ${date === today ? 'is-today' : ''}`}
-                    >
+                    <header className={`zenith-tcal__day-head ${date === today ? 'is-today' : ''}`}>
                         <span className="zenith-tcal__day-label">{dayLabel(date, locale)}</span>
                         <span className="zenith-tcal__day-count">{entries.length}</span>
                     </header>

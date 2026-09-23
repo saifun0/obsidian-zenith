@@ -48,7 +48,7 @@ export class PromptModal extends Modal {
 
         const input = contentEl.createEl('input', {
             type: 'text',
-            cls: 'zenith-prompt__input',
+            cls: 'zenith-input zenith-prompt__input',
             value: this.value,
         });
         if (this.opts.placeholder) input.placeholder = this.opts.placeholder;

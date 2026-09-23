@@ -7,6 +7,7 @@ import { PRIORITIES, type Priority } from '../../../core/constants';
 import { IconPickerModal } from '../../../core/IconPickerModal';
 import { ColorInput, Select, SettingRow, TextInput, useFieldIds } from '../../../settings/controls';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
+import { DateField } from '../../../components/ui/fields';
 import { PROJECT_STATUSES, type Project, type ProjectStatus } from '../projectsTypes';
 import { ProjectWriter, projectFileName, type ProjectInput } from '../services/projectWriter';
 import { ProjectCard } from './ProjectCard';
@@ -273,21 +274,21 @@ export const ProjectForm: FC<ProjectFormProps> = ({ project, onClose }) => {
 /**
  * A date, in the settings form's own clothes.
  *
- * `SettingRow` mints the ids and puts them in context; a raw input has to pick
- * them up itself or the label above it points at nothing. Three lines to stay
- * inside the contract rather than an exception to it.
+ * `SettingRow` mints the ids and puts them in context; a field that is not one
+ * of its controls has to pick them up itself or the label above it points at
+ * nothing. Three lines to stay inside the contract rather than an exception
+ * to it.
  */
 const DateInput: FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => {
     const ids = useFieldIds();
 
     return (
-        <input
-            type="date"
-            className="zenith-settings__input"
+        <DateField
+            className="zenith-settings__picker"
             id={ids?.id}
             aria-describedby={ids?.describedBy}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={onChange}
         />
     );
 };

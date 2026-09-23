@@ -3,6 +3,7 @@ import { PRIORITIES } from '../../../core/constants';
 import type { TaskFilterState } from './TasksApp';
 import { useTranslation } from '../../../core/i18n';
 import { Popover, usePopover } from '../../../components/shared';
+import { Dropdown } from '../../../components/ui/fields';
 
 // ── Props ────────────────────────────────────────────
 
@@ -50,46 +51,39 @@ export const TaskFilters: FC<TaskFiltersProps> = ({ filters, onFilterChange, all
     return (
         <>
             {/* Priority Filter */}
-            <select
+            <Dropdown
                 className="zenith-task-filters__select"
                 value={filters.priority}
-                onChange={(e) =>
-                    onFilterChange({
-                        ...filters,
-                        priority: e.target.value as TaskFilterState['priority'],
-                    })
+                options={[
+                    { value: 'all', label: t('tasks.filter.allPriorities') },
+                    ...PRIORITIES.map((p) => ({
+                        value: p,
+                        label: p.charAt(0).toUpperCase() + p.slice(1),
+                    })),
+                ]}
+                onChange={(v) =>
+                    onFilterChange({ ...filters, priority: v as TaskFilterState['priority'] })
                 }
-            >
-                <option value="all">{t('tasks.filter.allPriorities')}</option>
-                {PRIORITIES.map((p) => (
-                    <option key={p} value={p}>
-                        {p.charAt(0).toUpperCase() + p.slice(1)}
-                    </option>
-                ))}
-            </select>
+            />
 
             {/* Due-date filter — "no date" is the one that can't be reached any
                 other way, and it's where forgotten tasks pile up. */}
-            <select
+            <Dropdown
                 className="zenith-task-filters__select"
                 value={filters.due}
-                onChange={(e) =>
-                    onFilterChange({ ...filters, due: e.target.value as TaskFilterState['due'] })
-                }
-            >
-                {(['all', 'overdue', 'today', 'week', 'none'] as const).map((d) => (
-                    <option key={d} value={d}>
-                        {t('tasks.filter.due', { name: t(`tasks.due.${d}`) })}
-                    </option>
-                ))}
-            </select>
+                options={(['all', 'overdue', 'today', 'week', 'none'] as const).map((d) => ({
+                    value: d,
+                    label: t('tasks.filter.due', { name: t(`tasks.due.${d}`) }),
+                }))}
+                onChange={(v) => onFilterChange({ ...filters, due: v as TaskFilterState['due'] })}
+            />
 
             {/* Tag Filter */}
             <>
                 <input
                     {...tags.anchorProps}
                     type="text"
-                    className="zenith-task-filters__input"
+                    className="zenith-input zenith-task-filters__input"
                     placeholder={t('tasks.filter.tagPlaceholder')}
                     value={tagInput}
                     onChange={(e) => handleTagChange(e.target.value)}
@@ -123,51 +117,26 @@ export const TaskFilters: FC<TaskFiltersProps> = ({ filters, onFilterChange, all
             </>
 
             {/* Sort */}
-            <select
+            <Dropdown
                 className="zenith-task-filters__select"
                 value={filters.sort}
-                onChange={(e) =>
-                    onFilterChange({
-                        ...filters,
-                        sort: e.target.value as TaskFilterState['sort'],
-                    })
-                }
-            >
-                <option value="manual">
-                    {t('content.sortBy', { name: t('tasks.sort.manual') })}
-                </option>
-                <option value="created">
-                    {t('content.sortBy', { name: t('tasks.sort.created') })}
-                </option>
-                <option value="dueDate">
-                    {t('content.sortBy', { name: t('tasks.sort.dueDate') })}
-                </option>
-                <option value="priority">
-                    {t('content.sortBy', { name: t('tasks.sort.priority') })}
-                </option>
-            </select>
+                options={(['manual', 'created', 'dueDate', 'priority'] as const).map((s) => ({
+                    value: s,
+                    label: t('content.sortBy', { name: t(`tasks.sort.${s}`) }),
+                }))}
+                onChange={(v) => onFilterChange({ ...filters, sort: v as TaskFilterState['sort'] })}
+            />
 
             {/* Group (applies on the All tab) */}
-            <select
+            <Dropdown
                 className="zenith-task-filters__select"
                 value={filters.group}
-                onChange={(e) =>
-                    onFilterChange({
-                        ...filters,
-                        group: e.target.value as TaskFilterState['group'],
-                    })
-                }
-            >
-                <option value="smart">
-                    {t('tasks.filter.groupBy', { name: t('tasks.group.smart') })}
-                </option>
-                <option value="file">
-                    {t('tasks.filter.groupBy', { name: t('tasks.group.file') })}
-                </option>
-                <option value="none">
-                    {t('tasks.filter.groupBy', { name: t('tasks.group.none') })}
-                </option>
-            </select>
+                options={(['smart', 'file', 'none'] as const).map((g) => ({
+                    value: g,
+                    label: t('tasks.filter.groupBy', { name: t(`tasks.group.${g}`) }),
+                }))}
+                onChange={(v) => onFilterChange({ ...filters, group: v as TaskFilterState['group'] })}
+            />
         </>
     );
 };

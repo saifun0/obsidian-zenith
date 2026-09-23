@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
 import { Notice } from 'obsidian';
 import {
-    Search,
     X,
     ArrowDownNarrowWide,
     ArrowUpNarrowWide,
@@ -23,6 +22,7 @@ import { progressPercent } from '../services/progress';
 import { ContentCard } from './ContentCard';
 import { ResumeRow } from './ResumeRow';
 import { ContentDetailModal } from './ContentDetailModal';
+import { Dropdown, SearchField } from '../../../components/ui/fields';
 
 interface ContentGalleryProps {
     items: ContentItem[];
@@ -360,55 +360,41 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
                     ))}
                 </div>
 
-                <div className="zenith-content-gallery__search">
-                    <Search size={15} className="zenith-content-gallery__search-icon" />
-                    <input
-                        type="text"
-                        placeholder={t('content.searchPlaceholder')}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                    {search && (
-                        <button
-                            type="button"
-                            className="zenith-content-gallery__search-clear"
-                            aria-label={t('common.clear')}
-                            onClick={() => setSearch('')}
-                        >
-                            <X size={13} />
-                        </button>
-                    )}
-                </div>
+                <SearchField
+                    className="zenith-content-gallery__search"
+                    value={search}
+                    onChange={setSearch}
+                    placeholder={t('content.searchPlaceholder')}
+                />
 
-                <select
+                <Dropdown
                     className="zenith-content-gallery__select"
                     aria-label={t('content.form.status')}
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as ContentStatus | 'all')}
-                >
-                    <option value="all">{t('content.allStatuses')}</option>
-                    {CONTENT_STATUSES.map((s) => (
+                    options={[
+                        { value: 'all', label: t('content.allStatuses') },
                         // Counts in the labels turn the filter into a breakdown:
                         // you can see what's there before committing to a click.
-                        <option key={s} value={s} disabled={!statusCounts[s]}>
-                            {t(STATUS_KEY[s])} ({statusCounts[s] ?? 0})
-                        </option>
-                    ))}
-                </select>
+                        ...CONTENT_STATUSES.map((s) => ({
+                            value: s,
+                            label: `${t(STATUS_KEY[s])} (${statusCounts[s] ?? 0})`,
+                            disabled: !statusCounts[s],
+                        })),
+                    ]}
+                    onChange={(v) => setStatusFilter(v as ContentStatus | 'all')}
+                />
 
                 <div className="zenith-content-gallery__sort">
-                    <select
+                    <Dropdown
                         className="zenith-content-gallery__select"
                         aria-label={t('tasks.filter.sort')}
                         value={sort}
-                        onChange={(e) => changeSort(e.target.value as SortKey)}
-                    >
-                        {(Object.keys(SORT_KEY) as SortKey[]).map((k) => (
-                            <option key={k} value={k}>
-                                {t('content.sortBy', { name: t(SORT_KEY[k]) })}
-                            </option>
-                        ))}
-                    </select>
+                        options={(Object.keys(SORT_KEY) as SortKey[]).map((k) => ({
+                            value: k,
+                            label: t('content.sortBy', { name: t(SORT_KEY[k]) }),
+                        }))}
+                        onChange={(v) => changeSort(v as SortKey)}
+                    />
                     <button
                         type="button"
                         className="zenith-content-gallery__sortdir"
@@ -470,24 +456,17 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
                     >
                         {t(picked.size === visible.length ? 'content.bulk.none' : 'content.bulk.all')}
                     </button>
-                    <select
+                    {/* An action, not a setting: it never holds a value, so the
+                        placeholder is always what it says. */}
+                    <Dropdown
                         className="zenith-content-gallery__select"
                         aria-label={t('content.bulk.setStatus')}
+                        placeholder={t('content.bulk.setStatus')}
                         value=""
                         disabled={picked.size === 0 || bulkBusy}
-                        onChange={(e) => {
-                            const v = e.target.value as ContentStatus;
-                            e.target.value = '';
-                            if (v) void bulkStatus(v);
-                        }}
-                    >
-                        <option value="">{t('content.bulk.setStatus')}</option>
-                        {CONTENT_STATUSES.map((s) => (
-                            <option key={s} value={s}>
-                                {t(STATUS_KEY[s])}
-                            </option>
-                        ))}
-                    </select>
+                        options={CONTENT_STATUSES.map((s) => ({ value: s, label: t(STATUS_KEY[s]) }))}
+                        onChange={(v) => void bulkStatus(v as ContentStatus)}
+                    />
                     <button
                         type="button"
                         className="zenith-content-gallery__bulkdelete"

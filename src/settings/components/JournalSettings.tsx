@@ -19,6 +19,7 @@ import { DEFAULT_JOURNAL_FOLDER } from '../../core/constants';
 import type { JournalWeekStart } from '../../store/settingsSlice';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
 import { IconPickerModal } from '../../core/IconPickerModal';
+import { ColorField, Dropdown } from '../../components/ui/fields';
 import { journalNotePath, isoToDate } from '../../modules/journal/services/journalDates';
 import { translateNow } from '../../core/i18n';
 import {
@@ -144,17 +145,16 @@ export const JournalSettings: React.FC = () => {
                         <ObsidianIcon name={tracker.icon} size={18} />
                     </button>
                     <input
-                        className="zenith-ctype__label"
+                        className="zenith-input zenith-ctype__label"
                         value={tracker.label}
                         aria-label={t('settings.journalTrackers.name')}
                         onChange={(e) => patch(index, { label: e.target.value })}
                     />
-                    <input
-                        type="color"
+                    <ColorField
                         className="zenith-ctype__color"
                         value={tracker.color}
                         aria-label={t('ctypes.colour')}
-                        onChange={(e) => patch(index, { color: e.target.value })}
+                        onChange={(color) => patch(index, { color })}
                     />
                     {/* Off, not gone: the id still names a frontmatter key in
                         every note that recorded it, so switching a tracker off
@@ -190,23 +190,21 @@ export const JournalSettings: React.FC = () => {
                 <div className="zenith-ctype__row">
                     <label className="zenith-ctype__field">
                         <span>{t('settings.journalTrackers.kind')}</span>
-                        <select
+                        <Dropdown
+                            size="sm"
                             value={tracker.kind}
-                            onChange={(e) =>
-                                patch(index, { kind: e.target.value as TrackerKind })
-                            }
-                        >
-                            {TRACKER_KINDS.map((kind) => (
-                                <option key={kind} value={kind}>
-                                    {t(`journal.kind.${kind}`)}
-                                </option>
-                            ))}
-                        </select>
+                            options={TRACKER_KINDS.map((kind) => ({
+                                value: kind,
+                                label: t(`journal.kind.${kind}`),
+                            }))}
+                            onChange={(kind) => patch(index, { kind: kind as TrackerKind })}
+                        />
                     </label>
 
                     <label className="zenith-ctype__field">
                         <span>{t('settings.journalTrackers.key')}</span>
                         <input
+                            className="zenith-input zenith-input--sm"
                             value={tracker.id}
                             spellCheck={false}
                             onChange={(e) => patch(index, { id: e.target.value.trim() })}
@@ -221,16 +219,15 @@ export const JournalSettings: React.FC = () => {
                             <span title={t('settings.journalTrackers.goal.desc')}>
                                 {t('settings.journalTrackers.goal')}
                             </span>
-                            <select
+                            <Dropdown
+                                size="sm"
                                 value={String(tracker.goal ?? DEFAULT_SCALE_GOAL)}
-                                onChange={(e) => patch(index, { goal: Number(e.target.value) })}
-                            >
-                                {Array.from({ length: SCALE_MAX }, (_, i) => i + 1).map((score) => (
-                                    <option key={score} value={score}>
-                                        {score}
-                                    </option>
-                                ))}
-                            </select>
+                                options={Array.from({ length: SCALE_MAX }, (_, i) => ({
+                                    value: String(i + 1),
+                                    label: String(i + 1),
+                                }))}
+                                onChange={(goal) => patch(index, { goal: Number(goal) })}
+                            />
                         </label>
                     )}
 
@@ -239,6 +236,7 @@ export const JournalSettings: React.FC = () => {
                             <label className="zenith-ctype__field">
                                 <span>{t('settings.journalTrackers.unit')}</span>
                                 <input
+                                    className="zenith-input zenith-input--sm"
                                     value={tracker.unit ?? ''}
                                     onChange={(e) => patch(index, { unit: e.target.value })}
                                 />
@@ -247,6 +245,8 @@ export const JournalSettings: React.FC = () => {
                                 <span>{t('settings.journalTrackers.step')}</span>
                                 <input
                                     type="number"
+                                    inputMode="decimal"
+                                    className="zenith-input zenith-input--sm"
                                     min="0"
                                     step="any"
                                     value={tracker.step ?? 1}
@@ -259,6 +259,8 @@ export const JournalSettings: React.FC = () => {
                                 <span>{t('settings.journalTrackers.target')}</span>
                                 <input
                                     type="number"
+                                    inputMode="decimal"
+                                    className="zenith-input zenith-input--sm"
                                     min="0"
                                     step="any"
                                     value={tracker.max ?? ''}
@@ -385,16 +387,15 @@ export const JournalSettings: React.FC = () => {
                     </span>
                 </div>
                 <div className="zenith-settings__item-control">
-                    <select
-                        className="zenith-settings__select"
+                    <Dropdown
+                        className="zenith-settings__picker"
                         value={settings.journalWeekStart}
-                        onChange={(e) =>
-                            updateSettings({ journalWeekStart: e.target.value as JournalWeekStart })
-                        }
-                    >
-                        <option value="mon">{t('settings.journalWeekStart.mon')}</option>
-                        <option value="sun">{t('settings.journalWeekStart.sun')}</option>
-                    </select>
+                        options={[
+                            { value: 'mon', label: t('settings.journalWeekStart.mon') },
+                            { value: 'sun', label: t('settings.journalWeekStart.sun') },
+                        ]}
+                        onChange={(v) => updateSettings({ journalWeekStart: v as JournalWeekStart })}
+                    />
                 </div>
             </div>
 

@@ -234,26 +234,10 @@
     color: var(--zenith-text-muted);
 }
 
-.zenith-dialog .zenith-field__input{
+/* A form field fills its column. How it looks is the shared field skin
+   (`.zenith-input`, fields.css) — the same one settings and every view use. */
+.zenith-dialog .zenith-field__input {
     width: 100%;
-    padding: 9px 11px;
-    font-size: 0.9rem;
-    font-family: inherit;
-    color: var(--zenith-text-normal);
-    background: var(--zenith-bg-tertiary);
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-sm);
-    outline: none;
-    transition: border-color var(--zenith-transition-fast), box-shadow var(--zenith-transition-fast);
-}
-
-.zenith-dialog .zenith-field__input:focus{
-    border-color: var(--zenith-accent);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--zenith-accent) 22%, transparent);
-}
-
-.zenith-dialog .zenith-field__select {
-    cursor: pointer;
 }
 
 .zenith-dialog .zenith-field__textarea {
@@ -397,12 +381,30 @@
     }
 }
 
-/* Touch targets need room even when the pointer is coarse. */
-@media (pointer: coarse) {
-    .zenith-dialog .zenith-field__input {
-        padding: 11px 12px;
-        font-size: 16px; /* stops iOS/Android from zooming on focus */
-    }
+/* ── In place (the debug page's modal catalogue) ─
+   Drawn where it stands rather than over the app: no fixed scrim, no blur, no
+   viewport height. Two classes, so it outranks the coarse-pointer and phone
+   rules above whatever their order. The panel loses its height cap because the
+   frame around it scrolls instead — the specimen is inert, so a scroller
+   inside it could never be scrolled. */
+.zenith-dialog.zenith-dialog--inline {
+    position: relative;
+    inset: auto;
+    width: auto;
+    height: auto;
+    z-index: auto;
+    padding: 0;
+    overflow: visible;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    animation: none;
+}
+
+.zenith-dialog--inline .zenith-dialog__panel {
+    max-height: none;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    animation: none;
 }
 
 /* Destructive action inside a dialog. Muted until hovered — a delete button
