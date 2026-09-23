@@ -5,48 +5,26 @@ import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import { activeTrackers } from '../../../core/journalConfig';
+import { useReducedMotion } from '../../../components/shared/useCrossFade';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
-import type { WidgetSize } from '../../dashboard/grid/gridTypes';
-import { journalStats } from '../services/journalStats';
-import { TrackerDeck, type TrackerDeckScale } from './TrackerDeck';
+import { entriesByDate, journalStats } from '../services/journalStats';
+import { recentHabits } from '../services/habitMonth';
+import { HabitGlance } from './HabitGlance';
 
 const WINDOW_DAYS = 30;
 
-interface SizeLayout extends TrackerDeckScale {
-    /** The three-up journal metrics under the deck. */
-    metrics: boolean;
-}
-
 /**
- * What each size shows.
+ * JournalStatsWidget — every tracker's last few weeks, at a glance.
  *
- * The deck is on every one of them — it *is* the card — and what grows around
- * it is context: the basis under the figure, then the active tracker's window
- * as a plot, then the three journal-wide numbers that belong to no tracker at
- * all.
- */
-const LAYOUT: Record<WidgetSize, SizeLayout> = {
-    sm: { showBasis: false, plotHeight: 0, metrics: false },
-    md: { showBasis: true, plotHeight: 0, metrics: false },
-    lg: { showBasis: true, plotHeight: 22, metrics: true },
-};
-
-/**
- * JournalStatsWidget — what the journal has collected, one thing at a time.
+ * One row per tracker: its icon and name, its recent days as marks, and one
+ * figure. See `HabitGlance`. The large card adds three numbers about the
+ * journal as a whole, and every size ends on one thin line — how much of the
+ * window was written on, the writing streak, and the way into the journal.
  *
- * This was a list: every tracker got a row, and each row set its figure — the
- * thing the row exists to say — in the smallest type on it. Then it was a dial,
- * which put one tracker in the middle of a ring and the rest around the edge.
- * It is a deck now: one tracker's icon and figure at a time, swapping for the
- * next. See `TrackerDeck`.
- *
- * The card carried a header too — the coverage, a streak chip and a button, in
- * a bordered row directly under the card's own title bar. Two headers stacked,
- * and the lower one shouting: a chip in a second colour and a bordered button
- * for what is, either way, a footnote. Neither number is about the tracker on
- * screen; both are about the journal as a whole. So they read as a footnote
- * now, in one thin line at the foot of the card, and the way to the journal is
- * a ghost button at the end of it.
+ * Those footnote numbers are the JOURNAL's, and nothing above them is: no row
+ * repeats a streak or a day count of its own, so the card never shows two
+ * different "streaks" side by side and leaves the reader to work out which is
+ * which. A row's own run and coverage are on its tooltip.
  *
  * Deliberately read-only: values are set in the check-in widget, in the note's
  * own block, or in the journal view, and that button goes there.
@@ -56,6 +34,8 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
     const { plugin } = useApp();
     const entries = useZenithStore((s) => s.journalEntries);
     const configured = useZenithStore((s) => s.settings.journalTrackers);
+    const animations = useZenithStore((s) => s.settings.uiAnimations);
+    const reduced = useReducedMotion();
     const trackers = useMemo(() => activeTrackers(configured), [configured]);
 
     const today = getTodayString();
@@ -63,8 +43,12 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
         () => journalStats(entries, trackers, today, WINDOW_DAYS),
         [entries, trackers, today]
     );
+    const rows = useMemo(
+        () => recentHabits(entriesByDate(entries), trackers, today, WINDOW_DAYS),
+        [entries, trackers, today]
+    );
 
-    const layout = LAYOUT[size];
+    const showMetrics = size === 'lg';
 
     const openJournal = () => void plugin.moduleManager.get('journal')?.activateView();
 
@@ -87,16 +71,21 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
 
     return (
         <div className={`zenith-jw zenith-jw--stats zenith-jw--${size}`}>
-            {stats.trackers.length === 0 ? (
+            {rows.length === 0 ? (
                 <div className="zenith-jw__empty">
                     <NotebookPen size={24} strokeWidth={1.5} />
                     <span>{t('journal.noTrackers')}</span>
                 </div>
             ) : (
-                <TrackerDeck stats={stats.trackers} scale={layout} />
+                <HabitGlance
+                    rows={rows}
+                    stats={stats.trackers}
+                    today={today}
+                    animate={animations && !reduced}
+                />
             )}
 
-            {layout.metrics && stats.trackers.length > 0 && (
+            {showMetrics && rows.length > 0 && (
                 <div className="zenith-jw__metrics">
                     {metrics.map((m) => (
                         <div key={m.key} className="zenith-jw__metric">
@@ -121,7 +110,7 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
                         })}
                     </span>
                 </span>
-                {!layout.metrics && (
+                {!showMetrics && (
                     <span className="zenith-jw__meta-fact">
                         <Flame size={11} />
                         <span>

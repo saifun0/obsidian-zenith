@@ -1,16 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { translatorFor } from '../src/core/i18n';
-import {
-    trackerWindow,
-    trackerFacts,
-    staleness,
-} from '../src/modules/journal/components/trackerWindow';
+import { trackerWindow, staleness } from '../src/modules/journal/components/trackerWindow';
+import { summarizeTracker } from '../src/modules/journal/components/trackerSummary';
 import type { TrackerPoint, TrackerStat } from '../src/modules/journal/services/journalStats';
 import type { JournalTracker } from '../src/core/journalConfig';
 
-// The real dictionary rather than a stub: the strip's chips are two words each,
-// and a key that exists in neither language would otherwise pass the test and
-// render as `journal.stats.inARow` on the card.
+// The real dictionary rather than a stub: a key that exists in neither language
+// would otherwise pass the test and render as `journal.stats.avgPerDay` on the
+// card.
 const t = translatorFor('en');
 
 const MOOD: JournalTracker = {
@@ -57,7 +54,7 @@ function stat(tracker: JournalTracker, values: Array<number | null>): TrackerSta
 }
 
 describe('trackerWindow', () => {
-    it('reads the window the panel and the strip both stand on', () => {
+    it('reads the window each row tooltip stands on', () => {
         const window = trackerWindow(stat(MOOD, [3, null, 4, 5, 4]), t);
         expect(window.days).toBe(4);
         expect(window.windowDays).toBe(5);
@@ -71,14 +68,6 @@ describe('trackerWindow', () => {
         const doubled = { ...stat(MOOD, [3, 4]), rate: 1.5 };
         expect(trackerWindow(doubled, t).percent).toBe(100);
         expect(trackerWindow({ ...stat(MOOD, [3, 4]), rate: NaN }, t).percent).toBe(0);
-    });
-
-    // The one thing the strip needs that the panel does not: a check tracker's
-    // centre figure already reads "2 /5", so a coverage chip beside it would be
-    // the same number twice on a card with room for about six.
-    it('knows when the dial is already showing the coverage', () => {
-        expect(trackerWindow(stat(SPORT, [1, null, 1]), t).figureIsCoverage).toBe(true);
-        expect(trackerWindow(stat(MOOD, [3, null, 4]), t).figureIsCoverage).toBe(false);
     });
 
     it('forgives an unwritten today, like the journal streak does', () => {
@@ -96,46 +85,52 @@ describe('staleness', () => {
     });
 });
 
-describe('trackerFacts', () => {
-    const keys = (tracker: JournalTracker, values: Array<number | null>) =>
-        trackerFacts(stat(tracker, values), t).map((fact) => fact.key);
+const COUNT: JournalTracker = {
+    id: 'count',
+    label: 'Count',
+    icon: 'hash',
+    color: '#ecf75f',
+    kind: 'number',
+    max: 10,
+};
 
-    // The rule the whole list is shaped by: never repeat the figure standing in
-    // the middle of the dial. Each kind leads with a different one, so each has
-    // a different fact left over to be the first thing beside it.
-    it('leaves out whatever the dial is already showing', () => {
-        expect(keys(MOOD, [3, null, 4])).toEqual(['coverage', 'run', 'last']);
-        expect(keys(SPORT, [1, null, 1])).toEqual(['average', 'run', 'last']);
-        expect(keys(WATER, [2, null, 3])).toEqual(['average', 'coverage', 'run', 'last']);
+describe('summarizeTracker', () => {
+    const figure = (tracker: JournalTracker, values: Array<number | null>) => {
+        const summary = summarizeTracker(stat(tracker, values), t);
+        return `${summary.value}${summary.suffix}`;
+    };
+
+    it('reads a scale as its average out of the scale', () => {
+        expect(figure(MOOD, [3, null, 4])).toBe('3.5/5');
     });
 
-    it('reads a yes/no average as the share of the window', () => {
-        const [average] = trackerFacts(stat(SPORT, [1, null, 1, null]), t);
-        expect(average.short).toBe('50%');
-        expect(average.label).toBe('2 of 4 days');
+    it('reads a yes/no as the share of the window it was ticked on', () => {
+        expect(figure(SPORT, [1, null, 1, null])).toBe('50%');
+        expect(summarizeTracker(stat(SPORT, [1, null, 1, null]), t).basis).toBe('2 of 4 days');
     });
 
-    it('reads a number average as its own unit a day', () => {
-        const [average] = trackerFacts(stat(WATER, [2, null, 3]), t);
-        expect(average.short).toBe('2.5');
-        expect(average.unit).toBe('glasses/d');
-        expect(average.value).toBe('2.5 glasses');
+    // The sum grows just by leaving the window open; an ordinary day does not.
+    it('reads a number as what a recorded day comes to, not as the window sum', () => {
+        expect(figure(WATER, [2, null, 3])).toBe('2.5 glasses');
+        expect(figure(COUNT, [4, null, 7])).toBe('5.5/10');
+    });
+
+    it('rounds a two-digit average whole', () => {
+        expect(figure(WATER, [30, 35, 32])).toBe('32 glasses');
     });
 
     // A window with nothing in it has no average to report, and inventing a
     // zero would read as "none a day" rather than as "not recorded".
-    it('has no average for a number nobody wrote down', () => {
-        expect(keys(WATER, [null, null])).toEqual(['coverage', 'run', 'last']);
+    it('shows a dash, and no suffix, for a window nobody wrote in', () => {
+        expect(figure(MOOD, [null, null])).toBe('—');
+        expect(figure(WATER, [null, null])).toBe('—');
     });
 
-    it('gives the panel a figure and a phrase for every chip the strip sets', () => {
-        for (const fact of trackerFacts(stat(WATER, [2, null, 3]), t)) {
-            expect(fact.short.length).toBeGreaterThan(0);
-            expect(fact.value.length).toBeGreaterThan(0);
-            expect(fact.label.length).toBeGreaterThan(0);
-            // A key rendered instead of a phrase is what a missing string looks
-            // like on the card.
-            expect(fact.label).not.toContain('journal.stats.');
+    it('never renders a key where a phrase belongs', () => {
+        for (const tracker of [MOOD, SPORT, WATER, COUNT]) {
+            expect(summarizeTracker(stat(tracker, [2, null, 3]), t).basis).not.toContain(
+                'journal.stats.'
+            );
         }
     });
 });
