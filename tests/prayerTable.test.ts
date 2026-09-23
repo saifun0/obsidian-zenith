@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
     __testing,
     ensureTable,
+    loadTable,
     refreshTable,
     setTableStore,
     tableDay,
@@ -349,5 +350,29 @@ describe('resolveDayTimes', () => {
         await setTableStore(memoryStore().store);
         const resolved = resolveDayTimes(PLACE, SEPT, { ...settings, prayerSource: 'local' });
         expect(resolved.origin).toBe('local');
+    });
+});
+
+describe('loadTable — the match dialog checking a proposal', () => {
+    it('waits for the year and keeps it, so applying costs no second request', async () => {
+        const { provider, calls } = fakeProvider(yearOf);
+        __testing.setProvider(provider);
+        await setTableStore(memoryStore().store);
+
+        expect(await loadTable(PLACE, SEPT, OPTS)).toBe(true);
+        expect(tableDay(PLACE, SEPT, OPTS)?.fajr).toBe(226);
+        ensureTable(PLACE, SEPT, OPTS);
+        await __testing.settle();
+        expect(calls).toEqual([2026]);
+    });
+
+    it('does not keep retrying a table nobody may ever use', async () => {
+        const { provider, calls } = fakeProvider(() => null);
+        __testing.setProvider(provider);
+        await setTableStore(memoryStore().store);
+
+        expect(await loadTable(PLACE, SEPT, { ...OPTS, method: 'mwl' })).toBe(false);
+        await vi.advanceTimersByTimeAsync(60 * 60 * 1000);
+        expect(calls).toHaveLength(1);
     });
 });

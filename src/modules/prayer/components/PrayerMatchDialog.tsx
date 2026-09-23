@@ -1,4 +1,4 @@
-import React, { useMemo, useState, type FC } from 'react';
+import React, { useEffect, useMemo, useState, type FC } from 'react';
 import { Notice } from 'obsidian';
 import { Check, Plus, X } from 'lucide-react';
 import { Modal } from '../../../components/shared/Modal';
@@ -21,6 +21,11 @@ import {
     type MatchTimeId,
 } from '../prayerMatch';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
+import { isoToDate } from '../../journal/services/journalDates';
+import type { GeoPoint } from '../prayerTimes';
+import type { ApiMidnight } from '../prayerProvider';
+import { loadTable, tableDay } from '../prayerTable';
+import { scoreSetup } from '../prayerMatch';
 
 interface DayDraft {
     key: number;
@@ -38,6 +43,41 @@ const toMinutes = (hhmm: string): number | undefined => {
 
 /** An hour out per typed time on average is no match at all — a wrong place, or a typo. */
 const HOPELESS = 60;
+
+/**
+ * A proposal scored again against the published table it would be read from.
+ *
+ * The search runs on the local calculation — trying every combination against
+ * the service would be hundreds of requests. But in calendar mode the times
+ * come from the service, which rounds its own way, so the corrections are
+ * worked out from its minutes rather than ours: one request per year the typed
+ * days fall in, kept, so applying costs nothing more. Null when it could not
+ * be reached.
+ */
+async function checkWithTable(
+    place: GeoPoint,
+    samples: MatchSample[],
+    setup: MatchSetup,
+    midnight: ApiMidnight
+): Promise<MatchResult | null> {
+    const opts = {
+        method: setup.method,
+        fajrAngle: setup.fajrAngle,
+        ishaAngle: setup.ishaAngle,
+        hanafi: setup.asrMadhab === 'hanafi',
+        highLatRule: setup.highLatRule,
+        midnight,
+    };
+    const years = [...new Set(samples.map((s) => s.date.slice(0, 4)))];
+    for (const year of years) {
+        if (!(await loadTable(place, new Date(Number(year), 6, 1), opts))) return null;
+    }
+    const result = scoreSetup(samples, setup, (_s, iso) => tableDay(place, isoToDate(iso), opts));
+    // A day the table does not have is a failed check, not a perfect match.
+    return result.residuals.every((r) => Object.values(r).every((v) => Number.isFinite(v)))
+        ? result
+        : null;
+}
 
 /** The method as a person would name it. */
 export function setupLabel(setup: MatchSetup, t: Translator): string {
@@ -115,7 +155,35 @@ export const PrayerMatchDialog: FC<{ onClose: () => void }> = ({ onClose }) => {
 
     const options = ranking ? distinctMethods(ranking, 3) : [];
     const base = options[picked];
-    const shown = base && ranking && madhab ? (withMadhab(ranking, base, madhab) ?? base) : base;
+    const proposed = base && ranking && madhab ? (withMadhab(ranking, base, madhab) ?? base) : base;
+
+    // In calendar mode the proposal is checked against the service's own table
+    // before it is offered; `checked` holds the answer for one proposal.
+    const api = settings.prayerSource === 'api';
+    const midnight = settings.prayerApiMidnight;
+    const [checked, setChecked] = useState<{
+        of: MatchResult;
+        result: MatchResult | null;
+    } | null>(null);
+    useEffect(() => {
+        if (!api || !place || !proposed) return;
+        let live = true;
+        void checkWithTable(place, samples, proposed.setup, midnight).then((result) => {
+            if (live) setChecked({ of: proposed, result });
+        });
+        return () => {
+            live = false;
+        };
+    }, [api, place, proposed, samples, midnight]);
+
+    const check: 'none' | 'checking' | 'checked' | 'failed' = !api
+        ? 'none'
+        : checked?.of !== proposed
+          ? 'checking'
+          : checked.result
+            ? 'checked'
+            : 'failed';
+    const shown = check === 'checked' && checked?.result ? checked.result : proposed;
 
     const apply = () => {
         if (!shown) return;
@@ -150,7 +218,12 @@ export const PrayerMatchDialog: FC<{ onClose: () => void }> = ({ onClose }) => {
                 {t('common.cancel')}
             </button>
             {ranking && shown && shown.error < HOPELESS * typed ? (
-                <button type="button" className="zenith-btn zenith-btn--primary" onClick={apply}>
+                <button
+                    type="button"
+                    className="zenith-btn zenith-btn--primary"
+                    disabled={check === 'checking'}
+                    onClick={apply}
+                >
                     <Check size={14} />
                     {t('prayer.match.apply')}
                 </button>
@@ -247,7 +320,7 @@ export const PrayerMatchDialog: FC<{ onClose: () => void }> = ({ onClose }) => {
                         samples={samples}
                         hopeless={shown.error >= HOPELESS * typed}
                         onMadhab={(m) => setMadhab(m)}
-                        apiNote={settings.prayerSource === 'api'}
+                        check={check}
                     />
                 )}
 
@@ -286,9 +359,9 @@ const MatchOutcome: FC<{
     result: MatchResult;
     samples: MatchSample[];
     hopeless: boolean;
-    apiNote: boolean;
+    check: 'none' | 'checking' | 'checked' | 'failed';
     onMadhab: (m: AsrMadhab) => void;
-}> = ({ result, samples, hopeless, apiNote, onMadhab }) => {
+}> = ({ result, samples, hopeless, check, onMadhab }) => {
     const t = useTranslation();
     const s = result.setup;
     if (hopeless) return <p className="zenith-prayer-match__warn">{t('prayer.match.none')}</p>;
@@ -304,7 +377,9 @@ const MatchOutcome: FC<{
             <span className="zenith-prayer-match__kicker">{t('prayer.match.best')}</span>
             <strong className="zenith-prayer-match__method">{setupLabel(s, t)}</strong>
             <span className="zenith-prayer-match__muted">
-                {t(`prayer.rounding.${s.rounding}`)} · {t(`prayer.highLat.${s.highLatRule}`)}
+                {/* The service prints its own minutes: rounding is not ours to name then. */}
+                {check === 'none' && `${t(`prayer.rounding.${s.rounding}`)} · `}
+                {t(`prayer.highLat.${s.highLatRule}`)}
             </span>
 
             <div className="zenith-prayer-match__madhab">
@@ -345,10 +420,15 @@ const MatchOutcome: FC<{
                 })}
             </ul>
             <p className="zenith-prayer-match__hint">
-                {worst
-                    ? t('prayer.match.worst', { value: String(worst) })
-                    : t('prayer.match.allMatch')}
-                {apiNote ? ` ${t('prayer.match.apiNote')}` : ''}
+                {check === 'checking'
+                    ? t('prayer.match.checking')
+                    : `${worst ? t('prayer.match.worst', { value: String(worst) }) : t('prayer.match.allMatch')}${
+                          check === 'checked'
+                              ? ` ${t('prayer.match.checked')}`
+                              : check === 'failed'
+                                ? ` ${t('prayer.match.apiNote')}`
+                                : ''
+                      }`}
             </p>
         </section>
     );

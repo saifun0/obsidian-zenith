@@ -203,13 +203,14 @@ async function fetchAndStore(
     key: string,
     place: GeoPoint,
     year: number,
-    opts: PrayerApiOptions
+    opts: PrayerApiOptions,
+    retry = true
 ): Promise<boolean> {
     states.set(key, 'loading');
     const days = await provider.fetchYear(place, year, opts);
     if (!days) {
         states.set(key, 'error');
-        scheduleRetry(key, () => ensureYear(place, year, opts));
+        if (retry) scheduleRetry(key, () => ensureYear(place, year, opts));
         bump();
         return false;
     }
@@ -277,6 +278,36 @@ export function tableState(place: GeoPoint, date: Date, opts: PrayerApiOptions):
     if (inFlight.has(key)) return 'loading';
     if (memory.get(key)?.days[isoOf(date)]) return 'ok';
     return states.get(key) ?? 'idle';
+}
+
+/**
+ * The year `date` falls in, from memory, disk or the network — for the one
+ * caller that waits: "Match my app" checking its proposal against the table
+ * the times would actually come from. Whatever it fetches is kept, so applying
+ * the proposal costs no second request — and a failure is not retried in the
+ * background, since nobody may ever use that table.
+ */
+export async function loadTable(
+    place: GeoPoint,
+    date: Date,
+    opts: PrayerApiOptions
+): Promise<boolean> {
+    const year = date.getFullYear();
+    const key = tableKey(place, year, opts);
+    await inFlight.get(key);
+    if (memory.has(key)) return true;
+    if (store && !diskChecked.has(key)) {
+        diskChecked.add(key);
+        const loaded = parseStored(await store.read(fileOf(key)));
+        if (loaded) {
+            memory.set(key, loaded);
+            bump();
+            return true;
+        }
+    }
+    const work = fetchAndStore(key, place, year, opts, false).finally(() => inFlight.delete(key));
+    inFlight.set(key, work);
+    return work;
 }
 
 /**

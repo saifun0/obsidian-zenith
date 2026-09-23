@@ -43,7 +43,9 @@ export const PRAYER_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'prayer.match.apply': 'Use this',
         'prayer.match.applied': 'Prayer times now follow: {method}.',
         'prayer.match.apiNote':
-            'Times will come from the calendar service, which rounds on its own: a minute can still differ.',
+            'The calendar service the times will come from could not be reached to check: it rounds on its own, so a minute can still differ.',
+        'prayer.match.checking': 'Checking against the calendar service…',
+        'prayer.match.checked': 'Checked against the calendar service the times will come from.',
 
         'prayer.choose.title': 'How are your prayer times calculated?',
         'prayer.choose.lead':
@@ -106,7 +108,9 @@ export const PRAYER_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'prayer.match.apply': 'Применить',
         'prayer.match.applied': 'Время намаза теперь считается так: {method}.',
         'prayer.match.apiNote':
-            'Времена будут приходить из сервиса-календаря, а он округляет по-своему: минута ещё может отличаться.',
+            'Не удалось сверить с сервисом-календарём, откуда будут приходить времена: он округляет по-своему, минута ещё может отличаться.',
+        'prayer.match.checking': 'Сверяю с сервисом-календарём…',
+        'prayer.match.checked': 'Сверено с сервисом-календарём, откуда будут приходить времена.',
 
         'prayer.choose.title': 'Как считать время намаза?',
         'prayer.choose.lead':
