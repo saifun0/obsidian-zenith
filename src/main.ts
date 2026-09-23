@@ -34,6 +34,7 @@ import { moduleNameNow } from './core/moduleLabels';
 import { Scheduler } from './core/scheduler';
 import { NotificationCenter } from './core/notifications/NotificationCenter';
 import { NotificationCenterModal } from './core/notifications/NotificationCenterModal';
+import { FirstRunModal } from './core/profiles/FirstRunModal';
 
 /**
  * ZenithPlugin — Main entry point.
@@ -222,7 +223,14 @@ export default class ZenithPlugin extends Plugin {
         // so what was missed while Obsidian was closed is caught up for all of
         // them — including when the plugin is switched on mid-session and the
         // layout is ready already.
-        this.app.workspace.onLayoutReady(() => this.scheduler.start());
+        this.app.workspace.onLayoutReady(() => {
+            this.scheduler.start();
+            // A config that started empty is offered a template, once. An
+            // upgraded one never is — see the v10 migration.
+            if (!useZenithStore.getState().settings.profilesOnboarded) {
+                new FirstRunModal(this.app).open();
+            }
+        });
 
         // ── Settings Tab ─────────────────────────────
         this.addSettingTab(new ZenithSettingTab(this.app, this));

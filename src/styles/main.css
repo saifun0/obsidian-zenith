@@ -5,6 +5,7 @@
 @import './ui.css';
 @import './modal.css';
 @import './notifications.css';
+@import './profiles.css';
 @import '../components/ui/fields/fields.css';
 @import './dashboard.css';
 @import './dashboard-grid.css';

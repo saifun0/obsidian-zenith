@@ -25,6 +25,9 @@ remove `⏱` from your tasks, and switching it back on shows them again. A few s
   is remembered for when it comes back; until then the list is ungrouped and the calendar
   shows the month.
 
+[Profiles](profiles.md) switch many of these at once — a template, a setup you saved, or one
+someone sent you.
+
 A feature can need another one, or another module: the activity heatmap is part of task
 statistics, capture into the daily note needs the Journal module. Such a feature shows as
 off and says what it is waiting for.

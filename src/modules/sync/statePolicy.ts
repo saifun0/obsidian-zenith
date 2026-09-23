@@ -172,6 +172,15 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // still `activeModuleIds`, which stays per device.
     features: { scope: 'shared', merge: 'record' },
 
+    // ── Profiles ──
+    // Saved profiles are the user's, on every device, merged one by one. What
+    // the last apply changed is this device's to undo — its modules were the
+    // ones switched — and whether this device has been offered a template is
+    // a question about this device.
+    profiles: { scope: 'shared', merge: 'byId' },
+    profileUndo: { scope: 'device' },
+    profilesOnboarded: { scope: 'device' },
+
     // ── Identity and chrome that is not layout ──
     // The accent is a personal choice, not a per-screen accommodation, so
     // unlike density it belongs everywhere.

@@ -30,6 +30,13 @@ import type { ApiMidnight } from '../modules/prayer/prayerApi';
 import type { DashboardBgFit, DashboardBgSource } from '../modules/dashboard/dashboardBackground';
 import type { ModuleSource } from '../core/moduleSources';
 import { pinnedFeatures } from '../core/features';
+import {
+    BEFORE_PROFILES_ID,
+    beforeProfilesSnapshot,
+    normalizeStoredProfiles,
+    type StoredProfile,
+} from '../core/profiles/profiles';
+import { getTodayString } from '../core/dateUtils';
 import type { ZenithSliceCreator } from './types';
 
 // ── Settings Types ───────────────────────────────────
@@ -77,6 +84,14 @@ export interface InstalledModuleRecord {
 }
 
 /** An OAuth token pair as persisted. `expiresAt` is absolute epoch ms. */
+/** See `ZenithSettings.profileUndo`. */
+export interface ProfileUndo {
+    /** The profile that was applied, for the button's label. */
+    name: string;
+    at: number;
+    before: Partial<ZenithSettings>;
+}
+
 export interface StoredTokens {
     accessToken: string;
     refreshToken: string;
@@ -285,6 +300,22 @@ export interface ZenithSettings {
      * here.
      */
     features: Record<string, boolean>;
+    /**
+     * Profiles the user saved, and the snapshot taken when profiles arrived.
+     * Shared: a profile is the user's, wherever it was saved.
+     */
+    profiles: StoredProfile[];
+    /**
+     * What the last profile applied on this device changed, as it was before
+     * — "put it back" restores exactly that. Per device, like the change it
+     * undoes is from here.
+     */
+    profileUndo: ProfileUndo | null;
+    /**
+     * This device has been past the first-run choice of a template, or never
+     * needed it. A fresh install is the only config that starts false.
+     */
+    profilesOnboarded: boolean;
     /** Custom accent color (CSS color value); empty = use Obsidian's accent */
     accentColor: string;
     /** The module to open when clicking the ribbon icon */
@@ -621,7 +652,7 @@ export interface SettingsSlice {
  * Bump when a migration is added, and gate that migration on the value below.
  * Version 1 is "everything written before versioning existed".
  */
-export const CURRENT_SETTINGS_VERSION = 9;
+export const CURRENT_SETTINGS_VERSION = 10;
 
 /**
  * Object-valued settings that must be merged field-by-field rather than
@@ -731,6 +762,9 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
         'picture',
     ],
     features: {},
+    profiles: [],
+    profileUndo: null,
+    profilesOnboarded: false,
     accentColor: '',
     defaultModuleId: 'dashboard',
     language: 'auto',
@@ -827,6 +861,7 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             // discards also loses its claim to being the active one.
             merged.dashboardPresets = normalizePresets(saved.dashboardPresets);
             merged.activeTimer = normalizeSession(saved.activeTimer);
+            merged.profiles = normalizeStoredProfiles(saved.profiles);
             if (!merged.dashboardPresets.some((p) => p.id === merged.dashboardPresetId)) {
                 merged.dashboardPresetId = '';
             }
@@ -913,6 +948,21 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             // — and gets the defaults instead.
             if (from < 9 && Object.keys(saved).length > 0) {
                 merged.features = pinnedFeatures(merged.features);
+            }
+
+            // ── v9 → v10 ──
+            // Profiles arrived. A config written before them keeps a snapshot
+            // of itself, so that whatever profile is tried first, "as it was"
+            // is one click away — and it never sees the first-run choice of a
+            // template, which is for people starting from nothing.
+            if (from < 10 && Object.keys(saved).length > 0) {
+                merged.profilesOnboarded = true;
+                if (!merged.profiles.some((p) => p.id === BEFORE_PROFILES_ID)) {
+                    merged.profiles = [
+                        ...merged.profiles,
+                        beforeProfilesSnapshot(merged, getTodayString()),
+                    ];
+                }
             }
 
             return { settings: merged };
