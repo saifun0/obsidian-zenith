@@ -146,7 +146,7 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
 
     const addInput = (autoFocus: boolean) => (
         <input
-            className="zenith-subtask__input"
+            className="zenith-input zenith-input--sm zenith-subtask__input"
             value={addText}
             autoFocus={autoFocus}
             placeholder={t('tasks.subtask.placeholder')}
@@ -200,7 +200,7 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
                             />
                             {isEditing ? (
                                 <input
-                                    className="zenith-subtask__input"
+                                    className="zenith-input zenith-input--sm zenith-subtask__input"
                                     value={editText}
                                     autoFocus
                                     onChange={(e) => setEditText(e.target.value)}

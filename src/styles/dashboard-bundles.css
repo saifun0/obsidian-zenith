@@ -352,20 +352,6 @@
 .zenith-root input.zenith-bundle-inspector__name {
     flex: 1;
     min-width: 0;
-    height: 22px;
-    padding: 0 4px;
-    border: none;
-    border-bottom: 1px dashed var(--zenith-border);
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    color: var(--zenith-text-normal);
-    font-size: 0.72rem;
-}
-
-.zenith-root input.zenith-bundle-inspector__name:focus {
-    border-bottom-color: var(--zenith-accent);
-    box-shadow: none;
 }
 
 .zenith-bundle-inspector__member {

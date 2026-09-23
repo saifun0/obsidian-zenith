@@ -137,7 +137,7 @@ export const MetadataPicker: React.FC<MetadataPickerProps> = ({
                 <input
                     id={inputId}
                     type="text"
-                    className={`zenith-field__input ${canSearch ? 'zenith-picker__input' : ''}`}
+                    className={`zenith-input zenith-field__input ${canSearch ? 'zenith-picker__input' : ''}`}
                     placeholder={
                         placeholder ??
                         t(canSearch ? 'content.picker.placeholder' : 'content.form.titleLabel')

@@ -53,6 +53,7 @@ export const TaskChip: FC<TaskChipProps> = ({ entry, t, dim, compact, onOpen }) 
             ]
                 .filter(Boolean)
                 .join(' ')}
+            data-task={task.id}
             onClick={(e) => {
                 e.stopPropagation();
                 onOpen(entry);
@@ -65,9 +66,7 @@ export const TaskChip: FC<TaskChipProps> = ({ entry, t, dim, compact, onOpen }) 
             {/* The month grid has no hour rows, so the hour has to be written
                 out — otherwise "15:45" exists only in the week view. */}
             {entry.startMinutes !== undefined && (
-                <span className="zenith-tcal__chip-time">
-                    {formatMinutes(entry.startMinutes)}
-                </span>
+                <span className="zenith-tcal__chip-time">{formatMinutes(entry.startMinutes)}</span>
             )}
             <span className="zenith-tcal__chip-title">{task.title}</span>
             {overdueBy != null && overdueBy > 0 && (

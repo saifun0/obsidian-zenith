@@ -20,6 +20,7 @@ import { DEFAULT_PROGRESS_UNIT, statusForProgress, type ProgressValue } from '..
 import { openFileAtLine } from '../../../core/openInVault';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
 import { Modal } from '../../../components/shared/Modal';
+import { Dropdown } from '../../../components/ui/fields';
 import { StarRating } from '../../../components/shared/StarRating';
 import { ProgressControl } from './ProgressControl';
 
@@ -336,18 +337,14 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
                     )}
                     <div className="zenith-content-modal__cell">
                         <span className="zenith-content-modal__control-label">{t('content.form.status')}</span>
-                        <select
+                        <Dropdown
+                            size="sm"
                             className={`zenith-content-modal__status is-${status}`}
                             aria-label={t('content.form.status')}
                             value={status}
-                            onChange={(e) => void persistStatus(e.target.value as ContentStatus)}
-                        >
-                            {CONTENT_STATUSES.map((s) => (
-                                <option key={s} value={s}>
-                                    {t(STATUS_KEY[s])}
-                                </option>
-                            ))}
-                        </select>
+                            options={CONTENT_STATUSES.map((s) => ({ value: s, label: t(STATUS_KEY[s]) }))}
+                            onChange={(v) => void persistStatus(v as ContentStatus)}
+                        />
                     </div>
                     {shows('progress') && (
                         <div className="zenith-content-modal__cell zenith-content-modal__cell--progress">

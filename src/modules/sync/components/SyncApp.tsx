@@ -124,7 +124,7 @@ export const SyncApp: React.FC = () => {
                         <input
                             id="zenith-sync-name"
                             type="text"
-                            className="zenith-sync__input"
+                            className="zenith-input zenith-sync__input"
                             aria-label={t('sync.deviceName')}
                             value={nameDraft}
                             onChange={(e) => {

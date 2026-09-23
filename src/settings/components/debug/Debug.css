@@ -62,6 +62,14 @@
     color: var(--text-faint);
 }
 
+/* Where a specimen was taken from, after its class: quieter still, since it is
+   a pointer to the source rather than the thing being shown. */
+.zenith-debug__demo-source {
+    margin-left: 6px;
+    font-style: normal;
+    color: var(--text-muted);
+}
+
 .zenith-debug__demo-body {
     display: flex;
     flex-direction: column;
@@ -270,6 +278,75 @@
     text-align: right;
     word-break: break-word;
     min-width: 0;
+}
+
+/* ── Modals ──
+   Preview and Open sit at the end of the name, not on a line of their own:
+   they are what the row is for. */
+.zenith-debug__row-main .zenith-debug__row-actions {
+    margin-left: auto;
+}
+
+/* The frame a specimen stands in. Coloured like Obsidian's own scrim so the
+   dialog reads as a dialog, and it is the frame that scrolls: the specimen is
+   inert, and an inert scroller cannot be scrolled. */
+.zenith-debug__stage {
+    max-height: 560px;
+    overflow: auto;
+    padding: 20px;
+    border-radius: 8px;
+    background: var(--background-modifier-cover, rgba(0, 0, 0, 0.4));
+}
+
+.zenith-debug__stage-host {
+    display: flex;
+    justify-content: center;
+}
+
+/* An Obsidian modal's panel (or a suggester's `.prompt`), lifted out of its
+   fixed full-screen container. Everything that places it on the viewport is
+   undone — phone layouts pin it to the bottom edge, and some panels size
+   themselves in `vw` with `!important` — while its own width is left alone,
+   so a narrow dialog still looks narrow. */
+.zenith-debug__stage-host > * {
+    position: relative !important;
+    inset: auto !important;
+    transform: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    height: auto !important;
+    margin: 0 !important;
+    animation: none;
+}
+
+.zenith-debug__stage-error {
+    font-family: var(--font-monospace, monospace);
+    font-size: 0.78rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    color: var(--text-error);
+}
+
+/* ── Inputs ──
+   A field's ancestors, without what they bring as a surface. `.zenith-root`
+   is a view's scroller at full height, `.zenith-dialog` a centred flex scrim
+   and `.zenith-pop` a fixed panel; a specimen wants only the scope their
+   selectors key on, sitting in the flow of its box. */
+.zenith-debug__scope {
+    display: block;
+}
+
+.zenith-root.zenith-debug__scope {
+    height: auto;
+    overflow: visible;
+    background: transparent;
+}
+
+.zenith-pop.zenith-debug__pop {
+    position: relative;
+    z-index: auto;
+    box-shadow: none;
+    animation: none;
 }
 
 /* ── The About button that leads here ── */

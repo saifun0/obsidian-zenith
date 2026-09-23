@@ -1,4 +1,4 @@
-import { Modal, Notice, Platform, normalizePath, type App } from 'obsidian';
+import { Modal, Notice, Platform, normalizePath, setIcon, type App } from 'obsidian';
 import type ZenithPlugin from '../main';
 
 /**
@@ -137,24 +137,24 @@ export class MobileCheckModal extends Modal {
         list.empty();
 
         for (const r of results) {
-            const row = list.createDiv();
-            row.style.padding = '8px 0';
-            row.style.borderBottom = '1px solid var(--background-modifier-border)';
+            const row = list.createDiv({ cls: 'zenith-devcheck__row' });
 
-            const head = row.createDiv();
-            head.style.display = 'flex';
-            head.style.gap = '8px';
-            head.createSpan({ text: r.ok ? '✅' : '❌' });
+            const head = row.createDiv({ cls: 'zenith-devcheck__head' });
+            const mark = head.createSpan({
+                cls: `zenith-devcheck__mark ${r.ok ? 'is-ok' : 'is-fail'}`,
+                attr: { 'aria-label': r.ok ? 'OK' : 'Failed' },
+            });
+            setIcon(mark, r.ok ? 'circle-check' : 'circle-x');
             head.createSpan({ text: r.name });
 
-            const detail = row.createDiv({ text: r.detail, cls: 'setting-item-description' });
-            detail.style.paddingLeft = '26px';
-            detail.style.wordBreak = 'break-word';
+            row.createDiv({
+                text: r.detail,
+                cls: 'setting-item-description zenith-devcheck__detail',
+            });
         }
 
         const gate = results.find((r) => r.name.startsWith('new Function (CSP'));
-        const verdict = contentEl.createEl('p');
-        verdict.style.marginTop = '14px';
+        const verdict = contentEl.createEl('p', { cls: 'zenith-devcheck__verdict' });
         verdict.setText(
             gate?.ok
                 ? 'Verdict: third-party modules can run on this device.'

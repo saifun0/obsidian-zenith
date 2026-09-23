@@ -47,7 +47,8 @@ const EN: Dict = {
 
     // Settings — storage
     'settings.taskCapture': 'Capture into the daily note',
-    'settings.taskCapture.desc': 'New tasks go into today’s note. Off, they go to the tasks folder instead — both are always read.',
+    'settings.taskCapture.desc':
+        'New tasks go into today’s note. Off, they go to the tasks folder instead — both are always read.',
     'settings.tasksFolder': 'Tasks Folder',
     'settings.taskImages': 'Attached images',
     'settings.taskImageAlign': 'Image position',
@@ -127,13 +128,15 @@ const EN: Dict = {
     'settings.dashBgPath.desc': 'A picture in the vault. Works offline and syncs with it.',
     'settings.dashBgFit': 'Fit',
     'settings.dashBgDim': 'Dimming',
-    'settings.dashBgDim.desc': 'Black over the picture. Too little and the labels disappear into it.',
+    'settings.dashBgDim.desc':
+        'Black over the picture. Too little and the labels disappear into it.',
     'settings.dashBgBlur': 'Blur',
     'settings.dashCardOpacity': 'Card solidity',
     'settings.dashCardOpacity.desc':
         'How much of the picture the cards let through. A hundred is solid, and it shows only between them.',
     'settings.dashBgMobile': 'Show on phone',
-    'settings.dashBgMobile.desc': 'Off keeps a heavy picture off a metered, battery-powered device.',
+    'settings.dashBgMobile.desc':
+        'Off keeps a heavy picture off a metered, battery-powered device.',
     'settings.percentUnit': '%',
     'settings.pxUnit': 'px',
     'dashboard.bg.source.none': 'None',
@@ -233,7 +236,8 @@ const EN: Dict = {
     // Tasks calendar
     'settings.calendarGridGroup': 'Hour grid',
     'settings.calendarSlot': 'Default length',
-    'settings.calendarSlot.desc': 'For a task with a start but no end. Those blocks get a dashed edge.',
+    'settings.calendarSlot.desc':
+        'For a task with a start but no end. Those blocks get a dashed edge.',
     'settings.calendarWidgetGroup': 'Week ahead widget',
     'settings.calendarRowLabel': 'Row label',
     'settings.calendarRowLabel.countdown': 'Time left',
@@ -383,7 +387,8 @@ const EN: Dict = {
     'scaffold.title': 'Set up vault structure',
     'scaffold.intro': 'This creates the following folders at the vault root, each with its icon:',
     'scaffold.willArchive.one': '{count} existing top-level item will be moved into “50 Archive”.',
-    'scaffold.willArchive.other': '{count} existing top-level items will be moved into “50 Archive”.',
+    'scaffold.willArchive.other':
+        '{count} existing top-level items will be moved into “50 Archive”.',
     'scaffold.willArchive.desc':
         'Nothing is deleted — items are moved into a dated subfolder, and internal links are updated.',
     'scaffold.empty': 'Your vault is empty — no existing files will be moved.',
@@ -418,9 +423,12 @@ const EN: Dict = {
 
     // ── Debug tools ─────────────────────────────────
     'settings.about.debug': 'Debug tools',
-    'settings.about.debug.desc': 'Every control, the store, the module registry and the dictionary.',
+    'settings.about.debug.desc':
+        'Every control, the store, the module registry and the dictionary.',
     'debug.title': 'Debug tools',
     'debug.tab.components': 'Components',
+    'debug.tab.modals': 'Modals',
+    'debug.tab.inputs': 'Inputs',
     'debug.tab.state': 'State',
     'debug.tab.modules': 'Modules',
     'debug.tab.strings': 'Strings',
@@ -477,6 +485,70 @@ const EN: Dict = {
     'debug.strings.noChunks': 'No module has contributed any strings.',
     'debug.strings.gaps': 'Keys missing a language',
     'debug.strings.noGaps': 'Every contributed key answers in both languages.',
+
+    'debug.modals.intro':
+        'Preview draws a dialog here as a picture: nothing in it can be clicked, so nothing in it can act. Open shows the real one, whether or not its module is switched on — and there every button does what it says.',
+    'debug.modals.preview': 'Preview',
+    'debug.modals.hide': 'Hide',
+    'debug.modals.open': 'Open',
+    'debug.modals.core': 'Zenith core',
+    'debug.modals.writes': 'changes data',
+    'debug.modals.sample': 'sample data',
+    'debug.modals.moduleOff': 'module off',
+    'debug.modals.result': 'Answer from {name}: {value}',
+    'debug.modals.failed': 'Could not open: {error}',
+    'debug.modals.desc.prompt':
+        'Asks for one line of text: a layout preset name, a task for a project, a link to attach.',
+    'debug.modals.desc.iconPicker':
+        'Every icon Zenith can draw. Opened from folder icons, projects, content types and journal trackers.',
+    'debug.modals.desc.imagePicker':
+        'Pictures in the vault, newest first. Opened from picture settings and image fields.',
+    'debug.modals.desc.consent':
+        'Asked before a third-party module runs for the first time. Shown here for a module that does not exist.',
+    'debug.modals.desc.scaffold':
+        'Creates the vault folder structure and moves everything at the top level into the archive.',
+    'debug.modals.desc.mobileCheck':
+        'Checks whether modules can load on this device. Writes and removes a probe file in the plugin folder as it runs — the preview too.',
+    'debug.modals.desc.quickAddTask':
+        'Captures a task from the command palette without opening the tasks view.',
+    'debug.modals.desc.taskEditor': 'The full task editor, as the tasks view opens it for a new task.',
+    'debug.modals.desc.subtaskEditor': 'Time, timer, notes and attachments of one subtask.',
+    'debug.modals.desc.lightbox': 'An attached picture at full size — here, the newest one in the vault.',
+    'debug.modals.desc.contentDetail':
+        'One library item: poster, metadata, rating, status and progress.',
+    'debug.modals.desc.contentForm': 'Adding an item to the library.',
+    'debug.modals.desc.contentImport':
+        'Importing a library exported from MyAnimeList, Goodreads or Letterboxd.',
+    'debug.modals.desc.projectForm': 'Creating a project.',
+    'debug.modals.desc.prayer':
+        'The full prayer tracker, as the widget, the launcher and the command open it.',
+    'debug.modals.desc.syncQuick': 'Vault sync: where it stands, and a run on request.',
+    'debug.modals.desc.mediaPicker': 'The banner image above the file explorer.',
+    'debug.modals.desc.weather': 'The weather card in full, as a click on the card opens it.',
+
+    'debug.inputs.intro':
+        'Every field Zenith draws. First the kit itself — none of it a native control, so it looks the same on every platform — then the kit where it is used, grouped by the stylesheet around it. The label names the class or component; the name after it is where the field was taken from. Values here are the page’s own and go nowhere — only a button that acts in the vault by itself, like “Create folder”, still does what it says.',
+    'debug.inputs.kit': 'The field kit',
+    'debug.inputs.settings': 'Settings fields',
+    'debug.inputs.dialog': 'Dialog forms',
+    'debug.inputs.search': 'Search and filters',
+    'debug.inputs.inline': 'Edited in place',
+    'debug.inputs.obsidian': 'Inside Obsidian dialogs',
+
+    // ── Form controls ───────────────────────────────
+    'fields.date.placeholder': 'Pick a date',
+    'fields.date.today': 'Today',
+    'fields.date.prevMonth': 'Previous month',
+    'fields.date.nextMonth': 'Next month',
+    'fields.time.pick': 'Pick a time',
+    'fields.time.hours': 'Hours',
+    'fields.time.minutes': 'Minutes',
+    'fields.color.pick': 'Pick a colour',
+    'fields.color.hex': 'Colour code',
+    'fields.color.area': 'Saturation and brightness',
+    'fields.color.hue': 'Hue',
+    'fields.color.eyedropper': 'Pick a colour from the screen',
+    'fields.select.placeholder': 'Choose…',
 
     // ── Labels a screen reader reads out ────────────
     'a11y.changeIcon': 'Change icon',
@@ -536,7 +608,8 @@ const EN: Dict = {
     'settings.about.version': 'Version',
     'settings.about.minApp': 'Min. Obsidian',
     'settings.about.modules': 'Built-in modules',
-    'settings.about.note': 'Your data stays as plain Markdown in your vault — Zenith never uses a hidden database.',
+    'settings.about.note':
+        'Your data stays as plain Markdown in your vault — Zenith never uses a hidden database.',
 
     // ── Common ──────────────────────────────────────
     'common.items.one': '{count} item',
@@ -741,7 +814,8 @@ const EN: Dict = {
     'dashboard.grid.stackedHint': 'This pane is too narrow for a grid — widgets are in one column',
     'dashboard.grid.rowHeightHint': 'Height of one grid row — every widget is a multiple of this',
     'dashboard.grid.gapHint': 'Space between cards',
-    'dashboard.grid.canvasHint': 'How wide the dashboard may get — “Full” runs to the edges of the pane',
+    'dashboard.grid.canvasHint':
+        'How wide the dashboard may get — “Full” runs to the edges of the pane',
     'dashboard.widgets': 'Widgets',
     'dashboard.widgets.available': '{count} available',
     'dashboard.widgets.allAdded': 'all added',
@@ -879,7 +953,8 @@ const EN: Dict = {
     'prayer.notEntered': "Hasn't come in yet",
     'prayer.markHint': 'Click to mark · right-click for more',
     'prayer.noPlace': 'Choose where you are',
-    'prayer.noPlaceHint': 'Prayer times need coordinates. Set a place in settings, or use your device.',
+    'prayer.noPlaceHint':
+        'Prayer times need coordinates. Set a place in settings, or use your device.',
     'prayer.useDevice': 'Use my location',
     'prayer.locating': 'Asking your device…',
     'prayer.denied': "Your device wouldn't say. Pick a city in settings instead.",
@@ -921,12 +996,15 @@ const EN: Dict = {
     'dashboard.bundle.namePlaceholder': 'name (optional)',
     'dashboard.bundle.mergeHint': 'Bundle these together',
     'dashboard.bundle.mergeSizeHint': "{name} has no {size} size — it'll show compact",
-    'dashboard.bundle.compact': '{name} has no {size} size — resize the bundle, or give it its own cell',
+    'dashboard.bundle.compact':
+        '{name} has no {size} size — resize the bundle, or give it its own cell',
     'dashboard.bundle.dissolved': 'Zenith: bundle dissolved — one widget left.',
 
     // ── Tasks ───────────────────────────────────────
     'tasks.title': 'Tasks',
     'tasks.addTask': 'Add task',
+    'tasks.quickAdd.title': 'Quick add task',
+    'tasks.quickAdd.tagsPlaceholder': 'work, urgent',
     'tasks.openTasks': 'Open tasks',
     'tasks.openCalendar': 'Open the tasks calendar',
     'tasks.searchPlaceholder': 'Search tasks…',
@@ -1102,14 +1180,16 @@ const EN: Dict = {
     'content.bulk.none': 'Clear selection',
     'content.bulk.setStatus': 'Set status…',
     'content.bulk.deleteConfirm.one': 'Delete {count} item? The notes move to your vault’s trash.',
-    'content.bulk.deleteConfirm.other': 'Delete {count} items? The notes move to your vault’s trash.',
+    'content.bulk.deleteConfirm.other':
+        'Delete {count} items? The notes move to your vault’s trash.',
     'content.form.duplicateExact': 'Already in your library:',
     'content.form.duplicateSimilar': 'Something similar is already here:',
     'content.import.title': 'Import a library',
     'content.import.intro':
         'Bring your list across from MyAnimeList (XML), Goodreads or Letterboxd (CSV). Export from the service, then pick the file here.',
     'content.import.choose': 'Choose an export file…',
-    'content.import.unrecognised': 'This doesn’t look like a MyAnimeList, Goodreads or Letterboxd export.',
+    'content.import.unrecognised':
+        'This doesn’t look like a MyAnimeList, Goodreads or Letterboxd export.',
     'content.import.unreadable': 'Couldn’t read that file.',
     'content.import.found.one': '{count} entry',
     'content.import.found.other': '{count} entries',
@@ -1200,7 +1280,8 @@ const EN: Dict = {
     'tasks.stats.byTag': 'By tag',
     'tasks.stats.activity': 'Activity (last year)',
     'settings.cacheCovers': 'Store cover art in the vault',
-    'settings.cacheCovers.desc': 'Downloaded rather than linked, so the library survives offline and a dead CDN.',
+    'settings.cacheCovers.desc':
+        'Downloaded rather than linked, so the library survives offline and a dead CDN.',
     'settings.contentTypes': 'Content types',
     'clock.prevMonth': 'Previous month',
     'clock.nextMonth': 'Next month',
@@ -1324,6 +1405,7 @@ const EN: Dict = {
     'calendar.prev': 'Previous',
     'calendar.next': 'Next',
     'calendar.today': 'Back to today',
+    'calendar.columns': 'Days across the grid',
     'calendar.weekTitle': 'W{week} · {month}',
     'calendar.options': 'Options',
     'calendar.option.hideDone': 'Hide done & cancelled',
@@ -1422,10 +1504,13 @@ const EN: Dict = {
     'sync.lastPull': 'Last received',
     'sync.never': 'never',
     'sync.peers': 'Other devices',
-    'sync.peers.empty': 'No other device has published yet. Open Zenith on another device to see it here.',
+    'sync.peers.empty':
+        'No other device has published yet. Open Zenith on another device to see it here.',
     'sync.peers.lastSeen': 'last seen {when}',
-    'sync.result.alone': 'Settings published. No other device has checked in yet, so there was nothing to merge.',
-    'sync.result.agreed': 'Settings published. Your other devices already agree — nothing to change.',
+    'sync.result.alone':
+        'Settings published. No other device has checked in yet, so there was nothing to merge.',
+    'sync.result.agreed':
+        'Settings published. Your other devices already agree — nothing to change.',
     'sync.result.received.one': 'Merged {count} setting from your other devices.',
     'sync.result.received.other': 'Merged {count} settings from your other devices.',
     'sync.syncNow': 'Sync settings',
@@ -1462,10 +1547,14 @@ const EN: Dict = {
     'sync.undone': 'Change undone.',
     'sync.auto.held': 'Sync is waiting for you',
     'sync.auto.held.open': 'Open sync',
-    'sync.auto.held.first_run_requires_review': 'Nothing has been synced against this server yet, so the first run — {count} files — is for you to look over.',
-    'sync.auto.held.too_many_changes': 'This run would delete more than the safety limit allows. {count} changes are waiting.',
-    'sync.auto.held.forced_overwrite': 'A forced overwrite is waiting to be confirmed. {count} changes are waiting.',
-    'sync.auto.held.conflict_discards_a_version': 'A file changed in two places, and your conflict rule would throw one version away. {count} changes are waiting.',
+    'sync.auto.held.first_run_requires_review':
+        'Nothing has been synced against this server yet, so the first run — {count} files — is for you to look over.',
+    'sync.auto.held.too_many_changes':
+        'This run would delete more than the safety limit allows. {count} changes are waiting.',
+    'sync.auto.held.forced_overwrite':
+        'A forced overwrite is waiting to be confirmed. {count} changes are waiting.',
+    'sync.auto.held.conflict_discards_a_version':
+        'A file changed in two places, and your conflict rule would throw one version away. {count} changes are waiting.',
     'sync.quick.title': 'Vault sync',
     'sync.quick.lastRun': 'Last synced',
     'sync.quick.willMove': '{count} to transfer',
@@ -1498,7 +1587,8 @@ const EN: Dict = {
     'sync.time.days.other': '{count} days ago',
     // Sync — conflict inbox
     'inbox.title': 'Leftover conflict copies',
-    'inbox.desc': 'Second files left behind by a sync tool that could not reconcile a note. Nothing else lists these.',
+    'inbox.desc':
+        'Second files left behind by a sync tool that could not reconcile a note. Nothing else lists these.',
     'inbox.empty': 'None found.',
     'inbox.rescan': 'Scan again',
     'inbox.reconcile': 'Reconcile',
@@ -1509,10 +1599,12 @@ const EN: Dict = {
     'inbox.reconciled': 'Merged into {name}.',
     'inbox.keptOriginal': 'Copy discarded; {name} left as it was.',
     'inbox.keptCopy': 'The copy is now {name}.',
-    'inbox.unmergeable.prose_diverged': 'Both versions have different writing in them, so nothing was changed — open them and decide.',
+    'inbox.unmergeable.prose_diverged':
+        'Both versions have different writing in them, so nothing was changed — open them and decide.',
     'inbox.unmergeable.not_markdown': 'Not a note this can reconcile.',
     'inbox.unmergeable.not_canvas': 'One of the two canvases would not open, so both were kept.',
-    'inbox.unmergeable.the original is gone': 'The original is gone, so there is nothing to merge into.',
+    'inbox.unmergeable.the original is gone':
+        'The original is gone, so there is nothing to merge into.',
     'inbox.source.zenith': 'left by Zenith',
     'inbox.source.remotely-save': 'left by Remotely Save',
     'inbox.source.syncthing': 'left by Syncthing',
@@ -1525,34 +1617,42 @@ const EN: Dict = {
     'sync.settings.openTab': 'Open in a tab',
     'sync.settings.openTab.desc': 'The same page, beside your notes rather than in this dialog.',
     'sync.settings.filesGroup': 'Note storage',
-    'sync.settings.filesGroup.desc': 'Sync the vault itself to storage you control. Separate from settings sync, and off until you ask for it.',
+    'sync.settings.filesGroup.desc':
+        'Sync the vault itself to storage you control. Separate from settings sync, and off until you ask for it.',
     'sync.settings.auto': 'Keep it synced by itself',
-    'sync.settings.auto.desc': 'Runs on a timer, when you come back to the window, and shortly after you stop editing.',
-    'sync.settings.auto.note': 'A run that would delete more than the safety limit allows, or that is the first against this server, still stops and waits for you to look at it.',
+    'sync.settings.auto.desc':
+        'Runs on a timer, when you come back to the window, and shortly after you stop editing.',
+    'sync.settings.auto.note':
+        'A run that would delete more than the safety limit allows, or that is the first against this server, still stops and waits for you to look at it.',
     'sync.settings.autoInterval': 'Check the server every',
     'sync.settings.minutesUnit': 'min',
     'sync.settings.files': 'Sync note files',
-    'sync.settings.files.note': 'If another sync tool already covers this vault, leave this off — two engines on the same files will fight.',
+    'sync.settings.files.note':
+        'If another sync tool already covers this vault, leave this off — two engines on the same files will fight.',
     'sync.settings.kind': 'Backend',
     'sync.settings.kind.dropbox': 'Dropbox',
     'sync.settings.kind.onedrive': 'OneDrive',
     'sync.settings.dropboxClientId': 'Dropbox app key',
-    'sync.settings.dropboxClientId.desc': 'The app key from an app you create at dropbox.com/developers — scoped access, app folder or full Dropbox. Grant it account_info.read, files.metadata.read, files.content.read and files.content.write.',
+    'sync.settings.dropboxClientId.desc':
+        'The app key from an app you create at dropbox.com/developers — scoped access, app folder or full Dropbox. Grant it account_info.read, files.metadata.read, files.content.read and files.content.write.',
     'sync.settings.onedriveClientId': 'Application (client) ID',
-    'sync.settings.onedriveClientId.desc': 'From an app registration in the Azure portal. Register it as a public client and allow the device code flow.',
+    'sync.settings.onedriveClientId.desc':
+        'From an app registration in the Azure portal. Register it as a public client and allow the device code flow.',
     'sync.settings.dropboxClientId.optional':
         'Leave empty to use the app Zenith ships with. To use your own instead: create one at dropbox.com/developers with scoped access, add obsidian://zenith-dropbox to its redirect URIs, and grant it account_info.read, files.metadata.read, files.content.read and files.content.write.',
     'sync.settings.onedriveClientId.optional':
         'Leave empty to use the app Zenith ships with. To use your own instead: register one in the Azure portal as a public client, and allow the device code flow.',
     'sync.settings.ownApp.optional':
         'Your own registration gets you your own rate limits and your own name on the consent screen, and leaves you unaffected if the shipped app is ever throttled. Changing an app’s permissions later does not change an authorization already granted: disconnect and connect again after you do.',
-    'sync.settings.ownApp.note': 'Your own registration, not one shipped with Zenith — a plugin cannot distribute someone else’s app identity. Changing an app’s permissions later does not change an authorization already granted: disconnect and connect again after you do.',
+    'sync.settings.ownApp.note':
+        'Your own registration, not one shipped with Zenith — a plugin cannot distribute someone else’s app identity. Changing an app’s permissions later does not change an authorization already granted: disconnect and connect again after you do.',
     'sync.settings.oauthFolder': 'Folder in the account',
     'auth.connect': 'Connect',
     'auth.connected': 'This device is connected.',
     'auth.disconnect': 'Disconnect this device',
     'auth.needClientId': 'Enter the app id in settings first.',
-    'auth.redirect.waiting': 'Approve it in the browser — Dropbox hands it straight back to Obsidian.',
+    'auth.redirect.waiting':
+        'Approve it in the browser — Dropbox hands it straight back to Obsidian.',
     'auth.redirect.stuck': 'The browser did not bring me back',
     'auth.cancel': 'Cancel',
     'auth.paste': 'Authorization code',
@@ -1561,28 +1661,34 @@ const EN: Dict = {
     'auth.expired': 'The code expired before it was approved. Try again.',
     'auth.device.instructions': 'Open the page below and enter this code:',
     'auth.device.waiting': 'Waiting for you to approve it…',
-    'sync.settings.kind.desc': 'Dropbox and OneDrive authorize in the browser. S3 also covers MinIO, B2, R2 and Wasabi.',
+    'sync.settings.kind.desc':
+        'Dropbox and OneDrive authorize in the browser. S3 also covers MinIO, B2, R2 and Wasabi.',
     'sync.settings.server': 'Server',
-    'sync.settings.server.desc': 'Where the vault goes. Only the fields for the backend you pick are shown.',
+    'sync.settings.server.desc':
+        'Where the vault goes. Only the fields for the backend you pick are shown.',
     'sync.settings.kind.webdav': 'WebDAV',
     'sync.settings.kind.s3': 'S3',
     'sync.settings.s3Endpoint': 'Endpoint',
     'sync.settings.s3Endpoint.desc': 'The service address, without the bucket name.',
     'sync.settings.s3Bucket': 'Bucket',
     'sync.settings.s3Region': 'Region',
-    'sync.settings.s3Region.desc': 'Left empty this becomes us-east-1, which servers that ignore the region still accept.',
+    'sync.settings.s3Region.desc':
+        'Left empty this becomes us-east-1, which servers that ignore the region still accept.',
     'sync.settings.s3Access': 'Access key ID',
     'sync.settings.s3Secret': 'Secret access key',
     'sync.settings.s3Prefix': 'Folder in the bucket',
     'sync.settings.s3PathStyle': 'Path-style addressing',
-    'sync.settings.s3PathStyle.desc': 'Send requests to endpoint/bucket rather than bucket.endpoint. Needed by almost every S3-compatible server that is not AWS.',
+    'sync.settings.s3PathStyle.desc':
+        'Send requests to endpoint/bucket rather than bucket.endpoint. Needed by almost every S3-compatible server that is not AWS.',
     'sync.settings.url': 'Server address',
     'sync.settings.url.desc': 'The WebDAV endpoint, without a trailing slash.',
     'sync.settings.user': 'Username',
     'sync.settings.password': 'Password',
-    'sync.settings.password.note': 'Stored in plain text in this plugin’s data file, like every Obsidian plugin credential — the app gives plugins no keychain. Use an app password rather than your main one.',
+    'sync.settings.password.note':
+        'Stored in plain text in this plugin’s data file, like every Obsidian plugin credential — the app gives plugins no keychain. Use an app password rather than your main one.',
     'sync.settings.remoteDir': 'Folder on the server',
-    'sync.settings.remoteDir.desc': 'Where this vault lives on the server. Created on the first upload.',
+    'sync.settings.remoteDir.desc':
+        'Where this vault lives on the server. Created on the first upload.',
     'sync.settings.encryption': 'Encryption',
     'sync.settings.encrypt': 'Encrypt everything before it is uploaded',
     'sync.settings.encrypt.desc':
@@ -1600,21 +1706,27 @@ const EN: Dict = {
     'sync.settings.localRoot': 'Folder to sync',
     'sync.settings.includeConfig': 'Carry Obsidian settings too',
     'sync.settings.includeConfig.desc': 'Themes, other plugins and workspace layout.',
-    'sync.settings.includeConfig.note': 'Zenith’s own settings are never carried this way — the settings merge above owns them.',
+    'sync.settings.includeConfig.note':
+        'Zenith’s own settings are never carried this way — the settings merge above owns them.',
     'sync.settings.safety': 'Safety',
-    'sync.settings.safety.desc': 'This engine can delete files. These decide what it refuses to do without asking.',
+    'sync.settings.safety.desc':
+        'This engine can delete files. These decide what it refuses to do without asking.',
     'sync.settings.conflict': 'When a file changed on both sides',
-    'sync.settings.conflict.desc': 'Reconcile and Keep both never discard a version. Newer and Larger do.',
+    'sync.settings.conflict.desc':
+        'Reconcile and Keep both never discard a version. Newer and Larger do.',
     'sync.settings.conflict.smart': 'Reconcile',
     'sync.settings.conflict.newer': 'Newer',
     'sync.settings.conflict.larger': 'Larger',
     'sync.settings.conflict.both': 'Keep both',
-    'sync.settings.conflict.note': 'Newer and Larger throw one of the two versions away, so an automatic run that hits a conflict stops and asks instead. Reconcile and Keep both never discard anything and go through unattended.',
+    'sync.settings.conflict.note':
+        'Newer and Larger throw one of the two versions away, so an automatic run that hits a conflict stops and asks instead. Reconcile and Keep both never discard anything and go through unattended.',
     'sync.settings.protect': 'Refuse to delete more than',
-    'sync.settings.protect.desc': 'A run that would remove more than this share of known files stops and asks first.',
+    'sync.settings.protect.desc':
+        'A run that would remove more than this share of known files stops and asks first.',
     'sync.settings.percentUnit': '%',
     'sync.settings.maxFile': 'Skip files larger than',
-    'sync.settings.maxFile.desc': '0 means no limit. Skipped files are left untouched on both sides.',
+    'sync.settings.maxFile.desc':
+        '0 means no limit. Skipped files are left untouched on both sides.',
     'sync.settings.mbUnit': 'MB',
     'sync.settings.concurrency': 'Parallel transfers',
     'sync.settings.concurrency.desc': 'Lower this if the server rejects requests.',
@@ -1624,7 +1736,8 @@ const EN: Dict = {
     'sync.files.off': 'File sync is switched off. Turn it on in settings to set up a server.',
     'sync.files.notConfigured': 'No server configured yet.',
     'sync.files.syncNow': 'Sync now',
-    'sync.files.autoOn': 'Runs by itself — every {minutes} min, when you come back to the window, and after you stop editing.',
+    'sync.files.autoOn':
+        'Runs by itself — every {minutes} min, when you come back to the window, and after you stop editing.',
     'sync.files.autoOff': 'Automatic sync is off, so files move only when you press this.',
     'sync.files.test': 'Test connection',
     'sync.files.testOk': 'The server answered.',
@@ -1637,17 +1750,24 @@ const EN: Dict = {
     'sync.files.working': 'Working…',
     'sync.files.progress': '{done} of {total}',
     'sync.files.nothing': 'Nothing to do — both sides already agree.',
-    'sync.files.summary': 'Up {push} · down {pull} · delete here {deleteLocal} · delete there {deleteRemote} · conflicts {conflict}',
+    'sync.files.summary':
+        'Up {push} · down {pull} · delete here {deleteLocal} · delete there {deleteRemote} · conflicts {conflict}',
     'sync.files.skipped': '{count} skipped',
     'sync.files.force': 'Force',
-    'sync.files.force.desc': 'For when the two sides have drifted too far to reconcile, or one of them is simply the one you want. Both show you the full list first, including what would be deleted; nothing moves until you confirm it.',
+    'sync.files.force.desc':
+        'For when the two sides have drifted too far to reconcile, or one of them is simply the one you want. Both show you the full list first, including what would be deleted; nothing moves until you confirm it.',
     'sync.files.force.push': 'Send everything up',
-    'sync.files.force.push.hint': 'Make the server match this device: upload every file, and remove from the server anything this device does not have.',
+    'sync.files.force.push.hint':
+        'Make the server match this device: upload every file, and remove from the server anything this device does not have.',
     'sync.files.force.pull': 'Take everything down',
-    'sync.files.force.pull.hint': 'Make this device match the server: download every file, and remove from this device anything the server does not have.',
-    'sync.files.blocked.forced_overwrite': 'You asked for one side to overwrite the other, so this is every file it would touch — {actionable} of {known}. Read the deletions before you allow it.',
-    'sync.files.blocked.first_run_requires_review': 'Nothing has been synced against this server yet, so this first run is shown for review before anything moves.',
-    'sync.files.blocked.too_many_changes': 'This run would delete {actionable} of {known} known files, over the {limit}% limit. Read the list before allowing it.',
+    'sync.files.force.pull.hint':
+        'Make this device match the server: download every file, and remove from this device anything the server does not have.',
+    'sync.files.blocked.forced_overwrite':
+        'You asked for one side to overwrite the other, so this is every file it would touch — {actionable} of {known}. Read the deletions before you allow it.',
+    'sync.files.blocked.first_run_requires_review':
+        'Nothing has been synced against this server yet, so this first run is shown for review before anything moves.',
+    'sync.files.blocked.too_many_changes':
+        'This run would delete {actionable} of {known} known files, over the {limit}% limit. Read the list before allowing it.',
     'sync.files.lastRun': 'Last run',
     'sync.files.applied': '{count} applied',
     'sync.files.failedCount': '{count} failed',
@@ -1670,13 +1790,16 @@ const EN: Dict = {
     'sync.decision.skipped_too_large': 'skipped, too large',
     'sync.decision.skipped_excluded': 'skipped, out of scope',
     'sync.settings.enabled': 'Sync settings between devices',
-    'sync.settings.enabled.desc': 'Merges settings field by field instead of letting the last device to save overwrite everything.',
+    'sync.settings.enabled.desc':
+        'Merges settings field by field instead of letting the last device to save overwrite everything.',
     'sync.settings.pollSeconds': 'Check for changes every',
-    'sync.settings.pollSeconds.desc': 'How often to look at the other devices. Also checked whenever the window regains focus.',
+    'sync.settings.pollSeconds.desc':
+        'How often to look at the other devices. Also checked whenever the window regains focus.',
     'sync.settings.deviceGroup': 'This device',
     'sync.settings.whatSyncs': 'What travels',
     'sync.settings.open': 'Open sync',
-    'sync.settings.whatSyncs.desc': 'Folders, trackers, content types, location, prayer and weather preferences, installed modules and the running timer. Layout, density, active modules and where you left off stay on each device.',
+    'sync.settings.whatSyncs.desc':
+        'Folders, trackers, content types, location, prayer and weather preferences, installed modules and the running timer. Layout, density, active modules and where you left off stay on each device.',
 };
 
 const RU: Dict = {
@@ -1706,7 +1829,8 @@ const RU: Dict = {
         'Место один раз на весь плагин — его читают и погода, и намаз. Вводить можно на любом языке. Пусто — спросим устройство.',
 
     'settings.taskCapture': 'Писать в ежедневную заметку',
-    'settings.taskCapture.desc': 'Новые задачи попадают в заметку сегодняшнего дня. Если выключить — в папку задач; читаются в любом случае обе.',
+    'settings.taskCapture.desc':
+        'Новые задачи попадают в заметку сегодняшнего дня. Если выключить — в папку задач; читаются в любом случае обе.',
     'settings.tasksFolder': 'Папка задач',
     'settings.taskImages': 'Вложенные картинки',
     'settings.taskImageAlign': 'Положение картинок',
@@ -1743,8 +1867,7 @@ const RU: Dict = {
     'settings.place.people': '{count} жителей',
     'settings.place.detect': 'Определить',
     'settings.place.locating': 'Спрашиваем устройство…',
-    'settings.place.denied':
-        'Устройство не сообщило местоположение. Найдите город вручную.',
+    'settings.place.denied': 'Устройство не сообщило местоположение. Найдите город вручную.',
     'settings.place.auto': 'Автоматически',
     'settings.place.clear': 'Определять автоматически',
     'settings.place.here': 'Текущее место',
@@ -1824,7 +1947,8 @@ const RU: Dict = {
     'settings.dashHeading.greeting': 'Приветствие',
     'settings.dashHeading.custom': 'Свой',
     'settings.dashHeadingText': 'Ваш заголовок',
-    'settings.dashHeadingText.desc': 'Если оставить пустым, дашборд откроется вообще без заголовка.',
+    'settings.dashHeadingText.desc':
+        'Если оставить пустым, дашборд откроется вообще без заголовка.',
     'settings.dashDate': 'Сегодняшняя дата',
 
     // Намаз
@@ -1851,7 +1975,8 @@ const RU: Dict = {
     'settings.prayerIshaAngle': 'Угол иши',
     'settings.prayerIshaAngle.desc': 'Насколько солнце ниже горизонта во время иши.',
     'settings.prayerAsr': 'Аср',
-    'settings.prayerAsr.desc': 'Длина тени, с которой начинается аср: своя длина предмета или двойная.',
+    'settings.prayerAsr.desc':
+        'Длина тени, с которой начинается аср: своя длина предмета или двойная.',
     'settings.prayerHighLat': 'Высокие широты',
     'settings.prayerHighLat.desc':
         'Что делать летом, когда солнце не опускается достаточно низко и фаджр с ишей не наступают.',
@@ -1889,7 +2014,8 @@ const RU: Dict = {
     // Календарь задач
     'settings.calendarGridGroup': 'Сетка часов',
     'settings.calendarSlot': 'Длительность по умолчанию',
-    'settings.calendarSlot.desc': 'Для задачи с началом, но без конца. У таких блоков пунктирный край.',
+    'settings.calendarSlot.desc':
+        'Для задачи с началом, но без конца. У таких блоков пунктирный край.',
     'settings.calendarWidgetGroup': 'Виджет «Неделя вперёд»',
     'settings.calendarRowLabel': 'Подпись строки',
     'settings.calendarRowLabel.countdown': 'Сколько осталось',
@@ -1935,13 +2061,15 @@ const RU: Dict = {
     'modules.working': 'Загружаем…',
     'modules.failed': 'Не удалось установить.',
     'modules.update': 'Обновить',
-    'modules.update.paste': 'У вставленного модуля нет источника для обновления — вставьте новую версию.',
+    'modules.update.paste':
+        'У вставленного модуля нет источника для обновления — вставьте новую версию.',
     'modules.uninstall': 'Удалить',
     'modules.confirmUninstall': 'Удалить «{name}»? Файлы модуля будут стёрты.',
     'modules.notSandboxed': 'Без изоляции',
     'modules.origin.vault': 'хранилище: {path}',
     'modules.origin.paste': 'вставлено вами',
-    'modules.startFailed': 'Zenith: модуль «{id}» не запустился. Подробности — в его строке настроек.',
+    'modules.startFailed':
+        'Zenith: модуль «{id}» не запустился. Подробности — в его строке настроек.',
 
     // Почему найденный модуль не работает. Показывается в его строке настроек.
     'modules.problem.badJson': 'manifest.json — не валидный JSON ({error}).',
@@ -2038,9 +2166,12 @@ const RU: Dict = {
     // ── Структура хранилища ─────────────────────────
     'scaffold.title': 'Создать структуру хранилища',
     'scaffold.intro': 'В корне хранилища будут созданы эти папки, каждая со своей иконкой:',
-    'scaffold.willArchive.one': '{count} существующий элемент верхнего уровня переедет в «50 Archive».',
-    'scaffold.willArchive.few': '{count} существующих элемента верхнего уровня переедут в «50 Archive».',
-    'scaffold.willArchive.many': '{count} существующих элементов верхнего уровня переедут в «50 Archive».',
+    'scaffold.willArchive.one':
+        '{count} существующий элемент верхнего уровня переедет в «50 Archive».',
+    'scaffold.willArchive.few':
+        '{count} существующих элемента верхнего уровня переедут в «50 Archive».',
+    'scaffold.willArchive.many':
+        '{count} существующих элементов верхнего уровня переедут в «50 Archive».',
     'scaffold.willArchive.desc':
         'Ничего не удаляется — элементы переносятся в подпапку с датой, внутренние ссылки обновляются.',
     'scaffold.empty': 'Хранилище пустое — переносить нечего.',
@@ -2081,6 +2212,8 @@ const RU: Dict = {
     'settings.about.debug.desc': 'Все контролы, состояние, реестр модулей и словарь.',
     'debug.title': 'Инструменты отладки',
     'debug.tab.components': 'Компоненты',
+    'debug.tab.modals': 'Модалки',
+    'debug.tab.inputs': 'Инпуты',
     'debug.tab.state': 'Состояние',
     'debug.tab.modules': 'Модули',
     'debug.tab.strings': 'Строки',
@@ -2138,6 +2271,72 @@ const RU: Dict = {
     'debug.strings.noChunks': 'Ни один модуль не добавил строк.',
     'debug.strings.gaps': 'Ключи без одного из языков',
     'debug.strings.noGaps': 'Все добавленные ключи отвечают на обоих языках.',
+
+    'debug.modals.intro':
+        '«Превью» рисует окно прямо здесь, как картинку: в нём ничего нельзя нажать, поэтому ничего и не сработает. «Открыть» показывает настоящее окно, даже если его модуль выключен, — и там каждая кнопка делает то, что на ней написано.',
+    'debug.modals.preview': 'Превью',
+    'debug.modals.hide': 'Скрыть',
+    'debug.modals.open': 'Открыть',
+    'debug.modals.core': 'Ядро Zenith',
+    'debug.modals.writes': 'меняет данные',
+    'debug.modals.sample': 'пример данных',
+    'debug.modals.moduleOff': 'модуль выключен',
+    'debug.modals.result': 'Ответ {name}: {value}',
+    'debug.modals.failed': 'Не открылось: {error}',
+    'debug.modals.desc.prompt':
+        'Просит одну строку текста: имя пресета раскладки, задачу для проекта, ссылку для вложения.',
+    'debug.modals.desc.iconPicker':
+        'Все иконки, которые умеет рисовать Zenith. Открывается из иконок папок, проектов, типов контента и трекеров журнала.',
+    'debug.modals.desc.imagePicker':
+        'Картинки из хранилища, свежие сверху. Открывается из настроек картинки и полей с изображением.',
+    'debug.modals.desc.consent':
+        'Спрашивает перед первым запуском стороннего модуля. Здесь — для модуля, которого не существует.',
+    'debug.modals.desc.scaffold':
+        'Создаёт структуру папок хранилища и переносит всё, что лежит в корне, в архив.',
+    'debug.modals.desc.mobileCheck':
+        'Проверяет, загружаются ли модули на этом устройстве. По ходу пишет и удаляет пробный файл в папке плагина — и в превью тоже.',
+    'debug.modals.desc.quickAddTask':
+        'Быстро записывает задачу из палитры команд, не открывая вид задач.',
+    'debug.modals.desc.taskEditor':
+        'Полный редактор задачи — таким его открывает вид задач для новой задачи.',
+    'debug.modals.desc.subtaskEditor': 'Время, таймер, заметки и вложения одной подзадачи.',
+    'debug.modals.desc.lightbox':
+        'Прикреплённая картинка в полный размер — здесь самая свежая из хранилища.',
+    'debug.modals.desc.contentDetail':
+        'Одна запись библиотеки: постер, метаданные, оценка, статус и прогресс.',
+    'debug.modals.desc.contentForm': 'Добавление записи в библиотеку.',
+    'debug.modals.desc.contentImport':
+        'Импорт библиотеки, выгруженной из MyAnimeList, Goodreads или Letterboxd.',
+    'debug.modals.desc.projectForm': 'Создание проекта.',
+    'debug.modals.desc.prayer':
+        'Полный трекер намазов — так его открывают виджет, лаунчер и команда.',
+    'debug.modals.desc.syncQuick': 'Синхронизация хранилища: её состояние и запуск по запросу.',
+    'debug.modals.desc.mediaPicker': 'Баннер над проводником файлов.',
+    'debug.modals.desc.weather': 'Погода целиком — так её открывает клик по карточке.',
+
+    'debug.inputs.intro':
+        'Все поля ввода Zenith. Сначала сам набор — в нём нет ни одного нативного контрола, поэтому на любой платформе он выглядит одинаково, — затем он же там, где используется, сгруппированный по окружающим стилям. Подпись называет класс или компонент, а имя после неё — откуда поле взято. Значения здесь принадлежат только этой странице и никуда не уходят — лишь кнопка, которая сама действует в хранилище, вроде «Создать папку», по-прежнему делает то, что на ней написано.',
+    'debug.inputs.kit': 'Набор полей',
+    'debug.inputs.settings': 'Поля настроек',
+    'debug.inputs.dialog': 'Формы в диалогах',
+    'debug.inputs.search': 'Поиск и фильтры',
+    'debug.inputs.inline': 'Правка на месте',
+    'debug.inputs.obsidian': 'Внутри окон Obsidian',
+
+    // ── Поля ввода ──────────────────────────────────
+    'fields.date.placeholder': 'Выбрать дату',
+    'fields.date.today': 'Сегодня',
+    'fields.date.prevMonth': 'Предыдущий месяц',
+    'fields.date.nextMonth': 'Следующий месяц',
+    'fields.time.pick': 'Выбрать время',
+    'fields.time.hours': 'Часы',
+    'fields.time.minutes': 'Минуты',
+    'fields.color.pick': 'Выбрать цвет',
+    'fields.color.hex': 'Код цвета',
+    'fields.color.area': 'Насыщенность и яркость',
+    'fields.color.hue': 'Оттенок',
+    'fields.color.eyedropper': 'Взять цвет с экрана',
+    'fields.select.placeholder': 'Выбрать…',
 
     // ── Что зачитает экранный диктор ────────────────
     'a11y.changeIcon': 'Сменить иконку',
@@ -2199,7 +2398,8 @@ const RU: Dict = {
     'settings.about.version': 'Версия',
     'settings.about.minApp': 'Мин. Obsidian',
     'settings.about.modules': 'Встроенные модули',
-    'settings.about.note': 'Все ваши данные хранятся как обычный Markdown в хранилище — Zenith не использует скрытую базу данных.',
+    'settings.about.note':
+        'Все ваши данные хранятся как обычный Markdown в хранилище — Zenith не использует скрытую базу данных.',
 
     // ── Общее ───────────────────────────────────────
     'common.items.one': '{count} элемент',
@@ -2406,7 +2606,8 @@ const RU: Dict = {
     'dashboard.grid.stackedHint': 'Панель слишком узкая для сетки — виджеты идут в одну колонку',
     'dashboard.grid.rowHeightHint': 'Высота одного ряда — размер любого виджета кратен ей',
     'dashboard.grid.gapHint': 'Расстояние между карточками',
-    'dashboard.grid.canvasHint': 'Насколько широким может стать дашборд — «Всё» растягивает до краёв панели',
+    'dashboard.grid.canvasHint':
+        'Насколько широким может стать дашборд — «Всё» растягивает до краёв панели',
     'dashboard.widgets': 'Виджеты',
     'dashboard.widgets.available': 'доступно: {count}',
     'dashboard.widgets.allAdded': 'все добавлены',
@@ -2588,12 +2789,15 @@ const RU: Dict = {
     'dashboard.bundle.namePlaceholder': 'имя (необязательно)',
     'dashboard.bundle.mergeHint': 'Объединить в связку',
     'dashboard.bundle.mergeSizeHint': '{name} не умеет {size} — покажется компактно',
-    'dashboard.bundle.compact': '{name} не умеет размер {size} — поменяйте размер связки или выньте его в свою ячейку',
+    'dashboard.bundle.compact':
+        '{name} не умеет размер {size} — поменяйте размер связки или выньте его в свою ячейку',
     'dashboard.bundle.dissolved': 'Zenith: связка распущена — остался один виджет.',
 
     // ── Задачи ──────────────────────────────────────
     'tasks.title': 'Задачи',
     'tasks.addTask': 'Добавить задачу',
+    'tasks.quickAdd.title': 'Быстрая задача',
+    'tasks.quickAdd.tagsPlaceholder': 'работа, срочно',
     'tasks.openTasks': 'Открыть задачи',
     'tasks.openCalendar': 'Открыть календарь задач',
     'tasks.searchPlaceholder': 'Поиск задач…',
@@ -2767,15 +2971,18 @@ const RU: Dict = {
     'content.bulk.none': 'Снять выделение',
     'content.bulk.setStatus': 'Сменить статус…',
     'content.bulk.deleteConfirm.one': 'Удалить {count} элемент? Заметки уйдут в корзину хранилища.',
-    'content.bulk.deleteConfirm.few': 'Удалить {count} элемента? Заметки уйдут в корзину хранилища.',
-    'content.bulk.deleteConfirm.many': 'Удалить {count} элементов? Заметки уйдут в корзину хранилища.',
+    'content.bulk.deleteConfirm.few':
+        'Удалить {count} элемента? Заметки уйдут в корзину хранилища.',
+    'content.bulk.deleteConfirm.many':
+        'Удалить {count} элементов? Заметки уйдут в корзину хранилища.',
     'content.form.duplicateExact': 'Уже есть в библиотеке:',
     'content.form.duplicateSimilar': 'Похожее уже есть:',
     'content.import.title': 'Импорт библиотеки',
     'content.import.intro':
         'Перенесите список из MyAnimeList (XML), Goodreads или Letterboxd (CSV). Выгрузите файл в сервисе и выберите его здесь.',
     'content.import.choose': 'Выбрать файл выгрузки…',
-    'content.import.unrecognised': 'Это не похоже на выгрузку MyAnimeList, Goodreads или Letterboxd.',
+    'content.import.unrecognised':
+        'Это не похоже на выгрузку MyAnimeList, Goodreads или Letterboxd.',
     'content.import.unreadable': 'Не удалось прочитать файл.',
     'content.import.found.one': '{count} запись',
     'content.import.found.few': '{count} записи',
@@ -2869,7 +3076,8 @@ const RU: Dict = {
     'tasks.stats.byTag': 'По тегам',
     'tasks.stats.activity': 'Активность (за год)',
     'settings.cacheCovers': 'Хранить обложки в хранилище',
-    'settings.cacheCovers.desc': 'Скачивать, а не ссылаться — библиотека переживёт офлайн и закрытие CDN.',
+    'settings.cacheCovers.desc':
+        'Скачивать, а не ссылаться — библиотека переживёт офлайн и закрытие CDN.',
     'settings.contentTypes': 'Типы контента',
     'clock.prevMonth': 'Предыдущий месяц',
     'clock.nextMonth': 'Следующий месяц',
@@ -2935,6 +3143,7 @@ const RU: Dict = {
     'calendar.prev': 'Назад',
     'calendar.next': 'Вперёд',
     'calendar.today': 'К сегодняшнему дню',
+    'calendar.columns': 'Дней в ширину',
     'calendar.weekTitle': '{week}-я нед. · {month}',
     'calendar.options': 'Параметры',
     'calendar.option.hideDone': 'Скрыть выполненные и отменённые',
@@ -3091,7 +3300,8 @@ const RU: Dict = {
     'sync.lastPull': 'Получено',
     'sync.never': 'ни разу',
     'sync.peers': 'Другие устройства',
-    'sync.peers.empty': 'Пока никто больше не отметился. Откройте Zenith на другом устройстве — оно появится здесь.',
+    'sync.peers.empty':
+        'Пока никто больше не отметился. Откройте Zenith на другом устройстве — оно появится здесь.',
     'sync.peers.lastSeen': 'был(о) {when}',
     'sync.result.alone': 'Настройки опубликованы. Других устройств пока не видно, сливать нечего.',
     'sync.result.agreed': 'Настройки опубликованы. Другие устройства уже согласны — менять нечего.',
@@ -3129,10 +3339,14 @@ const RU: Dict = {
     'sync.undone': 'Изменение откачено.',
     'sync.auto.held': 'Синхронизация ждёт вас',
     'sync.auto.held.open': 'Открыть синхронизацию',
-    'sync.auto.held.first_run_requires_review': 'С этим сервером ещё ничего не синхронизировалось, поэтому первый прогон — {count} файлов — вам стоит просмотреть.',
-    'sync.auto.held.too_many_changes': 'Этот прогон удалил бы больше, чем разрешает предохранитель. Ждут {count} изменений.',
-    'sync.auto.held.forced_overwrite': 'Принудительная перезапись ждёт подтверждения. Ждут {count} изменений.',
-    'sync.auto.held.conflict_discards_a_version': 'Файл изменился в двух местах, и ваше правило столкновений выбросило бы одну из версий. Ждут {count} изменений.',
+    'sync.auto.held.first_run_requires_review':
+        'С этим сервером ещё ничего не синхронизировалось, поэтому первый прогон — {count} файлов — вам стоит просмотреть.',
+    'sync.auto.held.too_many_changes':
+        'Этот прогон удалил бы больше, чем разрешает предохранитель. Ждут {count} изменений.',
+    'sync.auto.held.forced_overwrite':
+        'Принудительная перезапись ждёт подтверждения. Ждут {count} изменений.',
+    'sync.auto.held.conflict_discards_a_version':
+        'Файл изменился в двух местах, и ваше правило столкновений выбросило бы одну из версий. Ждут {count} изменений.',
     'sync.quick.title': 'Синхронизация хранилища',
     'sync.quick.lastRun': 'Последняя синхронизация',
     'sync.quick.willMove': 'перенести: {count}',
@@ -3168,7 +3382,8 @@ const RU: Dict = {
     'sync.time.days.many': '{count} дней назад',
     // Синхронизация — инбокс конфликтов
     'inbox.title': 'Оставшиеся конфликтные копии',
-    'inbox.desc': 'Вторые файлы, оставленные синхронизатором, который не смог свести заметку. Больше их нигде не видно.',
+    'inbox.desc':
+        'Вторые файлы, оставленные синхронизатором, который не смог свести заметку. Больше их нигде не видно.',
     'inbox.empty': 'Не найдено.',
     'inbox.rescan': 'Проверить снова',
     'inbox.reconcile': 'Свести',
@@ -3179,7 +3394,8 @@ const RU: Dict = {
     'inbox.reconciled': 'Сведено в {name}.',
     'inbox.keptOriginal': 'Копия удалена, {name} осталась как была.',
     'inbox.keptCopy': 'Теперь {name} — это копия.',
-    'inbox.unmergeable.prose_diverged': 'В версиях разный текст, поэтому ничего не изменено — откройте и решите сами.',
+    'inbox.unmergeable.prose_diverged':
+        'В версиях разный текст, поэтому ничего не изменено — откройте и решите сами.',
     'inbox.unmergeable.not_markdown': 'Это не заметка, свести нельзя.',
     'inbox.unmergeable.not_canvas': 'Один из двух холстов не открылся, поэтому сохранены оба.',
     'inbox.unmergeable.the original is gone': 'Оригинала нет, сводить не с чем.',
@@ -3191,32 +3407,40 @@ const RU: Dict = {
     // Синхронизация — настройки файлового движка
     'sync.settings.stateGroup': 'Настройки Zenith',
     'sync.settings.statusGroup': 'Состояние',
-    'sync.settings.statusGroup.desc': 'Что синхронизация делает сейчас и что сделала в прошлый раз.',
+    'sync.settings.statusGroup.desc':
+        'Что синхронизация делает сейчас и что сделала в прошлый раз.',
     'sync.settings.openTab': 'Открыть вкладкой',
     'sync.settings.openTab.desc': 'Та же страница, но рядом с заметками, а не в этом окне.',
     'sync.settings.filesGroup': 'Хранилище заметок',
-    'sync.settings.filesGroup.desc': 'Синхронизация самого волта с хранилищем, которым вы управляете. Отдельно от настроек и выключена, пока не попросите.',
+    'sync.settings.filesGroup.desc':
+        'Синхронизация самого волта с хранилищем, которым вы управляете. Отдельно от настроек и выключена, пока не попросите.',
     'sync.settings.auto': 'Держать в синхроне самостоятельно',
-    'sync.settings.auto.desc': 'Запускается по таймеру, при возврате в окно и вскоре после того, как вы перестали править.',
-    'sync.settings.auto.note': 'Прогон, который удалил бы больше разрешённого предохранителем, или первый прогон с этим сервером, всё равно остановится и дождётся, пока вы на него посмотрите.',
+    'sync.settings.auto.desc':
+        'Запускается по таймеру, при возврате в окно и вскоре после того, как вы перестали править.',
+    'sync.settings.auto.note':
+        'Прогон, который удалил бы больше разрешённого предохранителем, или первый прогон с этим сервером, всё равно остановится и дождётся, пока вы на него посмотрите.',
     'sync.settings.autoInterval': 'Проверять сервер каждые',
     'sync.settings.minutesUnit': 'мин',
     'sync.settings.files': 'Синхронизировать файлы заметок',
-    'sync.settings.files.note': 'Если волт уже ведёт другой синхронизатор, оставьте выключенным — два движка на одних файлах будут мешать друг другу.',
+    'sync.settings.files.note':
+        'Если волт уже ведёт другой синхронизатор, оставьте выключенным — два движка на одних файлах будут мешать друг другу.',
     'sync.settings.kind': 'Backend',
     'sync.settings.kind.dropbox': 'Dropbox',
     'sync.settings.kind.onedrive': 'OneDrive',
     'sync.settings.dropboxClientId': 'App key приложения Dropbox',
-    'sync.settings.dropboxClientId.desc': 'App key приложения, созданного на dropbox.com/developers — scoped access, папка приложения или полный доступ. Выдайте ему account_info.read, files.metadata.read, files.content.read и files.content.write.',
+    'sync.settings.dropboxClientId.desc':
+        'App key приложения, созданного на dropbox.com/developers — scoped access, папка приложения или полный доступ. Выдайте ему account_info.read, files.metadata.read, files.content.read и files.content.write.',
     'sync.settings.onedriveClientId': 'Application (client) ID',
-    'sync.settings.onedriveClientId.desc': 'Из регистрации приложения в портале Azure. Зарегистрируйте как public client и разрешите device code flow.',
+    'sync.settings.onedriveClientId.desc':
+        'Из регистрации приложения в портале Azure. Зарегистрируйте как public client и разрешите device code flow.',
     'sync.settings.dropboxClientId.optional':
         'Оставьте пустым, чтобы использовать приложение, поставляемое с Zenith. Чтобы поставить своё: создайте его на dropbox.com/developers со scoped access, добавьте obsidian://zenith-dropbox в его redirect URIs и выдайте account_info.read, files.metadata.read, files.content.read и files.content.write.',
     'sync.settings.onedriveClientId.optional':
         'Оставьте пустым, чтобы использовать приложение, поставляемое с Zenith. Чтобы поставить своё: зарегистрируйте его в портале Azure как public client и разрешите device code flow.',
     'sync.settings.ownApp.optional':
         'Своя регистрация даёт собственные лимиты и своё имя на экране согласия, и вас не заденет, если поставляемое приложение когда-нибудь затроттлят. Изменение разрешений приложения не меняет уже выданную авторизацию: после правки отключитесь и подключитесь заново.',
-    'sync.settings.ownApp.note': 'Ваша собственная регистрация, а не поставляемая с Zenith — плагин не может распространять чужую идентичность приложения. Изменение разрешений приложения не меняет уже выданную авторизацию: после правки отключитесь и подключитесь заново.',
+    'sync.settings.ownApp.note':
+        'Ваша собственная регистрация, а не поставляемая с Zenith — плагин не может распространять чужую идентичность приложения. Изменение разрешений приложения не меняет уже выданную авторизацию: после правки отключитесь и подключитесь заново.',
     'sync.settings.oauthFolder': 'Папка в аккаунте',
     'auth.connect': 'Подключить',
     'auth.connected': 'Это устройство подключено.',
@@ -3231,7 +3455,8 @@ const RU: Dict = {
     'auth.expired': 'Код истёк до подтверждения. Попробуйте снова.',
     'auth.device.instructions': 'Откройте страницу ниже и введите этот код:',
     'auth.device.waiting': 'Жду подтверждения…',
-    'sync.settings.kind.desc': 'Dropbox и OneDrive авторизуются через браузер. S3 покрывает также MinIO, B2, R2 и Wasabi.',
+    'sync.settings.kind.desc':
+        'Dropbox и OneDrive авторизуются через браузер. S3 покрывает также MinIO, B2, R2 и Wasabi.',
     'sync.settings.server': 'Сервер',
     'sync.settings.server.desc': 'Куда уезжает волт. Показаны только поля выбранного бэкенда.',
     'sync.settings.kind.webdav': 'WebDAV',
@@ -3240,19 +3465,23 @@ const RU: Dict = {
     'sync.settings.s3Endpoint.desc': 'Адрес сервиса, без имени бакета.',
     'sync.settings.s3Bucket': 'Бакет',
     'sync.settings.s3Region': 'Регион',
-    'sync.settings.s3Region.desc': 'Пусто — будет us-east-1: его принимают и те серверы, которые регион игнорируют.',
+    'sync.settings.s3Region.desc':
+        'Пусто — будет us-east-1: его принимают и те серверы, которые регион игнорируют.',
     'sync.settings.s3Access': 'Access key ID',
     'sync.settings.s3Secret': 'Secret access key',
     'sync.settings.s3Prefix': 'Папка в бакете',
     'sync.settings.s3PathStyle': 'Адресация путём',
-    'sync.settings.s3PathStyle.desc': 'Слать запросы на endpoint/bucket, а не bucket.endpoint. Нужно почти всем S3-совместимым серверам кроме AWS.',
+    'sync.settings.s3PathStyle.desc':
+        'Слать запросы на endpoint/bucket, а не bucket.endpoint. Нужно почти всем S3-совместимым серверам кроме AWS.',
     'sync.settings.url': 'Адрес сервера',
     'sync.settings.url.desc': 'Точка входа WebDAV, без слеша на конце.',
     'sync.settings.user': 'Пользователь',
     'sync.settings.password': 'Пароль',
-    'sync.settings.password.note': 'Хранится открытым текстом в файле данных плагина, как любой пароль в плагинах Obsidian — приложение не даёт плагинам доступа к связке ключей. Заведите отдельный пароль приложения, не основной.',
+    'sync.settings.password.note':
+        'Хранится открытым текстом в файле данных плагина, как любой пароль в плагинах Obsidian — приложение не даёт плагинам доступа к связке ключей. Заведите отдельный пароль приложения, не основной.',
     'sync.settings.remoteDir': 'Папка на сервере',
-    'sync.settings.remoteDir.desc': 'Где на сервере лежит этот волт. Создаётся при первой загрузке.',
+    'sync.settings.remoteDir.desc':
+        'Где на сервере лежит этот волт. Создаётся при первой загрузке.',
     'sync.settings.encryption': 'Шифрование',
     'sync.settings.encrypt': 'Шифровать всё перед отправкой',
     'sync.settings.encrypt.desc':
@@ -3270,32 +3499,41 @@ const RU: Dict = {
     'sync.settings.localRoot': 'Папка для синхронизации',
     'sync.settings.includeConfig': 'Возить и настройки Obsidian',
     'sync.settings.includeConfig.desc': 'Темы, другие плагины и раскладка рабочего пространства.',
-    'sync.settings.includeConfig.note': 'Собственные настройки Zenith этим путём не поедут — ими ведает слияние настроек выше.',
+    'sync.settings.includeConfig.note':
+        'Собственные настройки Zenith этим путём не поедут — ими ведает слияние настроек выше.',
     'sync.settings.safety': 'Предохранители',
-    'sync.settings.safety.desc': 'Движок умеет удалять файлы. Здесь задаётся, чего он не сделает, не спросив.',
+    'sync.settings.safety.desc':
+        'Движок умеет удалять файлы. Здесь задаётся, чего он не сделает, не спросив.',
     'sync.settings.conflict': 'Если файл изменён с двух сторон',
-    'sync.settings.conflict.desc': '«Свести» и «Оба» не теряют ни одной версии. «Новее» и «Больше» — теряют.',
+    'sync.settings.conflict.desc':
+        '«Свести» и «Оба» не теряют ни одной версии. «Новее» и «Больше» — теряют.',
     'sync.settings.conflict.smart': 'Свести',
     'sync.settings.conflict.newer': 'Новее',
     'sync.settings.conflict.larger': 'Больше',
     'sync.settings.conflict.both': 'Оба',
-    'sync.settings.conflict.note': '«Новее» и «Больше» выбрасывают одну из двух версий, поэтому автоматический прогон, наткнувшись на столкновение, останавливается и спрашивает. «Свести» и «Оба» ничего не выбрасывают и проходят без вас.',
+    'sync.settings.conflict.note':
+        '«Новее» и «Больше» выбрасывают одну из двух версий, поэтому автоматический прогон, наткнувшись на столкновение, останавливается и спрашивает. «Свести» и «Оба» ничего не выбрасывают и проходят без вас.',
     'sync.settings.protect': 'Не удалять больше',
-    'sync.settings.protect.desc': 'Прогон, который удалил бы больше этой доли известных файлов, остановится и спросит.',
+    'sync.settings.protect.desc':
+        'Прогон, который удалил бы больше этой доли известных файлов, остановится и спросит.',
     'sync.settings.percentUnit': '%',
     'sync.settings.maxFile': 'Пропускать файлы больше',
-    'sync.settings.maxFile.desc': '0 — без ограничения. Пропущенные файлы не трогаются ни с одной стороны.',
+    'sync.settings.maxFile.desc':
+        '0 — без ограничения. Пропущенные файлы не трогаются ни с одной стороны.',
     'sync.settings.mbUnit': 'МБ',
     'sync.settings.concurrency': 'Параллельных передач',
     'sync.settings.concurrency.desc': 'Уменьшите, если сервер отклоняет запросы.',
 
     // Синхронизация — интерфейс файлового движка
     'sync.files.title': 'Статус подключения',
-    'sync.files.off': 'Синхронизация файлов выключена. Включите её в настройках, чтобы указать сервер.',
+    'sync.files.off':
+        'Синхронизация файлов выключена. Включите её в настройках, чтобы указать сервер.',
     'sync.files.notConfigured': 'Сервер ещё не настроен.',
     'sync.files.syncNow': 'Синхронизировать сейчас',
-    'sync.files.autoOn': 'Работает сама — каждые {minutes} мин, при возврате в окно и после того, как вы перестали править.',
-    'sync.files.autoOff': 'Автоматическая синхронизация выключена, файлы поедут только по этой кнопке.',
+    'sync.files.autoOn':
+        'Работает сама — каждые {minutes} мин, при возврате в окно и после того, как вы перестали править.',
+    'sync.files.autoOff':
+        'Автоматическая синхронизация выключена, файлы поедут только по этой кнопке.',
     'sync.files.test': 'Проверить связь',
     'sync.files.testOk': 'Сервер ответил.',
     'sync.files.preview': 'Показать изменения',
@@ -3307,17 +3545,24 @@ const RU: Dict = {
     'sync.files.working': 'Работаю…',
     'sync.files.progress': '{done} из {total}',
     'sync.files.nothing': 'Делать нечего — обе стороны уже согласны.',
-    'sync.files.summary': 'Вверх {push} · вниз {pull} · удалить здесь {deleteLocal} · удалить там {deleteRemote} · конфликтов {conflict}',
+    'sync.files.summary':
+        'Вверх {push} · вниз {pull} · удалить здесь {deleteLocal} · удалить там {deleteRemote} · конфликтов {conflict}',
     'sync.files.skipped': 'пропущено: {count}',
     'sync.files.force': 'Принудительно',
-    'sync.files.force.desc': 'На случай, когда стороны разошлись слишком далеко, чтобы их сводить, или когда одна из них просто та, которая вам нужна. Обе сначала покажут полный список, включая то, что будет удалено; ничего не поедет, пока вы не подтвердите.',
+    'sync.files.force.desc':
+        'На случай, когда стороны разошлись слишком далеко, чтобы их сводить, или когда одна из них просто та, которая вам нужна. Обе сначала покажут полный список, включая то, что будет удалено; ничего не поедет, пока вы не подтвердите.',
     'sync.files.force.push': 'Отправить всё',
-    'sync.files.force.push.hint': 'Привести сервер к виду этого устройства: загрузить все файлы, а то, чего здесь нет, — с сервера удалить.',
+    'sync.files.force.push.hint':
+        'Привести сервер к виду этого устройства: загрузить все файлы, а то, чего здесь нет, — с сервера удалить.',
     'sync.files.force.pull': 'Забрать всё',
-    'sync.files.force.pull.hint': 'Привести это устройство к виду сервера: скачать все файлы, а то, чего нет на сервере, — отсюда удалить.',
-    'sync.files.blocked.forced_overwrite': 'Вы попросили перезаписать одну сторону другой, так что вот все файлы, которых это коснётся — {actionable} из {known}. Прочитайте удаления, прежде чем разрешать.',
-    'sync.files.blocked.first_run_requires_review': 'С этим сервером ещё ничего не синхронизировалось, поэтому первый прогон показан для проверки — пока ничего не перемещено.',
-    'sync.files.blocked.too_many_changes': 'Этот прогон удалил бы {actionable} из {known} известных файлов, это больше предела в {limit}%. Прочитайте список, прежде чем разрешать.',
+    'sync.files.force.pull.hint':
+        'Привести это устройство к виду сервера: скачать все файлы, а то, чего нет на сервере, — отсюда удалить.',
+    'sync.files.blocked.forced_overwrite':
+        'Вы попросили перезаписать одну сторону другой, так что вот все файлы, которых это коснётся — {actionable} из {known}. Прочитайте удаления, прежде чем разрешать.',
+    'sync.files.blocked.first_run_requires_review':
+        'С этим сервером ещё ничего не синхронизировалось, поэтому первый прогон показан для проверки — пока ничего не перемещено.',
+    'sync.files.blocked.too_many_changes':
+        'Этот прогон удалил бы {actionable} из {known} известных файлов, это больше предела в {limit}%. Прочитайте список, прежде чем разрешать.',
     'sync.files.lastRun': 'Последний прогон',
     'sync.files.applied': 'выполнено: {count}',
     'sync.files.failedCount': 'с ошибкой: {count}',
@@ -3340,13 +3585,16 @@ const RU: Dict = {
     'sync.decision.skipped_too_large': 'пропущен, слишком большой',
     'sync.decision.skipped_excluded': 'пропущен, вне области',
     'sync.settings.enabled': 'Синхронизировать настройки между устройствами',
-    'sync.settings.enabled.desc': 'Сливает настройки по полям вместо того, чтобы последнее сохранившее устройство затирало всё разом.',
+    'sync.settings.enabled.desc':
+        'Сливает настройки по полям вместо того, чтобы последнее сохранившее устройство затирало всё разом.',
     'sync.settings.pollSeconds': 'Проверять изменения каждые',
-    'sync.settings.pollSeconds.desc': 'Как часто заглядывать к другим устройствам. Также проверяется при возврате фокуса в окно.',
+    'sync.settings.pollSeconds.desc':
+        'Как часто заглядывать к другим устройствам. Также проверяется при возврате фокуса в окно.',
     'sync.settings.deviceGroup': 'Это устройство',
     'sync.settings.whatSyncs': 'Что уезжает',
     'sync.settings.open': 'Открыть синхронизацию',
-    'sync.settings.whatSyncs.desc': 'Папки, трекеры, типы контента, локация, настройки намаза и погоды, установленные модули и запущенный таймер. Раскладка, плотность, активные модули и место, где вы остановились, остаются на каждом устройстве своими.',
+    'sync.settings.whatSyncs.desc':
+        'Папки, трекеры, типы контента, локация, настройки намаза и погоды, установленные модули и запущенный таймер. Раскладка, плотность, активные модули и место, где вы остановились, остаются на каждом устройстве своими.',
 };
 
 /**
@@ -3543,7 +3791,12 @@ export function translate(locale: Locale, key: string, params?: TParams): string
  * Translate a counted noun: looks up `<key>.<form>` and passes `count` through
  * as a placeholder, so a string can read "{count} items" / "{count} элемента".
  */
-export function translatePlural(locale: Locale, key: string, count: number, params?: TParams): string {
+export function translatePlural(
+    locale: Locale,
+    key: string,
+    count: number,
+    params?: TParams
+): string {
     const form = pluralForm(locale, count);
     const candidate = `${key}.${form}`;
     // `other` is the English catch-all; Russian keys that only define `many`

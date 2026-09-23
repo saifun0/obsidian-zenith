@@ -45,18 +45,26 @@ import {
  * would break the one thing they are for.
  */
 
-const Demo: React.FC<{ label: string; children: React.ReactNode; wide?: boolean }> = ({
-    label,
-    children,
-    wide,
-}) => (
+export const Demo: React.FC<{
+    label: string;
+    /** The component the specimen was taken from, when it is not the label itself. */
+    source?: string;
+    children: React.ReactNode;
+    wide?: boolean;
+}> = ({ label, source, children, wide }) => (
     <div className={`zenith-debug__demo${wide ? ' zenith-debug__demo--wide' : ''}`}>
-        <span className="zenith-debug__demo-label">{label}</span>
+        <span className="zenith-debug__demo-label">
+            {label}
+            {source && <em className="zenith-debug__demo-source">{source}</em>}
+        </span>
         <div className="zenith-debug__demo-body">{children}</div>
     </div>
 );
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+export const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
+    title,
+    children,
+}) => (
     <section className="zenith-debug__section">
         <div className="zenith-settings__section-label">{title}</div>
         <div className="zenith-debug__grid">{children}</div>
@@ -194,7 +202,14 @@ export const ComponentGallery: React.FC = () => {
                     <NumberInput value={count} unit="px" onChange={setCount} />
                 </Demo>
                 <Demo label="Slider">
-                    <Slider value={level} min={0} max={240} step={8} unit="px" onChange={setLevel} />
+                    <Slider
+                        value={level}
+                        min={0}
+                        max={240}
+                        step={8}
+                        unit="px"
+                        onChange={setLevel}
+                    />
                 </Demo>
                 <Demo label="Slider · disabled">
                     <Slider value={level} min={0} max={240} disabled onChange={() => undefined} />
@@ -224,12 +239,7 @@ export const ComponentGallery: React.FC = () => {
                     <TextInput value={text} disabled onChange={() => undefined} />
                 </Demo>
                 <Demo label="ColorInput">
-                    <ColorInput
-                        value={colour}
-                        allowEmpty
-                        resetLabel="Reset"
-                        onChange={setColour}
-                    />
+                    <ColorInput value={colour} allowEmpty resetLabel="Reset" onChange={setColour} />
                 </Demo>
                 <Demo label="TextArea" wide>
                     <TextArea value={notes} rows={3} onChange={setNotes} />
@@ -302,8 +312,8 @@ export const ComponentGallery: React.FC = () => {
                     <details className="zenith-settings__disclosure">
                         <summary>What that means</summary>
                         <p>
-                            The paragraph a one-line summary is standing in for, kept a click
-                            away rather than shown on every visit.
+                            The paragraph a one-line summary is standing in for, kept a click away
+                            rather than shown on every visit.
                         </p>
                     </details>
                 </Demo>
@@ -318,7 +328,9 @@ export const ComponentGallery: React.FC = () => {
                             </div>
                             <div className="zenith-settings__menu-text">
                                 <div className="zenith-settings__menu-title">A row</div>
-                                <div className="zenith-settings__menu-desc">With a description.</div>
+                                <div className="zenith-settings__menu-desc">
+                                    With a description.
+                                </div>
                             </div>
                         </div>
                         <div className="zenith-settings__menu-item">
@@ -330,7 +342,9 @@ export const ComponentGallery: React.FC = () => {
                                     A badged row
                                     <span className="zenith-settings__menu-badge">third-party</span>
                                 </div>
-                                <div className="zenith-settings__menu-desc">And its description.</div>
+                                <div className="zenith-settings__menu-desc">
+                                    And its description.
+                                </div>
                             </div>
                         </div>
                     </div>

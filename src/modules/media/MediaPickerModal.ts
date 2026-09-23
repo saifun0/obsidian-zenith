@@ -50,7 +50,7 @@ export class MediaPickerModal extends Modal {
         const quickRow = quick.createDiv('zenith-media-picker__quick-row');
         const quickInput = quickRow.createEl('input', {
             type: 'text',
-            cls: 'zenith-media-picker__input',
+            cls: 'zenith-input zenith-media-picker__input',
             attr: { placeholder: 'https://… or path/to/image.png' },
         });
         const addBtn = quickRow.createEl('button', {
@@ -73,7 +73,7 @@ export class MediaPickerModal extends Modal {
         // ── Search ──
         const searchInput = contentEl.createEl('input', {
             type: 'text',
-            cls: 'zenith-media-picker__search',
+            cls: 'zenith-input zenith-media-picker__search',
             attr: { placeholder: 'Search by name or path…' },
         });
         searchInput.addEventListener('input', () => {

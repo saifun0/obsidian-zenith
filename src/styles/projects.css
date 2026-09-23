@@ -25,16 +25,6 @@
    in ui.css — the four bordered boxes that used to sit across the top of this
    view are gone, and so is this module's private copy of a header. */
 
-.zenith-root button.zenith-projects__search-clear {
-    display: inline-flex;
-    padding: 0;
-    border: none;
-    background: none;
-    box-shadow: none;
-    color: var(--zenith-text-muted);
-    cursor: pointer;
-}
-
 /* ── Filter / Search Bar ─────────────────────────── */
 .zenith-projects__controls {
     display: flex;
@@ -49,27 +39,11 @@
     border-radius: var(--zenith-radius-md);
 }
 
+/* `SearchField`; placed here, drawn by the shared skin. */
 .zenith-projects__search-box {
-    display: flex;
-    align-items: center;
-    color: var(--zenith-text-muted);
-    gap: var(--zenith-space-xs);
-    background: var(--zenith-bg-primary);
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-sm);
-    padding: 4px 10px;
     flex: 1;
     min-width: 200px;
     max-width: 380px;
-}
-
-.zenith-projects__search-box input {
-    border: none;
-    background: transparent;
-    outline: none;
-    color: var(--zenith-text-normal);
-    font-size: 0.85rem;
-    width: 100%;
 }
 
 .zenith-projects__status-tabs {

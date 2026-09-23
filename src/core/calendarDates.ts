@@ -96,6 +96,17 @@ export function isoWeek(iso: string): { year: number; week: number } {
     return { year, week };
 }
 
+/**
+ * Localized "Mon" for one date.
+ *
+ * What a seven-wide grid puts in its header strip once per column, a narrower
+ * one has to repeat in every cell: three days across start on a different
+ * weekday every row, so a fixed strip above them would name the wrong days.
+ */
+export function weekdayLabel(iso: string, locale: string): string {
+    return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(isoToDate(iso));
+}
+
 /** Weekday header labels for a calendar, localized and rotated to `weekStart`. */
 export function weekdayLabels(locale: string, weekStart: WeekStart): string[] {
     const fmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
@@ -106,7 +117,9 @@ export function weekdayLabels(locale: string, weekStart: WeekStart): string[] {
 
 /** Localized "July 2026" heading. */
 export function monthLabel(iso: string, locale: string): string {
-    return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(isoToDate(iso));
+    return new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
+        isoToDate(iso)
+    );
 }
 
 /** Localized "Tuesday, 28 July" heading. */
@@ -120,7 +133,9 @@ export function dayLabel(iso: string, locale: string): string {
 
 /** Localized "28 Jul" — the compact form for a chip or a column header. */
 export function shortDayLabel(iso: string, locale: string): string {
-    return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(isoToDate(iso));
+    return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(
+        isoToDate(iso)
+    );
 }
 
 /**
@@ -139,6 +154,72 @@ export function monthHeading(iso: string, locale: string): string {
     return `${month.charAt(0).toUpperCase()}${month.slice(1)} ${year}`;
 }
 
+/** One row of a scrolling month grid: a run of days, filed under one month. */
+export interface MonthRow {
+    /** The row's days: `size` of them, bar a short row at either end. */
+    dates: string[];
+    /** `YYYY-MM` the row is filed under — the month its last day falls in. */
+    month: string;
+    /** This row is where `month` starts: the row holding its 1st. */
+    opens: boolean;
+}
+
+/** Days since 1970-01-01, counted in whole UTC days so it cannot drift. */
+function epochDay(iso: string): number {
+    return Math.floor(Date.parse(`${iso}T00:00:00Z`) / 86400000);
+}
+
+/**
+ * A run of days, as the rows a grid draws — and which month each is filed
+ * under.
+ *
+ * `size` is how many days a row holds: seven on any screen that fits a week,
+ * three on a phone, where seven columns leave each day too narrow to read a
+ * task in.
+ *
+ * A row is filed under the month it ENDS in, which is the month whose 1st it
+ * contains. A seven-day row spans two months whenever a week straddles a
+ * boundary, and it stays whole regardless: cutting it costs a row at every
+ * boundary and leaves the grid full of gaps, and a week is a real thing a
+ * reader plans in. The filing is what the scroll reports to the toolbar, and
+ * `opens` marks the row a month starts in — the one "go to October" scrolls
+ * to, and the one carrying October's name on its 1st.
+ */
+export function monthRows(run: string[], size = 7): MonthRow[] {
+    const rows: MonthRow[] = [];
+    if (run.length === 0) return rows;
+
+    /**
+     * How many days the first row is short of a full one.
+     *
+     * A seven-day row is a week and `monthRun` already begins on one, so it
+     * starts whole. Three days is not a week and has no natural start, so the
+     * rows are anchored to an absolute count of days instead of to whichever
+     * day the run happens to begin with. The run grows at both ends while it is
+     * being read: phased from its own first day, prepending four months would
+     * re-group every row below and shuffle the whole grid sideways.
+     */
+    // The second modulus is for dates before 1970, where the first is negative
+    // — a negative lead would skip the run's first days rather than short its
+    // first row.
+    const lead = size === 7 ? 0 : ((epochDay(run[0]) % size) + size) % size;
+
+    for (let i = lead === 0 ? 0 : -lead; i < run.length; i += size) {
+        const dates = run.slice(Math.max(0, i), i + size);
+        const month = dates[dates.length - 1].slice(0, 7);
+        rows.push({
+            dates,
+            month,
+            // The month a row ends in only ever moves forwards, one month at a
+            // time, so the first row to name a month is the only one that can
+            // open it and every month opens exactly once.
+            opens: rows.length === 0 || rows[rows.length - 1].month !== month,
+        });
+    }
+
+    return rows;
+}
+
 /**
  * Whole weeks covering a run of months, for a calendar that scrolls through
  * them rather than paging between them.
@@ -149,13 +230,11 @@ export function monthHeading(iso: string, locale: string): string {
  * question "what is happening at the end of next month" takes two clicks. The
  * run starts at the week containing the 1st of `from` months before the anchor
  * and ends at the week containing the last day of `to` months after it.
+ *
+ * What comes back is a flat list of days, which is the right shape to grow at
+ * either end and the wrong one to draw. `monthRows` turns it into rows.
  */
-export function monthRun(
-    anchor: string,
-    weekStart: WeekStart,
-    from: number,
-    to: number
-): string[] {
+export function monthRun(anchor: string, weekStart: WeekStart, from: number, to: number): string[] {
     const begin = isoToDate(addMonths(anchor, -from));
     const first = toLocalIsoDate(new Date(begin.getFullYear(), begin.getMonth(), 1));
 

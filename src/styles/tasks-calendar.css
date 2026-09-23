@@ -20,14 +20,22 @@
     /* One column template for every band — the day-number row, the ribbon
        lanes and the chip stacks are separate grids that have to line up. */
     /* Seven equal columns and nothing else. The week-number gutter that used
-       to take the first one is gone: a month's name stands at the left of the
-       week it begins in, and a narrow column of small numbers beside a large
-       heading is the ambiguity this grid least needs. */
+       to take the first one is gone: a column of small numbers running beside
+       the day numbers is the ambiguity this grid least needs, and the week
+       view is a click away for anyone who wants one. */
     --tcal-cols: repeat(7, minmax(0, 1fr));
+    /* Three of them on a phone, where a seventh of the width is about forty
+       pixels — a day number and the first letter of a task. The weekday strip
+       goes with it: three days across start on a different weekday every row,
+       so each cell names its own day instead. */
     --tcal-lane-h: 18px;
     /* A week's floor. The rows scroll, so this is a rhythm rather than a
        budget — four chips and a "+N" fit without the row growing. */
     --tcal-row-h: 108px;
+    /* A week's breathing room, named because the month wash has to cancel it
+       exactly — see `.zenith-tcal__wash`. */
+    --tcal-row-pad-top: 4px;
+    --tcal-row-pad-bottom: 6px;
 
     display: flex;
     flex-direction: column;
@@ -37,6 +45,18 @@
     padding: var(--zenith-space-md);
     box-sizing: border-box;
     font-size: 0.85rem;
+}
+
+.zenith-tcal.is-narrow {
+    --tcal-cols: repeat(3, minmax(0, 1fr));
+}
+
+/* The width itself, as the label. Tabular figures so 3 and 7 are the same
+   width and the toolbar does not shift when it is pressed. */
+.zenith-root button.zenith-tcal__cols {
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 
 /* ── Kind colours ────────────────────────────────────
@@ -105,7 +125,9 @@
     box-shadow: none;
     color: var(--zenith-text-muted);
     cursor: pointer;
-    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast);
+    transition:
+        background var(--zenith-transition-fast),
+        color var(--zenith-transition-fast);
 }
 
 .zenith-root button.zenith-tcal__tool:hover,
@@ -140,6 +162,10 @@
 }
 
 .zenith-root button.zenith-tcal__title {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     min-width: 9em;
     padding: 4px 10px;
     border: none;
@@ -157,6 +183,21 @@
 .zenith-root button.zenith-tcal__title:hover {
     background: var(--zenith-bg-hover);
     box-shadow: none;
+}
+
+/* A dot when the title is naming the day, week or month we are living in.
+
+   In the month view the title follows the scroll rather than an anchor, so it
+   is the one place that can answer "have I scrolled away from now?" — and a
+   dot answers it without the title changing width as it appears, which a word
+   would, on a control that sits between two others. */
+.zenith-root button.zenith-tcal__title.is-current::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--zenith-accent);
 }
 
 .zenith-tcal__bar-end {
@@ -304,13 +345,23 @@
 
 /* The one part that scrolls. The weekday strip above stays put, because a
    column header that scrolls away is a column header you have to scroll back
-   for. */
+   for.
+
+   The bar itself is hidden. It measures a run that grows at both ends as it is
+   read, so its thumb shrinks and jumps as months are added and never means
+   what a scrollbar is supposed to mean — how much is left. There is nothing
+   left; there is always more calendar. The toolbar names the month on screen,
+   and a click on it comes back to today. */
 .zenith-tcal__run {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
+    scrollbar-width: none;
+}
+
+.zenith-tcal__run::-webkit-scrollbar {
+    display: none;
 }
 
 /* `grid-template-rows` is set inline per week — `repeat()` rejects a count of
@@ -321,9 +372,61 @@
     grid-template-columns: var(--tcal-cols);
     gap: 0 4px;
     min-height: var(--tcal-row-h);
-    padding: 4px 0 6px;
+    padding: var(--tcal-row-pad-top) 0 var(--tcal-row-pad-bottom);
     border-top: 1px solid var(--zenith-border);
 }
+
+/* The washes behind a row's cells: which days are this month, and which are
+   last month's, carried in because the week was not cut.
+
+   Both span every track of the row — day numbers, ribbon lanes and chips — so
+   the marking is a block rather than a stripe behind the numbers. They are
+   grid items placed before the cells, which is what puts them underneath:
+   grid items paint in DOM order, and everything above them is transparent. */
+.zenith-tcal__wash {
+    pointer-events: none;
+    /* Out to the row's edges, cancelling the padding the cells sit inside.
+
+       A wash drawn only over the cells stops ten pixels short at the top and
+       bottom of every week, and a month five weeks tall then arrives as five
+       separate stripes with dark bands between them — which is not what a
+       month looks like. Cancelled, consecutive weeks meet, and the only thing
+       left crossing the month is the week separator, which belongs there. */
+    margin-top: calc(-1 * var(--tcal-row-pad-top));
+    margin-bottom: calc(-1 * var(--tcal-row-pad-bottom));
+}
+
+/* This month.
+
+   With the weeks running on in both directions there is no page boundary and
+   no "current page" — scroll for ten seconds and every month looks like every
+   other. A wash rather than a border because it has to survive being crossed
+   by ribbons and chips in eight colours, and weak enough that the `is-today`
+   pill inside it still wins. It covers exactly the columns the month occupies,
+   so it starts on the 1st and stops on the 30th, mid-week or not. */
+.zenith-tcal__wash.is-current {
+    background: color-mix(in srgb, var(--zenith-accent) 6%, transparent);
+}
+
+/* Where the month begins and where it runs out. Nothing else draws these now
+   that the name sits inside a cell instead of on a rule above the row, and a
+   6% wash alone can be missed against a busy week. */
+.zenith-tcal__wash.is-current.is-open {
+    border-top: 1px solid color-mix(in srgb, var(--zenith-accent) 45%, transparent);
+}
+
+.zenith-tcal__wash.is-current.is-close {
+    border-bottom: 1px solid color-mix(in srgb, var(--zenith-accent) 45%, transparent);
+}
+
+/* Last month's last days, sharing a week with this one, are not marked at all.
+
+   They had a recessed wash, then a rule down the boundary, then a quieter day
+   number, and each was louder than the thing it marked: to anyone not thinking
+   about month boundaries, a slab, a line and a dimmed date in what looks like
+   a random place. What says where a month begins is its name sitting on the
+   1st, and — for the month we are in — the wash behind its days. Everything
+   else was the grid apologising for the calendar having months in it. */
 
 .zenith-tcal__weekday {
     padding: 0 4px;
@@ -334,31 +437,77 @@
     letter-spacing: 0.05em;
 }
 
+/* `flex-end` rather than `center`: the cell of a 1st is taller than the rest,
+   because it carries its month's name above the number, and the numbers of
+   the week beside it have to stay on the same line. */
 .zenith-tcal__daynum-cell {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     min-width: 0;
     padding-bottom: 3px;
 }
 
-/* A month, announced where it begins: set large in the first column of the
-   week its 1st falls in, standing in for that cell's day number.
+/* The number and, where there is no header strip, the weekday beside it. */
+.zenith-tcal__dayline {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+}
 
-   That cell is the one place on this grid where a heading of this size costs
-   nothing. The day it displaces belongs to the month that is ending — whose
-   own name is already somewhere above — and a run of weeks has no page break
-   to put the name on instead. Nothing else here is allowed to be this loud,
-   which is what makes it findable while scrolling past. */
+/* "пн" next to the 3rd — what the header strip says once per column on a grid
+   wide enough to have fixed columns. Faint, because it repeats on every cell
+   and the number is the thing being looked for. */
+.zenith-tcal__dayname {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--zenith-text-faint);
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* The 1st: name over number. `stretch` so the name can centre itself across
+   the whole cell, with the number pulled back to the left where every other
+   day's number sits. */
+.zenith-tcal__daynum-cell.is-month-start {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1px;
+}
+
+.zenith-tcal__daynum-cell.is-month-start .zenith-tcal__dayline {
+    align-self: flex-start;
+}
+
+/* A month, announced on its own first day: the name centred over the cell of
+   the 1st, sitting above the number.
+
+   It was a full-width band between the rows for a while, and a band reads as a
+   heading over everything under it — which a whole week cannot honour, because
+   the week a month starts in begins in the month before. On the 1st the name
+   claims only the day it stands on. It is quiet on purpose: a month is found
+   by scrolling to a name that is *there*, not by one that shouts, and the
+   toolbar already says which month is on screen. */
 .zenith-tcal__month-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    padding-inline-start: 2px;
-    color: var(--zenith-text-normal);
-    font-size: 1.05rem;
-    font-weight: 700;
+    width: 100%;
+    color: var(--zenith-text-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
     line-height: 1.2;
-    letter-spacing: -0.01em;
+    letter-spacing: 0.01em;
+    text-align: center;
+}
+
+/* The month we are in, in the accent — the one name in the run worth finding
+   by eye while scrolling past. */
+.zenith-tcal__month-name.is-current {
+    color: var(--zenith-accent);
 }
 
 .zenith-tcal__stack {
@@ -412,14 +561,14 @@
     color: var(--zenith-text-normal);
 }
 
-/* "1 Sep" rather than "1". A month boundary falling mid-row has nothing else
-   to mark it — the heading only appears when the 1st lands in column one —
+/* The 1st, a shade stronger than the days after it.
+
+   It used to read "1 Sep", because a month could change halfway along a row
    and a bare "1" between a 31 and a 2 is the kind of thing a reader corrects
-   for half a second too late. */
+   for half a second too late. Rows no longer straddle months — the 1st is the
+   first day of its block, under a heading naming the month — so the label had
+   become the same word twice, and only the emphasis is worth keeping. */
 .zenith-tcal__daynum.is-first {
-    width: auto;
-    min-width: 0;
-    padding: 0 6px;
     color: var(--zenith-text-normal);
     font-weight: 600;
 }
@@ -502,18 +651,22 @@
     border: none;
     border-radius: 999px;
     background: color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 22%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 40%, transparent);
+    box-shadow: inset 0 0 0 1px
+        color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 40%, transparent);
     color: var(--zenith-text-normal);
     font-size: 0.7rem;
     line-height: 1;
     text-align: left;
     cursor: pointer;
-    transition: opacity var(--zenith-transition-fast), background var(--zenith-transition-fast);
+    transition:
+        opacity var(--zenith-transition-fast),
+        background var(--zenith-transition-fast);
 }
 
 .zenith-root button.zenith-tcal__ribbon:hover {
     background: color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 34%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 60%, transparent);
+    box-shadow: inset 0 0 0 1px
+        color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 60%, transparent);
 }
 
 /* A square end is the conventional "continues past here". */
@@ -623,6 +776,10 @@
     font-size: 0.66rem;
     text-align: left;
     cursor: pointer;
+    /* Fades with the chips above it when another task is lit. */
+    transition:
+        opacity var(--zenith-transition-fast),
+        color var(--zenith-transition-fast);
 }
 
 .zenith-root button.zenith-tcal__more:hover {
@@ -792,7 +949,11 @@
     border: none;
     border-left: 3px solid var(--tcal-kind, var(--zenith-accent));
     border-radius: var(--zenith-radius-xs);
-    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 20%, var(--zenith-bg-primary));
+    background: color-mix(
+        in srgb,
+        var(--tcal-kind, var(--zenith-accent)) 20%,
+        var(--zenith-bg-primary)
+    );
     box-shadow: none;
     color: var(--zenith-text-normal);
     font-size: 0.72rem;
@@ -800,12 +961,18 @@
     text-align: left;
     cursor: pointer;
     overflow: hidden;
-    transition: background var(--zenith-transition-fast), box-shadow var(--zenith-transition-fast),
+    transition:
+        background var(--zenith-transition-fast),
+        box-shadow var(--zenith-transition-fast),
         opacity var(--zenith-transition-fast);
 }
 
 .zenith-root button.zenith-tcal__event:hover {
-    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 34%, var(--zenith-bg-primary));
+    background: color-mix(
+        in srgb,
+        var(--tcal-kind, var(--zenith-accent)) 34%,
+        var(--zenith-bg-primary)
+    );
     box-shadow: var(--zenith-shadow-sm);
     /* Above its neighbours while hovered, so a block squeezed into a third of
        the column can still be read without being clicked. */
@@ -815,7 +982,8 @@
 /* The end was never stated — the height is the default slot, and the dashed
    foot is the block admitting it. */
 .zenith-root button.zenith-tcal__event.is-open-end {
-    border-bottom: 1px dashed color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 55%, transparent);
+    border-bottom: 1px dashed
+        color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 55%, transparent);
 }
 
 /* Priority is weight here, not a coloured edge: that edge is already spoken
@@ -828,6 +996,48 @@
 
 .zenith-tcal__event.is-dim {
     opacity: 0.25;
+}
+
+/* ── Spotlight ───────────────────────────────────────
+   Hovering a task lights every piece of it — each row a bar crosses, the chips
+   it has on other days, its block on the hours — and fades every other task, so
+   "which of these is the same thing" is answered without reading a title twice.
+
+   The grid itself stays as it is: the day numbers are what the lit task is read
+   against, and fading them would take away the one thing the highlight is for.
+   The attributes are set by `useSpotlight`. These rules sit after every
+   `.is-dim` on purpose, so a task faded by the statistics focus still comes
+   forward when it is the one under the pointer. */
+[data-spotlit] .zenith-tcal__chip:not([data-lit]),
+[data-spotlit] .zenith-tcal__ribbon:not([data-lit]),
+[data-spotlit] .zenith-tcal__event:not([data-lit]),
+[data-spotlit] .zenith-tcal__more {
+    opacity: 0.25;
+}
+
+[data-spotlit] [data-lit] {
+    opacity: 1;
+}
+
+/* Every lit piece wears the hover state, not only the one under the pointer —
+   otherwise the rest of a bar reads as merely "not faded", which is a weaker
+   claim than "this is the same bar". */
+.zenith-root [data-spotlit] button.zenith-tcal__chip[data-lit] {
+    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-text-muted)) 22%, transparent);
+}
+
+.zenith-root [data-spotlit] button.zenith-tcal__ribbon[data-lit] {
+    background: color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 34%, transparent);
+    box-shadow: inset 0 0 0 1px
+        color-mix(in srgb, var(--tcal-kind, var(--zenith-accent)) 60%, transparent);
+}
+
+.zenith-root [data-spotlit] button.zenith-tcal__event[data-lit] {
+    background: color-mix(
+        in srgb,
+        var(--tcal-kind, var(--zenith-accent)) 34%,
+        var(--zenith-bg-primary)
+    );
 }
 
 .zenith-tcal__event-head {

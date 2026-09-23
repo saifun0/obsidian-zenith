@@ -9,6 +9,7 @@ import {
     Clock,
     Columns3,
     Filter,
+    Grid3x3,
     List,
     Settings2,
 } from 'lucide-react';
@@ -23,7 +24,12 @@ interface ToolbarProps {
     t: Translator;
     mode: CalendarViewMode;
     title: string;
+    /** The title is naming the day, week or month we are living in. */
+    atCurrent: boolean;
     counts: CalendarCounts;
+    /** Days across the month grid — 7, or 3 on a narrow screen. */
+    columns: number;
+    onColumns: () => void;
     hideDone: boolean;
     spanDays: boolean;
     showDailyNotes: boolean;
@@ -62,7 +68,10 @@ export const CalendarToolbar: FC<ToolbarProps> = ({
     t,
     mode,
     title,
+    atCurrent,
     counts,
+    columns,
+    onColumns,
     hideDone,
     spanDays,
     showDailyNotes,
@@ -77,10 +86,26 @@ export const CalendarToolbar: FC<ToolbarProps> = ({
     const stats = usePopover();
     const opts = usePopover();
 
+    /**
+     * Arrows only where there are pages to turn.
+     *
+     * The month view's months are a single scroll, so a pager beside it was
+     * two controls for one thing that could not help disagreeing: the title
+     * named the anchor month while the reader was three months further down,
+     * and pressing an arrow abandoned their place to re-anchor somewhere they
+     * could already see. What's left is the title, which follows the scroll
+     * and takes you back to today.
+     */
+    const paging = mode !== 'month';
+
     // Nothing to do at all reads differently from "all done" — one is an empty
     // month, the other is a finished one, and the icon says which.
     const StatusIcon =
-        counts.remaining > 0 ? CalendarClock : counts.percentDone === 100 && counts.byKind.done > 0 ? CalendarCheck : CalendarHeart;
+        counts.remaining > 0
+            ? CalendarClock
+            : counts.percentDone === 100 && counts.byKind.done > 0
+              ? CalendarCheck
+              : CalendarHeart;
 
     const options: Array<{ key: CalendarToggle; on: boolean; label: string; shown?: boolean }> = [
         { key: 'hideDone', on: hideDone, label: t('calendar.option.hideDone') },
@@ -121,18 +146,51 @@ export const CalendarToolbar: FC<ToolbarProps> = ({
             </div>
 
             <div className="zenith-tcal__nav">
-                <button className="zenith-tcal__tool" onClick={() => onStep(-1)} aria-label={t('calendar.prev')}>
-                    <ChevronLeft size={16} />
-                </button>
-                <button className="zenith-tcal__title" onClick={onToday} title={t('calendar.today')}>
+                {paging && (
+                    <button
+                        className="zenith-tcal__tool"
+                        onClick={() => onStep(-1)}
+                        aria-label={t('calendar.prev')}
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                )}
+                <button
+                    className={`zenith-tcal__title ${atCurrent ? 'is-current' : ''}`}
+                    onClick={onToday}
+                    title={t('calendar.today')}
+                >
                     {title}
                 </button>
-                <button className="zenith-tcal__tool" onClick={() => onStep(1)} aria-label={t('calendar.next')}>
-                    <ChevronRight size={16} />
-                </button>
+                {paging && (
+                    <button
+                        className="zenith-tcal__tool"
+                        onClick={() => onStep(1)}
+                        aria-label={t('calendar.next')}
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                )}
             </div>
 
             <div className="zenith-tcal__bar-end">
+                {/* A grid, and the width written next to it. The number alone
+                    was a bare digit among icons and read as a badge rather than
+                    a button; no glyph alone says "seven days across" either.
+                    A different grid from the week view's columns, which is a
+                    mode and not a width. Only the month grid has one. */}
+                {mode === 'month' && (
+                    <button
+                        className="zenith-tcal__tool zenith-tcal__cols"
+                        onClick={onColumns}
+                        title={t('calendar.columns')}
+                        aria-label={t('calendar.columns')}
+                    >
+                        <Grid3x3 size={15} />
+                        {columns}
+                    </button>
+                )}
+
                 <button
                     {...opts.anchorProps}
                     className={`zenith-tcal__tool ${opts.open ? 'is-active' : ''}`}

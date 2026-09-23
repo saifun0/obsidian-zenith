@@ -54,29 +54,12 @@
     min-width: 0;
 }
 
+/* The small shared field, monospaced because it holds a path or an address.
+   A path that names nothing turns it red (`is-invalid`) rather than adding a
+   line of its own: the field is both the report and the repair. */
 .zenith-root input.zenith-picture-settings__input {
     flex: 1;
     min-width: 0;
-    height: 26px;
-    padding: 0 8px;
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-sm);
-    background: var(--zenith-bg-primary);
-    color: var(--zenith-text-normal);
-    font-family: var(--zenith-font-mono);
-    font-size: 0.7rem;
-}
-
-.zenith-root input.zenith-picture-settings__input:focus {
-    border-color: var(--zenith-accent);
-    outline: none;
-    box-shadow: none;
-}
-
-/* A path that names nothing. Said on the field rather than in a line of its own
-   because the field is both the report and the repair. */
-.zenith-root input.zenith-picture-settings__input.is-bad {
-    border-color: var(--zenith-danger);
 }
 
 /* The panel styles every button as a pill in a group; this one stands alone

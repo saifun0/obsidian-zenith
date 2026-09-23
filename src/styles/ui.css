@@ -318,9 +318,14 @@
     cursor: pointer;
 }
 
-.zenith-pop button.zenith-pop__item:hover {
-    background: var(--background-modifier-hover, #2f2f2f);
-    color: var(--text-normal, #dcddde);
+/* Only where a pointer can hover: under a finger `:hover` sticks to the row
+   the finger last crossed, so scrolling a list left a row lit that nobody
+   had chosen. */
+@media (hover: hover) {
+    .zenith-pop button.zenith-pop__item:hover {
+        background: var(--background-modifier-hover, #2f2f2f);
+        color: var(--text-normal, #dcddde);
+    }
 }
 
 .zenith-pop button.zenith-pop__item.is-active {

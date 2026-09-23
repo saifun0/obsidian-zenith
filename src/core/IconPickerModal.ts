@@ -34,7 +34,7 @@ export class IconPickerModal extends Modal {
 
         const search = contentEl.createEl('input', {
             type: 'text',
-            cls: 'zenith-icon-picker__search',
+            cls: 'zenith-input zenith-icon-picker__search',
             attr: { placeholder: 'Search icons…' },
         });
         search.addEventListener('input', () => {

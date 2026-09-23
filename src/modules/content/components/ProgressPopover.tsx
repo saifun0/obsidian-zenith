@@ -133,7 +133,7 @@ export const ProgressPopover: FC<ProgressPopoverProps> = ({
 
                             <span className="zenith-cwp__value">
                                 <input
-                                    className="zenith-cwp__num"
+                                    className="zenith-input zenith-input--sm zenith-cwp__num"
                                     type="number"
                                     inputMode="numeric"
                                     min={0}

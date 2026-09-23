@@ -30,35 +30,6 @@
     flex-shrink: 0;
 }
 
-/* ── Select affordance ──────────────────────────────
-   Native selects render inconsistently (and their value text can be clipped on
-   some platforms), so we strip the native chrome and draw our own up/down
-   chevron on the right, keeping the value legible. */
-.zenith-root select,
-.zenith-settings select,
-.zenith-quick-add select {
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
-    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='24'%20height='24'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%238a8f98'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m7%2015%205%205%205-5'/%3E%3Cpath%20d='m7%209%205-5%205%205'/%3E%3C/svg%3E") !important;
-    background-repeat: no-repeat !important;
-    background-position: right 9px center !important;
-    background-size: 13px !important;
-    padding-right: 30px !important;
-    /* Give the value room so it isn't vertically clipped by tight padding. */
-    min-height: 36px;
-    font-size: 0.86rem;
-    line-height: 1.3;
-    cursor: pointer;
-}
-/* Options render in a native popup — keep them at a comfortable, readable size. */
-.zenith-root select option,
-.zenith-settings select option {
-    font-size: 0.9rem;
-    background: var(--background-primary);
-    color: var(--text-normal);
-}
-
 /* ── Scrollbar ──────────────────────────────────── */
 .zenith-root::-webkit-scrollbar {
     width: 6px;
@@ -222,19 +193,9 @@
 }
 
 /* ── Icon picker modal ──────────────────────────────── */
-.zenith-icon-picker__search {
+input.zenith-input.zenith-icon-picker__search {
     width: 100%;
-    box-sizing: border-box;
     margin-bottom: 12px;
-    padding: 8px 10px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 6px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-    outline: none;
-}
-.zenith-icon-picker__search:focus {
-    border-color: var(--interactive-accent);
 }
 /* The picker is sectioned now (packs, then built-ins), so the scroll belongs to
    the wrapper — a per-section scroller would give every pack its own tiny
@@ -373,22 +334,46 @@
    .zenith-root, where those tokens aren't defined. */
 .zenith-prompt__input {
     width: 100%;
-    padding: 8px 10px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-    font-size: 0.92rem;
-}
-.zenith-prompt__input:focus {
-    outline: none;
-    border-color: var(--interactive-accent);
 }
 .zenith-prompt__actions {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
     margin-top: 16px;
+}
+
+/* ── Device capability check ─────────────────────────
+   One row per check: a pass/fail mark, the check's name, and what happened
+   underneath, indented to sit under the name rather than under the mark. */
+.zenith-devcheck__row {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+.zenith-devcheck__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.zenith-devcheck__mark {
+    display: inline-flex;
+    flex-shrink: 0;
+}
+.zenith-devcheck__mark svg {
+    width: 18px;
+    height: 18px;
+}
+.zenith-devcheck__mark.is-ok {
+    color: var(--color-green);
+}
+.zenith-devcheck__mark.is-fail {
+    color: var(--color-red);
+}
+.zenith-devcheck__detail {
+    padding-left: 26px;
+    word-break: break-word;
+}
+.zenith-devcheck__verdict {
+    margin-top: 14px;
 }
 
 /* ── While a drag is in progress ─────────────────────

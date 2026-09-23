@@ -239,9 +239,7 @@ export const CalendarWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
             <div className="zenith-tcalw__days">
                 {days.map((day) => (
                     <span className="zenith-tcalw__day" key={day.date}>
-                        <span
-                            className={`zenith-tcalw__day-name ${day.isToday ? 'is-today' : ''}`}
-                        >
+                        <span className={`zenith-tcalw__day-name ${day.isToday ? 'is-today' : ''}`}>
                             {day.short}
                         </span>
                         <span className="zenith-tcalw__day-num">{day.num}</span>

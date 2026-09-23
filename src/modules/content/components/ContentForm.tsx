@@ -19,6 +19,7 @@ import { resolveCover } from '../services/coverUrl';
 import { cacheCover, isRemoteCover } from '../services/coverCache';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
 import { Modal } from '../../../components/shared/Modal';
+import { Dropdown } from '../../../components/ui/fields';
 import { StarRating } from '../../../components/shared/StarRating';
 import { MetadataPicker } from './MetadataPicker';
 import { useTranslation } from '../../../core/i18n';
@@ -328,7 +329,7 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                             <input
                                 id="content-cover"
                                 type="text"
-                                className="zenith-field__input"
+                                className="zenith-input zenith-field__input"
                                 placeholder={t('content.form.coverPlaceholder')}
                                 value={coverImage}
                                 onChange={(e) => {
@@ -345,18 +346,13 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                         <label className="zenith-field__label" htmlFor="content-status">
                             {t('content.form.status')}
                         </label>
-                        <select
+                        <Dropdown
                             id="content-status"
-                            className="zenith-field__input zenith-field__select"
+                            className="zenith-input zenith-field__input"
                             value={status}
-                            onChange={(e) => setStatus(e.target.value as ContentStatus)}
-                        >
-                            {CONTENT_STATUSES.map((s) => (
-                                <option key={s} value={s}>
-                                    {t(STATUS_KEY[s])}
-                                </option>
-                            ))}
-                        </select>
+                            options={CONTENT_STATUSES.map((s) => ({ value: s, label: t(STATUS_KEY[s]) }))}
+                            onChange={(v) => setStatus(v as ContentStatus)}
+                        />
                     </div>
 
                     {shows('year') && (
@@ -367,7 +363,8 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                             <input
                                 id="content-year"
                                 type="number"
-                                className="zenith-field__input"
+                                inputMode="numeric"
+                                className="zenith-input zenith-field__input"
                                 placeholder="2024"
                                 value={year}
                                 onChange={(e) => setYear(e.target.value)}
@@ -383,7 +380,7 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                             <input
                                 id="content-creator"
                                 type="text"
-                                className="zenith-field__input"
+                                className="zenith-input zenith-field__input"
                                 value={creator}
                                 onChange={(e) => setCreator(e.target.value)}
                             />
@@ -423,7 +420,7 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                         <input
                             id="content-genres"
                             type="text"
-                            className="zenith-field__input"
+                            className="zenith-input zenith-field__input"
                             placeholder={t('content.form.genresPlaceholder')}
                             value={genresInput}
                             onChange={(e) => setGenresInput(e.target.value)}
@@ -439,7 +436,7 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                         <input
                             id="content-tags"
                             type="text"
-                            className="zenith-field__input"
+                            className="zenith-input zenith-field__input"
                             placeholder={t('content.form.tagsPlaceholder')}
                             value={tagsInput}
                             onChange={(e) => setTagsInput(e.target.value)}
@@ -454,7 +451,7 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                         </label>
                         <textarea
                             id="content-desc"
-                            className="zenith-field__input zenith-field__textarea"
+                            className="zenith-input zenith-field__input zenith-field__textarea"
                             rows={4}
                             placeholder={t('content.form.descriptionPlaceholder')}
                             value={description}

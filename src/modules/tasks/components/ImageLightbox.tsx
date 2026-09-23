@@ -1,9 +1,10 @@
-import React, { useEffect, type FC } from 'react';
+import React, { useContext, useEffect, useState, type FC } from 'react';
 import { createPortal } from 'react-dom';
 import { ExternalLink, FileSymlink, X } from 'lucide-react';
 import { TFile } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
+import { DialogInlineContext } from '../../../components/shared/Modal';
 import type { TaskAttachment } from '../services/taskDetails';
 
 /**
@@ -29,23 +30,30 @@ export const ImageLightbox: FC<ImageLightboxProps> = ({ attachment, src, onClose
     const t = useTranslation();
     const { app } = useApp();
     const isUrl = /^https?:\/\//i.test(attachment.target);
+    // Drawn in place on the debug page's modal catalogue; see DialogInlineContext.
+    const inline = useContext(DialogInlineContext);
+    // The window the user is in, as for the shared Modal: `document` is always
+    // the main window's.
+    const [host] = useState(() => activeDocument);
 
     // Escape closes, and the page behind it stops scrolling under the backdrop.
     useEffect(() => {
+        if (inline) return;
+        const win = host.defaultView ?? window;
         const onKey = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 e.stopPropagation();
                 onClose();
             }
         };
-        window.addEventListener('keydown', onKey);
-        const previous = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
+        win.addEventListener('keydown', onKey);
+        const previous = host.body.style.overflow;
+        host.body.style.overflow = 'hidden';
         return () => {
-            window.removeEventListener('keydown', onKey);
-            document.body.style.overflow = previous;
+            win.removeEventListener('keydown', onKey);
+            host.body.style.overflow = previous;
         };
-    }, [onClose]);
+    }, [onClose, inline, host]);
 
     const openSource = () => {
         onClose();
@@ -60,11 +68,11 @@ export const ImageLightbox: FC<ImageLightboxProps> = ({ attachment, src, onClose
         else void app.workspace.openLinkText(attachment.target, '', true);
     };
 
-    return createPortal(
+    const lightbox = (
         <div
-            className="zenith-lightbox"
+            className={`zenith-lightbox${inline ? ' zenith-lightbox--inline' : ''}`}
             role="dialog"
-            aria-modal="true"
+            aria-modal={!inline}
             aria-label={attachment.label ?? attachment.target}
             // Only a click on the backdrop itself closes — one that started on
             // the picture and drifted off it is not a click on the backdrop.
@@ -101,7 +109,8 @@ export const ImageLightbox: FC<ImageLightboxProps> = ({ attachment, src, onClose
                     <X size={16} />
                 </button>
             </div>
-        </div>,
-        document.body
+        </div>
     );
+
+    return inline ? lightbox : createPortal(lightbox, host.body);
 };

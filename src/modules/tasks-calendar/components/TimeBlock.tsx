@@ -74,6 +74,7 @@ export const TimeBlock: FC<TimeBlockProps> = ({
                 left: `calc(${width * column}% + 1px)`,
                 width: `calc(${width}% - 3px)`,
             }}
+            data-task={task.id}
             onClick={(e) => {
                 e.stopPropagation();
                 onOpen(entry);

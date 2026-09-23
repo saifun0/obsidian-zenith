@@ -1,0 +1,776 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — fields
+   ───────────────────────────────────────────────────
+   One look for everything a person types into or picks from, whatever it is
+   and wherever it sits.
+
+   There were fifteen before this: the settings field, the dialog field, four
+   search boxes, the filter popover, a subtask line, a card's path box and so
+   on, each with its own height, radius, fill and focus. And every native
+   control — select, date, time, colour — handed the drawing to the platform,
+   so the same task editor showed a Windows dropdown on one machine and an iOS
+   wheel on the next. The native controls are gone (see the components in this
+   folder); what remains is one skin, `.zenith-input`, over one set of numbers.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ── The numbers ─────────────────────────────────────
+   On `body`, not `.zenith-root`: a field turns up in places no Zenith root
+   reaches — the settings window, a portalled popover, an Obsidian modal built
+   from plain DOM. Custom properties do nothing until something reads them, so
+   declaring them this wide costs nothing.
+
+   The heights are the `lg` and `md` of the control scale in ui.css, so a field
+   and the button beside it are one height. Under a finger they grow like every
+   other target, and the text goes to 16px — below that, iOS zooms the whole
+   page in when a field takes focus. */
+body {
+    --zenith-field-h: 32px;
+    --zenith-field-h-sm: 28px;
+    --zenith-field-px: 10px;
+    --zenith-field-px-sm: 8px;
+    --zenith-field-radius: 8px;
+    --zenith-field-font: 0.88rem;
+    --zenith-field-bg: var(--background-primary);
+    --zenith-field-border: var(--background-modifier-border);
+    --zenith-field-border-hover: var(--background-modifier-border-hover, var(--text-faint));
+    --zenith-field-accent: var(--interactive-accent);
+    --zenith-field-ring: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent);
+}
+
+@media (pointer: coarse) {
+    body {
+        --zenith-field-h: 44px;
+        --zenith-field-h-sm: 40px;
+        --zenith-field-px: 12px;
+        --zenith-field-px-sm: 10px;
+        --zenith-field-font: 16px;
+    }
+}
+
+/* ── The skin ────────────────────────────────────────
+   Element + class throughout: Obsidian styles bare `input[type=text]` and
+   `button` at (0,1,1), and a lone class loses to both. `div.zenith-input` is
+   a composite — an icon, a bare input and a button inside one border — and
+   takes its focus ring from whatever inside it has focus.
+
+   `--zenith-field-inset` is the side padding of this particular field, so a
+   composite's parts can line up with it at either size. */
+input.zenith-input,
+textarea.zenith-input,
+button.zenith-input,
+div.zenith-input {
+    --zenith-field-inset: var(--zenith-field-px);
+    box-sizing: border-box;
+    height: var(--zenith-field-h);
+    min-height: var(--zenith-field-h);
+    margin: 0;
+    padding: 0 var(--zenith-field-inset);
+    border: 1px solid var(--zenith-field-border);
+    border-radius: var(--zenith-field-radius);
+    background: var(--zenith-field-bg);
+    box-shadow: none;
+    outline: none;
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: var(--zenith-field-font);
+    font-weight: 400;
+    line-height: 1.3;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+textarea.zenith-input {
+    height: auto;
+    min-height: calc(var(--zenith-field-h) * 2.4);
+    padding: 7px var(--zenith-field-inset);
+    line-height: 1.5;
+    resize: vertical;
+}
+
+/* The hover is a hairline a shade brighter and nothing else — the fill stays,
+   restated for the button, whose hover Obsidian repaints at (0,2,1).
+
+   Only where there is a hover to have. On a touchscreen `:hover` sticks to
+   whatever was tapped last, so a field stayed lit after the finger left it. */
+@media (hover: hover) {
+    input.zenith-input:hover:not(:disabled):not(:focus),
+    textarea.zenith-input:hover:not(:disabled):not(:focus),
+    button.zenith-input:hover:not(:disabled),
+    div.zenith-input:hover:not(:focus-within):not(.is-disabled) {
+        border-color: var(--zenith-field-border-hover);
+        background: var(--zenith-field-bg);
+    }
+}
+
+/* Obsidian repaints a hovered button's fill whether or not the pointer can
+   hover; the field keeps its own. */
+button.zenith-input:hover {
+    background: var(--zenith-field-bg);
+}
+
+/* One ring for typing, for keyboard focus, and for a picker that is open. */
+input.zenith-input:focus,
+input.zenith-input:focus-visible,
+textarea.zenith-input:focus,
+textarea.zenith-input:focus-visible,
+button.zenith-input:focus-visible,
+button.zenith-input[aria-expanded='true'],
+div.zenith-input:focus-within,
+div.zenith-input.is-open {
+    border-color: var(--zenith-field-accent);
+    background: var(--zenith-field-bg);
+    box-shadow: var(--zenith-field-ring);
+    outline: none;
+}
+
+.zenith-input::placeholder,
+.zenith-input input::placeholder {
+    color: var(--text-faint);
+    opacity: 1;
+}
+
+.zenith-input.zenith-input--sm {
+    --zenith-field-inset: var(--zenith-field-px-sm);
+    height: var(--zenith-field-h-sm);
+    min-height: var(--zenith-field-h-sm);
+    padding: 0 var(--zenith-field-inset);
+}
+
+.zenith-input.is-mono,
+.zenith-input.is-mono input {
+    font-family: var(--font-monospace);
+    font-size: calc(var(--zenith-field-font) * 0.93);
+}
+
+/* Not a pixel under 16 on a touchscreen, monospaced or not: iOS zooms in on
+   any field set smaller, and that is the field people type codes into. */
+@media (pointer: coarse) {
+    .zenith-input.is-mono,
+    .zenith-input.is-mono input {
+        font-size: var(--zenith-field-font);
+    }
+}
+
+.zenith-input.is-invalid,
+.zenith-input.is-invalid:focus,
+.zenith-input.is-invalid:focus-within {
+    border-color: var(--text-error);
+}
+
+.zenith-input:disabled,
+.zenith-input.is-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* A composite's own input: no box of its own, because the composite is the
+   box. Every state is named — Obsidian's focus rule is as specific as a plain
+   `div.zenith-input > input` and would draw a second ring inside the first. */
+div.zenith-input {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+div.zenith-input > input,
+div.zenith-input > input:hover,
+div.zenith-input > input:focus,
+div.zenith-input > input:focus-visible,
+div.zenith-input > input:active {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+    color: inherit;
+    font: inherit;
+}
+
+/* An icon-sized button inside a field: clear, open the clock, open the
+   calendar. Quiet until hovered, square, and a finger's width under one. */
+div.zenith-input button.zenith-field-btn {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    margin: 0 -4px 0 0;
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+@media (hover: hover) {
+    div.zenith-input button.zenith-field-btn:hover {
+        background: var(--background-modifier-hover);
+        color: var(--text-normal);
+    }
+}
+
+@media (pointer: coarse) {
+    div.zenith-input button.zenith-field-btn {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+.zenith-field-icon {
+    flex: none;
+    color: var(--text-muted);
+}
+
+/* No spinner arrows on any Zenith number: Windows draws two, macOS draws them
+   differently, iOS draws none. Where stepping matters, the control brings its
+   own − and + (the progress stepper does). */
+input.zenith-input[type='number'],
+:is(.zenith-root, .zenith-settings, .zenith-pop) input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+input.zenith-input[type='number']::-webkit-inner-spin-button,
+input.zenith-input[type='number']::-webkit-outer-spin-button,
+:is(.zenith-root, .zenith-settings, .zenith-pop) input[type='number']::-webkit-inner-spin-button,
+:is(.zenith-root, .zenith-settings, .zenith-pop) input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* The pickers' own buttons — calendar days, clock cells, presets — share one
+   quiet look: no fill until hovered or focused, a hover only where there is
+   one, and a keyboard focus that is always drawn. Scoped under the popover
+   for the same (0,1,1) reason as the fields. */
+.zenith-datepick button.zenith-datepick__nav,
+.zenith-datepick button.zenith-datepick__day,
+.zenith-datepick button.zenith-datepick__link,
+.zenith-timepick button.zenith-timepick__cell,
+.zenith-timepick button.zenith-timepick__clear,
+.zenith-colorpick button.zenith-colorpick__tool,
+.zenith-colorpick button.zenith-colorpick__reset {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-normal, #dcddde);
+    font-family: inherit;
+    cursor: pointer;
+}
+
+@media (hover: hover) {
+    .zenith-datepick button.zenith-datepick__nav:hover,
+    .zenith-datepick button.zenith-datepick__day:hover,
+    .zenith-datepick button.zenith-datepick__link:hover,
+    .zenith-timepick button.zenith-timepick__cell:hover,
+    .zenith-timepick button.zenith-timepick__clear:hover,
+    .zenith-colorpick button.zenith-colorpick__tool:hover,
+    .zenith-colorpick button.zenith-colorpick__reset:hover {
+        background: var(--background-modifier-hover, #2f2f2f);
+    }
+}
+
+.zenith-datepick button.zenith-datepick__nav:focus-visible,
+.zenith-datepick button.zenith-datepick__day:focus-visible,
+.zenith-datepick button.zenith-datepick__link:focus-visible,
+.zenith-timepick button.zenith-timepick__cell:focus-visible,
+.zenith-timepick button.zenith-timepick__clear:focus-visible,
+.zenith-colorpick button.zenith-colorpick__tool:focus-visible,
+.zenith-colorpick button.zenith-colorpick__reset:focus-visible {
+    background: var(--background-modifier-hover, #2f2f2f);
+    outline: none;
+}
+
+/* ── Dropdown ──────────────────────────────────────── */
+button.zenith-select {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.zenith-select__value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.zenith-select__value.is-placeholder {
+    color: var(--text-faint);
+}
+
+.zenith-select__chevron {
+    flex: none;
+    margin-right: -2px;
+    color: var(--text-muted);
+}
+
+.zenith-select__menu button.zenith-pop__item:focus-visible {
+    background: var(--background-modifier-hover, #2f2f2f);
+    outline: none;
+}
+
+.zenith-select__menu button.zenith-pop__item:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.zenith-select__label {
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-select__tick {
+    color: var(--interactive-accent, #8b5cf6);
+}
+
+/* ── Date ─────────────────────────────────────────── */
+div.zenith-datefield {
+    padding-right: 6px;
+    cursor: pointer;
+}
+
+/* The face of the field is a button that fills it, so the whole box opens the
+   calendar and the clear button can sit beside it rather than inside it. */
+div.zenith-datefield button.zenith-datefield__open {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    min-width: 0;
+    height: 100%;
+    margin: 0 0 0 calc(var(--zenith-field-inset) * -1);
+    padding: 0 0 0 var(--zenith-field-inset);
+    border: none;
+    border-radius: inherit;
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+div.zenith-datefield button.zenith-datefield__open:disabled {
+    cursor: not-allowed;
+}
+
+.zenith-datefield__value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.zenith-datefield__value.is-placeholder {
+    color: var(--text-faint);
+}
+
+/* The calendar. `zenith-datepick`, not `zenith-cal`: that block is the
+   dashboard clock's month, and sharing its name meant sharing its grid, its
+   header and its cell heights. */
+.zenith-pop.zenith-datepick {
+    gap: 6px;
+    padding: 8px;
+}
+
+.zenith-datepick__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.zenith-datepick__title {
+    flex: 1;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.zenith-datepick button.zenith-datepick__nav {
+    width: 28px;
+    height: 28px;
+    color: var(--text-muted, #999);
+}
+
+.zenith-datepick__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.zenith-datepick__dow {
+    padding: 2px 0 4px;
+    color: var(--text-faint, #7a7a7a);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.zenith-datepick button.zenith-datepick__day {
+    height: 32px;
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-datepick button.zenith-datepick__day.is-outside {
+    color: var(--text-faint, #7a7a7a);
+}
+
+.zenith-datepick button.zenith-datepick__day.is-today {
+    color: var(--interactive-accent, #8b5cf6);
+    font-weight: 700;
+}
+
+.zenith-datepick button.zenith-datepick__day.is-selected,
+.zenith-datepick button.zenith-datepick__day.is-selected:hover {
+    background: var(--interactive-accent, #8b5cf6);
+    color: var(--text-on-accent, #fff);
+    font-weight: 600;
+}
+
+.zenith-datepick button.zenith-datepick__day.is-selected:focus-visible {
+    box-shadow:
+        0 0 0 2px var(--background-secondary, #262626),
+        0 0 0 4px var(--interactive-accent, #8b5cf6);
+}
+
+.zenith-datepick__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 2px;
+    border-top: 1px solid var(--background-modifier-border, #454545);
+}
+
+.zenith-datepick button.zenith-datepick__link {
+    height: 28px;
+    padding: 0 8px;
+    color: var(--interactive-accent, #8b5cf6);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+@media (pointer: coarse) {
+    .zenith-datepick button.zenith-datepick__day {
+        height: 40px;
+        font-size: 0.95rem;
+    }
+
+    .zenith-datepick button.zenith-datepick__nav,
+    .zenith-datepick button.zenith-datepick__link {
+        height: 40px;
+        min-width: 40px;
+    }
+}
+
+/* ── Time ─────────────────────────────────────────── */
+div.zenith-timefield {
+    padding-right: 6px;
+}
+
+div.zenith-timefield > input {
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-pop.zenith-timepick {
+    gap: 6px;
+    padding: 6px;
+}
+
+.zenith-timepick__cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    min-height: 0;
+}
+
+.zenith-timepick__col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 216px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 2px;
+}
+
+.zenith-timepick__head {
+    padding: 2px 0 4px;
+    color: var(--text-faint, #7a7a7a);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.zenith-timepick button.zenith-timepick__cell,
+.zenith-timepick button.zenith-timepick__clear {
+    height: 30px;
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-timepick button.zenith-timepick__cell.is-selected {
+    background: var(--interactive-accent, #8b5cf6);
+    color: var(--text-on-accent, #fff);
+    font-weight: 600;
+}
+
+.zenith-timepick button.zenith-timepick__clear {
+    color: var(--interactive-accent, #8b5cf6);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+@media (pointer: coarse) {
+    .zenith-timepick button.zenith-timepick__cell,
+    .zenith-timepick button.zenith-timepick__clear {
+        height: 40px;
+        font-size: 0.95rem;
+    }
+}
+
+/* ── Colour ───────────────────────────────────────── */
+/* The swatch is a field-sized square with the colour inset, so it lines up
+   with the text field and the reset button beside it. */
+button.zenith-input.zenith-colorfield {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--zenith-field-h);
+    padding: 4px;
+    cursor: pointer;
+}
+
+.zenith-colorfield__chip {
+    width: 100%;
+    height: 100%;
+    border-radius: calc(var(--zenith-field-radius) - 3px);
+    background: var(--zenith-chip);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.zenith-colorfield__chip.is-empty {
+    background: repeating-linear-gradient(
+        45deg,
+        transparent 0 4px,
+        var(--background-modifier-border) 4px 5px
+    );
+}
+
+.zenith-pop.zenith-colorpick {
+    gap: 10px;
+    padding: 10px;
+}
+
+/* The square: hue from the strip, saturation left to right, brightness
+   bottom to top. Black and white here are the colour model's, not the
+   theme's — the square has to reach true black and true white under any
+   theme, or it cannot pick them. */
+.zenith-colorpick__sv {
+    position: relative;
+    flex: none;
+    height: 150px;
+    border-radius: 8px;
+    background:
+        linear-gradient(to top, black, transparent), linear-gradient(to right, white, transparent),
+        hsl(var(--zenith-hue) 100% 50%);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+    cursor: crosshair;
+    outline: none;
+    /* The finger steers the colour, not the page. */
+    touch-action: none;
+}
+
+.zenith-colorpick__sv:focus-visible,
+.zenith-colorpick__hue:focus-visible {
+    box-shadow:
+        0 0 0 2px var(--background-secondary, #262626),
+        0 0 0 4px var(--interactive-accent, #8b5cf6);
+}
+
+/* Both thumbs: a ring in the colour they sit on, white-edged with a dark halo
+   so it reads over the palest and the darkest corner alike. */
+.zenith-colorpick__thumb,
+.zenith-colorpick__hue-thumb {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.35),
+        0 1px 4px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+.zenith-colorpick__thumb {
+    background: var(--zenith-chip);
+}
+
+.zenith-colorpick__hue {
+    position: relative;
+    flex: none;
+    height: 14px;
+    margin: 0 8px;
+    border-radius: 999px;
+    background: linear-gradient(
+        to right,
+        hsl(0 100% 50%),
+        hsl(60 100% 50%),
+        hsl(120 100% 50%),
+        hsl(180 100% 50%),
+        hsl(240 100% 50%),
+        hsl(300 100% 50%),
+        hsl(360 100% 50%)
+    );
+    cursor: pointer;
+    outline: none;
+    touch-action: none;
+}
+
+.zenith-colorpick__hue-thumb {
+    top: 50%;
+    background: hsl(var(--zenith-hue) 100% 50%);
+}
+
+.zenith-colorpick__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.zenith-colorpick__row .zenith-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-colorpick__preview {
+    flex: none;
+    width: var(--zenith-field-h-sm);
+    height: var(--zenith-field-h-sm);
+    border-radius: 6px;
+    background: var(--zenith-chip);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.zenith-colorpick button.zenith-colorpick__tool {
+    width: var(--zenith-field-h-sm);
+    height: var(--zenith-field-h-sm);
+    color: var(--text-muted, #999);
+}
+
+.zenith-colorpick__grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+}
+
+.zenith-colorpick button.zenith-colorpick__swatch {
+    aspect-ratio: 1;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: var(--zenith-chip);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+}
+
+@media (hover: hover) {
+    .zenith-colorpick button.zenith-colorpick__swatch:hover {
+        box-shadow:
+            inset 0 0 0 1px rgba(0, 0, 0, 0.18),
+            0 0 0 2px var(--background-modifier-border-hover, #666);
+    }
+}
+
+.zenith-colorpick button.zenith-colorpick__swatch:focus-visible {
+    box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.18),
+        0 0 0 2px var(--background-modifier-border-hover, #666);
+    outline: none;
+}
+
+.zenith-colorpick button.zenith-colorpick__swatch.is-selected {
+    box-shadow:
+        0 0 0 2px var(--background-secondary, #262626),
+        0 0 0 4px var(--interactive-accent, #8b5cf6);
+}
+
+.zenith-colorpick button.zenith-colorpick__reset {
+    align-self: flex-start;
+    height: var(--zenith-field-h-sm);
+    padding: 0 10px;
+    color: var(--interactive-accent, #8b5cf6);
+    font-size: 0.8rem;
+}
+
+/* A finger is wider than a cursor: a taller square, a thicker strip, bigger
+   thumbs, and six presets to a row so each is a target rather than a dot. */
+@media (pointer: coarse) {
+    /* Room for half a thumb beyond the square's edge, even when the popover
+       has had to scroll and clips to its padding. */
+    .zenith-pop.zenith-colorpick {
+        padding: 14px;
+    }
+
+    .zenith-colorpick__sv {
+        height: 176px;
+    }
+
+    .zenith-colorpick__hue {
+        height: 24px;
+        margin: 0 12px;
+    }
+
+    .zenith-colorpick__thumb,
+    .zenith-colorpick__hue-thumb {
+        width: 24px;
+        height: 24px;
+        margin: -12px 0 0 -12px;
+    }
+
+    .zenith-colorpick__grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px;
+    }
+}
+
+/* ── Search ───────────────────────────────────────── */
+div.zenith-search {
+    min-width: 0;
+}

@@ -61,19 +61,6 @@
 .zenith-task-filters-popover .zenith-task-filters__select,
 .zenith-task-filters-popover .zenith-task-filters__input {
     width: 100%;
-    padding: 6px 10px;
-    font-size: 0.85rem;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.zenith-task-filters-popover .zenith-task-filters__select:focus,
-.zenith-task-filters-popover .zenith-task-filters__input:focus {
-    border-color: var(--interactive-accent);
 }
 
 /* ── Group Headers ──────────────────────────────── */
@@ -281,52 +268,9 @@
 
 /* ── Task Form ──────────────────────────────────── */
 /* ── Search bar ─────────────────────────────────── */
+/* The field itself is `SearchField` and the shared skin; this only places it. */
 .zenith-tasks-search {
-    display: flex;
-    align-items: center;
-    gap: 8px;
     margin-top: 12px;
-    padding: 0 10px;
-    height: 34px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    background: var(--background-primary);
-    transition: border-color 0.2s ease;
-}
-
-.zenith-tasks-search:focus-within {
-    border-color: var(--interactive-accent);
-}
-
-.zenith-tasks-search__icon {
-    color: var(--text-muted);
-    flex-shrink: 0;
-}
-
-.zenith-tasks-search__input {
-    flex: 1;
-    border: none !important;
-    background: transparent !important;
-    color: var(--text-normal);
-    font-size: 0.9rem;
-    outline: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-}
-
-button.zenith-tasks-search__clear {
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 1.1rem;
-    line-height: 1;
-    padding: 0 4px;
-    box-shadow: none;
-}
-
-.zenith-tasks-search__clear:hover {
-    color: var(--text-normal);
 }
 
 /* ── Task item hover actions ────────────────────── */
@@ -752,6 +696,21 @@ button.zenith-lightbox__btn {
     .zenith-lightbox__name {
         display: none;
     }
+}
+
+/* In place, on the debug page's modal catalogue: a dark box of its own
+   instead of the whole window, with the bar pinned to that box. */
+.zenith-lightbox.zenith-lightbox--inline {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    height: 360px;
+    padding: 56px 16px 16px;
+    border-radius: 8px;
+    animation: none;
+}
+.zenith-lightbox--inline .zenith-lightbox__bar {
+    position: absolute;
 }
 
 /* ── Image alignment in a task row ──────────────── */

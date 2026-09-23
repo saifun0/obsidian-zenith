@@ -584,73 +584,9 @@
     color: var(--zenith-text-faint);
 }
 
+/* `SearchField` at the small size; the sheet only sets its floor. */
 .zenith-add-sheet__search {
-    display: flex;
-    align-items: center;
-    gap: 6px;
     min-width: 180px;
-    padding: 0 8px;
-    height: 28px;
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-sm);
-    background: var(--zenith-bg-primary);
-    color: var(--zenith-text-muted);
-}
-
-/* Hovering lifts the hairline and nothing else.
-   Whatever the theme or Obsidian wanted to do to the input on hover is already
-   neutralised below, so without this the box had no hover state of its own —
-   it had one borrowed from somewhere else, which is why it flashed a filled
-   background at a field that is not a button. A border a shade brighter says
-   "you can type here" without repainting the box. */
-.zenith-add-sheet__search:hover:not(:focus-within) {
-    border-color: color-mix(in srgb, var(--background-modifier-border) 75%, transparent);
-}
-
-.zenith-add-sheet__search:focus-within {
-    border-color: var(--zenith-accent);
-}
-
-/* Obsidian styles bare inputs with a box-shadow — an inset hairline normally,
-   an accent ring on focus — and it survives resetting `border` and `outline`,
-   which is all this rule used to do. The wrapper already draws the border and
-   lights it on `:focus-within`, so the two stacked: a lit rounded rectangle
-   inside a lit rounded rectangle. Every state is named because Obsidian's
-   focus rule is as specific as ours, and losing the inner ring costs no focus
-   indication — the wrapper is the indicator. */
-.zenith-add-sheet__search input,
-.zenith-add-sheet__search input:hover,
-.zenith-add-sheet__search input:focus,
-.zenith-add-sheet__search input:focus-visible,
-.zenith-add-sheet__search input:active {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    background: transparent;
-    color: var(--zenith-text-normal);
-    font-size: 0.82rem;
-    outline: none;
-    box-shadow: none;
-}
-
-.zenith-add-sheet__search button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    box-shadow: none;
-    color: var(--zenith-text-faint);
-    cursor: pointer;
-}
-
-.zenith-add-sheet__search button:hover {
-    background: var(--zenith-bg-hover);
-    color: var(--zenith-text-normal);
 }
 
 .zenith-add-sheet__group + .zenith-add-sheet__group {

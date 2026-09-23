@@ -4,7 +4,6 @@ import {
     Plus,
     CheckSquare,
     SlidersHorizontal,
-    Search,
     BarChart3,
     CalendarDays,
 } from 'lucide-react';
@@ -18,6 +17,7 @@ import type { Priority } from '../../../core/constants';
 import { Tabs } from '../../../components/shared/Tabs';
 import { IconButton } from '../../../components/shared/IconButton';
 import { Popover, usePopover } from '../../../components/shared';
+import { SearchField } from '../../../components/ui/fields';
 import { TaskList } from './TaskList';
 import { TaskFilters } from './TaskFilters';
 import { TaskStats } from './TaskStats';
@@ -251,25 +251,12 @@ export const TasksApp: FC = () => {
                 <Tabs tabs={tabsWithCounts} activeTab={activeTab} onTabChange={setActiveTab} />
 
                 {/* Search */}
-                <div className="zenith-tasks-search">
-                    <Search size={15} className="zenith-tasks-search__icon" />
-                    <input
-                        type="text"
-                        className="zenith-tasks-search__input"
-                        placeholder={t('tasks.searchPlaceholder')}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                    {search && (
-                        <button
-                            className="zenith-tasks-search__clear"
-                            onClick={() => setSearch('')}
-                            aria-label={t('common.clear')}
-                        >
-                            ×
-                        </button>
-                    )}
-                </div>
+                <SearchField
+                    className="zenith-tasks-search"
+                    value={search}
+                    onChange={setSearch}
+                    placeholder={t('tasks.searchPlaceholder')}
+                />
             </div>
 
             {/* Statistics panel */}

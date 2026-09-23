@@ -305,7 +305,7 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
                     <input
                         id="zenith-auth-code"
                         type="text"
-                        className="zenith-sync__input"
+                        className="zenith-input zenith-sync__input"
                         value={codeDraft}
                         onChange={(e) => setCodeDraft(e.target.value)}
                         placeholder={t('auth.paste.placeholder')}

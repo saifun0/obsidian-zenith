@@ -3855,16 +3855,9 @@ button.zenith-cw__cta {
     min-width: 0;
 }
 
+/* The small shared field; only its width and the figures are its own. */
 .zenith-cwp input.zenith-cwp__num {
-    width: 52px;
-    height: 26px;
-    padding: 0 6px;
-    border: 1px solid var(--background-modifier-border, #444);
-    border-radius: 7px;
-    background: var(--background-primary, #1e1e1e);
-    box-shadow: none;
-    color: var(--text-normal, #dcddde);
-    font-size: 13px;
+    width: 56px;
     font-weight: 600;
     text-align: right;
     font-variant-numeric: tabular-nums;
@@ -3953,13 +3946,7 @@ button.zenith-cw__cta {
 
     .zenith-cwp button.zenith-cwp__step,
     .zenith-cwp input.zenith-cwp__num {
-        width: 44px;
-        height: 44px;
-    }
-
-    .zenith-cwp input.zenith-cwp__num {
-        width: 58px;
-        font-size: 15px;
+        width: 64px;
         text-align: center;
     }
 
@@ -4095,8 +4082,4 @@ button.zenith-cw__cta {
     color: var(--text-normal);
 }
 
-/* ── Quick Add modal ────────────────────────────── */
-.zenith-quick-add .setting-item {
-    border: none;
-    padding: 8px 0;
-}
+

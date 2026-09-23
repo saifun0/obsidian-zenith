@@ -380,35 +380,47 @@ label.zenith-settings__item-name {
     justify-content: flex-end;
 }
 
-/* ── Inputs & Selects ── */
-.zenith-settings__input,
-.zenith-settings__select {
+/* ── Inputs ──
+   The settings field is drawn from the same numbers as every other field in
+   the plugin (`--zenith-field-*`, fields.css). It keeps its own rule, and its
+   `!important`s, because Obsidian's settings dialog styles its inputs more
+   specifically than anything else in the app — but it no longer has values of
+   its own to drift. */
+.zenith-settings__input {
     width: 260px !important;
-    height: 32px !important; /* Slightly more compact */
-    min-height: 32px !important;
-    padding: 0 12px !important;
+    height: var(--zenith-field-h) !important;
+    min-height: var(--zenith-field-h) !important;
+    padding: 0 var(--zenith-field-px) !important;
     margin: 0 !important;
-    border: 1px solid var(--background-modifier-border) !important;
-    border-radius: var(--zs-radius-control) !important;
-    background: var(--background-primary) !important;
+    border: 1px solid var(--zenith-field-border) !important;
+    border-radius: var(--zenith-field-radius) !important;
+    background: var(--zenith-field-bg) !important;
     color: var(--text-normal) !important;
     font-family: inherit !important;
-    font-size: 0.9rem !important;
-    line-height: 30px !important;
+    font-size: var(--zenith-field-font) !important;
+    line-height: normal !important;
     box-sizing: border-box !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease !important;
+    box-shadow: none !important;
 }
 
-/* One ring, everywhere something takes focus. Declared as a pair so the
-   keyboard ring and the typing state are the same colour and the same weight
-   — they were an outline on some controls, a shadow on others, and nothing at
-   all on the segmented strip. */
-.zenith-settings__input:focus,
-.zenith-settings__select:focus {
-    border-color: var(--interactive-accent) !important;
+.zenith-settings__input:hover:not(:disabled):not(:focus) {
+    border-color: var(--zenith-field-border-hover) !important;
+}
+
+/* One ring, everywhere something takes focus: the same one fields.css draws. */
+.zenith-settings__input:focus {
+    border-color: var(--zenith-field-accent) !important;
     outline: none !important;
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent) !important;
+    box-shadow: var(--zenith-field-ring) !important;
+}
+
+/* A picker — dropdown, date — takes the text field's width; the rest of its
+   look is the shared field skin. */
+.zenith-settings__picker {
+    width: 260px;
 }
 
 /* A placeholder is a hint, not a value. It read at full text colour in some
@@ -526,7 +538,8 @@ label.zenith-settings__item-name {
     justify-content: flex-start;
 }
 
-.zenith-settings__item--stack .zenith-settings__input {
+.zenith-settings__item--stack .zenith-settings__input,
+.zenith-settings__item--stack .zenith-settings__picker {
     width: 100% !important;
     max-width: 360px;
 }
@@ -713,17 +726,6 @@ button.zenith-settings__noteMark {
     align-items: center;
     gap: 10px;
     width: 100%;
-}
-
-.zenith-settings__color {
-    width: 40px;
-    height: 32px;
-    padding: 2px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--zs-radius-control);
-    background: var(--background-primary);
-    cursor: pointer;
-    flex: 0 0 auto;
 }
 
 /* ── Section label ──
@@ -1090,23 +1092,22 @@ button.zenith-settings__icon-btn {
 .zenith-settings__num {
     display: inline-flex;
     align-items: stretch;
-    /* Border-box, or the 1px border sits OUTSIDE the 32px and the field stands
-       two pixels taller than the text input in the row above it. */
+    /* Border-box, or the 1px border sits OUTSIDE the field height and the
+       field stands two pixels taller than the text input in the row above. */
     box-sizing: border-box;
-    height: 32px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--zs-radius-control);
-    background: var(--background-primary);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    height: var(--zenith-field-h);
+    border: 1px solid var(--zenith-field-border);
+    border-radius: var(--zenith-field-radius);
+    background: var(--zenith-field-bg);
     overflow: hidden;
     transition:
-        border-color 0.2s ease,
-        box-shadow 0.2s ease;
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .zenith-settings__num:focus-within {
-    border-color: var(--interactive-accent);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent);
+    border-color: var(--zenith-field-accent);
+    box-shadow: var(--zenith-field-ring);
 }
 
 .zenith-settings__num .zenith-settings__input,
@@ -1161,9 +1162,21 @@ button.zenith-settings__icon-btn {
 .zenith-settings__textarea {
     width: 100%;
     max-width: 360px;
-    padding: 8px 10px;
-    border-radius: var(--zs-radius-control);
+    padding: 7px var(--zenith-field-px);
+    border: 1px solid var(--zenith-field-border);
+    border-radius: var(--zenith-field-radius);
+    background: var(--zenith-field-bg);
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: var(--zenith-field-font);
+    line-height: 1.5;
     resize: vertical;
+}
+
+.zenith-settings__textarea:focus {
+    border-color: var(--zenith-field-accent);
+    outline: none;
+    box-shadow: var(--zenith-field-ring);
 }
 
 .zenith-settings__input.is-mono,
@@ -1665,9 +1678,12 @@ button.zenith-settings__reveal:focus-visible {
         margin-left: 0;
     }
 
-    .zenith-settings__input,
-    .zenith-settings__select {
+    .zenith-settings__input {
         width: 100% !important;
+    }
+
+    .zenith-settings__picker {
+        width: 100%;
     }
 
     .zenith-settings__num .zenith-settings__input {

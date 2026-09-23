@@ -88,16 +88,47 @@
     white-space: nowrap;
     cursor: text;
 }
+/* ── Quick add (an Obsidian modal around a React form) ── */
+.zenith-quick-add__form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.zenith-quick-add__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+/* The dialog forms' label, restated: this modal is outside `.zenith-dialog`. */
+.zenith-quick-add__label {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.zenith-quick-add__field .zenith-input {
+    width: 100%;
+}
+
+.zenith-quick-add__row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.zenith-quick-add__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .zenith-subtask__input {
     flex: 1;
     min-width: 0;
-    padding: 3px 8px;
-    font-size: 0.85rem;
-    border: 1px solid var(--interactive-accent);
-    border-radius: 6px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-    outline: none;
 }
 .zenith-subtask__actions {
     display: flex;
