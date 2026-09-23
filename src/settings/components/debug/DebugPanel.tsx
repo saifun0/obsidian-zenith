@@ -8,6 +8,7 @@ import { ComponentGallery } from './ComponentGallery';
 import { InputGallery } from './InputGallery';
 import { ModalGallery } from './ModalGallery';
 import { ModuleDiagnostics } from './ModuleDiagnostics';
+import { NotificationDebug } from './NotificationDebug';
 import { StateInspector } from './StateInspector';
 import { StringsAudit } from './StringsAudit';
 
@@ -18,13 +19,13 @@ import { StringsAudit } from './StringsAudit';
  * question you only have while something is broken, and a permanent entry would
  * put a page of raw JSON one click from a page about accent colours.
  *
- * Six tabs, each a different kind of "is this what I think it is":
+ * Seven tabs, each a different kind of "is this what I think it is":
  * what the controls look like, what every dialog and every field looks like,
- * what the store holds, what the loader believes, and which language is
- * answering.
+ * what the store holds, what the loader believes, whether a reminder reaches
+ * you, and which language is answering.
  */
 
-type Tab = 'components' | 'modals' | 'inputs' | 'state' | 'modules' | 'strings';
+type Tab = 'components' | 'modals' | 'inputs' | 'state' | 'modules' | 'notify' | 'strings';
 
 export const DebugPanel: React.FC = () => {
     const t = useTranslation();
@@ -54,6 +55,7 @@ export const DebugPanel: React.FC = () => {
                     { value: 'inputs', label: t('debug.tab.inputs'), icon: 'text-cursor-input' },
                     { value: 'state', label: t('debug.tab.state'), icon: 'braces' },
                     { value: 'modules', label: t('debug.tab.modules'), icon: 'blocks' },
+                    { value: 'notify', label: t('debug.tab.notify'), icon: 'bell' },
                     { value: 'strings', label: t('debug.tab.strings'), icon: 'languages' },
                 ]}
             />
@@ -63,6 +65,7 @@ export const DebugPanel: React.FC = () => {
             {tab === 'inputs' && <InputGallery />}
             {tab === 'state' && <StateInspector />}
             {tab === 'modules' && <ModuleDiagnostics />}
+            {tab === 'notify' && <NotificationDebug />}
             {tab === 'strings' && <StringsAudit />}
         </div>
     );
