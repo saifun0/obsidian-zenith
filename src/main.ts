@@ -26,6 +26,7 @@ import type { FileSyncService } from './modules/sync/services/fileSync';
 import type { FileSyncAuto } from './modules/sync/services/fileSyncAuto';
 import { PendingAuthStore } from './modules/sync/services/remotes/oauthPending';
 import { ZenithSettingTab } from './settings/ZenithSettingTab';
+import { registerUriCapture } from './core/uri/uriCapture';
 import { registerQuickAddTaskCommand } from './modules/tasks/commands';
 import { dashboardWidgets, type DashboardWidgetDefinition } from './modules/dashboard/widgets';
 import { navActions, type NavActionDefinition } from './modules/navigator/navigation';
@@ -234,6 +235,9 @@ export default class ZenithPlugin extends Plugin {
 
         // ── Settings Tab ─────────────────────────────
         this.addSettingTab(new ZenithSettingTab(this.app, this));
+
+        // ── Links from outside: `obsidian://zenith?do=…` ──
+        registerUriCapture(this);
 
         // ── Global commands (available regardless of active view) ──
         registerQuickAddTaskCommand(this);

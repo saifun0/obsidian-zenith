@@ -99,6 +99,13 @@ function recurrenceRollover(body: string, prefix: string, today: string): string
     })}`;
 }
 
+/** Where {@link TaskWriter.addTask} put a task: enough to take it back. */
+export interface AddedTask {
+    filePath: string;
+    /** The task's line exactly as written. */
+    line: string;
+}
+
 export class TaskWriter {
     constructor(private readonly app: App) {}
 
@@ -183,7 +190,7 @@ export class TaskWriter {
         input: NewTaskInput,
         target?: TaskTarget | null,
         details?: TaskDetails
-    ): Promise<void> {
+    ): Promise<AddedTask> {
         const subtasks = input.subtasks ?? [];
         const line = buildTaskLine(input);
         // Details go between the task and its subtasks, indented to match them.
@@ -202,7 +209,7 @@ export class TaskWriter {
                         : null;
                     return placed ? placed.join('\n') : appendBlock(data, block);
                 });
-                return;
+                return { filePath: file.path, line };
             }
             // The note vanished between resolving the target and writing —
             // fall through to the inbox rather than dropping the task.
@@ -218,10 +225,35 @@ export class TaskWriter {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) {
             await this.app.vault.create(filePath, `${block}\n`);
-            return;
+            return { filePath, line };
         }
 
         await this.app.vault.process(file, (data) => appendBlock(data, block));
+        return { filePath, line };
+    }
+
+    /**
+     * Take back a task {@link addTask} just wrote — the undo on a notice.
+     *
+     * Found by its exact line, the last one if the same task was added twice,
+     * and removed with whatever sits indented under it. A line that has changed
+     * since — ticked, edited — is no longer the one that was added, and is left
+     * alone: undo must never take away something the user touched.
+     */
+    async removeAddedTask(added: AddedTask): Promise<boolean> {
+        const file = this.app.vault.getAbstractFileByPath(added.filePath);
+        if (!(file instanceof TFile)) return false;
+        let ok = false;
+        await this.app.vault.process(file, (data) => {
+            const lines = data.split('\n');
+            const idx = lines.map((l) => l.trimEnd()).lastIndexOf(added.line.trimEnd());
+            if (idx < 0) return data;
+            const { end } = detailRange(lines, idx);
+            lines.splice(idx, end - idx);
+            ok = true;
+            return lines.join('\n');
+        });
+        return ok;
     }
 
     /**

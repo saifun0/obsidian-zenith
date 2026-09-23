@@ -346,3 +346,30 @@ describe('finishing a recurring task', () => {
         expect(store.text).toBe('- [-] Throw out the boxes 🏁 delete ❌ 2024-02-15');
     });
 });
+
+describe('taking back a task that was just added', () => {
+    it('removes the last copy of exactly that line', async () => {
+        const note = ['- [ ] Buy milk', '- [ ] Walk', '- [ ] Buy milk', ''].join('\n');
+        const { app, store } = fakeApp('Inbox.md', note);
+
+        const ok = await new TaskWriter(app).removeAddedTask({
+            filePath: 'Inbox.md',
+            line: '- [ ] Buy milk',
+        });
+
+        expect(ok).toBe(true);
+        expect(store.text).toBe(['- [ ] Buy milk', '- [ ] Walk', ''].join('\n'));
+    });
+
+    it('leaves a line the user has touched since — undo never takes their work', async () => {
+        const { app, store } = fakeApp('Inbox.md', '- [x] Buy milk ✅ 2026-09-24\n');
+
+        const ok = await new TaskWriter(app).removeAddedTask({
+            filePath: 'Inbox.md',
+            line: '- [ ] Buy milk',
+        });
+
+        expect(ok).toBe(false);
+        expect(store.text).toBe('- [x] Buy milk ✅ 2026-09-24\n');
+    });
+});

@@ -126,3 +126,9 @@
 .zenith-notice.is-clickable {
     cursor: pointer;
 }
+
+/* The undo on a notice for something a link wrote. */
+.notice button.zenith-notice-undo {
+    margin-left: 10px;
+    padding: 2px 10px;
+}

@@ -113,6 +113,8 @@ export const FEATURES = [
         requiresModules: ['journal'],
     }),
     feature('tasks.naturalInput', 'tasks'),
+    // Off by default: any web page can open an `obsidian://` link.
+    feature('tasks.uriCapture', 'tasks', { default: false }),
     feature('tasks.subtasks', 'tasks'),
     feature('tasks.attachments', 'tasks'),
     feature('tasks.timer', 'tasks'),

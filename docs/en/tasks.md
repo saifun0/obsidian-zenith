@@ -63,7 +63,7 @@ capture is on (the default — see [Journal](journal.md)), and to `Zenith Inbox.
 
 > Dates are compared in your **local** timezone, so “Today” / “Overdue” are always correct.
 
-**Natural input.** In quick add, the title can carry the rest: *Call mom tomorrow at 6pm !*
+<a id="natural-input"></a>**Natural input.** In quick add, the title can carry the rest: *Call mom tomorrow at 6pm !*
 becomes the task *Call mom*, due tomorrow at 18:00, priority 🔼. Every piece that was
 understood shows as a chip under the field, and × on a chip keeps those words in the title
 instead. What is read, in English and Russian:
@@ -101,3 +101,36 @@ Empty buckets appear as drop targets only while a drag they'd accept is in fligh
 Reordering needs **Sort: Manual**, since every other sort derives the order from the task
 data and a dragged row would snap straight back. The grip is also focusable: press
 <kbd>↑</kbd>/<kbd>↓</kbd> to move a row without a pointer.
+
+## Capture from links
+
+With **Tasks → Features → Capture from links** on, `obsidian://zenith` links add a task,
+log today's tracker or open a view — from a phone's home-screen shortcut, a widget, anything
+that can open a URL:
+
+| Link | Does |
+| --- | --- |
+| `obsidian://zenith?do=add-task&text=Call%20mom%20tomorrow%20at%206pm` | Adds a task. The text is read like [quick add](#natural-input) — date, time, priority, repeat. |
+| `obsidian://zenith?do=log&tracker=water&value=%2B1` | Today's `water` + 1. `value=5` sets it, `value=-1` takes one off, `value=true` ticks a check tracker. |
+| `obsidian://zenith?do=open&view=tasks` | Opens a view: `dashboard`, `tasks`, `calendar`, `projects`, `content`, `journal`, `prayer`. |
+
+`tracker` is the tracker's id — the frontmatter key its values are written under. Add
+`&vault=My%20Vault` if you have more than one vault. Write `+` as `%2B`: in a link a bare
+`+` means a space (Zenith reads `value= 1` as `+1` anyway, but other apps may not pass it on
+intact).
+
+**It is off by default**, because any web page can open an `obsidian://` link. When on:
+links can only add a task, set **today's** tracker value, or open a view — nothing deletes
+or edits; every write shows a notice with **Undo**; more than five requests a minute are
+ignored for the rest of it; and an action for a module that is off does nothing. While it
+is off, a link says so in a notice — at most once every ten minutes.
+
+**iOS (Shortcuts).** New shortcut → *Ask for Input* (Text) → *URL Encode* → *Open URLs*
+with `obsidian://zenith?do=add-task&text=` followed by the *URL Encoded Text* variable. Add
+it to the home screen, or say its name to Siri. For a tracker, one action is enough: *Open
+URLs* `obsidian://zenith?do=log&tracker=water&value=%2B1`.
+
+**Android.** Any launcher or automation app that opens a URL will do — for example *HTTP
+Shortcuts* or *Tasker* (*Browse URL*): point a home-screen shortcut at
+`obsidian://zenith?do=log&tracker=water&value=%2B1`. To type a task, use the app's text
+prompt and put the (encoded) answer after `text=`.
