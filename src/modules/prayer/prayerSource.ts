@@ -57,6 +57,7 @@ export type PrayerSourceSettings = Pick<
     | 'prayerHighLatRule'
     | 'prayerAdjustments'
     | 'prayerHijriOffset'
+    | 'prayerRounding'
 >;
 
 export function prayerApiOptionsOf(settings: PrayerSourceSettings): PrayerApiOptions {

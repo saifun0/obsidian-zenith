@@ -4,6 +4,7 @@ import type { ZenithLanguage } from '../store/settingsSlice';
 import { FEATURE_STRINGS } from './featureStrings';
 import { NOTIFY_STRINGS } from './notifications/strings';
 import { PROFILE_STRINGS } from './profiles/strings';
+import { PRAYER_STRINGS } from '../modules/prayer/strings';
 
 /**
  * Minimal i18n for Zenith's own UI.
@@ -3542,8 +3543,20 @@ const RU: Dict = {
  * Russian string — the only way to catch one is to look in the dictionary.
  */
 export const DICTS: Record<Locale, Dict> = {
-    en: { ...EN, ...FEATURE_STRINGS.en, ...NOTIFY_STRINGS.en, ...PROFILE_STRINGS.en },
-    ru: { ...RU, ...FEATURE_STRINGS.ru, ...NOTIFY_STRINGS.ru, ...PROFILE_STRINGS.ru },
+    en: {
+        ...EN,
+        ...FEATURE_STRINGS.en,
+        ...NOTIFY_STRINGS.en,
+        ...PROFILE_STRINGS.en,
+        ...PRAYER_STRINGS.en,
+    },
+    ru: {
+        ...RU,
+        ...FEATURE_STRINGS.ru,
+        ...NOTIFY_STRINGS.ru,
+        ...PROFILE_STRINGS.ru,
+        ...PRAYER_STRINGS.ru,
+    },
 };
 
 // ── Contributed dictionaries ────────────────────────────────────────────────

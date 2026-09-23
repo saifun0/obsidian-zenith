@@ -302,3 +302,26 @@ describe('loadSettings — v10 → v11: the content library stops going online',
         expect((s as unknown as Record<string, unknown>).cacheCovers).toBe(true);
     });
 });
+
+describe('loadSettings — v11 → v12: the prayer method is asked, not assumed', () => {
+    it('asks someone still on both old defaults', () => {
+        const s = load({ settingsVersion: 11, prayerMethod: 'russia', prayerAsrMadhab: 'hanafi' });
+        expect(s.prayerMethodChosen).toBe(false);
+    });
+
+    it('does not ask someone who already changed either', () => {
+        expect(load({ settingsVersion: 11, prayerMethod: 'mwl' }).prayerMethodChosen).toBe(true);
+        resetZenithStore();
+        expect(load({ settingsVersion: 11, prayerAsrMadhab: 'standard' }).prayerMethodChosen).toBe(
+            true
+        );
+    });
+
+    it('asks a fresh install', () => {
+        expect(load({}).prayerMethodChosen).toBe(false);
+    });
+
+    it('keeps an answer once given', () => {
+        expect(load({ settingsVersion: 12, prayerMethodChosen: true }).prayerMethodChosen).toBe(true);
+    });
+});

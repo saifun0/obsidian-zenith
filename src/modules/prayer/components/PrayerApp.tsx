@@ -22,6 +22,7 @@ import {
     usePrayerPlace,
 } from '../usePrayer';
 import { PrayerNoPlace } from './PrayerNoPlace';
+import { PrayerMethodPrompt } from './PrayerMethodPrompt';
 import { PrayerDayHead } from './PrayerDayHead';
 import { PrayerStatsPanel } from './PrayerStatsPanel';
 import { PrayerRow, PrayerMarkerRow } from './PrayerRow';
@@ -118,6 +119,7 @@ export const PrayerApp: FC = () => {
 
     return (
         <div className="zenith-prayer zenith-prayer-view">
+            {!settings.prayerMethodChosen && <PrayerMethodPrompt />}
             <PrayerDayHead
                 dateLabel={dateLabel}
                 hijriLabel={

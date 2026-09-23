@@ -42,6 +42,7 @@ export type PrayerCalcSettings = Pick<
     | 'prayerHighLatRule'
     | 'prayerAdjustments'
     | 'prayerHijriOffset'
+    | 'prayerRounding'
 >;
 
 export function prayerCalcOptions(settings: PrayerCalcSettings, date: Date): PrayerCalcOptions {
@@ -53,5 +54,6 @@ export function prayerCalcOptions(settings: PrayerCalcSettings, date: Date): Pra
         highLatRule: settings.prayerHighLatRule,
         adjustments: settings.prayerAdjustments,
         isRamadan: isRamadan(date, settings.prayerHijriOffset),
+        rounding: settings.prayerRounding,
     };
 }

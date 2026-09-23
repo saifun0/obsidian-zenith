@@ -5,6 +5,7 @@ import {
     type AsrMadhab,
     type HighLatRule,
     type PrayerId,
+    type PrayerRounding,
 } from './prayerConfig';
 
 /**
@@ -85,6 +86,8 @@ export interface PrayerCalcOptions {
     adjustments?: Partial<Record<PrayerTimeId, number>>;
     /** Umm al-Qura pushes isha 30 minutes later during Ramadan. */
     isRamadan?: boolean;
+    /** Nearest minute unless said otherwise. */
+    rounding?: PrayerRounding;
     /**
      * Minutes east of UTC. Defaults to the **device's** offset at noon on the
      * given date, which is right for the overwhelmingly common case of a person
@@ -201,6 +204,17 @@ function deviceOffsetMinutes(year: number, month: number, day: number): number {
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 
+/**
+ * A moment in fractional minutes → the minute shown.
+ *
+ * Dropping the seconds is a floor with a hair of slack: the arithmetic lands on
+ * 724.9999999 for what is exactly 12:05:00, and without the slack that would
+ * read as 12:04.
+ */
+function toMinute(minutes: number, rounding: PrayerRounding | undefined): number {
+    return rounding === 'floor' ? Math.floor(minutes + 1e-6) : Math.round(minutes);
+}
+
 /** `YYYY-MM-DD` from a Date's local calendar fields. */
 function localIso(date: Date): string {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -301,7 +315,7 @@ export function prayerTimes(place: GeoPoint, date: Date, opts: PrayerCalcOptions
             invalid.push(id);
             continue;
         }
-        times[id] = Math.round(hours * 60) + (adjustments[id] ?? 0);
+        times[id] = toMinute(hours * 60, opts.rounding) + (adjustments[id] ?? 0);
     }
 
     return { date: localIso(date), times, invalid };

@@ -219,3 +219,15 @@ export const HIGH_LAT_RULES: readonly HighLatRule[] = [
     'seventhOfNight',
     'none',
 ] as const;
+
+/**
+ * How a computed moment becomes the minute that is shown.
+ *
+ * Nobody publishes seconds, and the tables do not agree on how to lose them:
+ * some round to the nearest minute, some simply drop the seconds. Against the
+ * same astronomy the two differ by one minute about half the time — which is
+ * what a dhuhr that is "always a minute out" usually turns out to be.
+ */
+export type PrayerRounding = 'nearest' | 'floor';
+
+export const PRAYER_ROUNDINGS: readonly PrayerRounding[] = ['nearest', 'floor'] as const;

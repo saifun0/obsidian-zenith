@@ -4,7 +4,14 @@ import { coreSchema } from '../../settings/schema/types';
 import { useZenithStore } from '../../store';
 import { createPlaceField } from '../../settings/components/PlaceField';
 import { PrayerAdjustField } from './components/PrayerAdjustField';
-import { EXTRA_PRAYERS, HIGH_LAT_RULES, PRAYER_METHODS, PRAYER_SOURCES } from './prayerConfig';
+import { PrayerMatchField } from './components/PrayerMethodPrompt';
+import {
+    EXTRA_PRAYERS,
+    HIGH_LAT_RULES,
+    PRAYER_METHODS,
+    PRAYER_ROUNDINGS,
+    PRAYER_SOURCES,
+} from './prayerConfig';
 import { prayerPlaceOf } from './prayerOptions';
 import { refreshPrayerTimes } from './prayerSource';
 
@@ -42,6 +49,9 @@ export const prayerSettingsSchema = coreSchema({
             titleKey: 'settings.prayerCalcGroup',
             descKey: 'settings.prayerCalcGroup.desc',
             fields: [
+                // First, above the settings it fills in: most people know
+                // which app they trust, not which method it uses.
+                { type: 'custom', key: 'prayerMatch', row: true, render: PrayerMatchField },
                 {
                     type: 'segmented',
                     key: 'prayerSource',
@@ -143,6 +153,20 @@ export const prayerSettingsSchema = coreSchema({
                         value: rule,
                         labelKey: `prayer.highLat.${rule}`,
                     })),
+                },
+                {
+                    // The service prints its own minutes, so this only means
+                    // something where the times are worked out here.
+                    type: 'segmented',
+                    key: 'prayerRounding',
+                    labelKey: 'settings.prayerRounding',
+                    descKey: 'settings.prayerRounding.desc',
+                    default: 'nearest',
+                    options: PRAYER_ROUNDINGS.map((id) => ({
+                        value: id,
+                        labelKey: `prayer.rounding.${id}`,
+                    })),
+                    showIf: (v) => v.prayerSource === 'local',
                 },
                 { type: 'custom', key: 'prayerAdjustments', row: true, render: PrayerAdjustField },
             ],

@@ -109,13 +109,18 @@ export const PrayerWidget: FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
     // The way into the full tracker. It rides on the "n of five" line rather
     // than floating in a corner: that line is already the widget's summary of
     // the day, and "0 of 5" is the thing that makes you want the rest.
+    //
+    // Until a method is chosen it carries a dot and says so: the full view is
+    // where the question is asked, and the widget has no room to ask it.
+    const chosen = settings.prayerMethodChosen;
+    const openLabel = t(chosen ? 'prayer.openFull' : 'prayer.choose.widget');
     const openFull = (
         <button
             type="button"
-            className="zenith-prayer__open"
+            className={`zenith-prayer__open${chosen ? '' : ' is-attention'}`}
             onClick={() => new PrayerModal(app, plugin).open()}
-            title={t('prayer.openFull')}
-            aria-label={t('prayer.openFull')}
+            title={openLabel}
+            aria-label={openLabel}
         >
             <Maximize2 size={12} />
         </button>

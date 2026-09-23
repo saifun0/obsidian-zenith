@@ -109,6 +109,8 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     prayerIshaAngle: 'yes',
     prayerAsrMadhab: 'yes',
     prayerHighLatRule: 'yes',
+    prayerRounding: 'yes',
+    prayerMethodChosen: 'yes',
     prayerAdjustments: 'yes',
     prayerExtras: 'yes',
     prayerHijriOffset: 'yes',

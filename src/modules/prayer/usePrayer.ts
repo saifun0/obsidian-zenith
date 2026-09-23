@@ -60,6 +60,7 @@ export function usePrayerSourceSettings(): PrayerSourceSettings {
     const highLatRule = useZenithStore((s) => s.settings.prayerHighLatRule);
     const adjustments = useZenithStore((s) => s.settings.prayerAdjustments);
     const hijriOffset = useZenithStore((s) => s.settings.prayerHijriOffset);
+    const rounding = useZenithStore((s) => s.settings.prayerRounding);
 
     return useMemo(
         () => ({
@@ -72,6 +73,7 @@ export function usePrayerSourceSettings(): PrayerSourceSettings {
             prayerHighLatRule: highLatRule,
             prayerAdjustments: adjustments,
             prayerHijriOffset: hijriOffset,
+            prayerRounding: rounding,
         }),
         [
             source,
@@ -83,6 +85,7 @@ export function usePrayerSourceSettings(): PrayerSourceSettings {
             highLatRule,
             adjustments,
             hijriOffset,
+            rounding,
         ]
     );
 }

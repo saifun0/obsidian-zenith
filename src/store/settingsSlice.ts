@@ -24,6 +24,7 @@ import {
     DEFAULT_METHOD_ID,
     type AsrMadhab,
     type HighLatRule,
+    type PrayerRounding,
     type PrayerSource,
 } from '../modules/prayer/prayerConfig';
 import type { ApiMidnight } from '../modules/prayer/prayerApi';
@@ -204,6 +205,14 @@ export interface ZenithSettings {
     prayerAsrMadhab: AsrMadhab;
     /** What to do where the sun never reaches the fajr/isha angle. */
     prayerHighLatRule: HighLatRule;
+    /** How the calculation turns a moment into a minute: rounded, or seconds dropped. */
+    prayerRounding: PrayerRounding;
+    /**
+     * Whether the method and madhab were chosen by the user rather than left
+     * at the defaults. Until they are, the prayer view asks: the two decide
+     * times up to an hour apart, and which is right is not ours to say.
+     */
+    prayerMethodChosen: boolean;
     /**
      * ±minutes per time, keyed by `PrayerTimeId`. For matching the mosque you
      * actually pray at, which rounds and adjusts in its own way.
@@ -647,7 +656,7 @@ export interface SettingsSlice {
  * Bump when a migration is added, and gate that migration on the value below.
  * Version 1 is "everything written before versioning existed".
  */
-export const CURRENT_SETTINGS_VERSION = 11;
+export const CURRENT_SETTINGS_VERSION = 12;
 
 /**
  * Object-valued settings that must be merged field-by-field rather than
@@ -727,6 +736,8 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     prayerIshaAngle: 15,
     prayerAsrMadhab: 'hanafi',
     prayerHighLatRule: 'angleBased',
+    prayerRounding: 'nearest',
+    prayerMethodChosen: false,
     prayerAdjustments: {},
     prayerShowSunrise: true,
     prayerExtras: ['witr'],
@@ -974,6 +985,17 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
                     delete copy.provider;
                     return copy as unknown as ContentTypeConfig;
                 });
+            }
+
+            // ── v11 → v12 ──
+            // The prayer view started asking for a method and madhab instead
+            // of assuming the Russian muftiate's and a Hanafi asr. Someone who
+            // already changed either made the choice themselves and is not
+            // asked again; someone still on both defaults may never have
+            // known there was a choice, which is the case the question is for.
+            if (from < 12 && Object.keys(saved).length > 0) {
+                merged.prayerMethodChosen =
+                    merged.prayerMethod !== 'russia' || merged.prayerAsrMadhab !== 'hanafi';
             }
 
             return { settings: merged };
