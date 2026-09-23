@@ -10,6 +10,7 @@ import { entriesByDate, currentStreak } from '../services/journalStats';
 import { setTrackerValue, openDailyNote } from '../services/journalActions';
 import { addDays, buildDateMatcher, relativeNotePath, dayLabel } from '../services/journalDates';
 import { TrackerRail } from './TrackerRail';
+import { useFeature } from '../../../core/useFeature';
 
 interface DailyNoteBlockProps {
     /** Vault path of the note the block was rendered in. */
@@ -28,6 +29,16 @@ interface DailyNoteBlockProps {
  */
 export const DailyNoteBlock: FC<DailyNoteBlockProps> = ({ sourcePath }) => {
     const t = useTranslation();
+    const on = useFeature('journal.dailyBlock');
+    // Switched off, the block says so in one quiet line rather than going
+    // blank: an empty space in the note would look like something broke.
+    if (!on) return <div className="zenith-dblock__off">{t('journal.block.off')}</div>;
+    return <DailyNoteBody sourcePath={sourcePath} />;
+};
+
+const DailyNoteBody: FC<DailyNoteBlockProps> = ({ sourcePath }) => {
+    const t = useTranslation();
+    const wordsOn = useFeature('journal.wordCount');
     const { app } = useApp();
     const entries = useZenithStore((s) => s.journalEntries);
     const settings = useZenithStore((s) => s.settings);
@@ -79,9 +90,12 @@ export const DailyNoteBlock: FC<DailyNoteBlockProps> = ({ sourcePath }) => {
                         {date === today && (
                             <span className="zenith-dblock__badge">{t('journal.today')}</span>
                         )}
-                        {entry && <span>{t.plural('journal.words', entry.words)}</span>}
+                        {entry && wordsOn && <span>{t.plural('journal.words', entry.words)}</span>}
                         {streak > 0 && (
-                            <span className="zenith-dblock__streak" title={t('journal.stats.streak')}>
+                            <span
+                                className="zenith-dblock__streak"
+                                title={t('journal.stats.streak')}
+                            >
                                 <Flame size={12} />
                                 {streak}
                             </span>

@@ -190,7 +190,7 @@ function itemOf(m: RegExpExecArray, head: string): Omit<Item, 'lead'> | null {
         const glyph = groups[`g${i}`];
         if (glyph === undefined) continue;
         const def = MARKERS[i];
-        return { kind: def.kind, raw: m[0], value: def.value ? groups[`v${i}`] ?? '' : glyph };
+        return { kind: def.kind, raw: m[0], value: def.value ? (groups[`v${i}`] ?? '') : glyph };
     }
     return null;
 }
@@ -259,7 +259,7 @@ function removeItem(items: Item[], at: number): void {
 
 function insertItem(items: Item[], at: number, kind: ItemKind, raw: string): void {
     const next = items[at];
-    const item: Item = { kind, raw, value: '', lead: at === 0 ? next?.lead ?? '' : ' ' };
+    const item: Item = { kind, raw, value: '', lead: at === 0 ? (next?.lead ?? '') : ' ' };
     if (next) next.lead = at === 0 ? ' ' : next.lead || ' ';
     items.splice(at, 0, item);
 }
@@ -542,7 +542,10 @@ function fieldEdit(def: MarkerDef, patch: TaskPatch, items: Item[]): string | nu
             // is the only place that can guarantee no line is ever written with
             // a backwards range.
             const start = normalizeTimeOfDay(rawStart) ?? rawStart;
-            const end = endAfter(start, patch.dueEndTime !== undefined ? patch.dueEndTime : was.end);
+            const end = endAfter(
+                start,
+                patch.dueEndTime !== undefined ? patch.dueEndTime : was.end
+            );
             if (start === was.start && end === was.end) return undefined;
             return `${glyph} ${start}${end ? `-${end}` : ''}`;
         }
@@ -694,10 +697,14 @@ export function buildTaskBody(input: TaskInput): string {
 
 /** A full `- [ ] …` task line for a new task (status defaults to todo). */
 export function buildTaskLine(input: TaskInput): string {
-    const char = input.status === 'done' ? 'x'
-        : input.status === 'in-progress' ? '/'
-        : input.status === 'cancelled' ? '-'
-        : ' ';
+    const char =
+        input.status === 'done'
+            ? 'x'
+            : input.status === 'in-progress'
+              ? '/'
+              : input.status === 'cancelled'
+                ? '-'
+                : ' ';
     return `- [${char}] ${buildTaskBody(input)}`;
 }
 
@@ -733,7 +740,10 @@ export function nextRecurrenceDate(rule: string, from: string): string | null {
     const base = new Date(`${from}T00:00:00`);
     if (Number.isNaN(base.getTime())) return null;
 
-    const r = rule.toLowerCase().trim().replace(/^every\s+/, '');
+    const r = rule
+        .toLowerCase()
+        .trim()
+        .replace(/^every\s+/, '');
     let days = 0;
     let months = 0;
 

@@ -7,6 +7,7 @@ import { PRIORITIES, TASK_STATUSES } from '../../../core/constants';
 import type { Priority, TaskStatus } from '../../../core/constants';
 import type { Task } from '../../../store/taskSlice';
 import { TaskWriter } from '../services/taskWriter';
+import { useFeature } from '../../../core/useFeature';
 import { resolveTaskTarget } from '../services/taskTarget';
 import {
     diffTaskFields,
@@ -60,6 +61,12 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
     const tasks = useZenithStore((s) => s.tasks);
     const settings = useZenithStore((s) => s.settings);
     const isEdit = !!editTask;
+    // A hidden field keeps what it was opened with, so switching a feature off
+    // never makes a save clear what that feature wrote.
+    const subtasksOn = useFeature('tasks.subtasks');
+    const attachmentsOn = useFeature('tasks.attachments');
+    const timerOn = useFeature('tasks.timer');
+    const projectLinksOn = useFeature('projects.taskLinks');
 
     const [title, setTitle] = useState(editTask?.title ?? '');
     const [status, setStatus] = useState<TaskStatus>(editTask?.status ?? 'todo');
@@ -288,21 +295,26 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                     the slowest way to say it and the only one that can be
                     misspelt. Saved as a link in the task's detail block, so the
                     task's own text stays what the user wrote. */}
-                <div className="zenith-field">
-                    <label className="zenith-field__label" htmlFor="zenith-task-project">
-                        {t('tasks.editor.project')}
-                    </label>
-                    <Dropdown
-                        id="zenith-task-project"
-                        className="zenith-input zenith-field__input"
-                        value={projectPath}
-                        options={[
-                            { value: '', label: t('tasks.editor.project.none') },
-                            ...projectOptions.map((p) => ({ value: p.filePath, label: p.title })),
-                        ]}
-                        onChange={setProjectPath}
-                    />
-                </div>
+                {projectLinksOn && (
+                    <div className="zenith-field">
+                        <label className="zenith-field__label" htmlFor="zenith-task-project">
+                            {t('tasks.editor.project')}
+                        </label>
+                        <Dropdown
+                            id="zenith-task-project"
+                            className="zenith-input zenith-field__input"
+                            value={projectPath}
+                            options={[
+                                { value: '', label: t('tasks.editor.project.none') },
+                                ...projectOptions.map((p) => ({
+                                    value: p.filePath,
+                                    label: p.title,
+                                })),
+                            ]}
+                            onChange={setProjectPath}
+                        />
+                    </div>
+                )}
 
                 {/* Tags */}
                 <div className="zenith-field">
@@ -368,7 +380,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                     />
                 </div>
 
-                <AttachmentField value={attachments} onChange={setAttachments} />
+                {attachmentsOn && <AttachmentField value={attachments} onChange={setAttachments} />}
 
                 <div className="zenith-form__grid">
                     <div className="zenith-field">
@@ -407,15 +419,19 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                             onChange={setDueEndTime}
                         />
                     </div>
-                    <div className="zenith-field">
-                        <label className="zenith-field__label">{t('tasks.editor.timer')}</label>
-                        <input
-                            className="zenith-input zenith-field__input"
-                            placeholder={t('tasks.editor.timerPlaceholder')}
-                            value={timerText}
-                            onChange={(e) => setTimerText(e.target.value)}
-                        />
-                    </div>
+                    {timerOn && (
+                        <div className="zenith-field">
+                            <label className="zenith-field__label">
+                                {t('tasks.editor.timer')}
+                            </label>
+                            <input
+                                className="zenith-input zenith-field__input"
+                                placeholder={t('tasks.editor.timerPlaceholder')}
+                                value={timerText}
+                                onChange={(e) => setTimerText(e.target.value)}
+                            />
+                        </div>
+                    )}
                     <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.start')}</label>
                         <DateField
@@ -447,7 +463,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                 </div>
 
                 {/* Subtasks — create only */}
-                {!isEdit && (
+                {!isEdit && subtasksOn && (
                     <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.subtasks')}</label>
                         {subtasks.map((s, i) => (

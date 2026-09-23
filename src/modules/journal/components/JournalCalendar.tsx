@@ -1,3 +1,4 @@
+import { useFeature } from '../../../core/useFeature';
 import React, { useMemo, type FC } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { coerceTrackerValue, trackerColor, type JournalTracker } from '../../../core/journalConfig';
@@ -58,6 +59,7 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
     onMonthChange,
 }) => {
     const t = useTranslation();
+    const wordsOn = useFeature('journal.wordCount');
     const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
 
     const days = useMemo(() => monthGrid(monthAnchor, weekStart), [monthAnchor, weekStart]);
@@ -161,7 +163,8 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
                             aria-pressed={date === selected}
                             title={
                                 entry
-                                    ? `${date} · ${t.plural('journal.words', entry.words)}` +
+                                    ? `${date}` +
+                                      (wordsOn ? ` · ${t.plural('journal.words', entry.words)}` : '') +
                                       (total > 0 ? ` · ${t('journal.keptOn', { kept, total })}` : '')
                                     : date
                             }

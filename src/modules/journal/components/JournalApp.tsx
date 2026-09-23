@@ -12,6 +12,7 @@ import { ViewHeader } from '../../../components/shared';
 import { entriesByDate } from '../services/journalStats';
 import { setTrackerValue, openDailyNote, createDailyNote } from '../services/journalActions';
 import { addDays } from '../services/journalDates';
+import { useFeature } from '../../../core/useFeature';
 import { JournalCalendar } from './JournalCalendar';
 import { DayPanel } from './DayPanel';
 import { JournalStats } from './JournalStats';
@@ -41,8 +42,16 @@ export const JournalApp: FC = () => {
     const byDate = useMemo(() => entriesByDate(entries), [entries]);
     const entry = byDate.get(selected);
 
+    const statsOn = useFeature('journal.stats');
+    const wordsOn = useFeature('journal.wordCount');
+    const monthOn = useFeature('journal.habitMonth');
+    const moodColorsOn = useFeature('journal.moodColors');
+
     /** The calendar tints days by the first scale tracker — normally the mood. */
-    const colorBy = useMemo(() => trackers.find((tr) => tr.kind === 'scale'), [trackers]);
+    const colorBy = useMemo(
+        () => (moodColorsOn ? trackers.find((tr) => tr.kind === 'scale') : undefined),
+        [trackers, moodColorsOn]
+    );
 
     /** Days with a task due — a marker dot in the calendar. */
     const taskDays = useMemo(() => {
@@ -112,46 +121,51 @@ export const JournalApp: FC = () => {
     return (
         <div className="zenith-journal">
             <ViewHeader icon={CalendarDays} title={t('journal.title')}>
-                    <IconButton
-                        icon={CalendarCheck}
-                        tooltip={t('journal.goToday')}
-                        onClick={goToday}
-                        variant="ghost"
-                        size="md"
-                    />
-                    {/* A notice, not a panel: reading it moves nothing on the
+                <IconButton
+                    icon={CalendarCheck}
+                    tooltip={t('journal.goToday')}
+                    onClick={goToday}
+                    variant="ghost"
+                    size="md"
+                />
+                {/* A notice, not a panel: reading it moves nothing on the
                         page, and it goes away by itself once read. A toggle
                         pushed the whole calendar down and had to be turned off
                         again by hand. */}
-                    <IconButton
-                        icon={Info}
-                        tooltip={t('habits.explain')}
-                        onClick={() => new Notice(t('habits.legend'), 12000)}
-                        variant="ghost"
-                        size="md"
-                    />
-                    <IconButton
-                        icon={RotateCw}
-                        tooltip={t('common.refresh')}
-                        onClick={() => void refresh()}
-                        disabled={journalLoading}
-                        variant="ghost"
-                        size="md"
-                    />
+                <IconButton
+                    icon={Info}
+                    tooltip={t('habits.explain')}
+                    onClick={() => new Notice(t('habits.legend'), 12000)}
+                    variant="ghost"
+                    size="md"
+                />
+                <IconButton
+                    icon={RotateCw}
+                    tooltip={t('common.refresh')}
+                    onClick={() => void refresh()}
+                    disabled={journalLoading}
+                    variant="ghost"
+                    size="md"
+                />
             </ViewHeader>
 
             {/* Always on screen. It used to hide behind a toggle, which meant
                 the month you are actually keeping was one click further away
                 than the month you are only looking at. */}
-            <JournalStats
-                entries={entries}
-                trackers={trackers}
-                today={today}
-                monthAnchor={monthAnchor}
-                animate={settings.uiAnimations}
-                replay={replay}
-                onSetValue={setHabit}
-            />
+            {(statsOn || monthOn) && (
+                <JournalStats
+                    entries={entries}
+                    trackers={trackers}
+                    today={today}
+                    monthAnchor={monthAnchor}
+                    animate={settings.uiAnimations}
+                    replay={replay}
+                    onSetValue={setHabit}
+                    showOverview={statsOn}
+                    showWords={wordsOn}
+                    showMonth={monthOn}
+                />
+            )}
 
             <div className="zenith-journal__body">
                 <JournalCalendar

@@ -34,6 +34,12 @@ export interface ProjectCardProps {
      * lookalike preview would start lying the first time the real card changed.
      */
     preview?: boolean;
+    /**
+     * Draw the tasks: the meter, the count and the list. Off when projects
+     * are not linked to tasks at all — progress is counted in tasks, so there
+     * would be nothing to measure.
+     */
+    showTasks?: boolean;
 }
 
 /**
@@ -62,6 +68,7 @@ export const ProjectCard: FC<ProjectCardProps> = ({
     onAddTask,
     onTaskStatus,
     preview = false,
+    showTasks = true,
 }) => {
     const t = useTranslation();
 
@@ -141,14 +148,16 @@ export const ProjectCard: FC<ProjectCardProps> = ({
                 ))}
             </div>
 
-            <div className="zenith-project-card__meter">
-                <Meter percent={project.stats.progressPercent} />
-                <span className="zenith-project-card__count">
-                    {project.stats.completedTasks} / {project.stats.totalTasks}
-                </span>
-            </div>
+            {showTasks && (
+                <div className="zenith-project-card__meter">
+                    <Meter percent={project.stats.progressPercent} />
+                    <span className="zenith-project-card__count">
+                        {project.stats.completedTasks} / {project.stats.totalTasks}
+                    </span>
+                </div>
+            )}
 
-            {!preview && (
+            {!preview && showTasks && (
                 <div className="zenith-project-card__tasks">
                     <div className="zenith-project-card__tasksHead">
                         {tasks.length > 0 ? (

@@ -10,6 +10,7 @@ import {
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
+import { useFeature } from '../../../core/useFeature';
 import { TASK_TABS, PRIORITIES } from '../../../core/constants';
 import { getTodayString } from '../../../core/dateUtils';
 import { queryTasks, type DueFilter } from '../services/taskFilter';
@@ -52,6 +53,14 @@ const SORTS: TaskFilterState['sort'][] = ['manual', 'dueDate', 'priority', 'crea
 const GROUPS: TaskFilterState['group'][] = ['smart', 'file', 'none'];
 const DUES: DueFilter[] = ['all', 'overdue', 'today', 'week', 'none'];
 
+/**
+ * The groupings that are switched on. "None" is always there: it is the
+ * absence of a feature, not one.
+ */
+export function groupModes(smart: boolean, file: boolean): TaskFilterState['group'][] {
+    return [...(smart ? ['smart' as const] : []), ...(file ? ['file' as const] : []), 'none'];
+}
+
 /** Narrow the untrusted strings that come back from `data.json`. */
 function restoreFilters(saved: {
     priority: string;
@@ -83,6 +92,11 @@ export const TasksApp: FC = () => {
     const tasks = useZenithStore((s) => s.tasks);
     const tasksLoading = useZenithStore((s) => s.tasksLoading);
     const calendarOn = useZenithStore((s) => s.loadedModuleIds).includes('tasks-calendar');
+    const statsOn = useFeature('tasks.stats');
+    const dragOn = useFeature('tasks.dragDrop');
+    const smartOn = useFeature('tasks.smartGroups');
+    const fileOn = useFeature('tasks.fileGroups');
+    const groups = useMemo(() => groupModes(smartOn, fileOn), [smartOn, fileOn]);
 
     const openCalendar = () => void plugin.moduleManager.get('tasks-calendar')?.activateView();
 
@@ -186,13 +200,15 @@ export const TasksApp: FC = () => {
                                 size="md"
                             />
                         )}
-                        <IconButton
-                            icon={BarChart3}
-                            tooltip={t('common.statistics')}
-                            onClick={() => setShowStats((v) => !v)}
-                            variant={showStats ? 'default' : 'ghost'}
-                            size="md"
-                        />
+                        {statsOn && (
+                            <IconButton
+                                icon={BarChart3}
+                                tooltip={t('common.statistics')}
+                                onClick={() => setShowStats((v) => !v)}
+                                variant={showStats ? 'default' : 'ghost'}
+                                size="md"
+                            />
+                        )}
                         <div ref={filterPop.anchorProps.ref}>
                             <IconButton
                                 icon={SlidersHorizontal}
@@ -227,6 +243,7 @@ export const TasksApp: FC = () => {
                                 filters={filters}
                                 onFilterChange={setFilters}
                                 allTags={allTags}
+                                groups={groups}
                             />
                         </Popover>
                         <IconButton
@@ -260,7 +277,7 @@ export const TasksApp: FC = () => {
             </div>
 
             {/* Statistics panel */}
-            {showStats && <TaskStats tasks={tasks} />}
+            {statsOn && showStats && <TaskStats tasks={tasks} />}
 
             {/* Task List */}
             {tasksLoading ? (
@@ -271,8 +288,14 @@ export const TasksApp: FC = () => {
             ) : (
                 <TaskList
                     tasks={filteredTasks}
-                    groupMode={activeTab === 'all' ? filters.group : 'none'}
-                    reorderable={filters.sort === 'manual'}
+                    // A saved grouping whose feature has since been switched
+                    // off is kept for when it comes back, and not drawn.
+                    groupMode={
+                        activeTab === 'all' && groups.includes(filters.group)
+                            ? filters.group
+                            : 'none'
+                    }
+                    reorderable={dragOn && filters.sort === 'manual'}
                 />
             )}
 

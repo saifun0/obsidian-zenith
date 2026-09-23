@@ -11,6 +11,7 @@ import { buildDateMatcher, relativeNotePath } from '../../journal/services/journ
 import type { Task } from '../../../store/taskSlice';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import { buildCalendar, type EntryKind } from '../services/calendarTasks';
+import { useFeature } from '../../../core/useFeature';
 import { spanColor } from '../services/spanColor';
 import { kindKey } from './kindUi';
 import { noteName } from './TaskChip';
@@ -108,6 +109,11 @@ export const CalendarWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const tasks = useZenithStore((s) => s.tasks);
     const settings = useZenithStore((s) => s.settings);
     const journalOn = useZenithStore((s) => s.loadedModuleIds).includes('journal');
+    // The calendar's own switches, as the calendar draws them: stored on, but
+    // switched off as a feature, is off.
+    const spanDays = useFeature('calendar.spans') && settings.calendarView.spanDays;
+    const showDailyNotes =
+        useFeature('calendar.dailyNotes') && settings.calendarView.showDailyNotes;
 
     // Ticks every minute so a deadline landing today counts down for real, and
     // so the axis rolls over at midnight on a card that's been open for days.
@@ -125,7 +131,7 @@ export const CalendarWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const showNote = rowLabel === 'note' || rowLabel === 'both';
 
     const dailyNoteDate = useMemo(() => {
-        if (!journalOn || !settings.calendarView.showDailyNotes) return undefined;
+        if (!journalOn || !showDailyNotes) return undefined;
         const match = buildDateMatcher(settings.journalDateFormat);
         return (path: string): string | null => {
             const relative = relativeNotePath(path, settings.journalFolderPath);
@@ -133,7 +139,7 @@ export const CalendarWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
         };
     }, [
         journalOn,
-        settings.calendarView.showDailyNotes,
+        showDailyNotes,
         settings.journalDateFormat,
         settings.journalFolderPath,
     ]);
@@ -143,8 +149,8 @@ export const CalendarWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
         // and the full calendar is one click away for the rest.
         const calendar = buildCalendar(tasks, {
             today,
-            spanDays: settings.calendarView.spanDays,
-            showDailyNotes: settings.calendarView.showDailyNotes,
+            spanDays,
+            showDailyNotes,
             hideDone: true,
             dailyNoteDate,
         });
@@ -202,8 +208,8 @@ export const CalendarWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
         locale,
         horizon,
         settings.calendarSpanColors,
-        settings.calendarView.spanDays,
-        settings.calendarView.showDailyNotes,
+        spanDays,
+        showDailyNotes,
         dailyNoteDate,
     ]);
 

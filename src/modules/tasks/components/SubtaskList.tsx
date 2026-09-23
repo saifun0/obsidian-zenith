@@ -5,6 +5,7 @@ import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import type { SubTask } from '../../../store/taskSlice';
 import type { TaskStatus } from '../../../core/constants';
+import { useFeature } from '../../../core/useFeature';
 import { TaskWriter } from '../services/taskWriter';
 import { formatDuration } from '../services/taskFormat';
 import { TaskStatusControl } from './taskStatusUi';
@@ -93,6 +94,8 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
     const writer = () => new TaskWriter(app);
 
     const { dragKey, dropTarget, handleProps, registerRow } = sortable;
+    const timerOn = useFeature('tasks.timer');
+    const dragOn = useFeature('tasks.dragDrop');
 
     const setStatus = async (sub: SubTask, status: TaskStatus) => {
         try {
@@ -239,7 +242,7 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
                             {!isEditing && sub.dueTime && (
                                 <span className="zenith-subtask__time">{sub.dueTime}</span>
                             )}
-                            {!isEditing && sub.spentMinutes !== undefined && (
+                            {!isEditing && timerOn && sub.spentMinutes !== undefined && (
                                 <span className="zenith-subtask__time is-spent">
                                     {formatDuration(sub.spentMinutes)}
                                 </span>
@@ -248,28 +251,33 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
                             {/* Outside the hover cluster: a subtask being timed
                                 has to keep showing its clock, and the cluster
                                 collapses to nothing when the pointer leaves. */}
-                            {!isEditing && sub.status !== 'done' && sub.status !== 'cancelled' && (
-                                <TaskTimerButton
-                                    filePath={filePath}
-                                    lineNumber={sub.lineNumber}
-                                    title={sub.title}
-                                    timerMinutes={sub.timerMinutes}
-                                    size={12}
-                                />
-                            )}
+                            {!isEditing &&
+                                timerOn &&
+                                sub.status !== 'done' &&
+                                sub.status !== 'cancelled' && (
+                                    <TaskTimerButton
+                                        filePath={filePath}
+                                        lineNumber={sub.lineNumber}
+                                        title={sub.title}
+                                        timerMinutes={sub.timerMinutes}
+                                        size={12}
+                                    />
+                                )}
                             {!isEditing && (
                                 <div className="zenith-subtask__actions">
                                     {/* Right-hand cluster, not the left gutter —
                                         the tree connectors own that column. */}
-                                    <button
-                                        type="button"
-                                        className="zenith-subtask__action zenith-drag-handle"
-                                        aria-label={t('tasks.reorder', { name: sub.title })}
-                                        title={t('tasks.reorderHint')}
-                                        {...handleProps(key)}
-                                    >
-                                        <GripVertical size={12} />
-                                    </button>
+                                    {dragOn && (
+                                        <button
+                                            type="button"
+                                            className="zenith-subtask__action zenith-drag-handle"
+                                            aria-label={t('tasks.reorder', { name: sub.title })}
+                                            title={t('tasks.reorderHint')}
+                                            {...handleProps(key)}
+                                        >
+                                            <GripVertical size={12} />
+                                        </button>
+                                    )}
                                     <button
                                         className="zenith-subtask__action"
                                         onClick={() => setDetailing(sub)}

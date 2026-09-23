@@ -41,6 +41,7 @@ export class ContentModule extends BaseModule {
         this.disposers.push(
             this.plugin.registerDashboardWidget({
                 id: 'content.overview',
+                feature: 'content.widget',
                 title: 'Content',
                 titleKey: 'widget.content',
                 description: 'Library status at a glance and what to continue next.',

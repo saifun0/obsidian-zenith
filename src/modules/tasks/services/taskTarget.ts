@@ -1,3 +1,4 @@
+import { featureEnabled } from '../../../core/features';
 import { App, Notice } from 'obsidian';
 import { translate, resolveLocale } from '../../../core/i18n';
 import type { ZenithSettings } from '../../../store/settingsSlice';
@@ -27,8 +28,8 @@ export async function resolveTaskTarget(
     app: App,
     settings: ZenithSettings
 ): Promise<TaskTarget | null> {
-    if (!settings.journalCaptureTasks) return null;
-    if (!settings.activeModuleIds.includes('journal')) return null;
+    // The switch and the journal module both, as the registry reads them.
+    if (!featureEnabled(settings, 'tasks.captureDaily')) return null;
 
     const config = journalConfig(settings);
     try {

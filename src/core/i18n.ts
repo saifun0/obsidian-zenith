@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from 'react';
 import { useZenithStore } from '../store';
 import type { ZenithLanguage } from '../store/settingsSlice';
+import { FEATURE_STRINGS } from './featureStrings';
 
 /**
  * Minimal i18n for Zenith's own UI.
@@ -46,9 +47,6 @@ const EN: Dict = {
         'Where you are, once, for the whole plugin — weather and prayer times both read it. Type in any language. Left empty, the device is asked.',
 
     // Settings — storage
-    'settings.taskCapture': 'Capture into the daily note',
-    'settings.taskCapture.desc':
-        'New tasks go into today’s note. Off, they go to the tasks folder instead — both are always read.',
     'settings.tasksFolder': 'Tasks Folder',
     'settings.taskImages': 'Attached images',
     'settings.taskImageAlign': 'Image position',
@@ -98,9 +96,6 @@ const EN: Dict = {
     'settings.weatherIpLookup': 'Fall back to IP lookup',
     'settings.weatherIpLookup.desc':
         'When the device declines to share its location, ask ipapi.co instead.',
-    'settings.weatherAir': 'Air quality',
-    'settings.weatherAir.desc':
-        'Pollutants, AQI and (in Europe) pollen. Costs one extra request per refresh.',
     // Media
     'settings.mediaBanner': 'Banner image',
     'settings.mediaBanner.desc': 'Shown above the file-explorer folder tree. {count} saved.',
@@ -172,7 +167,6 @@ const EN: Dict = {
     'settings.dashHeading.custom': 'My own',
     'settings.dashHeadingText': 'Your heading',
     'settings.dashHeadingText.desc': 'Left empty, the dashboard opens with no heading at all.',
-    'settings.dashDate': "Today's date",
 
     // Prayer times
     'settings.prayerPlace': 'Location for prayer times',
@@ -206,15 +200,12 @@ const EN: Dict = {
     'settings.prayerAdjust.desc':
         'Minutes added to each time. For matching the mosque you actually pray at.',
     'settings.prayerDisplayGroup': 'What to show',
-    'settings.prayerSunrise': 'Sunrise',
-    'settings.prayerSunrise.desc': "Show sunrise — it's the end of fajr's window, not a prayer.",
     'settings.prayerExtras': 'Voluntary prayers',
     'settings.prayerExtras.desc': 'Extra ticks alongside the five obligatory prayers.',
     'settings.prayerHijri': 'Hijri date offset',
     'settings.prayerHijri.desc':
         'Shift the Islamic date by a day or two, to match how your community sights the month.',
     'settings.prayerRemindGroup': 'Reminders',
-    'settings.prayerNotify': 'Notify at prayer time',
     'settings.prayerNotify.note':
         'Only while Obsidian is running — this is a plugin, not an alarm clock, and there is no adhan.',
     'settings.prayerNotifyBefore': 'Warn before',
@@ -245,7 +236,6 @@ const EN: Dict = {
     'settings.calendarRowLabel.both': 'Both',
     'settings.calendarRowLabel.none': 'Nothing',
     'settings.calendarHorizon': 'Days shown',
-    'settings.calendarOverdue': 'Overdue strip',
     'settings.calendarSpanColors': 'Colour multi-day tasks',
     'settings.calendarSpanColors.desc':
         'Give each multi-day task its own colour, so overlapping ones stay apart.',
@@ -257,8 +247,6 @@ const EN: Dict = {
     'settings.weatherForecast.desc': 'How many days to show, or hide the section.',
     'settings.weatherForecast.off': 'Off',
     'settings.daysUnit': 'days',
-    'settings.weatherHourly': 'Hourly forecast',
-    'settings.weatherSun': 'Sunrise & sunset',
     'settings.weatherPrivacy':
         'Forecasts come from Open-Meteo, which needs no account and receives only ' +
         'the coordinates. IP lookup, when you switch it on, sends your address to ipapi.co.',
@@ -1799,7 +1787,7 @@ const EN: Dict = {
     'sync.settings.whatSyncs': 'What travels',
     'sync.settings.open': 'Open sync',
     'sync.settings.whatSyncs.desc':
-        'Folders, trackers, content types, location, prayer and weather preferences, installed modules and the running timer. Layout, density, active modules and where you left off stay on each device.',
+        'Folders, trackers, content types, which features are on, location, prayer and weather preferences, installed modules and the running timer. Layout, density, active modules and where you left off stay on each device.',
 };
 
 const RU: Dict = {
@@ -1828,9 +1816,6 @@ const RU: Dict = {
     'settings.location.desc':
         'Место один раз на весь плагин — его читают и погода, и намаз. Вводить можно на любом языке. Пусто — спросим устройство.',
 
-    'settings.taskCapture': 'Писать в ежедневную заметку',
-    'settings.taskCapture.desc':
-        'Новые задачи попадают в заметку сегодняшнего дня. Если выключить — в папку задач; читаются в любом случае обе.',
     'settings.tasksFolder': 'Папка задач',
     'settings.taskImages': 'Вложенные картинки',
     'settings.taskImageAlign': 'Положение картинок',
@@ -1876,9 +1861,6 @@ const RU: Dict = {
     'settings.weatherIpLookup': 'Запасной вариант — по IP',
     'settings.weatherIpLookup.desc':
         'Если устройство не сообщает местоположение, спросить ipapi.co.',
-    'settings.weatherAir': 'Качество воздуха',
-    'settings.weatherAir.desc':
-        'Загрязнители, AQI и (в Европе) пыльца. Один дополнительный запрос при обновлении.',
     // Медиа
     'settings.mediaBanner': 'Изображение баннера',
     'settings.mediaBanner.desc': 'Показывается над деревом папок. Сохранено: {count}.',
@@ -1949,7 +1931,6 @@ const RU: Dict = {
     'settings.dashHeadingText': 'Ваш заголовок',
     'settings.dashHeadingText.desc':
         'Если оставить пустым, дашборд откроется вообще без заголовка.',
-    'settings.dashDate': 'Сегодняшняя дата',
 
     // Намаз
     'settings.prayerPlace': 'Место для намаза',
@@ -1984,15 +1965,12 @@ const RU: Dict = {
     'settings.prayerAdjust.desc':
         'Минуты, прибавляемые к каждому времени. Чтобы сойтись с вашей мечетью.',
     'settings.prayerDisplayGroup': 'Что показывать',
-    'settings.prayerSunrise': 'Восход',
-    'settings.prayerSunrise.desc': 'Показывать восход — это конец времени фаджра, а не намаз.',
     'settings.prayerExtras': 'Дополнительные намазы',
     'settings.prayerExtras.desc': 'Отметки рядом с пятью обязательными.',
     'settings.prayerHijri': 'Сдвиг даты по хиджре',
     'settings.prayerHijri.desc':
         'Сдвинуть исламскую дату на день-два — по тому, как месяц начинают в вашей общине.',
     'settings.prayerRemindGroup': 'Напоминания',
-    'settings.prayerNotify': 'Напоминать о намазе',
     'settings.prayerNotify.note':
         'Только пока Obsidian открыт — это плагин, а не будильник, и азан он не проигрывает.',
     'settings.prayerNotifyBefore': 'Предупреждать за',
@@ -2023,7 +2001,6 @@ const RU: Dict = {
     'settings.calendarRowLabel.both': 'И то, и другое',
     'settings.calendarRowLabel.none': 'Ничего',
     'settings.calendarHorizon': 'Дней на оси',
-    'settings.calendarOverdue': 'Полоса просроченных',
     'settings.calendarSpanColors': 'Цвет многодневных задач',
     'settings.calendarSpanColors.desc':
         'Давать каждой многодневной задаче свой цвет, чтобы пересекающиеся не сливались.',
@@ -2035,8 +2012,6 @@ const RU: Dict = {
     'settings.weatherForecast.desc': 'Сколько дней показывать или скрыть секцию.',
     'settings.weatherForecast.off': 'Выкл',
     'settings.daysUnit': 'дней',
-    'settings.weatherHourly': 'Почасовой прогноз',
-    'settings.weatherSun': 'Восход и закат',
     'settings.weatherPrivacy':
         'Прогноз берётся с Open-Meteo: аккаунт не нужен, передаются только координаты. ' +
         'Определение по IP, если его включить, отправляет ваш адрес на ipapi.co.',
@@ -3594,7 +3569,7 @@ const RU: Dict = {
     'sync.settings.whatSyncs': 'Что уезжает',
     'sync.settings.open': 'Открыть синхронизацию',
     'sync.settings.whatSyncs.desc':
-        'Папки, трекеры, типы контента, локация, настройки намаза и погоды, установленные модули и запущенный таймер. Раскладка, плотность, активные модули и место, где вы остановились, остаются на каждом устройстве своими.',
+        'Папки, трекеры, типы контента, включённые функции, локация, настройки намаза и погоды, установленные модули и запущенный таймер. Раскладка, плотность, активные модули и место, где вы остановились, остаются на каждом устройстве своими.',
 };
 
 /**
@@ -3602,7 +3577,10 @@ const RU: Dict = {
  * English before giving up, which is right at runtime but hides a missing
  * Russian string — the only way to catch one is to look in the dictionary.
  */
-export const DICTS: Record<Locale, Dict> = { en: EN, ru: RU };
+export const DICTS: Record<Locale, Dict> = {
+    en: { ...EN, ...FEATURE_STRINGS.en },
+    ru: { ...RU, ...FEATURE_STRINGS.ru },
+};
 
 // ── Contributed dictionaries ────────────────────────────────────────────────
 
@@ -3734,7 +3712,7 @@ function lookup(locale: Locale, key: string): string | undefined {
     return (
         DICTS[locale][key] ??
         contributedString(locale, key) ??
-        EN[key] ??
+        DICTS.en[key] ??
         contributedString('en', key)
     );
 }

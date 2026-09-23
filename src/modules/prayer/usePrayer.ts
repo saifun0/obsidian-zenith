@@ -1,3 +1,4 @@
+import { useFeature } from '../../core/useFeature';
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { useZenithStore } from '../../store';
 import { useNow } from '../../core/useNow';
@@ -164,7 +165,14 @@ export function useNowMinutes(): number {
     return minutesOfDay(useNow(60_000));
 }
 
-/** Voluntary prayers the user has switched on, in canonical order. */
+const NO_EXTRAS: string[] = [];
+
+/**
+ * Voluntary prayers the user has switched on, in canonical order — none at
+ * all while the feature is off, which keeps the chosen list for its return.
+ */
 export function usePrayerExtras(): string[] {
-    return useZenithStore((s) => s.settings.prayerExtras);
+    const on = useFeature('prayer.extras');
+    const extras = useZenithStore((s) => s.settings.prayerExtras);
+    return on ? extras : NO_EXTRAS;
 }

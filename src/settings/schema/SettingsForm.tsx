@@ -17,6 +17,7 @@ import {
     type ChoiceOption,
 } from '../controls';
 import { FolderInput } from '../controls/FolderInput';
+import { FeatureRow } from './FeatureRow';
 import {
     fieldError,
     fieldValue,
@@ -92,6 +93,10 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ schema, values, onCh
         if (field.type === 'custom') {
             const Render = field.render;
             return <Render key={field.key} {...ctx} set={onChange} />;
+        }
+
+        if (field.type === 'feature') {
+            return <FeatureRow key={field.key} id={field.key} noteKey={field.noteKey} />;
         }
 
         if (field.type === 'action') {

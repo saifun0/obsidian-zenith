@@ -7,6 +7,7 @@ import { computeTaskStats, type StatsRange } from '../services/taskStats';
 import { PieChart } from '../../../components/shared/PieChart';
 import { STATUS_COLOR } from './taskStatusUi';
 import { useTranslation } from '../../../core/i18n';
+import { useFeature } from '../../../core/useFeature';
 
 const RANGES: { id: StatsRange; label: string }[] = [
     { id: 'week', label: 'Week' },
@@ -42,6 +43,7 @@ interface TaskStatsProps {
 }
 
 export const TaskStats: FC<TaskStatsProps> = ({ tasks }) => {
+    const heatmapOn = useFeature('tasks.heatmap');
     const t = useTranslation();
     const [range, setRange] = useState<StatsRange>('year');
     const today = getTodayString();
@@ -162,22 +164,24 @@ export const TaskStats: FC<TaskStatsProps> = ({ tasks }) => {
             </div>
 
             {/* Heatmap */}
-            <div className="zenith-taskstats__heat">
-                <div className="zenith-taskstats__chart-title">{t('tasks.stats.activity')}</div>
-                <div className="zenith-heatmap">
-                    {chunkWeeks(stats.heatmap).map((week, wi) => (
-                        <div key={wi} className="zenith-heatmap__col">
-                            {week.map((cell) => (
-                                <div
-                                    key={cell.date}
-                                    className={`zenith-heatmap__cell zenith-heatmap__cell--l${heatLevel(cell.count)}`}
-                                    title={`${cell.date}: ${cell.count} done`}
-                                />
-                            ))}
-                        </div>
-                    ))}
+            {heatmapOn && (
+                <div className="zenith-taskstats__heat">
+                    <div className="zenith-taskstats__chart-title">{t('tasks.stats.activity')}</div>
+                    <div className="zenith-heatmap">
+                        {chunkWeeks(stats.heatmap).map((week, wi) => (
+                            <div key={wi} className="zenith-heatmap__col">
+                                {week.map((cell) => (
+                                    <div
+                                        key={cell.date}
+                                        className={`zenith-heatmap__cell zenith-heatmap__cell--l${heatLevel(cell.count)}`}
+                                        title={`${cell.date}: ${cell.count} done`}
+                                    />
+                                ))}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

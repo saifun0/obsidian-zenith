@@ -2,6 +2,7 @@ import { BaseModule } from '../../core/IModule';
 import { VIEW_TYPE_TASKS } from '../../core/constants';
 import { TasksView } from './TasksView';
 import { TasksWidget } from './components/TasksWidget';
+import { watchFeature } from '../../core/useFeature';
 import { TimerService } from './services/timerService';
 import { tasksSettingsSchema } from './settings.schema';
 import type { SettingsSchema } from '../../settings/schema/types';
@@ -33,9 +34,22 @@ export class TasksModule extends BaseModule {
 
         // The timer outlives the view: you start one, go to the note you are
         // working in, and the countdown still has to reach you.
-        this.timer = new TimerService(this.plugin.app);
-        this.timer.start();
-        this.disposers.push(() => this.timer?.stop());
+        // Only while the feature is on: switched off, nothing ticks, and a
+        // timer left running is stopped with its time written to the task —
+        // there is no button left to stop it with.
+        const timer = new TimerService(this.plugin.app);
+        this.timer = timer;
+        this.disposers.push(
+            watchFeature('tasks.timer', (on) => {
+                if (on) {
+                    timer.start();
+                    return;
+                }
+                timer.stop();
+                void timer.stopRunning();
+            })
+        );
+        this.disposers.push(() => timer.stop());
 
         // Register command to open Tasks
         this.addCommand({
@@ -48,6 +62,7 @@ export class TasksModule extends BaseModule {
         this.disposers.push(
             this.plugin.registerDashboardWidget({
                 id: 'tasks.overview',
+                feature: 'tasks.widget',
                 title: 'Tasks',
                 titleKey: 'widget.tasks',
                 description: 'What’s due, overdue and in progress, with quick add.',

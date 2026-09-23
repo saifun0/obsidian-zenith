@@ -57,6 +57,7 @@ export class JournalModule extends BaseModule {
         this.disposers.push(
             this.plugin.registerDashboardWidget({
                 id: 'journal.checkin',
+                feature: 'journal.widget',
                 title: 'Check-in',
                 titleKey: 'widget.checkin',
                 description: "Today's trackers as buttons — the same controls as in the note.",
@@ -68,6 +69,7 @@ export class JournalModule extends BaseModule {
             }),
             this.plugin.registerDashboardWidget({
                 id: 'journal.stats',
+                feature: 'journal.stats',
                 title: 'Journal stats',
                 titleKey: 'widget.journalStats',
                 description: 'Streak, entries and every tracker over the last 30 days.',

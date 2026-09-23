@@ -1,3 +1,4 @@
+import { useFeature } from '../../../core/useFeature';
 import React, { useMemo, type FC } from 'react';
 import { NotebookPen, CalendarDays, Flame, CheckCircle2 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
@@ -31,6 +32,7 @@ const WINDOW_DAYS = 30;
  */
 export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const t = useTranslation();
+    const wordsOn = useFeature('journal.wordCount');
     const { plugin } = useApp();
     const entries = useZenithStore((s) => s.journalEntries);
     const configured = useZenithStore((s) => s.settings.journalTrackers);
@@ -66,7 +68,15 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
             label: t('journal.stats.streakBest', { count: stats.longestStreak }),
         },
         { key: 'last', value: lastEntry, label: t('journal.stats.lastEntry') },
-        { key: 'words', value: String(stats.words), label: t('journal.stats.wordsInWindow') },
+        ...(wordsOn
+            ? [
+                  {
+                      key: 'words',
+                      value: String(stats.words),
+                      label: t('journal.stats.wordsInWindow'),
+                  },
+              ]
+            : []),
     ];
 
     return (

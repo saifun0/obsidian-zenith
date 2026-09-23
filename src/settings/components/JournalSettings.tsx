@@ -22,6 +22,10 @@ import { IconPickerModal } from '../../core/IconPickerModal';
 import { ColorField, Dropdown } from '../../components/ui/fields';
 import { journalNotePath, isoToDate } from '../../modules/journal/services/journalDates';
 import { translateNow } from '../../core/i18n';
+import { CoreSettingsForm } from '../schema/CoreSettingsForm';
+import { featureOnlySchema } from '../schema/featureGroup';
+
+const JOURNAL_FEATURES = featureOnlySchema('journal');
 import {
     readDailyNotesConfig,
     dailyNotesConflict,
@@ -298,6 +302,9 @@ export const JournalSettings: React.FC = () => {
                     </span>
                 </div>
             )}
+            {/* A hand-written page, so the generated switches are put in by
+                hand — the same group every schema-drawn page gets in front. */}
+            <CoreSettingsForm schema={JOURNAL_FEATURES} />
 
             {/* The four rows above the trackers are one run with nothing
                 between them, so they are one card — the same shape the schema

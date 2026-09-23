@@ -154,6 +154,14 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // a button anywhere hide it everywhere with no way to bring it back.
     navigatorHiddenActions: { scope: 'shared' },
 
+    // ── Which features are on ──
+    // Shared, because a feature is part of how the person uses the plugin, not
+    // of the screen in front of them — and merged key by key, so switching
+    // off the heatmap on the phone and the timer on the desktop is two
+    // changes, not one that overwrites the other. Whether the MODULE runs is
+    // still `activeModuleIds`, which stays per device.
+    features: { scope: 'shared', merge: 'record' },
+
     // ── Identity and chrome that is not layout ──
     // The accent is a personal choice, not a per-screen accommodation, so
     // unlike density it belongs everywhere.

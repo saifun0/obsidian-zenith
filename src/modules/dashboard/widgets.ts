@@ -110,6 +110,13 @@ export interface DashboardWidgetDefinition {
     /** Sort order (ascending). Defaults to 100. */
     order?: number;
     /**
+     * The feature this widget is, when it can be switched off apart from its
+     * module (`tasks.widget`). Off, the dashboard treats it the way it treats
+     * the widget of a module that is off: not on the board, not in the
+     * gallery. See `core/features.ts`.
+     */
+    feature?: string;
+    /**
      * May be placed more than once, each copy configured on its own.
      *
      * Off by default, because most widgets are singular — two clocks tell the

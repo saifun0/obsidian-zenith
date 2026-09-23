@@ -47,7 +47,8 @@ interface MonthGridProps {
     onOpenEntry: (entry: CalendarEntry) => void;
     onOpenSpan: (segment: SpanSegment) => void;
     /** Jump into the week view at this date. */
-    onOpenWeek: (date: string) => void;
+    /** Where "+N more" goes. Without it the count is only a count. */
+    onOpenWeek?: (date: string) => void;
     /** The run has been scrolled near its end and wants later months. */
     onReachEnd: () => void;
     /** The run has been scrolled near its start and wants earlier months. */
@@ -393,15 +394,20 @@ export const MonthGrid: FC<MonthGridProps> = ({
                                                 onOpen={onOpenEntry}
                                             />
                                         ))}
-                                        {hidden > 0 && (
-                                            <button
-                                                className="zenith-tcal__more"
-                                                onClick={() => onOpenWeek(date)}
-                                                title={t('calendar.openWeek')}
-                                            >
-                                                {t('calendar.more', { count: hidden })}
-                                            </button>
-                                        )}
+                                        {hidden > 0 &&
+                                            (onOpenWeek ? (
+                                                <button
+                                                    className="zenith-tcal__more"
+                                                    onClick={() => onOpenWeek(date)}
+                                                    title={t('calendar.openWeek')}
+                                                >
+                                                    {t('calendar.more', { count: hidden })}
+                                                </button>
+                                            ) : (
+                                                <span className="zenith-tcal__more">
+                                                    {t('calendar.more', { count: hidden })}
+                                                </span>
+                                            ))}
                                     </div>
                                 );
                             })}

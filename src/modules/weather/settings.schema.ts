@@ -80,26 +80,11 @@ export const weatherSettingsSchema = coreSchema({
                         { value: '10', label: '10' },
                     ],
                 },
-                {
-                    type: 'toggle',
-                    key: 'weatherShowHourly',
-                    labelKey: 'settings.weatherHourly',
-                    default: true,
-                },
-                {
-                    type: 'toggle',
-                    key: 'weatherShowSun',
-                    labelKey: 'settings.weatherSun',
-                    default: true,
-                },
-                {
-                    type: 'toggle',
-                    key: 'weatherShowAir',
-                    labelKey: 'settings.weatherAir',
-                    descKey: 'settings.weatherAir.desc',
-                    default: true,
-                    noteKey: 'settings.weatherPrivacy',
-                },
+                // The weather's features stay with the forecast they share a
+                // card with, rather than in a list of their own above it.
+                { type: 'feature', key: 'weather.hourly' },
+                { type: 'feature', key: 'weather.sun' },
+                { type: 'feature', key: 'weather.air', noteKey: 'settings.weatherPrivacy' },
             ],
         },
     ],

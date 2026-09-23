@@ -1,3 +1,4 @@
+import { whenFeature } from '../../settings/schema/featureGroup';
 import { Notice } from 'obsidian';
 import { coreSchema } from '../../settings/schema/types';
 import { useZenithStore } from '../../store';
@@ -150,19 +151,14 @@ export const prayerSettingsSchema = coreSchema({
             id: 'display',
             titleKey: 'settings.prayerDisplayGroup',
             fields: [
-                {
-                    type: 'toggle',
-                    key: 'prayerShowSunrise',
-                    labelKey: 'settings.prayerSunrise',
-                    descKey: 'settings.prayerSunrise.desc',
-                    default: true,
-                },
+                { type: 'feature', key: 'prayer.sunrise' },
                 {
                     type: 'multiselect',
                     key: 'prayerExtras',
                     labelKey: 'settings.prayerExtras',
                     descKey: 'settings.prayerExtras.desc',
                     default: ['witr'],
+                    showIf: whenFeature('prayer.extras'),
                     options: EXTRA_PRAYERS.map((id) => ({
                         value: id,
                         labelKey: `prayer.extra.${id}`,
@@ -185,11 +181,11 @@ export const prayerSettingsSchema = coreSchema({
             id: 'reminders',
             titleKey: 'settings.prayerRemindGroup',
             fields: [
+                // Here rather than in the list at the top, beside how early
+                // the reminder comes.
                 {
-                    type: 'toggle',
-                    key: 'prayerNotify',
-                    labelKey: 'settings.prayerNotify',
-                    default: false,
+                    type: 'feature',
+                    key: 'prayer.reminders',
                     noteKey: 'settings.prayerNotify.note',
                 },
                 {
@@ -202,7 +198,7 @@ export const prayerSettingsSchema = coreSchema({
                     max: 60,
                     step: 5,
                     unitKey: 'settings.minutesUnit',
-                    showIf: (v) => v.prayerNotify === true,
+                    showIf: whenFeature('prayer.reminders'),
                 },
             ],
         },

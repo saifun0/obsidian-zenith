@@ -1,6 +1,7 @@
 import { App, TFile, TFolder, normalizePath } from 'obsidian';
 import { translate, resolveLocale, type Locale } from '../../../core/i18n';
 import { JOURNAL_BLOCK_LANG } from '../../../core/constants';
+import { featureEnabled } from '../../../core/features';
 import { insertUnderHeading, appendBlock } from '../../../services/markdownSections';
 import type { ZenithSettings } from '../../../store/settingsSlice';
 import { journalNotePath, isoToDate, formatJournalDate } from './journalDates';
@@ -13,6 +14,12 @@ export interface JournalConfig {
     /** Heading captured tasks are filed under; empty = the localized default. */
     taskHeading: string;
     locale: Locale;
+    /**
+     * Open a new note with the check-in block. Off with its feature: a block
+     * nobody renders is a stray code fence in every note from then on. Absent
+     * counts as on.
+     */
+    withBlock?: boolean;
 }
 
 export function journalConfig(settings: ZenithSettings): JournalConfig {
@@ -22,6 +29,7 @@ export function journalConfig(settings: ZenithSettings): JournalConfig {
         templatePath: settings.journalTemplatePath,
         taskHeading: settings.journalTaskHeading,
         locale: resolveLocale(settings.language),
+        withBlock: featureEnabled(settings, 'journal.dailyBlock'),
     };
 }
 
@@ -61,12 +69,12 @@ export function applyTemplate(template: string, date: string, title: string): st
  * trackers and its prev/next navigation without the user having to know the
  * block exists.
  */
-function defaultBody(locale: Locale): string {
+function defaultBody(locale: Locale, withBlock: boolean): string {
     const highlights = translate(locale, 'journal.template.highlights');
     const notes = translate(locale, 'journal.template.notes');
     const tasks = translate(locale, 'journal.template.tasks');
-    const block = ['```' + JOURNAL_BLOCK_LANG, '```'].join('\n');
-    return `${block}\n\n## ${highlights}\n\n- \n\n## ${tasks}\n\n## ${notes}\n\n`;
+    const block = withBlock ? `${['```' + JOURNAL_BLOCK_LANG, '```'].join('\n')}\n\n` : '';
+    return `${block}## ${highlights}\n\n- \n\n## ${tasks}\n\n## ${notes}\n\n`;
 }
 
 /**
@@ -118,12 +126,12 @@ export class JournalWriter {
     /** Template text for a new note: the configured file, or the built-in body. */
     private async readTemplate(config: JournalConfig): Promise<string> {
         const path = config.templatePath.trim();
-        if (!path) return defaultBody(config.locale);
+        if (!path) return defaultBody(config.locale, config.withBlock !== false);
 
         const file = this.app.vault.getAbstractFileByPath(normalizePath(path));
         if (!(file instanceof TFile)) {
             console.warn(`Zenith: journal template "${path}" not found — using the default body.`);
-            return defaultBody(config.locale);
+            return defaultBody(config.locale, config.withBlock !== false);
         }
         return this.app.vault.read(file);
     }

@@ -12,8 +12,14 @@ import { projectsSettingsSchema } from '../src/modules/projects/settings.schema'
 import { syncSettingsSchema } from '../src/modules/sync/settings.schema';
 import { appearanceSchema, generalSchema } from '../src/settings/schema/coreSchemas';
 import { flattenFields, defaultsFromSchema } from '../src/settings/schema/helpers';
-import { isValueField, type CoreSettingsSchema } from '../src/settings/schema/types';
+import {
+    isValueField,
+    type CoreSettingsSchema,
+    type SettingsSchema,
+} from '../src/settings/schema/types';
 import { DICTS } from '../src/core/i18n';
+import { getFeature } from '../src/core/features';
+import { withFeatureGroup } from '../src/settings/schema/featureGroup';
 
 /**
  * Every built-in schema. Add new ones here — that is the whole point of the
@@ -103,13 +109,19 @@ describe('core settings schemas agree with DEFAULT_SETTINGS', () => {
 });
 
 describe('core settings schemas are fully translated', () => {
-    const keysOf = (schema: CoreSettingsSchema): string[] => {
+    const keysOf = (schema: SettingsSchema): string[] => {
         const out: string[] = [];
         for (const group of schema.groups) {
             if (group.titleKey) out.push(group.titleKey);
             if (group.descKey) out.push(group.descKey);
             for (const field of group.fields) {
                 if (field.type === 'custom') continue;
+                // A feature's words live in the registry; a key that names no
+                // feature is pushed as it is, so it shows up as missing.
+                if (field.type === 'feature') {
+                    out.push(getFeature(field.key)?.labelKey ?? field.key);
+                    continue;
+                }
                 out.push(field.labelKey);
                 if (field.descKey) out.push(field.descKey);
                 if ('noteKey' in field && field.noteKey) out.push(field.noteKey);
@@ -127,7 +139,8 @@ describe('core settings schemas are fully translated', () => {
         return out;
     };
 
-    for (const schema of CORE_SCHEMAS) {
+    // With the generated "Features" group, which is part of every page.
+    for (const schema of CORE_SCHEMAS.map((s) => withFeatureGroup(s))) {
         it(`${schema.moduleId} resolves every key in English`, () => {
             // A missing key renders as the key itself, which looks like a bug
             // rather than reading like one — so catch it here.

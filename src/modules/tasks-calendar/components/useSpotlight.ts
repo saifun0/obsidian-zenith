@@ -1,4 +1,5 @@
 import { useCallback, useRef, type PointerEvent } from 'react';
+import { useFeature } from '../../../core/useFeature';
 
 /**
  * Hovering a task lights every piece of it and fades everything else.
@@ -24,6 +25,7 @@ export function useSpotlight<T extends HTMLElement>(): {
     onPointerLeave: (e: PointerEvent<T>) => void;
 } {
     const lit = useRef<string | null>(null);
+    const on = useFeature('calendar.spotlight');
 
     const light = useCallback((box: HTMLElement, id: string | null) => {
         if (lit.current === id) return;
@@ -41,13 +43,13 @@ export function useSpotlight<T extends HTMLElement>(): {
 
     const onPointerOver = useCallback(
         (e: PointerEvent<T>) => {
-            if (e.pointerType !== 'mouse') return;
+            if (!on || e.pointerType !== 'mouse') return;
             // The gap between two chips is part of the day, not of either task,
             // so crossing it puts the month back to normal.
             const piece = (e.target as HTMLElement).closest<HTMLElement>('[data-task]');
             light(e.currentTarget, piece?.dataset.task ?? null);
         },
-        [light]
+        [light, on]
     );
 
     const onPointerLeave = useCallback(

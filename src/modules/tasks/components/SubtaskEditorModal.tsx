@@ -4,6 +4,7 @@ import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import type { SubTask } from '../../../store/taskSlice';
 import { TaskWriter } from '../services/taskWriter';
+import { useFeature } from '../../../core/useFeature';
 import {
     diffTaskFields,
     formatDuration,
@@ -54,6 +55,8 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
     const [notes, setNotes] = useState(subtask.description ?? '');
     const [attachments, setAttachments] = useState<TaskAttachment[]>(subtask.attachments ?? []);
     const [submitting, setSubmitting] = useState(false);
+    const attachmentsOn = useFeature('tasks.attachments');
+    const timerOn = useFeature('tasks.timer');
 
     const submit = async () => {
         const trimmed = title.trim();
@@ -130,7 +133,7 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
                     />
                 </div>
 
-                <AttachmentField value={attachments} onChange={setAttachments} />
+                {attachmentsOn && <AttachmentField value={attachments} onChange={setAttachments} />}
 
                 <div className="zenith-form__grid">
                     <div className="zenith-field">
@@ -155,15 +158,19 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
                             onChange={setDueEndTime}
                         />
                     </div>
-                    <div className="zenith-field">
-                        <label className="zenith-field__label">{t('tasks.editor.timer')}</label>
-                        <input
-                            className="zenith-input zenith-field__input"
-                            placeholder={t('tasks.editor.timerPlaceholder')}
-                            value={timerText}
-                            onChange={(e) => setTimerText(e.target.value)}
-                        />
-                    </div>
+                    {timerOn && (
+                        <div className="zenith-field">
+                            <label className="zenith-field__label">
+                                {t('tasks.editor.timer')}
+                            </label>
+                            <input
+                                className="zenith-input zenith-field__input"
+                                placeholder={t('tasks.editor.timerPlaceholder')}
+                                value={timerText}
+                                onChange={(e) => setTimerText(e.target.value)}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         </Modal>

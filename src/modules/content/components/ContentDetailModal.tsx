@@ -1,3 +1,4 @@
+import { useFeature } from '../../../core/useFeature';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Notice } from 'obsidian';
 import { CalendarCheck, CalendarClock, ExternalLink, FileText, RefreshCw, Trash2 } from 'lucide-react';
@@ -57,6 +58,7 @@ const PROGRESS_WRITE_DELAY = 600;
 export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, type, onClose }) => {
     const { app } = useApp();
     const t = useTranslation();
+    const genreFilterOn = useFeature('content.genreFilter');
     const updateItemRating = useZenithStore((s) => s.updateItemRating);
     const patchContentItem = useZenithStore((s) => s.patchContentItem);
     const setContentGenreFilter = useZenithStore((s) => s.setContentGenreFilter);
@@ -291,18 +293,24 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
                             // A genre is the most natural way to ask "what else
                             // like this do I have"; clicking one filters the
                             // library rather than just sitting there as a label.
-                            <button
-                                type="button"
-                                key={g}
-                                className="zenith-content-modal__chip"
-                                title={t('content.filterByGenre', { genre: g })}
-                                onClick={() => {
-                                    setContentGenreFilter(g);
-                                    onClose();
-                                }}
-                            >
-                                {g}
-                            </button>
+                            genreFilterOn ? (
+                                <button
+                                    type="button"
+                                    key={g}
+                                    className="zenith-content-modal__chip"
+                                    title={t('content.filterByGenre', { genre: g })}
+                                    onClick={() => {
+                                        setContentGenreFilter(g);
+                                        onClose();
+                                    }}
+                                >
+                                    {g}
+                                </button>
+                            ) : (
+                                <span key={g} className="zenith-content-modal__chip">
+                                    {g}
+                                </span>
+                            )
                         ))}
                     </div>
                 )}

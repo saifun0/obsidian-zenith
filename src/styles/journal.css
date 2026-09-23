@@ -794,6 +794,11 @@ body.is-phone .zenith-journal__body {
 
 /* ── In-note code block (```zenith-daily```) ──────── */
 
+.zenith-dblock__off {
+    color: var(--text-faint);
+    font-size: var(--font-ui-smaller);
+}
+
 .zenith-dblock-host {
     margin: 0.6em 0;
 }

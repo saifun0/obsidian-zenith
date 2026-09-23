@@ -15,6 +15,7 @@ import type { JournalTracker } from '../../../core/journalConfig';
 import type { JournalEntry, TrackerValue } from '../../../store/journalSlice';
 import type { Task } from '../../../store/taskSlice';
 import type { TaskStatus } from '../../../core/constants';
+import { useFeature } from '../../../core/useFeature';
 import { TaskWriter } from '../../tasks/services/taskWriter';
 import { useZenithStore } from '../../../store';
 import { TaskStatusControl } from '../../tasks/components/taskStatusUi';
@@ -56,6 +57,7 @@ export const DayPanel: FC<DayPanelProps> = ({
     onShiftDay,
 }) => {
     const t = useTranslation();
+    const wordsOn = useFeature('journal.wordCount');
     const { app, plugin } = useApp();
     const setTaskStatus = useZenithStore((s) => s.setTaskStatus);
     const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
@@ -114,7 +116,11 @@ export const DayPanel: FC<DayPanelProps> = ({
                         {date === today && (
                             <span className="zenith-jday__badge">{t('journal.today')}</span>
                         )}
-                        {entry ? t.plural('journal.words', entry.words) : t('journal.noNote')}
+                        {!entry
+                            ? t('journal.noNote')
+                            : wordsOn
+                              ? t.plural('journal.words', entry.words)
+                              : null}
                     </span>
                 </div>
                 {/* Icon only, at every width. The label was the first thing to

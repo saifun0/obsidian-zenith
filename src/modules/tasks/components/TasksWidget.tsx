@@ -12,6 +12,7 @@ import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import type { SubTask, Task } from '../../../store/taskSlice';
 import type { TaskStatus } from '../../../core/constants';
+import { useFeature } from '../../../core/useFeature';
 import { countSubtasks } from '../services/taskStats';
 import { TaskWriter } from '../services/taskWriter';
 import { getTodayString } from '../../../core/dateUtils';
@@ -53,7 +54,14 @@ import {
 export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
     const t = useTranslation();
     const { app, plugin } = useApp();
-    const tasks = useZenithStore((s) => s.tasks);
+    const stored = useZenithStore((s) => s.tasks);
+    // With subtasks switched off the card is planned as if there were none:
+    // no tally, no rows to open, nothing in the summary strip.
+    const subtasksOn = useFeature('tasks.subtasks');
+    const tasks = useMemo(
+        () => (subtasksOn ? stored : stored.map((task) => ({ ...task, subtasks: [] }))),
+        [stored, subtasksOn]
+    );
     const today = getTodayString();
     const m = METRICS[size];
 

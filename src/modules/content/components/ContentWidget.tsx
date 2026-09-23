@@ -18,6 +18,7 @@ import type { ContentItem } from '../../../store/contentSlice';
 import type { ContentTypeConfig } from '../../../core/contentTypes';
 import { effectiveContentTypes, resolveContentType } from '../../../core/contentTypes';
 import { resolveCover } from '../services/coverUrl';
+import { useFeature } from '../../../core/useFeature';
 import { bumpProgress } from '../services/contentActions';
 import { buildContentShelf, shelfRows } from '../services/contentShelf';
 import { STALE_DAYS } from '../services/contentStats';
@@ -123,6 +124,7 @@ interface RowFacts {
 export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const { app, plugin } = useApp();
     const t = useTranslation();
+    const quickOn = useFeature('content.quickIncrement');
     const items = useZenithStore((s) => s.contentItems);
     const savedTypes = useZenithStore((s) => s.settings.contentTypes);
     const patchContentItem = useZenithStore((s) => s.patchContentItem);
@@ -293,12 +295,13 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
                 // subtitle spends its one line on what distinguishes the item.
                 sub: [item.year, item.creator].filter(Boolean).join(' · ') || type.label,
                 canBump:
+                    quickOn &&
                     tracks &&
                     item.status === 'in-progress' &&
                     (!progress.total || progress.current < progress.total),
             };
         },
-        [app, types]
+        [app, types, quickOn]
     );
 
     if (items.length === 0) {

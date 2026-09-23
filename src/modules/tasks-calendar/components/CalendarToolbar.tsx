@@ -34,6 +34,10 @@ interface ToolbarProps {
     spanDays: boolean;
     showDailyNotes: boolean;
     allHours: boolean;
+    /** The views on offer; the switcher is hidden when there is only one. */
+    modes: readonly CalendarViewMode[];
+    /** Which of the option switches exist at all — the rest are features that are off. */
+    toggles: Record<CalendarToggle, boolean>;
     /** Kind the statistics popover is focusing; everything else dims. */
     focus: EntryKind | null;
     onMode: (mode: CalendarViewMode) => void;
@@ -76,6 +80,8 @@ export const CalendarToolbar: FC<ToolbarProps> = ({
     spanDays,
     showDailyNotes,
     allHours,
+    modes,
+    toggles,
     focus,
     onMode,
     onStep,
@@ -107,7 +113,8 @@ export const CalendarToolbar: FC<ToolbarProps> = ({
               ? CalendarCheck
               : CalendarHeart;
 
-    const options: Array<{ key: CalendarToggle; on: boolean; label: string; shown?: boolean }> = [
+    type Option = { key: CalendarToggle; on: boolean; label: string; shown?: boolean };
+    const allOptions: Option[] = [
         { key: 'hideDone', on: hideDone, label: t('calendar.option.hideDone') },
         { key: 'spanDays', on: spanDays, label: t('calendar.option.spanDays') },
         { key: 'showDailyNotes', on: showDailyNotes, label: t('calendar.option.dailyNotes') },
@@ -119,6 +126,7 @@ export const CalendarToolbar: FC<ToolbarProps> = ({
             shown: mode === 'week' || mode === 'day',
         },
     ];
+    const options = allOptions.filter((o) => toggles[o.key]);
 
     return (
         <div className="zenith-tcal__bar">
@@ -131,19 +139,25 @@ export const CalendarToolbar: FC<ToolbarProps> = ({
                 <Filter size={15} />
             </button>
 
-            <div className="zenith-tcal__modes" role="group" aria-label={t('calendar.viewMode')}>
-                {MODES.map(({ id, icon: Icon, key }) => (
-                    <button
-                        key={id}
-                        className={`zenith-tcal__mode ${mode === id ? 'is-active' : ''}`}
-                        onClick={() => onMode(id)}
-                        title={t(key)}
-                        aria-pressed={mode === id}
-                    >
-                        <Icon size={15} />
-                    </button>
-                ))}
-            </div>
+            {modes.length > 1 && (
+                <div
+                    className="zenith-tcal__modes"
+                    role="group"
+                    aria-label={t('calendar.viewMode')}
+                >
+                    {MODES.filter(({ id }) => modes.includes(id)).map(({ id, icon: Icon, key }) => (
+                        <button
+                            key={id}
+                            className={`zenith-tcal__mode ${mode === id ? 'is-active' : ''}`}
+                            onClick={() => onMode(id)}
+                            title={t(key)}
+                            aria-pressed={mode === id}
+                        >
+                            <Icon size={15} />
+                        </button>
+                    ))}
+                </div>
+            )}
 
             <div className="zenith-tcal__nav">
                 {paging && (

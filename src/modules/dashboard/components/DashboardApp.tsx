@@ -4,6 +4,7 @@ import { RotateCw, LayoutGrid, Check, LayoutTemplate } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
+import { useFeature } from '../../../core/useFeature';
 import { normalizeGridConfig } from '../grid/gridTypes';
 import { PromptModal } from '../../../core/PromptModal';
 import {
@@ -51,7 +52,8 @@ export const DashboardApp: React.FC = () => {
     const grid = useMemo(() => normalizeGridConfig(savedGrid), [savedGrid]);
     const heading = useZenithStore((s) => s.settings.dashboardHeading);
     const headingText = useZenithStore((s) => s.settings.dashboardHeadingText);
-    const showDate = useZenithStore((s) => s.settings.dashboardShowDate);
+    const showDate = useFeature('dashboard.date');
+    const presetsOn = useFeature('dashboard.presets');
 
     const presets = useZenithStore((s) => s.settings.dashboardPresets);
     const activePresetId = useZenithStore((s) => s.settings.dashboardPresetId);
@@ -196,8 +198,12 @@ export const DashboardApp: React.FC = () => {
      * subscribing to `settings` whole would rebuild the layer's style for each
      * of them.
      */
+    // Switched off, the wallpaper is the same as none at all: no layer, no
+    // request for the picture, cards at full strength.
+    const bgOn = useFeature('dashboard.background');
+    const savedBgSource = useZenithStore((s) => s.settings.dashboardBgSource);
     const bg = {
-        dashboardBgSource: useZenithStore((s) => s.settings.dashboardBgSource),
+        dashboardBgSource: bgOn ? savedBgSource : ('none' as const),
         dashboardBgUrl: useZenithStore((s) => s.settings.dashboardBgUrl),
         dashboardBgPath: useZenithStore((s) => s.settings.dashboardBgPath),
         dashboardBgFit: useZenithStore((s) => s.settings.dashboardBgFit),
@@ -248,14 +254,16 @@ export const DashboardApp: React.FC = () => {
                     control; refreshing is a different one and stands apart.
                     Three identical squares in a row said none of that. */}
                     <div className="zenith-dashboard__group">
-                        <button
-                            className="zenith-dashboard__action"
-                            onClick={openPresets}
-                            aria-label={t('dashboard.presets')}
-                            title={t('dashboard.presets')}
-                        >
-                            <LayoutTemplate size={16} />
-                        </button>
+                        {presetsOn && (
+                            <button
+                                className="zenith-dashboard__action"
+                                onClick={openPresets}
+                                aria-label={t('dashboard.presets')}
+                                title={t('dashboard.presets')}
+                            >
+                                <LayoutTemplate size={16} />
+                            </button>
+                        )}
                         <button
                             className={`zenith-dashboard__action ${editing ? 'is-active' : ''}`}
                             onClick={() => setEditing((v) => !v)}

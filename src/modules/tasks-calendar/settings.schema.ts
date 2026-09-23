@@ -1,4 +1,5 @@
 import { coreSchema } from '../../settings/schema/types';
+import { whenFeature } from '../../settings/schema/featureGroup';
 
 /**
  * The tasks calendar had no settings page at all — it fell through to "this
@@ -11,6 +12,9 @@ export const tasksCalendarSettingsSchema = coreSchema({
         {
             id: 'grid',
             titleKey: 'settings.calendarGridGroup',
+            // The hour grid is the week and day views'; without them there is
+            // no block for a default length to size.
+            showIf: whenFeature('calendar.timeViews'),
             fields: [
                 {
                     type: 'segmented',
@@ -31,6 +35,7 @@ export const tasksCalendarSettingsSchema = coreSchema({
         {
             id: 'widget',
             titleKey: 'settings.calendarWidgetGroup',
+            showIf: whenFeature('calendar.widget'),
             fields: [
                 {
                     type: 'select',
@@ -55,18 +60,15 @@ export const tasksCalendarSettingsSchema = coreSchema({
                         { value: '14', label: '14' },
                     ],
                 },
-                {
-                    type: 'toggle',
-                    key: 'calendarShowOverdue',
-                    labelKey: 'settings.calendarOverdue',
-                    default: true,
-                },
+                // With the card it belongs to, not in the list at the top.
+                { type: 'feature', key: 'calendar.overdue' },
                 {
                     type: 'toggle',
                     key: 'calendarSpanColors',
                     labelKey: 'settings.calendarSpanColors',
                     descKey: 'settings.calendarSpanColors.desc',
                     default: true,
+                    showIf: whenFeature('calendar.spans'),
                 },
             ],
         },

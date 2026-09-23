@@ -14,11 +14,13 @@ interface TaskFiltersProps {
     filters: TaskFilterState;
     onFilterChange: (filters: TaskFilterState) => void;
     allTags: string[];
+    /** The groupings on offer; see `groupModes`. */
+    groups: readonly TaskFilterState['group'][];
 }
 
 // ── Component ────────────────────────────────────────
 
-export const TaskFilters: FC<TaskFiltersProps> = ({ filters, onFilterChange, allTags }) => {
+export const TaskFilters: FC<TaskFiltersProps> = ({ filters, onFilterChange, allTags, groups }) => {
     const t = useTranslation();
     const [tagInput, setTagInput] = useState(filters.tag);
     // The suggestion list was a div positioned inside the field's own box, with
@@ -127,16 +129,21 @@ export const TaskFilters: FC<TaskFiltersProps> = ({ filters, onFilterChange, all
                 onChange={(v) => onFilterChange({ ...filters, sort: v as TaskFilterState['sort'] })}
             />
 
-            {/* Group (applies on the All tab) */}
-            <Dropdown
-                className="zenith-task-filters__select"
-                value={filters.group}
-                options={(['smart', 'file', 'none'] as const).map((g) => ({
-                    value: g,
-                    label: t('tasks.filter.groupBy', { name: t(`tasks.group.${g}`) }),
-                }))}
-                onChange={(v) => onFilterChange({ ...filters, group: v as TaskFilterState['group'] })}
-            />
+            {/* Group (applies on the All tab) — only the groupings that are
+                switched on, and nothing at all when "none" is the only one. */}
+            {groups.length > 1 && (
+                <Dropdown
+                    className="zenith-task-filters__select"
+                    value={filters.group}
+                    options={groups.map((g) => ({
+                        value: g,
+                        label: t('tasks.filter.groupBy', { name: t(`tasks.group.${g}`) }),
+                    }))}
+                    onChange={(v) =>
+                        onFilterChange({ ...filters, group: v as TaskFilterState['group'] })
+                    }
+                />
+            )}
         </>
     );
 };

@@ -19,6 +19,7 @@ import { useZenithStore } from '../../../store';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import { TaskWriter } from '../services/taskWriter';
+import { useFeature } from '../../../core/useFeature';
 import { isOverdue, isToday } from '../../../core/dateUtils';
 import { openFileAtLine } from '../../../core/openInVault';
 import { TaskStatusControl } from './taskStatusUi';
@@ -84,6 +85,10 @@ export const TaskItem: FC<TaskItemProps> = ({
     const [editing, setEditing] = useState(false);
     // Bumped by the "add subtask" action; the tree opens its field in response.
     const [addSignal, setAddSignal] = useState(0);
+    const subtasksOn = useFeature('tasks.subtasks');
+    const attachmentsOn = useFeature('tasks.attachments');
+    const timerOn = useFeature('tasks.timer');
+    const dragOn = useFeature('tasks.dragDrop');
 
     // The row element is wanted by two things: the sortable hook (to work out
     // drop targets) and the branch measurement below.
@@ -128,7 +133,11 @@ export const TaskItem: FC<TaskItemProps> = ({
         await plugin.dataService.reloadTasks();
     };
 
-    const subtaskSortable = useSortableRows({ rows: subtaskRows, onMove: moveSubtask });
+    const subtaskSortable = useSortableRows({
+        rows: subtaskRows,
+        onMove: moveSubtask,
+        disabled: !dragOn,
+    });
 
     // Subtask completion, rolled up so the row says how much is left without
     // needing the tree expanded.
@@ -238,7 +247,7 @@ export const TaskItem: FC<TaskItemProps> = ({
                                 )}
                             </span>
                         )}
-                        {task.spentMinutes !== undefined && (
+                        {timerOn && task.spentMinutes !== undefined && (
                             <span className="zenith-task-pill zenith-task-pill--spent">
                                 <Timer size={12} />
                                 {t('tasks.spent', { time: formatDuration(task.spentMinutes) })}
@@ -250,7 +259,7 @@ export const TaskItem: FC<TaskItemProps> = ({
                                 {task.doneDate}
                             </span>
                         )}
-                        {subs.total > 0 && (
+                        {subtasksOn && subs.total > 0 && (
                             <span
                                 className={`zenith-task-pill zenith-task-pill--subs ${
                                     subs.done === subs.total ? 'is-complete' : ''
@@ -271,24 +280,26 @@ export const TaskItem: FC<TaskItemProps> = ({
 
                     {task.description && <p className="zenith-task-notes">{task.description}</p>}
 
-                    {task.attachments && task.attachments.length > 0 && (
+                    {attachmentsOn && task.attachments && task.attachments.length > 0 && (
                         <TaskAttachments attachments={task.attachments} />
                     )}
 
-                    <SubtaskTree
-                        filePath={task.filePath}
-                        parentLine={task.lineNumber}
-                        subtasks={task.subtasks}
-                        sortable={subtaskSortable}
-                        openAdd={addSignal}
-                    />
+                    {subtasksOn && (
+                        <SubtaskTree
+                            filePath={task.filePath}
+                            parentLine={task.lineNumber}
+                            subtasks={task.subtasks}
+                            sortable={subtaskSortable}
+                            openAdd={addSignal}
+                        />
+                    )}
                 </div>
 
                 <div className="zenith-task-item__actions">
                     {/* First in the cluster, and the only one that stays visible
                         while it runs — a timer you cannot see is one you forget
                         you left going. */}
-                    {!dimmed && (
+                    {!dimmed && timerOn && (
                         <TaskTimerButton
                             filePath={task.filePath}
                             lineNumber={task.lineNumber}
@@ -299,16 +310,20 @@ export const TaskItem: FC<TaskItemProps> = ({
                     {/* Lives with the other row actions rather than in the left
                         gutter: that column belongs to the tree connectors, and a
                         handle there pushed every checkbox out from under them. */}
-                    <button
-                        type="button"
-                        className="zenith-task-item__action zenith-drag-handle"
-                        aria-label={t('tasks.reorder', { name: task.title })}
-                        title={t(reorderable ? 'tasks.reorderHint' : 'tasks.reorderUnavailable')}
-                        disabled={!reorderable}
-                        {...dragHandleProps}
-                    >
-                        <GripVertical size={14} />
-                    </button>
+                    {dragOn && (
+                        <button
+                            type="button"
+                            className="zenith-task-item__action zenith-drag-handle"
+                            aria-label={t('tasks.reorder', { name: task.title })}
+                            title={t(
+                                reorderable ? 'tasks.reorderHint' : 'tasks.reorderUnavailable'
+                            )}
+                            disabled={!reorderable}
+                            {...dragHandleProps}
+                        >
+                            <GripVertical size={14} />
+                        </button>
+                    )}
                     <button
                         className="zenith-task-item__action"
                         onClick={handleOpen}
@@ -317,14 +332,16 @@ export const TaskItem: FC<TaskItemProps> = ({
                     >
                         <ExternalLink size={14} />
                     </button>
-                    <button
-                        className="zenith-task-item__action"
-                        onClick={() => setAddSignal((n) => n + 1)}
-                        aria-label={t('tasks.subtask.add')}
-                        title={t('tasks.subtask.add')}
-                    >
-                        <Plus size={14} />
-                    </button>
+                    {subtasksOn && (
+                        <button
+                            className="zenith-task-item__action"
+                            onClick={() => setAddSignal((n) => n + 1)}
+                            aria-label={t('tasks.subtask.add')}
+                            title={t('tasks.subtask.add')}
+                        >
+                            <Plus size={14} />
+                        </button>
+                    )}
                     <button
                         className="zenith-task-item__action"
                         onClick={() => setEditing(true)}

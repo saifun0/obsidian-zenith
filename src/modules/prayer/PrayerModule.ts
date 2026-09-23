@@ -88,6 +88,7 @@ export class PrayerModule extends BaseModule {
         this.disposers.push(
             this.plugin.registerDashboardWidget({
                 id: 'prayer.times',
+                feature: 'prayer.widget',
                 title: 'Prayer',
                 titleKey: 'widget.prayer',
                 icon: 'moon-star',

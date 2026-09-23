@@ -32,6 +32,7 @@ import { CalendarToolbar, type CalendarToggle, type CalendarViewMode } from './C
 import { MonthGrid } from './MonthGrid';
 import { WeekGrid } from './WeekGrid';
 import { AgendaList } from './AgendaList';
+import { useFeature } from '../../../core/useFeature';
 
 const MODES: CalendarViewMode[] = ['month', 'week', 'day', 'list'];
 
@@ -51,9 +52,22 @@ const RUN_STEP = 4;
 /** Far enough that nobody scrolls to it; a guard against an unbounded run. */
 const RUN_MAX = 60;
 
-/** Validate the persisted view mode — it comes back from `data.json`. */
-function toMode(raw: string): CalendarViewMode {
-    return (MODES as string[]).includes(raw) ? (raw as CalendarViewMode) : 'month';
+/**
+ * The views that are switched on. The month is always there: it is the
+ * calendar, not a feature of it.
+ */
+export function calendarModes(timeViews: boolean, agenda: boolean): CalendarViewMode[] {
+    return MODES.filter((m) => (m !== 'week' && m !== 'day') || timeViews).filter(
+        (m) => m !== 'list' || agenda
+    );
+}
+
+/**
+ * Validate the persisted view mode — it comes back from `data.json`, and may
+ * name a view that has been switched off since.
+ */
+function toMode(raw: string, allowed: readonly CalendarViewMode[]): CalendarViewMode {
+    return (allowed as string[]).includes(raw) ? (raw as CalendarViewMode) : 'month';
 }
 
 /**
@@ -96,8 +110,24 @@ export const TasksCalendarApp: FC = () => {
     const setTaskStatus = useZenithStore((s) => s.setTaskStatus);
     const journalOn = useZenithStore((s) => s.loadedModuleIds).includes('journal');
 
-    const view = settings.calendarView;
-    const mode = toMode(view.view);
+    const timeViewsOn = useFeature('calendar.timeViews');
+    const agendaOn = useFeature('calendar.agenda');
+    const spansOn = useFeature('calendar.spans');
+    const dailyNotesOn = useFeature('calendar.dailyNotes');
+    const allHoursOn = useFeature('calendar.allHours');
+    const modes = useMemo(() => calendarModes(timeViewsOn, agendaOn), [timeViewsOn, agendaOn]);
+
+    // What the toolbar's switches are stored as, and what is drawn: a switch
+    // whose feature is off counts as off, and keeps its stored value for when
+    // the feature comes back.
+    const saved = settings.calendarView;
+    const view = {
+        ...saved,
+        spanDays: spansOn && saved.spanDays,
+        showDailyNotes: dailyNotesOn && saved.showDailyNotes,
+        allHours: allHoursOn && saved.allHours,
+    };
+    const mode = toMode(saved.view, modes);
     const weekStart = settings.journalWeekStart;
 
     /**
@@ -248,7 +278,7 @@ export const TasksCalendarApp: FC = () => {
     }, [today, currentMonth]);
 
     const changeMode = (next: CalendarViewMode) => {
-        updateSettings({ calendarView: { ...view, view: next } });
+        updateSettings({ calendarView: { ...saved, view: next } });
         // Switching into a narrower view from a month you're browsing should
         // land in that month, not snap back to today — but if the month *is*
         // this one, the week or day you want is the current one.
@@ -260,7 +290,7 @@ export const TasksCalendarApp: FC = () => {
     };
 
     const toggle = (key: CalendarToggle) =>
-        updateSettings({ calendarView: { ...view, [key]: !view[key] } });
+        updateSettings({ calendarView: { ...saved, [key]: !view[key] } });
 
     /**
      * Widen or narrow the grid. Writing the number down is also what stops the
@@ -268,7 +298,7 @@ export const TasksCalendarApp: FC = () => {
      */
     const changeColumns = () =>
         updateSettings({
-            calendarView: { ...view, columns: columns === WIDE ? NARROW : WIDE },
+            calendarView: { ...saved, columns: columns === WIDE ? NARROW : WIDE },
         });
 
     const openTask = useCallback(
@@ -289,10 +319,19 @@ export const TasksCalendarApp: FC = () => {
         [openTask]
     );
 
-    const openWeek = (date: string) => {
-        setAnchor(startOfWeek(date, weekStart));
-        updateSettings({ calendarView: { ...view, view: 'week' } });
-    };
+    // "+N more" opens the week; without the time views, the agenda of that
+    // month; without either, it stays a count.
+    const openWeek = timeViewsOn
+        ? (date: string) => {
+              setAnchor(startOfWeek(date, weekStart));
+              updateSettings({ calendarView: { ...saved, view: 'week' } });
+          }
+        : agendaOn
+          ? (date: string) => {
+                setAnchor(date);
+                updateSettings({ calendarView: { ...saved, view: 'list' } });
+            }
+          : undefined;
 
     const openDay = journalOn
         ? (date: string) => void openDailyNote(app, settings, date)
@@ -340,6 +379,13 @@ export const TasksCalendarApp: FC = () => {
                 spanDays={view.spanDays}
                 showDailyNotes={view.showDailyNotes}
                 allHours={view.allHours}
+                modes={modes}
+                toggles={{
+                    hideDone: true,
+                    spanDays: spansOn,
+                    showDailyNotes: dailyNotesOn,
+                    allHours: allHoursOn,
+                }}
                 focus={focus}
                 onMode={changeMode}
                 onStep={step}

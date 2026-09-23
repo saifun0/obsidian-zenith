@@ -7,6 +7,7 @@ import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { resolveCover } from '../services/coverUrl';
+import { useFeature } from '../../../core/useFeature';
 import { bumpProgress } from '../services/contentActions';
 import { formatProgress, progressPercent, shortUnit } from '../services/progress';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
@@ -50,6 +51,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
 }) => {
     const { app } = useApp();
     const t = useTranslation();
+    const quickOn = useFeature('content.quickIncrement');
     const patchContentItem = useZenithStore((s) => s.patchContentItem);
     const coverUrl = resolveCover(app, item.coverImage);
     const sub = [item.year, item.creator].filter(Boolean).join(' · ');
@@ -87,7 +89,10 @@ export const ContentCard: React.FC<ContentCardProps> = ({
     })();
 
     const canBump =
-        tracksProgress && item.status === 'in-progress' && (!progress.total || progress.current < progress.total);
+        quickOn &&
+        tracksProgress &&
+        item.status === 'in-progress' &&
+        (!progress.total || progress.current < progress.total);
 
     const openMenu = useContentMenu(item, type, onOpen);
 

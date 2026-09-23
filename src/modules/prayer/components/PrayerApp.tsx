@@ -11,6 +11,7 @@ import { setExtraPrayer, setPrayerStatus, statusForTap } from '../prayerActions'
 import { dayOf, prayerStats } from '../prayerStats';
 import { hasEntered, nextPrayer, type PrayerTimeId } from '../prayerTimes';
 import { hijriMonthKey } from '../hijri';
+import { useFeature } from '../../../core/useFeature';
 import {
     useDayTimes,
     useTimesFallback,
@@ -57,6 +58,8 @@ export const PrayerApp: FC = () => {
     const days = usePrayerDays();
     const extras = usePrayerExtras();
     const nowMinutes = useNowMinutes();
+    const hijriOn = useFeature('prayer.hijri');
+    const statsOn = useFeature('prayer.stats');
     const hijri = useHijri(selected);
 
     const stats = useMemo(
@@ -118,7 +121,9 @@ export const PrayerApp: FC = () => {
             <PrayerDayHead
                 dateLabel={dateLabel}
                 hijriLabel={
-                    hijri ? `${hijri.day} ${t(hijriMonthKey(hijri.month))} ${hijri.year}` : null
+                    hijriOn && hijri
+                        ? `${hijri.day} ${t(hijriMonthKey(hijri.month))} ${hijri.year}`
+                        : null
                 }
                 placeLabel={placeLabel(place)}
                 methodLabel={t(`prayer.method.${settings.prayerMethod}`)}
@@ -183,13 +188,15 @@ export const PrayerApp: FC = () => {
                 )}
             </section>
 
-            <PrayerStatsPanel
-                stats={stats}
-                days={days}
-                today={today}
-                selected={selected}
-                onSelect={setSelected}
-            />
+            {statsOn && (
+                <PrayerStatsPanel
+                    stats={stats}
+                    days={days}
+                    today={today}
+                    selected={selected}
+                    onSelect={setSelected}
+                />
+            )}
         </div>
     );
 };

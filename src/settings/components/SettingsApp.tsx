@@ -30,7 +30,10 @@ import { configurableModules } from '../moduleMenu';
 import { CoreSettingsForm } from '../schema/CoreSettingsForm';
 import { appearanceSchema, generalSchema } from '../schema/coreSchemas';
 import { ModuleSettingsForm } from '../schema/ModuleSettingsForm';
-import type { CoreSettingsSchema } from '../schema/types';
+import { featureOnlySchema } from '../schema/featureGroup';
+import { CORE_MODULE, featureEnabled } from '../../core/features';
+
+const CORE_FEATURES = featureOnlySchema(CORE_MODULE);
 
 type Category = 'general' | 'appearance' | 'vault' | 'modules' | 'about' | 'debug';
 
@@ -180,9 +183,16 @@ export const SettingsApp: React.FC = () => {
 
     const renderVault = () => {
         const iconEntries = Object.entries(settings.folderIcons);
+        const scaffoldOn = featureEnabled(settings, 'core.vaultScaffold');
+        const iconsOn = featureEnabled(settings, 'core.folderIcons');
 
         return (
             <div className="zenith-settings__content">
+                {/* What no module owns has its switches here, on the page of
+                    the two things they switch. */}
+                <CoreSettingsForm schema={CORE_FEATURES} />
+
+                {scaffoldOn && (
                 <div className="zenith-settings__item zenith-settings__item--stack">
                     <div className="zenith-settings__item-info">
                         <span className="zenith-settings__item-name">{t('settings.scaffold')}</span>
@@ -197,7 +207,10 @@ export const SettingsApp: React.FC = () => {
                         </button>
                     </div>
                 </div>
+                )}
 
+                {iconsOn && (
+                <>
                 <div className="zenith-settings__section-label">{t('settings.folderIcons')}</div>
                 <div className="zenith-settings__item-desc zenith-settings__item-desc--block">
                     {t('settings.folderIcons.desc')}
@@ -239,6 +252,8 @@ export const SettingsApp: React.FC = () => {
                         ))}
                     </div>
                 )}
+                </>
+                )}
             </div>
         );
     };
@@ -263,7 +278,7 @@ export const SettingsApp: React.FC = () => {
             return (
                 <div className="zenith-settings__content">
                     {isBuiltIn ? (
-                        <CoreSettingsForm schema={schema as CoreSettingsSchema} />
+                        <CoreSettingsForm schema={schema} />
                     ) : (
                         <ModuleSettingsForm schema={schema} />
                     )}

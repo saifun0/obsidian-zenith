@@ -1,5 +1,6 @@
 import { DEFAULT_TASKS_FOLDER } from '../../core/constants';
 import { coreSchema } from '../../settings/schema/types';
+import { whenFeature } from '../../settings/schema/featureGroup';
 
 export const tasksSettingsSchema = coreSchema({
     moduleId: 'tasks',
@@ -18,13 +19,7 @@ export const tasksSettingsSchema = coreSchema({
                  * read, so turning capture on doesn't hide the tasks already
                  * sitting in the folder.
                  */
-                {
-                    type: 'toggle',
-                    key: 'journalCaptureTasks',
-                    labelKey: 'settings.taskCapture',
-                    descKey: 'settings.taskCapture.desc',
-                    default: true,
-                },
+                { type: 'feature', key: 'tasks.captureDaily' },
                 {
                     type: 'text',
                     key: 'journalTaskHeading',
@@ -32,7 +27,7 @@ export const tasksSettingsSchema = coreSchema({
                     descKey: 'settings.journalTaskHeading.desc',
                     default: '',
                     placeholder: 'Задачи',
-                    showIf: (v) => v.journalCaptureTasks === true,
+                    showIf: whenFeature('tasks.captureDaily'),
                 },
                 {
                     type: 'folder',
@@ -40,7 +35,9 @@ export const tasksSettingsSchema = coreSchema({
                     labelKey: 'settings.tasksFolder',
                     default: DEFAULT_TASKS_FOLDER,
                     placeholder: DEFAULT_TASKS_FOLDER,
-                    showIf: (v) => !v.journalCaptureTasks,
+                    // Where new tasks go when they do not go into the day's
+                    // note — which is also the case while the journal is off.
+                    showIf: (v) => !whenFeature('tasks.captureDaily')(v),
                 },
             ],
         },
@@ -50,6 +47,7 @@ export const tasksSettingsSchema = coreSchema({
             // the note, and a task list looks better when its pictures agree.
             id: 'images',
             titleKey: 'settings.taskImages',
+            showIf: whenFeature('tasks.attachments'),
             fields: [
                 {
                     type: 'select',

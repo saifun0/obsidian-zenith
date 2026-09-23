@@ -1,3 +1,4 @@
+import { useFeature } from '../../../core/useFeature';
 import React, { useEffect, useRef, useState, type FC } from 'react';
 import { Maximize2 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
@@ -62,6 +63,7 @@ export const PrayerWidget: FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
     const days = usePrayerDays();
     const nowMinutes = useNowMinutes();
     const extras = usePrayerExtras();
+    const weekStripOn = useFeature('prayer.weekStrip');
     const openMenu = usePrayerMenu(today);
 
     // The preset says how much room the grid gave us; only the element knows
@@ -254,14 +256,14 @@ export const PrayerWidget: FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
                 </div>
             </div>
 
-            {layout === 'lg' && (
+            {layout === 'lg' && (weekStripOn || enabledExtras.length > 0) && (
                 <>
                     <div className="zenith-prayer__rule" />
                     <div className="zenith-prayer__split zenith-prayer__split--bottom">
-                        <PrayerWeekStrip days={days} today={today} />
+                        {weekStripOn && <PrayerWeekStrip days={days} today={today} />}
                         {enabledExtras.length > 0 && (
                             <>
-                                <div className="zenith-prayer__divider" />
+                                {weekStripOn && <div className="zenith-prayer__divider" />}
                                 <div className="zenith-prayer__extras-panel">
                                     <span className="zenith-prayer__kicker">
                                         {t('prayer.extrasTitle')}

@@ -10,6 +10,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
+import { useFeature } from '../../../core/useFeature';
 import type { ContentItem } from '../../../store/contentSlice';
 import { CONTENT_STATUSES } from '../../../core/constants';
 import type { ContentStatus } from '../../../core/constants';
@@ -77,7 +78,13 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
 
     // Set from outside the gallery: a genre chip in the detail modal or the
     // stats view, and the dashboard widget asking to open one card.
-    const genreFilter = useZenithStore((s) => s.contentGenreFilter);
+    // Switched off, a genre handed over earlier is ignored rather than left
+    // filtering the library with no chip to clear it by.
+    const genreFilterOn = useFeature('content.genreFilter');
+    const storedGenre = useZenithStore((s) => s.contentGenreFilter);
+    const genreFilter = genreFilterOn ? storedGenre : null;
+    const resumeOn = useFeature('content.resume');
+    const multiSelectOn = useFeature('content.multiSelect');
     const setGenreFilter = useZenithStore((s) => s.setContentGenreFilter);
     const focusId = useZenithStore((s) => s.focusContentId);
     const setFocusId = useZenithStore((s) => s.setFocusContentId);
@@ -105,6 +112,12 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
     useEffect(() => {
         updateSettings({ contentView: { type: activeType, status: statusFilter, sort, desc } });
     }, [activeType, statusFilter, sort, desc, updateSettings]);
+
+    // Selecting ends with its feature, so no bulk bar is left without the
+    // button that closes it.
+    useEffect(() => {
+        if (!multiSelectOn) setSelectMode(false);
+    }, [multiSelectOn]);
 
     // The dashboard widget hands over an id instead of opening the note, so a
     // click means the same thing there as it does here. Consumed immediately,
@@ -252,8 +265,9 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
 
     // "Continue" shelf — only on the unfiltered view, so it complements the grid.
     const continueItems = useMemo(
-        () => (filtersActive ? [] : items.filter((i) => i.status === 'in-progress')),
-        [items, filtersActive]
+        () =>
+            filtersActive || !resumeOn ? [] : items.filter((i) => i.status === 'in-progress'),
+        [items, filtersActive, resumeOn]
     );
 
     // The shelf is a shortcut into the same library, so anything on it is left
@@ -404,16 +418,18 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
                     >
                         {desc ? <ArrowDownNarrowWide size={15} /> : <ArrowUpNarrowWide size={15} />}
                     </button>
-                    <button
-                        type="button"
-                        className={`zenith-content-gallery__sortdir ${selectMode ? 'is-active' : ''}`}
-                        aria-pressed={selectMode}
-                        aria-label={t('content.bulk.select')}
-                        title={t('content.bulk.select')}
-                        onClick={toggleSelectMode}
-                    >
-                        <CheckSquare size={15} />
-                    </button>
+                    {multiSelectOn && (
+                        <button
+                            type="button"
+                            className={`zenith-content-gallery__sortdir ${selectMode ? 'is-active' : ''}`}
+                            aria-pressed={selectMode}
+                            aria-label={t('content.bulk.select')}
+                            title={t('content.bulk.select')}
+                            onClick={toggleSelectMode}
+                        >
+                            <CheckSquare size={15} />
+                        </button>
+                    )}
                 </div>
             </div>
 

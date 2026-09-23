@@ -29,6 +29,7 @@ import {
 import type { ApiMidnight } from '../modules/prayer/prayerApi';
 import type { DashboardBgFit, DashboardBgSource } from '../modules/dashboard/dashboardBackground';
 import type { ModuleSource } from '../core/moduleSources';
+import { pinnedFeatures } from '../core/features';
 import type { ZenithSliceCreator } from './types';
 
 // ── Settings Types ───────────────────────────────────
@@ -259,6 +260,15 @@ export interface ZenithSettings {
 
     /** IDs of currently active modules */
     activeModuleIds: string[];
+    /**
+     * Features switched on or off, by id — see `core/features.ts`.
+     *
+     * Only what somebody chose, or what the migration pinned: a feature with
+     * no entry follows its registry default. Features that predate the
+     * registry keep their own setting (`weatherShowAir`…) and never appear
+     * here.
+     */
+    features: Record<string, boolean>;
     /** Custom accent color (CSS color value); empty = use Obsidian's accent */
     accentColor: string;
     /** The module to open when clicking the ribbon icon */
@@ -595,7 +605,7 @@ export interface SettingsSlice {
  * Bump when a migration is added, and gate that migration on the value below.
  * Version 1 is "everything written before versioning existed".
  */
-export const CURRENT_SETTINGS_VERSION = 8;
+export const CURRENT_SETTINGS_VERSION = 9;
 
 /**
  * Object-valued settings that must be merged field-by-field rather than
@@ -612,6 +622,7 @@ const NESTED_KEYS = [
     'calendarView',
     'moduleSettings',
     'widgetConfig',
+    'features',
 ] as const;
 
 /**
@@ -699,6 +710,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
         'sync',
         'picture',
     ],
+    features: {},
     accentColor: '',
     defaultModuleId: 'dashboard',
     language: 'auto',
@@ -871,6 +883,16 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             // choices if they ever went back to a build that still has it.
             if (from < 8) {
                 merged.activeModuleIds = merged.activeModuleIds.filter((id) => id !== 'canvas');
+            }
+
+            // ── v8 → v9 ──
+            // Features became switches. Everything a config written before
+            // then had, it keeps: each feature on by default is pinned on, so
+            // no later change to a default can take it away. An empty object
+            // is not a config anybody wrote — it is a fresh install or a reset
+            // — and gets the defaults instead.
+            if (from < 9 && Object.keys(saved).length > 0) {
+                merged.features = pinnedFeatures(merged.features);
             }
 
             return { settings: merged };

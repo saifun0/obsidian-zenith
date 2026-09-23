@@ -50,6 +50,7 @@ export class ProjectsModule extends BaseModule {
         this.disposers.push(
             this.plugin.registerDashboardWidget({
                 id: 'projects.overview',
+                feature: 'projects.widget',
                 title: 'Projects',
                 titleKey: 'widget.projects',
                 description: 'Overview of your active projects and task progress.',

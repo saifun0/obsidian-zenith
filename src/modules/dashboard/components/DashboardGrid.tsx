@@ -59,6 +59,8 @@ import { isCopyId, newCopyId, widgetIdOf } from '../grid/widgetInstances';
 import { withoutWidgetConfig } from '../widgetConfig';
 import { GridSettingsBar } from './GridSettingsBar';
 import { LayoutPresetsBar } from './LayoutPresetsBar';
+import { featureEnabled } from '../../../core/features';
+import { useFeature } from '../../../core/useFeature';
 
 /**
  * Arrow keys nudge the focused widget one cell — the keyboard equivalent of
@@ -132,7 +134,21 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     const ctx = useMemo<DashboardWidgetContext>(() => ({ app, plugin }), [app, plugin]);
 
     const t = useTranslation();
-    const registered = useDashboardWidgets();
+    const allRegistered = useDashboardWidgets();
+    // A widget whose feature is off is gone the same way a disabled module's
+    // widget is. The selector returns a string so a settings write that does
+    // not flip any of these features does not re-render the board.
+    const switchedOff = useZenithStore((s) =>
+        allRegistered
+            .filter((def) => def.feature && !featureEnabled(s.settings, def.feature))
+            .map((def) => def.id)
+            .join('\n')
+    );
+    const registered = useMemo(() => {
+        const off = new Set(switchedOff.split('\n'));
+        return allRegistered.filter((def) => !off.has(def.id));
+    }, [allRegistered, switchedOff]);
+    const presetsOn = useFeature('dashboard.presets');
     const savedLayout = useZenithStore((s) => s.settings.dashboardLayout);
     const savedBundles = useZenithStore((s) => s.settings.dashboardBundles);
     const savedStackOrder = useZenithStore((s) => s.settings.dashboardStackOrder);
@@ -802,7 +818,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                 />
             )}
 
-            {editing && <LayoutPresetsBar />}
+            {editing && presetsOn && <LayoutPresetsBar />}
 
             {editing && (
                 <AddWidgetSheet

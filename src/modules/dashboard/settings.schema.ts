@@ -1,4 +1,5 @@
 import { coreSchema } from '../../settings/schema/types';
+import { whenFeature } from '../../settings/schema/featureGroup';
 import { DASHBOARD_BG_FITS, DASHBOARD_BG_SOURCES } from './dashboardBackground';
 import { vaultImageField } from '../../settings/controls/VaultImageField';
 
@@ -29,18 +30,16 @@ export const dashboardSettingsSchema = coreSchema({
                     // Only worth a row when it is the one being shown.
                     showIf: (v) => v.dashboardHeading === 'custom',
                 },
-                {
-                    type: 'toggle',
-                    key: 'dashboardShowDate',
-                    labelKey: 'settings.dashDate',
-                    default: false,
-                },
+                // Beside the heading it sits under, rather than in the
+                // generated list with the rest.
+                { type: 'feature', key: 'dashboard.date' },
             ],
         },
         {
             id: 'background',
             titleKey: 'settings.dashBgGroup',
             descKey: 'settings.dashBgGroup.desc',
+            showIf: whenFeature('dashboard.background'),
             fields: [
                 {
                     type: 'segmented',

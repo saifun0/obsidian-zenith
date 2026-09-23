@@ -181,6 +181,25 @@ export interface HeadingField {
     showIf?: Predicate;
 }
 
+/**
+ * A feature's switch, drawn from the registry — see `core/features.ts`.
+ *
+ * Every feature of a module is listed in its generated "Features" group; a
+ * schema names one itself only to put it beside the settings that depend on
+ * it (capture beside the heading it files under, reminders beside how early
+ * they come). Named here, it is left out of that group, so it is never drawn
+ * twice. Label, description and the reason it is unavailable all come from
+ * the registry either way.
+ */
+export interface FeatureField {
+    type: 'feature';
+    /** The feature id. */
+    key: string;
+    /** A note beside the name, as on any other row — a privacy caveat, say. */
+    noteKey?: string;
+    showIf?: Predicate;
+}
+
 export interface CustomFieldProps extends FieldContext {
     set: (patch: SettingsBag) => void;
 }
@@ -220,7 +239,7 @@ export type ValueField<K extends string> =
     | MultiselectField<K>;
 
 export type SettingField<K extends string = string> =
-    ValueField<K> | ActionField | HeadingField | CustomField;
+    ValueField<K> | ActionField | HeadingField | CustomField | FeatureField;
 
 export interface SettingsGroup<K extends string = string> {
     id: string;
@@ -262,5 +281,10 @@ export const coreSchema = (schema: CoreSettingsSchema): CoreSettingsSchema => sc
 
 /** Fields that actually hold a value (everything but actions and decoration). */
 export function isValueField(field: SettingField): field is ValueField<string> {
-    return field.type !== 'action' && field.type !== 'heading' && field.type !== 'custom';
+    return (
+        field.type !== 'action' &&
+        field.type !== 'heading' &&
+        field.type !== 'custom' &&
+        field.type !== 'feature'
+    );
 }

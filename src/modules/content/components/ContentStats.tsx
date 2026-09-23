@@ -163,7 +163,11 @@ export const ContentStats: React.FC<ContentStatsProps> = ({ items, onSelectGenre
                                 type="button"
                                 key={g.genre}
                                 className="zenith-content-stats__genre"
-                                title={t('content.filterByGenre', { genre: g.genre })}
+                                title={
+                                    onSelectGenre
+                                        ? t('content.filterByGenre', { genre: g.genre })
+                                        : undefined
+                                }
                                 onClick={() => onSelectGenre?.(g.genre)}
                             >
                                 {g.genre}

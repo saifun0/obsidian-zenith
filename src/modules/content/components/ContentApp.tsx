@@ -1,3 +1,4 @@
+import { useFeature } from '../../../core/useFeature';
 import React, { useState, useCallback, useMemo } from 'react';
 import { RotateCw, BarChart3, LayoutGrid, Library, Star, FileUp } from 'lucide-react';
 import { Notice } from 'obsidian';
@@ -22,6 +23,9 @@ import { Plus } from 'lucide-react';
 export const ContentApp: React.FC = () => {
     const { plugin } = useApp();
     const t = useTranslation();
+    const importOn = useFeature('content.import');
+    const statsOn = useFeature('content.stats');
+    const genreFilterOn = useFeature('content.genreFilter');
     const contentItems = useZenithStore((s) => s.contentItems);
     const contentLoading = useZenithStore((s) => s.contentLoading);
     const setContentGenreFilter = useZenithStore((s) => s.setContentGenreFilter);
@@ -79,18 +83,22 @@ export const ContentApp: React.FC = () => {
                         onClick={() => setShowForm(true)}
                         variant="default"
                     />
-                    <IconButton
-                        icon={FileUp}
-                        tooltip={t('content.import.title')}
-                        onClick={() => setShowImport(true)}
-                        variant="ghost"
-                    />
-                    <IconButton
-                        icon={showStats ? LayoutGrid : BarChart3}
-                        tooltip={t(showStats ? 'content.galleryView' : 'common.statistics')}
-                        onClick={() => setShowStats(!showStats)}
-                        variant="ghost"
-                    />
+                    {importOn && (
+                        <IconButton
+                            icon={FileUp}
+                            tooltip={t('content.import.title')}
+                            onClick={() => setShowImport(true)}
+                            variant="ghost"
+                        />
+                    )}
+                    {statsOn && (
+                        <IconButton
+                            icon={showStats ? LayoutGrid : BarChart3}
+                            tooltip={t(showStats ? 'content.galleryView' : 'common.statistics')}
+                            onClick={() => setShowStats(!showStats)}
+                            variant="ghost"
+                        />
+                    )}
                     <IconButton
                         icon={RotateCw}
                         tooltip={t('common.refresh')}
@@ -110,22 +118,26 @@ export const ContentApp: React.FC = () => {
                 />
             )}
 
-            {showImport && (
+            {importOn && showImport && (
                 <ContentImportModal
                     onClose={() => setShowImport(false)}
                     onImported={loadContent}
                 />
             )}
 
-            {showStats ? (
+            {statsOn && showStats ? (
                 <ContentStats
                     items={contentItems}
                     // Picking a genre out of the statistics is a request to see
                     // those items, so it hands the view back to the gallery.
-                    onSelectGenre={(genre) => {
-                        setContentGenreFilter(genre);
-                        setShowStats(false);
-                    }}
+                    onSelectGenre={
+                        genreFilterOn
+                            ? (genre) => {
+                                  setContentGenreFilter(genre);
+                                  setShowStats(false);
+                              }
+                            : undefined
+                    }
                 />
             ) : (
                 <ContentGallery items={contentItems} loading={contentLoading} />

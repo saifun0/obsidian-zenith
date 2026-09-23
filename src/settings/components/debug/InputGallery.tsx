@@ -666,7 +666,12 @@ const SearchFields: React.FC = () => {
             </Demo>
             <Demo label="TaskFilters" source="TasksApp · zenith-task-filters-popover" wide>
                 <PopScope className="zenith-task-filters-popover">
-                    <TaskFilters filters={filters} onFilterChange={setFilters} allTags={allTags} />
+                    <TaskFilters
+                        filters={filters}
+                        onFilterChange={setFilters}
+                        allTags={allTags}
+                        groups={['smart', 'file', 'none']}
+                    />
                 </PopScope>
             </Demo>
         </Section>

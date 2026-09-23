@@ -6,6 +6,7 @@ import { useTranslation } from '../../../core/i18n';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import type { Project } from '../projectsTypes';
 import { dueLabel } from '../services/projectStats';
+import { useFeature } from '../../../core/useFeature';
 import { Meter } from '../../../components/shared';
 import { ProjectFormModal } from '../ProjectFormModal';
 
@@ -19,6 +20,7 @@ import { ProjectFormModal } from '../ProjectFormModal';
  */
 export const ProjectsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const t = useTranslation();
+    const linksOn = useFeature('projects.taskLinks');
     const { app, plugin } = useApp();
     const projects = useZenithStore((s) => s.projects);
 
@@ -90,16 +92,22 @@ export const ProjectsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
                                 {due && (
                                     <span className={`zenith-pw__due ${due.tone}`}>{due.text}</span>
                                 )}
-                                <Meter
-                                    percent={p.stats.progressPercent}
-                                    size="xs"
-                                    className="zenith-pw__track"
-                                />
-                                <span className="zenith-pw__count">
-                                    {p.stats.totalTasks > 0
-                                        ? `${p.stats.completedTasks}/${p.stats.totalTasks}`
-                                        : `${p.stats.progressPercent}%`}
-                                </span>
+                                {/* Progress is counted in tasks, so without
+                                    them there is nothing to measure. */}
+                                {linksOn && (
+                                    <>
+                                        <Meter
+                                            percent={p.stats.progressPercent}
+                                            size="xs"
+                                            className="zenith-pw__track"
+                                        />
+                                        <span className="zenith-pw__count">
+                                            {p.stats.totalTasks > 0
+                                                ? `${p.stats.completedTasks}/${p.stats.totalTasks}`
+                                                : `${p.stats.progressPercent}%`}
+                                        </span>
+                                    </>
+                                )}
                             </li>
                         );
                     })}

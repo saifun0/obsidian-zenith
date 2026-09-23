@@ -7,6 +7,7 @@ import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { resolveCover } from '../services/coverUrl';
+import { useFeature } from '../../../core/useFeature';
 import { bumpProgress } from '../services/contentActions';
 import { formatProgress, progressPercent } from '../services/progress';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
@@ -42,6 +43,7 @@ export const ResumeRow: React.FC<ResumeRowProps> = ({
 }) => {
     const { app } = useApp();
     const t = useTranslation();
+    const quickOn = useFeature('content.quickIncrement');
     const patchContentItem = useZenithStore((s) => s.patchContentItem);
     // Same menu as a poster tile: one gesture, one meaning, both surfaces.
     const openMenu = useContentMenu(item, type, onOpen);
@@ -51,7 +53,10 @@ export const ResumeRow: React.FC<ResumeRowProps> = ({
     const tracksProgress = type.fields.includes('progress');
     const pct = tracksProgress ? progressPercent(progress) : undefined;
     const canBump =
-        tracksProgress && (!progress.total || progress.current < progress.total) && !selectionMode;
+        quickOn &&
+        tracksProgress &&
+        (!progress.total || progress.current < progress.total) &&
+        !selectionMode;
 
     const bump = async (e: React.MouseEvent) => {
         e.stopPropagation();

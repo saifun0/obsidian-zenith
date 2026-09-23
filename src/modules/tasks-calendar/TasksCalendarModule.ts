@@ -42,6 +42,7 @@ export class TasksCalendarModule extends BaseModule {
         this.disposers.push(
             this.plugin.registerDashboardWidget({
                 id: 'tasks-calendar.week',
+                feature: 'calendar.widget',
                 title: 'Week ahead',
                 titleKey: 'widget.week',
                 description: 'Task load for the next seven days, and what lands first.',

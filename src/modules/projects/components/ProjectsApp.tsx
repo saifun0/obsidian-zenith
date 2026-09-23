@@ -11,6 +11,7 @@ import { ProjectWriter } from '../services/projectWriter';
 import { ProjectFormModal } from '../ProjectFormModal';
 import { ProjectCard } from './ProjectCard';
 import { TaskWriter } from '../../tasks/services/taskWriter';
+import { useFeature } from '../../../core/useFeature';
 import { ViewHeader } from '../../../components/shared';
 import { SearchField } from '../../../components/ui/fields';
 import type { Task } from '../../../store/taskSlice';
@@ -42,6 +43,7 @@ export const ProjectsApp: FC = () => {
 
     const projects = useZenithStore((s) => s.projects);
     const tasks = useZenithStore((s) => s.tasks);
+    const linksOn = useFeature('projects.taskLinks');
     const statusFilter = useZenithStore((s) => s.projectStatusFilter);
     const searchQuery = useZenithStore((s) => s.projectSearchQuery);
     const setStatusFilter = useZenithStore((s) => s.setProjectStatusFilter);
@@ -191,12 +193,14 @@ export const ProjectsApp: FC = () => {
                         <>
                             <span>{t('projects.summary.total', { count: summary.total })}</span>
                             <span>{t('projects.summary.active', { count: summary.active })}</span>
-                            <span>
-                                {t('projects.summary.tasks', {
-                                    done: summary.doneTasks,
-                                    total: summary.totalTasks,
-                                })}
-                            </span>
+                            {linksOn && (
+                                <span>
+                                    {t('projects.summary.tasks', {
+                                        done: summary.doneTasks,
+                                        total: summary.totalTasks,
+                                    })}
+                                </span>
+                            )}
                         </>
                     }
                 >
@@ -249,6 +253,7 @@ export const ProjectsApp: FC = () => {
                                 key={project.id}
                                 project={project}
                                 tasks={filterTasksForProject(project, tasks)}
+                                showTasks={linksOn}
                                 expanded={expanded[project.id] ?? false}
                                 onToggleTasks={() =>
                                     setExpanded((prev) => ({

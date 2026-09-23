@@ -1,3 +1,4 @@
+import { useFeature } from '../../../core/useFeature';
 import React, { useMemo, type FC } from 'react';
 import { PenLine } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
@@ -20,6 +21,7 @@ import { TrackerRail } from './TrackerRail';
  */
 export const JournalCheckinWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const t = useTranslation();
+    const wordsOn = useFeature('journal.wordCount');
     const { app } = useApp();
     const entries = useZenithStore((s) => s.journalEntries);
     const settings = useZenithStore((s) => s.settings);
@@ -37,9 +39,11 @@ export const JournalCheckinWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) 
                 <div className="zenith-jw__head-text">
                     <span className="zenith-jw__eyebrow">{t('journal.widget.checkIn')}</span>
                     <span className="zenith-jw__summary">
-                        {isJournalled(entry)
-                            ? t.plural('journal.words', entry?.words ?? 0)
-                            : t('journal.widget.blank')}
+                        {!isJournalled(entry)
+                            ? t('journal.widget.blank')
+                            : wordsOn
+                              ? t.plural('journal.words', entry?.words ?? 0)
+                              : t('journal.widget.written')}
                     </span>
                 </div>
             </div>

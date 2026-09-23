@@ -4,6 +4,7 @@ import { IconPickerModal } from './IconPickerModal';
 import { remapIconPaths, pruneIconPaths } from './iconPaths';
 import { applyIcon } from './icons/applyIcon';
 import type ZenithPlugin from '../main';
+import { featureEnabled } from './features';
 
 /**
  * FolderIconService — lets the user assign an icon to any file or folder, shown
@@ -29,21 +30,34 @@ export class FolderIconService {
         return useZenithStore.getState().settings.folderIcons;
     }
 
+    private get enabled(): boolean {
+        return featureEnabled(useZenithStore.getState().settings, 'core.folderIcons');
+    }
+
     start(): void {
-        this.app.workspace.onLayoutReady(() => {
-            this.attachObservers();
-            this.decorate();
-        });
+        this.app.workspace.onLayoutReady(() => this.sync());
 
         // Re-decorate when the layout changes (explorer opened, panes moved…).
         this.plugin.registerEvent(
             this.app.workspace.on('layout-change', () => {
+                if (!this.enabled) return;
                 this.attachObservers();
                 this.scheduleDecorate();
             })
         );
 
-        // Keep assignments consistent as the vault changes.
+        // Switched off, the icons come out of the explorer and nothing keeps
+        // watching it; switched on, both come back.
+        this.plugin.register(
+            useZenithStore.subscribe(
+                (s) => featureEnabled(s.settings, 'core.folderIcons'),
+                () => this.sync()
+            )
+        );
+
+        // Keep assignments consistent as the vault changes — even while the
+        // feature is off, so that switching it back on does not bring back
+        // icons pinned to paths that were renamed in the meantime.
         this.plugin.registerEvent(
             this.app.vault.on('rename', (file, oldPath) => this.onRename(file, oldPath))
         );
@@ -69,6 +83,17 @@ export class FolderIconService {
     }
 
     /** Remove every icon we injected into the explorer (used on unload). */
+    /** Bring the explorer in line with the feature switch. */
+    private sync(): void {
+        if (this.enabled) {
+            this.attachObservers();
+            this.decorate();
+        } else {
+            this.detachObservers();
+            this.removeAllInjected();
+        }
+    }
+
     private removeAllInjected(): void {
         for (const container of this.explorerContainers()) {
             container.querySelectorAll('.zenith-nav-icon').forEach((el) => el.remove());
@@ -97,6 +122,7 @@ export class FolderIconService {
     }
 
     private decorate(): void {
+        if (!this.enabled) return;
         const icons = this.icons;
         for (const container of this.explorerContainers()) {
             const titles = container.querySelectorAll<HTMLElement>(
@@ -154,6 +180,7 @@ export class FolderIconService {
     // ── Context menu ────────────────────────────────────────────────────────
 
     private addMenuItems(menu: Menu, file: TAbstractFile): void {
+        if (!this.enabled) return;
         const path = file.path;
         const hasIcon = !!this.icons[path];
         const label = file instanceof TFolder ? 'folder' : 'file';

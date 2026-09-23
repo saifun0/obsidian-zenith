@@ -21,6 +21,12 @@ interface JournalStatsProps {
     replay: number;
     /** Recording a day from the grid. Absent makes the grid read-only. */
     onSetValue?: (tracker: JournalTracker, date: string, next: TrackerValue | null) => void;
+    /** The thirty-day card — the `journal.stats` feature. */
+    showOverview?: boolean;
+    /** The words figure on it — `journal.wordCount`. */
+    showWords?: boolean;
+    /** The month of habits — `journal.habitMonth`. */
+    showMonth?: boolean;
 }
 
 const WINDOW_DAYS = 30;
@@ -50,6 +56,9 @@ export const JournalStats: FC<JournalStatsProps> = ({
     animate,
     replay,
     onSetValue,
+    showOverview = true,
+    showWords = true,
+    showMonth = true,
 }) => {
     const t = useTranslation();
     const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
@@ -79,57 +88,65 @@ export const JournalStats: FC<JournalStatsProps> = ({
             label: t('journal.stats.streakBest', { count: stats.longestStreak }),
         },
         { key: 'last', value: lastEntry, label: t('journal.stats.lastEntry') },
-        {
-            key: 'words',
-            value: stats.words.toLocaleString(locale),
-            label: t('journal.stats.wordsInWindow'),
-        },
+        ...(showWords
+            ? [
+                  {
+                      key: 'words',
+                      value: stats.words.toLocaleString(locale),
+                      label: t('journal.stats.wordsInWindow'),
+                  },
+              ]
+            : []),
     ];
 
     return (
         <div className="zenith-jstats">
-            <section
-                className="zenith-jstats__overview"
-                aria-label={t('journal.stats.windowOf', { days: stats.windowDays })}
-            >
-                <div className="zenith-jstats__metric">
-                    <span className="zenith-jstats__metric-value">
-                        {stats.inRange}
-                        <span className="zenith-jstats__figure-of">/{stats.windowDays}</span>
-                    </span>
-                    <span className="zenith-jstats__metric-label">
-                        {t('journal.stats.daysRecorded')}
-                    </span>
-                </div>
-                {metrics.map((m) => (
-                    <div key={m.key} className="zenith-jstats__metric">
-                        <span className="zenith-jstats__metric-value">{m.value}</span>
-                        <span className="zenith-jstats__metric-label">{m.label}</span>
+            {showOverview && (
+                <section
+                    className="zenith-jstats__overview"
+                    aria-label={t('journal.stats.windowOf', { days: stats.windowDays })}
+                >
+                    <div className="zenith-jstats__metric">
+                        <span className="zenith-jstats__metric-value">
+                            {stats.inRange}
+                            <span className="zenith-jstats__figure-of">/{stats.windowDays}</span>
+                        </span>
+                        <span className="zenith-jstats__metric-label">
+                            {t('journal.stats.daysRecorded')}
+                        </span>
                     </div>
-                ))}
+                    {metrics.map((m) => (
+                        <div key={m.key} className="zenith-jstats__metric">
+                            <span className="zenith-jstats__metric-value">{m.value}</span>
+                            <span className="zenith-jstats__metric-label">{m.label}</span>
+                        </div>
+                    ))}
 
-                {/* The window, drawn: where the entries fall, oldest on the left.
+                    {/* The window, drawn: where the entries fall, oldest on the left.
                     Its two ends are named in one line rather than in an axis row
                     of their own — the strip is evidence for the figures above
                     it, not a chart that needs reading. */}
-                <div className="zenith-jstats__coverage-block">
-                    <span className="zenith-jstats__axis">
-                        {t('journal.stats.windowOf', { days: stats.windowDays })}
-                    </span>
-                    <CoverageStrip stats={stats} today={today} height={6} />
-                    <span className="zenith-jstats__axis">{t('journal.stats.axisToday')}</span>
-                </div>
-            </section>
+                    <div className="zenith-jstats__coverage-block">
+                        <span className="zenith-jstats__axis">
+                            {t('journal.stats.windowOf', { days: stats.windowDays })}
+                        </span>
+                        <CoverageStrip stats={stats} today={today} height={6} />
+                        <span className="zenith-jstats__axis">{t('journal.stats.axisToday')}</span>
+                    </div>
+                </section>
+            )}
 
-            <HabitMonth
-                byDate={byDate}
-                trackers={trackers}
-                anchor={monthAnchor}
-                today={today}
-                animate={animate}
-                replay={replay}
-                onSetValue={onSetValue}
-            />
+            {showMonth && (
+                <HabitMonth
+                    byDate={byDate}
+                    trackers={trackers}
+                    anchor={monthAnchor}
+                    today={today}
+                    animate={animate}
+                    replay={replay}
+                    onSetValue={onSetValue}
+                />
+            )}
         </div>
     );
 };
