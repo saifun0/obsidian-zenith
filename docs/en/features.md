@@ -39,7 +39,7 @@ off and says what it is waiting for.
 | — | Folder icons, vault structure button |
 | [Notifications](notifications.md) | Notification center |
 | Dashboard | Today's date, wallpaper, saved layouts |
-| Tasks | Capture into the daily note, subtasks, attachments, timer, drag and drop, group by date, group by note, statistics, activity heatmap, widget |
+| Tasks | Capture into the daily note, natural input, subtasks, attachments, timer, drag and drop, group by date, group by note, statistics, activity heatmap, widget |
 | Calendar | Week and day views, all 24 hours, agenda, start-to-due bars, tasks from daily notes, highlight on hover, week-ahead widget, overdue strip |
 | Projects | Tasks in projects (links and progress), widget |
 | Journal | Check-in block, calendar coloured by mood, habit month, word count, statistics, check-in widget |

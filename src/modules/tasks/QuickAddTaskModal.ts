@@ -53,6 +53,10 @@ export class QuickAddTaskModal extends Modal {
                     title: draft.title,
                     priority: draft.priority,
                     dueDate: draft.dueDate || undefined,
+                    // An hour means nothing without its day.
+                    dueTime: draft.dueDate ? draft.dueTime : undefined,
+                    dueEndTime: draft.dueDate ? draft.dueEndTime : undefined,
+                    recurrence: draft.recurrence,
                     tags: draft.tags,
                 },
                 target

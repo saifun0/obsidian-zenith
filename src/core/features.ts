@@ -112,6 +112,7 @@ export const FEATURES = [
         settingKey: 'journalCaptureTasks',
         requiresModules: ['journal'],
     }),
+    feature('tasks.naturalInput', 'tasks'),
     feature('tasks.subtasks', 'tasks'),
     feature('tasks.attachments', 'tasks'),
     feature('tasks.timer', 'tasks'),

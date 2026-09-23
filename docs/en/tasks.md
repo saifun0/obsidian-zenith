@@ -63,6 +63,25 @@ capture is on (the default — see [Journal](journal.md)), and to `Zenith Inbox.
 
 > Dates are compared in your **local** timezone, so “Today” / “Overdue” are always correct.
 
+**Natural input.** In quick add, the title can carry the rest: *Call mom tomorrow at 6pm !*
+becomes the task *Call mom*, due tomorrow at 18:00, priority 🔼. Every piece that was
+understood shows as a chip under the field, and × on a chip keeps those words in the title
+instead. What is read, in English and Russian:
+
+| | Examples |
+| --- | --- |
+| Date → 📅 | `today`, `tomorrow`, `friday` / `on fri`, `+3d`, `+2w`, `15.10`, `15.10.2027` · `сегодня`, `завтра`, `послезавтра`, `в пятницу`, `пт`, `+3д`, `+2н` |
+| Time → ⏰ | `at 18`, `9:30`, `6pm`, `18:00–19:30`, `from 9 to 10` · `в 18`, `с 9 до 10:30` |
+| Priority | `!` → 🔼, `!!` → ⏫ — standing on their own |
+| Repeat → 🔁 | `every day/week/month/year`, `every 3 days`, `daily`, `weekly` · `каждый день`, `каждые 2 недели`, `ежемесячно` |
+
+It stays narrow on purpose. A bare number is never a time (*buy 2 loaves*), a weekday named
+on that day means next week's, a date already past this year means next year's, and a time
+or a repeat with no day is today's. Anything else stays part of the title — a phrase half
+understood looks half understood, and nothing is dropped. `#tags` are the task's own
+syntax and stay in the title; typing `#` offers the tags already in use. Switch it off under
+**Tasks → Features → Natural input**.
+
 **Drag and drop.** Every task and subtask row has a grip in its action cluster. A task
 carries its whole subtree, and lands with the indentation of whatever it's dropped next
 to — so dragging a subtask beside a top-level task promotes it, and dropping a task inside

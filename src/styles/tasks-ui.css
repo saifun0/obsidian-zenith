@@ -126,6 +126,61 @@
     justify-content: flex-end;
 }
 
+/* What the phrase was understood to say, one chip per piece. Obsidian's own
+   variables: the modal is outside `.zenith-root`. */
+.zenith-quick-add__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.zenith-quick-add__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px 2px 8px;
+    border-radius: 999px;
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.zenith-quick-add button.zenith-quick-add__chip-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-faint);
+    cursor: pointer;
+}
+
+.zenith-quick-add button.zenith-quick-add__chip-remove:hover {
+    background: var(--background-modifier-border);
+    color: var(--text-normal);
+}
+
+.zenith-quick-add button.zenith-quick-add__suggestion {
+    padding: 2px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-accent);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.zenith-quick-add button.zenith-quick-add__suggestion:hover {
+    background: var(--background-modifier-hover);
+}
+
 .zenith-subtask__input {
     flex: 1;
     min-width: 0;

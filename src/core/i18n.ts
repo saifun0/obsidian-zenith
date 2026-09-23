@@ -5,6 +5,7 @@ import { FEATURE_STRINGS } from './featureStrings';
 import { NOTIFY_STRINGS } from './notifications/strings';
 import { PROFILE_STRINGS } from './profiles/strings';
 import { PRAYER_STRINGS } from '../modules/prayer/strings';
+import { TASK_STRINGS } from '../modules/tasks/strings';
 
 /**
  * Minimal i18n for Zenith's own UI.
@@ -3549,6 +3550,7 @@ export const DICTS: Record<Locale, Dict> = {
         ...NOTIFY_STRINGS.en,
         ...PROFILE_STRINGS.en,
         ...PRAYER_STRINGS.en,
+        ...TASK_STRINGS.en,
     },
     ru: {
         ...RU,
@@ -3556,6 +3558,7 @@ export const DICTS: Record<Locale, Dict> = {
         ...NOTIFY_STRINGS.ru,
         ...PROFILE_STRINGS.ru,
         ...PRAYER_STRINGS.ru,
+        ...TASK_STRINGS.ru,
     },
 };
 

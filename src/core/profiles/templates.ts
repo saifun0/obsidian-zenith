@@ -39,6 +39,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
         on: [
             ...BASICS,
             'tasks.captureDaily',
+            'tasks.naturalInput',
             'tasks.subtasks',
             'tasks.smartGroups',
             'tasks.widget',
@@ -79,6 +80,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
             'journal.stats',
             'journal.widget',
             'tasks.captureDaily',
+            'tasks.naturalInput',
             'tasks.subtasks',
             'tasks.smartGroups',
             'tasks.widget',
@@ -94,6 +96,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
             'dashboard.date',
             'dashboard.presets',
             'tasks.captureDaily',
+            'tasks.naturalInput',
             'tasks.subtasks',
             'tasks.attachments',
             'tasks.timer',
