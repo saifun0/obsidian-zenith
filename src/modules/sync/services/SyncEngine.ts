@@ -499,7 +499,9 @@ export interface ExcluderOptions {
  * unconditionally, config-dir setting or not: the settings layer already owns
  * those files, and two writers on one file is precisely the bug this whole
  * module exists to fix. Letting the file engine carry them would reintroduce it
- * one level down.
+ * one level down. `cache/` too: it holds what each device fetched for itself
+ * (the prayer year tables), and carrying it would be traffic and conflicts for
+ * files any device can fetch again.
  */
 export function buildExcluder(opts: ExcluderOptions): (key: string) => boolean {
     const root = trimSlashes(opts.localRoot);
@@ -513,7 +515,10 @@ export function buildExcluder(opts: ExcluderOptions): (key: string) => boolean {
     };
 
     const pluginRel = relativeToRoot(opts.pluginDir);
-    const ownState = pluginRel === null ? [] : [`${pluginRel}/sync`, `${pluginRel}/data.json`];
+    const ownState =
+        pluginRel === null
+            ? []
+            : [`${pluginRel}/sync`, `${pluginRel}/data.json`, `${pluginRel}/cache`];
     const userPrefixes = opts.userExcludes.map(trimSlashes).filter(Boolean);
 
     const configRel = relativeToRoot('.obsidian');

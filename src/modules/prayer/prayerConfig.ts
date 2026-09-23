@@ -231,3 +231,12 @@ export const HIGH_LAT_RULES: readonly HighLatRule[] = [
 export type PrayerRounding = 'nearest' | 'floor';
 
 export const PRAYER_ROUNDINGS: readonly PrayerRounding[] = ['nearest', 'floor'] as const;
+
+/**
+ * What a day shows while the published table is not there — not fetched yet,
+ * or not reachable: the calculation, which is right but may not be what the
+ * mosque prints, or a dash, which is honest about not knowing.
+ */
+export type PrayerFallback = 'calc' | 'none';
+
+export const PRAYER_FALLBACKS: readonly PrayerFallback[] = ['calc', 'none'] as const;

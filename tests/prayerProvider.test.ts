@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { __testing } from '../src/modules/prayer/prayerApi';
-import type { PrayerApiOptions } from '../src/modules/prayer/prayerApi';
+import { ALADHAN, __testing, roundedPlace } from '../src/modules/prayer/prayerProvider';
+import type { PrayerApiOptions } from '../src/modules/prayer/prayerProvider';
 
-const { clockToMinutes, gregorianToIso, unwrapDay, parseMonth, buildUrl } = __testing;
+const { clockToMinutes, gregorianToIso, unwrapDay, parseYear, buildYearUrl } = __testing;
 
 /** A day as the service prints it, zone suffix and all. */
 function timings(over: Record<string, string> = {}): Record<string, string> {
@@ -98,46 +98,76 @@ describe('unwrapDay', () => {
     });
 });
 
-describe('parseMonth', () => {
+describe('parseYear', () => {
     const entry = (date: string) => ({ timings: timings(), date: { gregorian: { date } } });
 
-    it('reads the array form', () => {
-        const month = parseMonth({ data: [entry('01-08-2026'), entry('02-08-2026')] })!;
-        expect(Object.keys(month)).toEqual(['2026-08-01', '2026-08-02']);
-        expect(month['2026-08-01'].fajr).toBe(237);
+    it('reads the annual form, keyed by month', () => {
+        // What `/v1/calendar/{year}` returns: `data` by month number, each a
+        // list of days — checked against the live service.
+        const year = parseYear({
+            data: {
+                1: [entry('01-01-2026'), entry('02-01-2026')],
+                12: [entry('31-12-2026')],
+            },
+        })!;
+        expect(Object.keys(year).sort()).toEqual(['2026-01-01', '2026-01-02', '2026-12-31']);
+        expect(year['2026-12-31'].fajr).toBe(237);
     });
 
-    it('reads the form keyed by day of the month', () => {
-        const month = parseMonth({ data: { 1: entry('01-08-2026'), 2: entry('02-08-2026') } })!;
-        expect(Object.keys(month).sort()).toEqual(['2026-08-01', '2026-08-02']);
+    it('reads a plain list, which is what a single month looks like', () => {
+        const year = parseYear({ data: [entry('01-08-2026'), entry('02-08-2026')] })!;
+        expect(Object.keys(year)).toEqual(['2026-08-01', '2026-08-02']);
+    });
+
+    it('reads months keyed by day of the month', () => {
+        const year = parseYear({ data: { 8: { 1: entry('01-08-2026') } } })!;
+        expect(Object.keys(year)).toEqual(['2026-08-01']);
     });
 
     it('skips days it cannot place, and fails on a payload with none', () => {
-        const month = parseMonth({
-            data: [entry('01-08-2026'), { timings: timings() }, { date: { gregorian: {} } }],
+        const year = parseYear({
+            data: { 8: [entry('01-08-2026'), { timings: timings() }, { date: { gregorian: {} } }] },
         })!;
-        expect(Object.keys(month)).toEqual(['2026-08-01']);
-        expect(parseMonth({ data: [] })).toBeNull();
-        expect(parseMonth({})).toBeNull();
+        expect(Object.keys(year)).toEqual(['2026-08-01']);
+        expect(parseYear({ data: {} })).toBeNull();
+        expect(parseYear({})).toBeNull();
     });
 });
 
-describe('buildUrl', () => {
+describe('buildYearUrl', () => {
     const place = { lat: 45.0428, lon: 41.9734 };
 
+    it('asks for the whole year in one request', () => {
+        expect(buildYearUrl(place, 2026, OPTS)).toContain('/calendar/2026?');
+    });
+
+    it('sends the place rounded to about a kilometre', () => {
+        const url = buildYearUrl(place, 2026, OPTS);
+        expect(url).toContain('latitude=45.04&');
+        expect(url).toContain('longitude=41.97&');
+        expect(url).not.toContain('45.0428');
+    });
+
     it('sends the muftiate method, the madhab and the night rule', () => {
-        const url = buildUrl(place, 2026, 8, OPTS);
-        expect(url).toContain('/calendar/2026/8?');
+        const url = buildYearUrl(place, 2026, OPTS);
         // 14 is the Spiritual Administration of Muslims of Russia.
         expect(url).toContain('method=14');
         expect(url).toContain('school=1');
         expect(url).toContain('latitudeAdjustmentMethod=3');
         expect(url).toContain('midnightMode=1');
-        expect(url).toContain('timezonestring=Europe%2FMoscow');
+    });
+
+    it('reports on the device’s zone, so daylight saving lands on the right days', () => {
+        // The service applies the zone per day; sending the device's rather
+        // than the place's keeps the times on the clock "now" is read from.
+        expect(buildYearUrl(place, 2026, OPTS)).toContain('timezonestring=Europe%2FMoscow');
+        expect(buildYearUrl(place, 2026, { ...OPTS, timezone: 'Europe/Berlin' })).toContain(
+            'timezonestring=Europe%2FBerlin'
+        );
     });
 
     it('asks for the custom method with our own angles', () => {
-        const url = buildUrl(place, 2026, 8, {
+        const url = buildYearUrl(place, 2026, {
             ...OPTS,
             method: 'custom',
             fajrAngle: 16.5,
@@ -148,13 +178,42 @@ describe('buildUrl', () => {
     });
 
     it('omits the latitude rule the service has no option for', () => {
-        const url = buildUrl(place, 2026, 8, { ...OPTS, highLatRule: 'none' });
-        expect(url).not.toContain('latitudeAdjustmentMethod');
+        expect(buildYearUrl(place, 2026, { ...OPTS, highLatRule: 'none' })).not.toContain(
+            'latitudeAdjustmentMethod'
+        );
     });
 
     it('asks for sunset-to-sunrise when that is what was chosen', () => {
-        expect(buildUrl(place, 2026, 8, { ...OPTS, midnight: 'toSunrise' })).toContain(
+        expect(buildYearUrl(place, 2026, { ...OPTS, midnight: 'toSunrise' })).toContain(
             'midnightMode=0'
         );
+    });
+});
+
+describe('ALADHAN.shape', () => {
+    it('changes with everything that changes the answer', () => {
+        const base = ALADHAN.shape(OPTS);
+        expect(ALADHAN.shape({ ...OPTS, method: 'mwl' })).not.toBe(base);
+        expect(ALADHAN.shape({ ...OPTS, hanafi: false })).not.toBe(base);
+        expect(ALADHAN.shape({ ...OPTS, highLatRule: 'none' })).not.toBe(base);
+        expect(ALADHAN.shape({ ...OPTS, midnight: 'toSunrise' })).not.toBe(base);
+        expect(ALADHAN.shape({ ...OPTS, timezone: 'Asia/Almaty' })).not.toBe(base);
+    });
+
+    it('carries custom angles only for the custom method', () => {
+        expect(ALADHAN.shape({ ...OPTS, fajrAngle: 10 })).toBe(ALADHAN.shape(OPTS));
+        expect(ALADHAN.shape({ ...OPTS, method: 'custom', fajrAngle: 10 })).not.toBe(
+            ALADHAN.shape({ ...OPTS, method: 'custom', fajrAngle: 11 })
+        );
+    });
+});
+
+describe('roundedPlace', () => {
+    it('keeps two decimals, both signs', () => {
+        expect(roundedPlace({ lat: 45.0428, lon: 41.9734 })).toEqual({ lat: 45.04, lon: 41.97 });
+        expect(roundedPlace({ lat: -33.8688, lon: -151.2093 })).toEqual({
+            lat: -33.87,
+            lon: -151.21,
+        });
     });
 });

@@ -52,6 +52,20 @@ export const PRAYER_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'prayer.choose.confirm': 'Use these',
         'prayer.choose.match': 'Match my app…',
         'prayer.choose.widget': 'Choose how times are calculated',
+
+        'settings.prayerFallback': 'Without the table',
+        'settings.prayerFallback.desc':
+            'Before the year’s table has loaded, or when it cannot: show the calculation — right, but maybe a minute or two from what the table prints — or a dash.',
+        'prayer.fallback.calc': 'Calculation',
+        'prayer.fallback.none': 'Dash',
+        'prayer.table.calcPending': 'calculated · table loading',
+        'prayer.table.calcFailed': 'calculated · table unreachable',
+        'prayer.table.pending': 'table loading',
+        'prayer.table.unavailable': 'table unreachable',
+        'prayer.table.pendingHint':
+            'The year’s timetable has not loaded yet. It is kept on this device once it has.',
+        'prayer.table.unavailableHint':
+            'The timetable could not be loaded. Zenith keeps trying, and the times appear as soon as it arrives.',
     },
     ru: {
         'prayer.rounding.nearest': 'До ближайшей минуты',
@@ -101,5 +115,19 @@ export const PRAYER_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'prayer.choose.confirm': 'Выбрать',
         'prayer.choose.match': 'Подобрать под приложение…',
         'prayer.choose.widget': 'Выберите, как считать время',
+
+        'settings.prayerFallback': 'Без таблицы',
+        'settings.prayerFallback.desc':
+            'Пока таблица года не загружена или недоступна: показывать расчёт — верный, но на минуту-другую может расходиться с таблицей — или прочерк.',
+        'prayer.fallback.calc': 'Расчёт',
+        'prayer.fallback.none': 'Прочерк',
+        'prayer.table.calcPending': 'расчёт · таблица загружается',
+        'prayer.table.calcFailed': 'расчёт · таблица недоступна',
+        'prayer.table.pending': 'таблица загружается',
+        'prayer.table.unavailable': 'таблица недоступна',
+        'prayer.table.pendingHint':
+            'Таблица года ещё не загружена. Загруженная, она хранится на этом устройстве.',
+        'prayer.table.unavailableHint':
+            'Таблицу не удалось загрузить. Zenith продолжает пробовать — времена появятся, как только она придёт.',
     },
 };

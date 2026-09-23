@@ -14,7 +14,7 @@ import { hijriMonthKey } from '../hijri';
 import { useFeature } from '../../../core/useFeature';
 import {
     useDayTimes,
-    useTimesFallback,
+    useTimesSource,
     useHijri,
     useNowMinutes,
     usePrayerDays,
@@ -55,7 +55,7 @@ export const PrayerApp: FC = () => {
 
     const place = usePrayerPlace();
     const day = useDayTimes(selected);
-    const fallback = useTimesFallback(selected);
+    const source = useTimesSource(selected);
     const days = usePrayerDays();
     const extras = usePrayerExtras();
     const nowMinutes = useNowMinutes();
@@ -129,7 +129,7 @@ export const PrayerApp: FC = () => {
                 }
                 placeLabel={placeLabel(place)}
                 methodLabel={t(`prayer.method.${settings.prayerMethod}`)}
-                fallback={fallback}
+                source={source}
                 isToday={isToday}
                 next={next}
                 times={times}
@@ -183,7 +183,11 @@ export const PrayerApp: FC = () => {
                     );
                 })}
 
-                {day.invalid.length > 0 && (
+                {source?.origin === 'missing' ? (
+                    <p className="zenith-prayer__note">
+                        {t(source.pending ? 'prayer.table.pendingHint' : 'prayer.table.unavailableHint')}
+                    </p>
+                ) : day.invalid.length > 0 && (
                     <p className="zenith-prayer__note">
                         {t('prayer.noTimes')} {t('prayer.noTimesHint')}
                     </p>

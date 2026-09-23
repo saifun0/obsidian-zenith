@@ -124,6 +124,7 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     prayerAsrMadhab: { scope: 'shared' },
     prayerHighLatRule: { scope: 'shared' },
     prayerRounding: { scope: 'shared' },
+    prayerFallback: { scope: 'shared' },
     prayerMethodChosen: { scope: 'shared' },
     prayerAdjustments: { scope: 'shared', merge: 'record' },
     prayerShowSunrise: { scope: 'shared' },

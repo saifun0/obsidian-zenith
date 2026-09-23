@@ -24,10 +24,11 @@ import {
     DEFAULT_METHOD_ID,
     type AsrMadhab,
     type HighLatRule,
+    type PrayerFallback,
     type PrayerRounding,
     type PrayerSource,
 } from '../modules/prayer/prayerConfig';
-import type { ApiMidnight } from '../modules/prayer/prayerApi';
+import type { ApiMidnight } from '../modules/prayer/prayerProvider';
 import type { DashboardBgFit, DashboardBgSource } from '../modules/dashboard/dashboardBackground';
 import type { ModuleSource } from '../core/moduleSources';
 import { pinnedFeatures } from '../core/features';
@@ -207,6 +208,8 @@ export interface ZenithSettings {
     prayerHighLatRule: HighLatRule;
     /** How the calculation turns a moment into a minute: rounded, or seconds dropped. */
     prayerRounding: PrayerRounding;
+    /** What a day shows while the published table is missing: the calculation, or a dash. */
+    prayerFallback: PrayerFallback;
     /**
      * Whether the method and madhab were chosen by the user rather than left
      * at the defaults. Until they are, the prayer view asks: the two decide
@@ -737,6 +740,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     prayerAsrMadhab: 'hanafi',
     prayerHighLatRule: 'angleBased',
     prayerRounding: 'nearest',
+    prayerFallback: 'calc',
     prayerMethodChosen: false,
     prayerAdjustments: {},
     prayerShowSunrise: true,

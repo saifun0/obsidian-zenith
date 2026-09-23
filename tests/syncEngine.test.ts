@@ -151,6 +151,8 @@ describe('buildExcluder', () => {
             expect(ex('.obsidian/plugins/zenith/sync/outbox/devA.json')).toBe(true);
             expect(ex('.obsidian/plugins/zenith/sync')).toBe(true);
             expect(ex('.obsidian/plugins/zenith/data.json')).toBe(true);
+            // Fetched per device (the prayer year tables) and fetched again anywhere.
+            expect(ex('.obsidian/plugins/zenith/cache/prayer/aladhan-2026.json')).toBe(true);
         }
     });
 

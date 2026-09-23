@@ -186,7 +186,7 @@ const EN: Dict = {
         'What the service measures midnight and the last third to. The local calculation always divides sunset to fajr.',
     'settings.prayerApiRefresh': 'Published times',
     'settings.prayerApiRefresh.desc':
-        'Fetched a month at a time and kept offline. Refresh after changing the method, or if the mosque has corrected its table.',
+        'Fetched a year at a time and kept on this device. Refresh if the published table has been corrected.',
     'settings.prayerApiRefresh.button': 'Refresh',
     'settings.prayerMethod': 'Method',
     'settings.prayerMethod.desc': 'Sets the fajr and isha angles.',
@@ -1931,7 +1931,7 @@ const RU: Dict = {
         'До чего сервис считает полночь и последнюю треть. Локальный расчёт всегда делит от заката до фаджра.',
     'settings.prayerApiRefresh': 'Готовые времена',
     'settings.prayerApiRefresh.desc':
-        'Забираются помесячно и хранятся оффлайн. Обновите после смены метода или если мечеть поправила таблицу.',
+        'Загружаются на год вперёд и хранятся на этом устройстве. Обновите, если опубликованную таблицу поправили.',
     'settings.prayerApiRefresh.button': 'Обновить',
     'settings.prayerMethod': 'Метод',
     'settings.prayerMethod.desc': 'Задаёт углы для фаджра и иши.',

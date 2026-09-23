@@ -2,9 +2,10 @@
 
 [← Documentation](../../README.md) · **English** · [Русский](../ru/prayer.md)
 
-Prayer times are computed **on the device** from the chosen coordinates — no request, no
-account, and nothing leaves the vault. What you prayed is recorded in the same daily note
-the journal uses, one plain property per prayer:
+Prayer times come from a **published calendar** (Aladhan) by default, a year at a time,
+kept on this device — or, if you prefer, are **computed on the device** with no request at
+all. What you prayed is recorded in the same daily note the journal uses, one plain property
+per prayer:
 
 ```yaml
 ---
@@ -43,6 +44,17 @@ Corrections are only offered up to 10 minutes — anything larger means a wrong 
 mosque's rounding. The madhab is shown as a choice with both figures a tap apart, never
 fitted silently: it is a matter of practice, and the times only show which one the app
 uses.
+
+**The year's table.** In calendar mode the whole year is fetched in one request and kept as
+a file in the plugin's folder (`.obsidian/plugins/zenith/cache/prayer/`), so the times keep
+working offline for months — next year's table is fetched once fewer than 60 days of this
+one are left. Nothing waits for it: until it has loaded, or when the service cannot be
+reached, the view shows the calculation instead and says so beside the method ("calculated ·
+table loading"), or shows a dash if you chose **Without the table → Dash**. A failed fetch
+is retried on its own, after half a minute, then two, eight, half an hour, up to six hours.
+The cache never travels with Zenith's sync: every device fetches its own. Only the
+coordinates, rounded to two decimals (about a kilometre), are sent — see
+[privacy](privacy.md).
 
 **Recording.** On the dashboard, tapping a prayer marks it — *on time* while its window is
 open, *late* once it has closed — and tapping again clears it; right-click offers all three

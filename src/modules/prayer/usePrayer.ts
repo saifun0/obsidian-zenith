@@ -6,13 +6,14 @@ import { isoToDate } from '../journal/services/journalDates';
 import type { GeoPlace } from '../../services/geocode';
 import { hijriDate, type HijriDate } from './hijri';
 import { prayerCalcOptions, prayerPlaceOf } from './prayerOptions';
-import { apiRevision, subscribeApi } from './prayerApi';
+import { subscribeTables, tablesRevision } from './prayerTable';
 import {
     dayTimesFor,
     ensurePrayerDay,
-    prayerApiPending,
+    prayerTablePending,
     resolveDayTimes,
     type PrayerSourceSettings,
+    type TimesOrigin,
 } from './prayerSource';
 import { prayerDaysByDate, type PrayerDay } from './prayerStats';
 import { minutesOfDay, type DayTimes, type PrayerCalcOptions } from './prayerTimes';
@@ -61,6 +62,7 @@ export function usePrayerSourceSettings(): PrayerSourceSettings {
     const adjustments = useZenithStore((s) => s.settings.prayerAdjustments);
     const hijriOffset = useZenithStore((s) => s.settings.prayerHijriOffset);
     const rounding = useZenithStore((s) => s.settings.prayerRounding);
+    const fallback = useZenithStore((s) => s.settings.prayerFallback);
 
     return useMemo(
         () => ({
@@ -74,6 +76,7 @@ export function usePrayerSourceSettings(): PrayerSourceSettings {
             prayerAdjustments: adjustments,
             prayerHijriOffset: hijriOffset,
             prayerRounding: rounding,
+            prayerFallback: fallback,
         }),
         [
             source,
@@ -86,6 +89,7 @@ export function usePrayerSourceSettings(): PrayerSourceSettings {
             adjustments,
             hijriOffset,
             rounding,
+            fallback,
         ]
     );
 }
@@ -99,15 +103,14 @@ export function usePrayerOptions(iso: string): PrayerCalcOptions {
 /**
  * Times for one day, or null when there's nowhere to compute them for.
  *
- * In calendar mode the first frame is still the local calculation — the fetch
- * has not landed yet, and a prayer view that opens empty while a request flies
- * would be a worse trade than showing correct astronomy for a second. The
- * revision counter is what swaps it for the published table when it arrives.
+ * In calendar mode, before the year's table is read from disk or fetched, the
+ * first frame is the local calculation — or a dash, if that is what was chosen.
+ * The revision counter is what swaps in the published table when it arrives.
  */
 export function useDayTimes(iso: string): DayTimes | null {
     const place = usePrayerPlace();
     const settings = usePrayerSourceSettings();
-    const revision = useSyncExternalStore(subscribeApi, apiRevision, apiRevision);
+    const revision = useSyncExternalStore(subscribeTables, tablesRevision, tablesRevision);
 
     useEffect(() => {
         ensurePrayerDay(place, isoToDate(iso), settings);
@@ -117,29 +120,34 @@ export function useDayTimes(iso: string): DayTimes | null {
         if (!place) return null;
         return dayTimesFor(place, isoToDate(iso), settings);
         // `revision` is a dependency without being read: it changes when a
-        // month lands, which is what changes the answer `dayTimesFor` finds in
+        // year lands, which is what changes the answer `dayTimesFor` finds in
         // the cache.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `revision` invalidates rather than being read — see the comment above it.
     }, [place, iso, settings, revision]);
 }
 
 /**
- * Whether this day is showing the arithmetic because the service could not be
- * reached — as opposed to because the user chose it, or because the month is
- * still in flight. Only the first of those is worth a mark on screen.
+ * When the published table was asked for and is not what is shown: where the
+ * times came from instead, and whether the table is still on its way. Null
+ * when the times are what was asked for — the table, or the calculation the
+ * user chose.
  */
-export function useTimesFallback(iso: string): boolean {
+export interface TimesSource {
+    origin: Extract<TimesOrigin, 'fallback' | 'missing'>;
+    pending: boolean;
+}
+
+export function useTimesSource(iso: string): TimesSource | null {
     const place = usePrayerPlace();
     const settings = usePrayerSourceSettings();
-    const revision = useSyncExternalStore(subscribeApi, apiRevision, apiRevision);
+    const revision = useSyncExternalStore(subscribeTables, tablesRevision, tablesRevision);
 
-    return useMemo(() => {
-        if (!place || settings.prayerSource !== 'api') return false;
+    return useMemo((): TimesSource | null => {
+        if (!place || settings.prayerSource !== 'api') return null;
         const date = isoToDate(iso);
-        return (
-            resolveDayTimes(place, date, settings).origin === 'fallback' &&
-            !prayerApiPending(place, date, settings)
-        );
+        const { origin } = resolveDayTimes(place, date, settings);
+        if (origin !== 'fallback' && origin !== 'missing') return null;
+        return { origin, pending: prayerTablePending(place, date, settings) };
         // Same as above: the counter is here to recompute, not to be read.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Same again.
     }, [place, iso, settings, revision]);

@@ -1,15 +1,14 @@
 import type { ZenithSettings } from '../../store/settingsSlice';
-import {
-    apiDay,
-    apiState,
-    clearApiCache,
-    ensureApiMonth,
-    refreshApiMonth,
-    type ApiMidnight,
-    type PrayerApiOptions,
-} from './prayerApi';
 import { prayerCalcOptions } from './prayerOptions';
-import { prayerTimes, type DayTimes, type GeoPoint, type PrayerTimeId } from './prayerTimes';
+import type { ApiMidnight, PrayerApiOptions } from './prayerProvider';
+import { ensureTable, refreshTable, tableDay, tableState } from './prayerTable';
+import {
+    prayerTimes,
+    TIME_IDS,
+    type DayTimes,
+    type GeoPoint,
+    type PrayerTimeId,
+} from './prayerTimes';
 
 /**
  * Which of the two engines answers, and what happens when the first one can't.
@@ -19,23 +18,25 @@ import { prayerTimes, type DayTimes, type GeoPoint, type PrayerTimeId } from './
  * maghrib is would be useless in a basement. That reasoning still holds — it is
  * why this file exists rather than a plain `await`.
  *
- * So the service is the source and the arithmetic is the floor. Every surface
- * reads synchronously, gets the local answer on the first frame, and is told to
- * repaint when the month lands. Offline, mid-flight, or against a service
- * having a bad day, the times are the ones this device worked out — which are
- * right, just not necessarily the ones the local calendar prints.
+ * So the published table is the source and the arithmetic is the floor —
+ * unless the user would rather see a dash than a time the table might not
+ * print. Every surface reads synchronously, gets an answer on the first frame,
+ * and is told to repaint when the year lands.
  *
  * The per-prayer adjustments are applied here for both engines rather than
  * being sent along as the service's own `tune`, so "maghrib, two minutes later"
  * means one thing regardless of where the numbers came from.
  */
 
-/** Which engine a day's times actually came from. */
-export type TimesOrigin = 'local' | 'api' | 'fallback';
+/**
+ * Which engine a day's times actually came from. `fallback` means the table was
+ * asked for and the arithmetic answered; `missing`, that it was asked for and
+ * nothing is shown in its place.
+ */
+export type TimesOrigin = 'local' | 'api' | 'fallback' | 'missing';
 
 export interface ResolvedTimes {
     times: DayTimes;
-    /** `fallback` means the service was asked for and the arithmetic answered. */
     origin: TimesOrigin;
 }
 
@@ -58,6 +59,7 @@ export type PrayerSourceSettings = Pick<
     | 'prayerAdjustments'
     | 'prayerHijriOffset'
     | 'prayerRounding'
+    | 'prayerFallback'
 >;
 
 export function prayerApiOptionsOf(settings: PrayerSourceSettings): PrayerApiOptions {
@@ -91,10 +93,17 @@ function withAdjustments(
     return out;
 }
 
+/** A day with no times at all: every surface already draws those as a dash. */
+function emptyDay(iso: string): DayTimes {
+    const times = { sunset: NaN } as Record<PrayerTimeId, number>;
+    for (const id of TIME_IDS) times[id] = NaN;
+    return { date: iso, times, invalid: [...TIME_IDS, 'sunset'] };
+}
+
 /**
  * Start whatever fetching this day needs, and say nothing.
  *
- * Cheap to call on every render — a month already held, or already in flight,
+ * Cheap to call on every render — a year already held, or already in flight,
  * costs a lookup — and a no-op in local mode, which is what keeps a user who
  * chose the arithmetic from making a single request.
  */
@@ -104,11 +113,12 @@ export function ensurePrayerDay(
     settings: PrayerSourceSettings
 ): void {
     if (!place || settings.prayerSource !== 'api') return;
-    ensureApiMonth(place, date, prayerApiOptionsOf(settings));
+    ensureTable(place, date, prayerApiOptionsOf(settings));
 }
 
 /**
- * One day's times, from the configured source, falling back to the arithmetic.
+ * One day's times, from the configured source, falling back to the arithmetic
+ * or to nothing, as chosen.
  *
  * Synchronous by design: see the note at the top of the file.
  */
@@ -117,17 +127,17 @@ export function resolveDayTimes(
     date: Date,
     settings: PrayerSourceSettings
 ): ResolvedTimes {
-    const adjustments = settings.prayerAdjustments;
-
     if (settings.prayerSource === 'api') {
-        const opts = prayerApiOptionsOf(settings);
-        const fromApi = apiDay(place, date, opts, localIso(date));
-        if (fromApi) {
-            const times = withAdjustments(fromApi.times, adjustments);
-            return {
-                times: { ...fromApi, times, invalid: fromApi.invalid },
-                origin: 'api',
-            };
+        const published = tableDay(place, date, prayerApiOptionsOf(settings));
+        if (published) {
+            const times = withAdjustments(published, settings.prayerAdjustments);
+            const invalid = (Object.keys(times) as PrayerTimeId[]).filter(
+                (id) => !Number.isFinite(times[id])
+            );
+            return { times: { date: localIso(date), times, invalid }, origin: 'api' };
+        }
+        if (settings.prayerFallback === 'none') {
+            return { times: emptyDay(localIso(date)), origin: 'missing' };
         }
     }
 
@@ -138,37 +148,28 @@ export function resolveDayTimes(
 }
 
 /** Times only, for the callers that don't care where they came from. */
-export function dayTimesFor(
-    place: GeoPoint,
-    date: Date,
-    settings: PrayerSourceSettings
-): DayTimes {
+export function dayTimesFor(place: GeoPoint, date: Date, settings: PrayerSourceSettings): DayTimes {
     return resolveDayTimes(place, date, settings).times;
 }
 
 /**
- * Whether the service is still being waited on for this day.
+ * Whether the table is still being waited on for this day.
  *
- * Separate from the origin, because "showing local times while the month is in
- * flight" and "showing local times because the request failed" look identical
- * on screen and only the second one is worth telling anyone about.
+ * Separate from the origin, because "not loaded yet" and "could not be loaded"
+ * look identical on screen and deserve different words.
  */
-export function prayerApiPending(
+export function prayerTablePending(
     place: GeoPoint | null,
     date: Date,
     settings: PrayerSourceSettings
 ): boolean {
     if (!place || settings.prayerSource !== 'api') return false;
-    const state = apiState(place, date, prayerApiOptionsOf(settings));
+    const state = tableState(place, date, prayerApiOptionsOf(settings));
     return state === 'loading' || state === 'idle';
 }
 
 /**
- * Throw away every cached month and ask again for the one `date` falls in.
- *
- * The settings page's button. Only this month is refetched — the rest arrive on
- * their own as days are browsed, and fetching a year to satisfy a button press
- * would be a dozen requests nobody asked for.
+ * Fetch this year's table again, now. The settings page's button.
  *
  * Returns whether the service answered, so the caller can say so.
  */
@@ -177,7 +178,6 @@ export async function refreshPrayerTimes(
     date: Date,
     settings: PrayerSourceSettings
 ): Promise<boolean> {
-    clearApiCache();
     if (!place || settings.prayerSource !== 'api') return false;
-    return refreshApiMonth(place, date, prayerApiOptionsOf(settings));
+    return refreshTable(place, date, prayerApiOptionsOf(settings));
 }

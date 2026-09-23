@@ -8,5 +8,9 @@ approximate location via a request to `ipapi.co`, falling back to the browser's 
 prompt. Weather data comes from Open-Meteo. No API keys are required and results are cached
 locally.
 
+Prayer times, in calendar mode, come from `api.aladhan.com`: it receives the location
+rounded to about a kilometre, the calculation settings and the device's time zone — once a
+year per place and method. In calculated mode prayer times make no requests.
+
 The content library makes no requests of its own. A cover given as a link is loaded from
 that address whenever it is shown, like any image in a note.

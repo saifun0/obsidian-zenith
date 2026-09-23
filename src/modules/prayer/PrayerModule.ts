@@ -1,4 +1,4 @@
-import { Notice } from 'obsidian';
+import { Notice, normalizePath } from 'obsidian';
 import { BaseModule } from '../../core/IModule';
 import { PRAYER_BLOCK_LANG, VIEW_TYPE_PRAYER } from '../../core/constants';
 import { getTodayString } from '../../core/dateUtils';
@@ -14,6 +14,7 @@ import { prayerSettingsSchema } from './settings.schema';
 import { setPrayerStatus, statusForTap } from './prayerActions';
 import { prayerPlaceOf } from './prayerOptions';
 import { dayTimesFor, ensurePrayerDay } from './prayerSource';
+import { setTableStore, vaultTableStore } from './prayerTable';
 import { PRAYERS } from './prayerConfig';
 import { currentPrayer, formatClock, minutesOfDay } from './prayerTimes';
 import type ZenithPlugin from '../../main';
@@ -27,8 +28,8 @@ import type { TranslationTable } from '../../core/i18n';
  * that disagrees with the mosque down the road is worse than no tracker; the
  * on-device calculation stays underneath it and answers whenever the service
  * cannot be reached, so the module still works with no network at all. Which
- * one is in charge is a setting, and coordinates are the only thing that ever
- * leaves — see `prayerApi.ts`.
+ * one is in charge is a setting, and coordinates, rounded to a kilometre, are
+ * the only thing that ever leaves — see `prayerProvider.ts`.
  *
  * What was prayed goes into the daily note's frontmatter (`fajr: ontime`),
  * which means the log is ordinary Markdown: greppable, syncable, and still
@@ -108,6 +109,17 @@ export class PrayerModule extends BaseModule {
             })
         );
 
+        // The year tables live in the plugin's own folder, beside its code
+        // rather than among the user's notes — a cache nobody should have to
+        // see, sort or sync. With no folder to hand (a test harness) they are
+        // held in memory for the session.
+        const dir = this.plugin.manifest.dir;
+        void setTableStore(
+            dir
+                ? vaultTableStore(this.plugin.app.vault.adapter, normalizePath(`${dir}/cache/prayer`))
+                : null
+        );
+
         this.reminders = new PrayerReminderService(this.plugin);
         this.reminders.start();
     }
@@ -115,6 +127,7 @@ export class PrayerModule extends BaseModule {
     async onunload(): Promise<void> {
         this.reminders?.stop();
         this.reminders = null;
+        void setTableStore(null);
         this.disposers.forEach((d) => d());
         this.disposers = [];
     }

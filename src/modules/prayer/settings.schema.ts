@@ -8,6 +8,7 @@ import { PrayerMatchField } from './components/PrayerMethodPrompt';
 import {
     EXTRA_PRAYERS,
     HIGH_LAT_RULES,
+    PRAYER_FALLBACKS,
     PRAYER_METHODS,
     PRAYER_ROUNDINGS,
     PRAYER_SOURCES,
@@ -62,6 +63,18 @@ export const prayerSettingsSchema = coreSchema({
                         value: id,
                         labelKey: `prayer.source.${id}`,
                     })),
+                },
+                {
+                    type: 'segmented',
+                    key: 'prayerFallback',
+                    labelKey: 'settings.prayerFallback',
+                    descKey: 'settings.prayerFallback.desc',
+                    default: 'calc',
+                    options: PRAYER_FALLBACKS.map((id) => ({
+                        value: id,
+                        labelKey: `prayer.fallback.${id}`,
+                    })),
+                    showIf: (v) => v.prayerSource === 'api',
                 },
                 {
                     type: 'select',

@@ -6,7 +6,7 @@ import type { EventSource, SourceEvent } from '../../core/scheduler';
 import type ZenithPlugin from '../../main';
 import { PRAYERS, type PrayerId } from './prayerConfig';
 import { prayerPlaceOf } from './prayerOptions';
-import { subscribeApi } from './prayerApi';
+import { subscribeTables } from './prayerTable';
 import { dayTimesFor, ensurePrayerDay } from './prayerSource';
 import { dateAtMinutes, formatClock } from './prayerTimes';
 
@@ -42,9 +42,9 @@ export class PrayerReminderService implements EventSource<PrayerEvent> {
     start(): void {
         this.disposers.push(this.plugin.scheduler.register(this));
         const reschedule = () => this.plugin.scheduler.reschedule();
-        // A month arriving can move the next prayer by a minute or two, and the
+        // A year arriving can move the next prayer by a minute or two, and the
         // timer was aimed with the calculated value — so it is re-aimed.
-        this.disposers.push(subscribeApi(reschedule));
+        this.disposers.push(subscribeTables(reschedule));
         // Any of these changes the answer to "when is the next prayer" — a
         // moved city or a switched method has to re-aim the timer, not wait for
         // the old one to fire.
@@ -62,6 +62,8 @@ export class PrayerReminderService implements EventSource<PrayerEvent> {
                         s.prayerHighLatRule,
                         s.prayerFajrAngle,
                         s.prayerIshaAngle,
+                        s.prayerRounding,
+                        s.prayerFallback,
                         JSON.stringify(s.prayerAdjustments),
                         JSON.stringify(prayerPlaceOf(s)),
                     ].join('|');
