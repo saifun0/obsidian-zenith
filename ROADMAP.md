@@ -149,7 +149,7 @@
 
 ### 0.4 Помощники периода и темпа
 
-- [ ] `src/core/period.ts`: `periodProgress(start, end, today)` и
+- [x] `src/core/period.ts`: `periodProgress(start, end, today)` и
       `pace(target, done, start, end, today)` → ожидаемое к сегодня, отставание/опережение,
       нужный темп в день. ~60 строк с тестами. Общей сущности «Цель» не заводить.
 
