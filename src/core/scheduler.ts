@@ -85,10 +85,10 @@ export class Scheduler {
 
     /** Add a source; returns what removes it. */
     register<E extends SourceEvent>(source: EventSource<E>): () => void {
-        this.sources.set(source.id, source as unknown as EventSource);
+        this.sources.set(source.id, source);
         this.reschedule();
         return () => {
-            if (this.sources.get(source.id) === (source as unknown as EventSource)) {
+            if (this.sources.get(source.id) === source) {
                 this.sources.delete(source.id);
                 this.reschedule();
             }

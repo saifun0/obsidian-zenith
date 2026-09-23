@@ -119,8 +119,10 @@ export function snoozeRecord(
 /** A snooze that has come round: showing again, and unread. */
 export function wakeRecord(state: NotificationState, id: string): NotificationState {
     return update(state, id, (r) => {
-        const { snoozedUntil: _gone, readAt: _read, ...rest } = r;
-        return rest;
+        const woken = { ...r };
+        delete woken.snoozedUntil;
+        delete woken.readAt;
+        return woken;
     });
 }
 
