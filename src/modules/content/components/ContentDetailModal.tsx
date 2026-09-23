@@ -1,7 +1,7 @@
 import { useFeature } from '../../../core/useFeature';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Notice } from 'obsidian';
-import { CalendarCheck, CalendarClock, ExternalLink, FileText, RefreshCw, Trash2 } from 'lucide-react';
+import { CalendarCheck, CalendarClock, FileText, Trash2 } from 'lucide-react';
 import type { ContentItem } from '../../../store/contentSlice';
 import type { ContentTypeConfig, ContentFieldId } from '../../../core/contentTypes';
 import { CONTENT_STATUSES } from '../../../core/constants';
@@ -11,9 +11,6 @@ import { useApp } from '../../../context/AppContext';
 import { ContentWriter } from '../services/contentWriter';
 import { setItemStatus } from '../services/contentActions';
 import { datesForStatus, daysBetween, type ContentDates } from '../services/contentDates';
-import { cacheCover, isRemoteCover } from '../services/coverCache';
-import { findRefreshedMetadata } from '../services/metadata/resync';
-import { providerSearchable } from '../services/metadata';
 import { getTodayString } from '../../../core/dateUtils';
 import { useTranslation } from '../../../core/i18n';
 import { resolveCover } from '../services/coverUrl';
@@ -62,8 +59,6 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
     const updateItemRating = useZenithStore((s) => s.updateItemRating);
     const patchContentItem = useZenithStore((s) => s.patchContentItem);
     const setContentGenreFilter = useZenithStore((s) => s.setContentGenreFilter);
-    const contentFolderPath = useZenithStore((s) => s.settings.contentFolderPath);
-    const cacheCovers = useZenithStore((s) => s.settings.cacheCovers);
 
     // Local mirror so the modal reflects edits without waiting for a re-parse.
     const [rating, setRating] = useState(item.rating);
@@ -73,7 +68,7 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
         current: item.progressCurrent ?? 0,
         total: item.progressTotal,
     });
-    const [busy, setBusy] = useState<'resync' | 'delete' | null>(null);
+    const [busy, setBusy] = useState(false);
     const [showFullDesc, setShowFullDesc] = useState(false);
 
     const writer = useRef(new ContentWriter(app));
@@ -182,61 +177,12 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
         [flushProgress]
     );
 
-    /**
-     * Re-fetch this item's metadata from the source it was filled from.
-     *
-     * Only overwrites the fields a provider owns, and only when it can identify
-     * the same work again — a re-sync that silently rebound an item to a
-     * different film with a similar title would be worse than not refreshing.
-     *
-     * Two things a provider does *not* own: your rating, which goes to
-     * `externalRating` so both scores can coexist, and the decision to keep
-     * covers in the vault — a refreshed cover is cached exactly like a new
-     * item's, or the refresh would quietly opt this item out of working offline.
-     */
-    const resync = async () => {
-        if (busy) return;
-        setBusy('resync');
-        try {
-            const fresh = await findRefreshedMetadata(type.provider, item.title, item.sourceId);
-            if (!fresh) {
-                new Notice(t('content.error.resync'));
-                return;
-            }
-
-            let cover = fresh.coverUrl ?? item.coverImage;
-            if (cacheCovers && cover && isRemoteCover(cover)) {
-                cover = (await cacheCover(app, contentFolderPath, item.title, cover)) ?? cover;
-            }
-
-            await writer.current.patch(item.filePath, {
-                cover,
-                year: fresh.year ?? item.year,
-                creator: fresh.creator ?? item.creator,
-                genres: fresh.genres?.length ? fresh.genres : item.genres,
-                externalRating:
-                    typeof fresh.rating === 'number'
-                        ? Math.round(fresh.rating * 10) / 10
-                        : item.externalRating,
-                progressTotal: fresh.total ?? item.progressTotal,
-                source: fresh.source ?? item.source,
-                sourceId: fresh.sourceId ?? item.sourceId,
-            });
-            new Notice(t('content.resynced'));
-        } catch (err) {
-            console.error('Zenith: Failed to refresh metadata:', err);
-            new Notice(t('content.error.resync'));
-        } finally {
-            setBusy(null);
-        }
-    };
-
     const remove = async () => {
         if (busy) return;
         // The note goes to the vault's trash, so this is a reassurance rather
         // than a last warning.
         if (!window.confirm(t('content.detail.deleteConfirm', { title: item.title }))) return;
-        setBusy('delete');
+        setBusy(true);
         try {
             if (await writer.current.deleteItem(item.filePath)) onClose();
             else new Notice(t('content.error.delete'));
@@ -244,7 +190,7 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
             console.error('Zenith: Failed to delete item:', err);
             new Notice(t('content.error.delete'));
         } finally {
-            setBusy(null);
+            setBusy(false);
         }
     };
 
@@ -330,16 +276,6 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
                                     showValue
                                     ariaLabel={t('content.form.rating')}
                                 />
-                                {item.externalRating != null && (
-                                    <span
-                                        className="zenith-content-modal__external"
-                                        title={t('content.detail.externalRatingHint')}
-                                    >
-                                        {t('content.detail.externalRating', {
-                                            value: item.externalRating.toFixed(1),
-                                        })}
-                                    </span>
-                                )}
                             </div>
                         </div>
                     )}
@@ -422,34 +358,13 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
                     >
                         <FileText size={15} /> {t('common.openNote')}
                     </button>
-                    {item.source && (
-                        <a
-                            className="zenith-btn zenith-btn--ghost"
-                            href={item.source}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <ExternalLink size={15} /> {t('content.detail.source')}
-                        </a>
-                    )}
-                    {providerSearchable(type.provider) && (
-                        <button
-                            className="zenith-btn zenith-btn--ghost"
-                            onClick={() => void resync()}
-                            disabled={busy !== null}
-                            title={t('content.detail.resync')}
-                        >
-                            <RefreshCw size={15} className={busy === 'resync' ? 'zenith-spin' : ''} />
-                            {t(busy === 'resync' ? 'content.detail.resyncing' : 'content.detail.resync')}
-                        </button>
-                    )}
                     {/* Destructive, so it sits apart from the row and is named by
                         its tooltip: as a full red button it read as one of the
-                        four things you might reasonably want to do next. */}
+                        things you might reasonably want to do next. */}
                     <button
                         className="zenith-btn zenith-content-modal__delete"
                         onClick={() => void remove()}
-                        disabled={busy !== null}
+                        disabled={busy}
                         aria-label={t('content.detail.delete')}
                         title={t('content.detail.delete')}
                     >

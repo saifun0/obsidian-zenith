@@ -69,9 +69,6 @@ describe('one popover, not seven', () => {
         // Positioned against the habit grid's own box from an (x, y) rather
         // than from an element, and it has no anchor to hand Popover.
         'modules/journal/components/HabitValuePicker.tsx',
-        // Lives inside a dialog and takes Escape before the dialog does; that
-        // ordering is the feature, and Popover would take the key first.
-        'modules/content/components/MetadataPicker.tsx',
     ];
 
     it('does not re-implement dismissal', () => {

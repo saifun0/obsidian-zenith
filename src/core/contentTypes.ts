@@ -2,64 +2,15 @@
  * Content type configuration.
  *
  * A "content type" (book, movie, anime, or a user-defined one) bundles its
- * presentation (label, icon, colour), which keyless metadata provider auto-fills
- * it, what the "creator" field is called for it (Author / Director / Studio …),
- * and which of the curated metadata fields it shows. Types are user-editable in
- * settings; when none are saved the built-in {@link DEFAULT_CONTENT_TYPES} apply.
- */
-
-/**
- * Keyless metadata source a type searches when auto-filling.
+ * presentation (label, icon, colour), what the "creator" field is called for it
+ * (Author / Director / Studio …), and which of the curated metadata fields it
+ * shows. Types are user-editable in settings; when none are saved the built-in
+ * {@link DEFAULT_CONTENT_TYPES} apply.
  *
- * Each id names a *subject* (movie, anime, game) rather than a single API —
- * behind one id the service may try several keyless sources in order, so a
- * miss on one still fills the form. The `itunes-*` / `jikan-*` ids are the
- * original one-API-per-id names, kept so saved settings keep resolving; see
- * {@link normalizeProviderId}.
+ * Types saved by an older version also carry a `provider` — the online
+ * catalogue it auto-filled from. Nothing reads it any more, and the settings
+ * migration to version 11 drops it.
  */
-export type MetadataProviderId =
-    | 'movie'
-    | 'show'
-    | 'music'
-    | 'books'
-    | 'anime'
-    | 'manga'
-    | 'game'
-    | 'wikipedia'
-    | 'none'
-    // ── Legacy aliases (pre-multi-source), never offered in the UI ──
-    | 'itunes-movie'
-    | 'itunes-show'
-    | 'itunes-music'
-    | 'jikan-anime'
-    | 'jikan-manga';
-
-/** The provider ids offered in settings, in menu order. */
-export const METADATA_PROVIDER_IDS: readonly MetadataProviderId[] = [
-    'movie',
-    'show',
-    'anime',
-    'manga',
-    'books',
-    'game',
-    'music',
-    'wikipedia',
-    'none',
-] as const;
-
-const LEGACY_PROVIDER_IDS: Record<string, MetadataProviderId> = {
-    'itunes-movie': 'movie',
-    'itunes-show': 'show',
-    'itunes-music': 'music',
-    'jikan-anime': 'anime',
-    'jikan-manga': 'manga',
-};
-
-/** Resolve a stored provider id (possibly a legacy alias) to a current one. */
-export function normalizeProviderId(id: MetadataProviderId | string | undefined): MetadataProviderId {
-    if (!id) return 'none';
-    return LEGACY_PROVIDER_IDS[id] ?? (id as MetadataProviderId);
-}
 
 /** The fixed set of metadata fields a type can choose to display. */
 export type ContentFieldId =
@@ -100,7 +51,6 @@ export interface ContentTypeConfig {
     icon: string;
     /** Accent colour (hex) for the type badge/ribbon. */
     color: string;
-    provider: MetadataProviderId;
     /** What the shared "creator" field is called for this type. */
     creatorLabel?: string;
     /** What one unit of progress is called: "pages", "episodes", "chapters"… */
@@ -114,14 +64,14 @@ const NO_PROGRESS: ContentFieldId[] = ['year', 'creator', 'genres', 'rating', 't
 
 /** Built-in types, applied whenever the user hasn't saved a custom set. */
 export const DEFAULT_CONTENT_TYPES: readonly ContentTypeConfig[] = [
-    { id: 'book', label: 'Book', icon: 'book-open', color: '#8b5cf6', provider: 'books', creatorLabel: 'Author', progressUnit: 'pages', fields: [...ALL_FIELDS] },
-    { id: 'movie', label: 'Movie', icon: 'film', color: '#ec4899', provider: 'movie', creatorLabel: 'Director', progressUnit: 'minutes', fields: [...NO_PROGRESS] },
-    { id: 'show', label: 'Show', icon: 'tv', color: '#3b82f6', provider: 'show', creatorLabel: 'Network', progressUnit: 'episodes', fields: [...ALL_FIELDS] },
-    { id: 'anime', label: 'Anime', icon: 'sparkles', color: '#f59e0b', provider: 'anime', creatorLabel: 'Studio', progressUnit: 'episodes', fields: [...ALL_FIELDS] },
-    { id: 'manga', label: 'Manga', icon: 'book', color: '#10b981', provider: 'manga', creatorLabel: 'Author', progressUnit: 'chapters', fields: [...ALL_FIELDS] },
-    { id: 'game', label: 'Game', icon: 'gamepad-2', color: '#22c55e', provider: 'game', creatorLabel: 'Developer', progressUnit: 'hours', fields: [...ALL_FIELDS] },
-    { id: 'music', label: 'Music', icon: 'music', color: '#eab308', provider: 'music', creatorLabel: 'Artist', progressUnit: 'tracks', fields: [...NO_PROGRESS] },
-    { id: 'other', label: 'Other', icon: 'package', color: '#6b7280', provider: 'wikipedia', creatorLabel: 'Creator', progressUnit: 'units', fields: [...ALL_FIELDS] },
+    { id: 'book', label: 'Book', icon: 'book-open', color: '#8b5cf6', creatorLabel: 'Author', progressUnit: 'pages', fields: [...ALL_FIELDS] },
+    { id: 'movie', label: 'Movie', icon: 'film', color: '#ec4899', creatorLabel: 'Director', progressUnit: 'minutes', fields: [...NO_PROGRESS] },
+    { id: 'show', label: 'Show', icon: 'tv', color: '#3b82f6', creatorLabel: 'Network', progressUnit: 'episodes', fields: [...ALL_FIELDS] },
+    { id: 'anime', label: 'Anime', icon: 'sparkles', color: '#f59e0b', creatorLabel: 'Studio', progressUnit: 'episodes', fields: [...ALL_FIELDS] },
+    { id: 'manga', label: 'Manga', icon: 'book', color: '#10b981', creatorLabel: 'Author', progressUnit: 'chapters', fields: [...ALL_FIELDS] },
+    { id: 'game', label: 'Game', icon: 'gamepad-2', color: '#22c55e', creatorLabel: 'Developer', progressUnit: 'hours', fields: [...ALL_FIELDS] },
+    { id: 'music', label: 'Music', icon: 'music', color: '#eab308', creatorLabel: 'Artist', progressUnit: 'tracks', fields: [...NO_PROGRESS] },
+    { id: 'other', label: 'Other', icon: 'package', color: '#6b7280', creatorLabel: 'Creator', progressUnit: 'units', fields: [...ALL_FIELDS] },
 ] as const;
 
 /**
@@ -158,7 +108,7 @@ export function resolveContentType(types: ContentTypeConfig[], id: string): Cont
             label: id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Other',
             icon: 'package',
             color: '#6b7280',
-            provider: 'wikipedia',
+           
             creatorLabel: 'Creator',
             progressUnit: 'units',
             fields: [...ALL_FIELDS],

@@ -536,21 +536,25 @@
     justify-content: center;
     overflow: hidden;
 }
-.zenith-form__poster-busy {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.45);
-    color: #fff;
-}
 .zenith-form__poster-hint {
     display: inline-flex;
     align-items: center;
     gap: 3px;
     font-size: 0.62rem;
     color: var(--zenith-text-faint);
+}
+/* A cover is a path or a link typed in, or a picture chosen from the vault. */
+.zenith-form__cover-row {
+    display: flex;
+    gap: var(--zenith-space-sm);
+    align-items: center;
+}
+.zenith-form__cover-row .zenith-field__input {
+    flex: 1;
+    min-width: 0;
+}
+.zenith-form__cover-row .zenith-btn {
+    flex-shrink: 0;
 }
 /* Load probe — present in the DOM only to report onError/onLoad. */
 .zenith-form__poster-probe {
@@ -559,182 +563,6 @@
     height: 1px;
     opacity: 0;
     pointer-events: none;
-}
-
-/* ── Metadata picker (title search + result list) ─── */
-.zenith-picker {
-    position: relative;
-}
-.zenith-picker__input-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-.zenith-picker__icon {
-    position: absolute;
-    left: 11px;
-    color: var(--zenith-text-muted);
-    pointer-events: none;
-}
-.zenith-dialog .zenith-picker__input,
-.zenith-root .zenith-picker__input {
-    padding-left: 34px;
-}
-.zenith-picker__panel {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    z-index: 30;
-    padding: 4px;
-    /* ~4.5 rows: enough to browse, short enough that the row below is clearly
-       cut off rather than looking like part of the last one. */
-    max-height: 340px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    background: var(--zenith-bg-primary);
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-md);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
-}
-/* Names the upstream once, so the per-row badge can be dropped. */
-.zenith-picker__origin {
-    padding: 5px 8px 6px;
-    font-size: 0.62rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--zenith-text-faint);
-}
-.zenith-picker__list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-.zenith-picker__list li {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-/* A hairline between rows: with 48px covers stacked edge to edge the list read
-   as one continuous strip of artwork with text floating over it. */
-.zenith-picker__list li + li {
-    border-top: 1px solid color-mix(in srgb, var(--zenith-border) 55%, transparent);
-}
-/* Parent + tag scoping: a bare `.class` loses to Obsidian's own `button`
-   rules, which is what put a frame and centred text on every result row. */
-.zenith-picker__list li button.zenith-picker__result,
-.zenith-picker__list button.zenith-picker__result {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 12px;
-    width: 100%;
-    /* Must clear the 48px thumb — at 6px the rows collided. */
-    min-height: 64px;
-    padding: 8px;
-    margin: 0;
-    border: none;
-    background: transparent;
-    box-shadow: none;
-    border-radius: var(--zenith-radius-sm);
-    cursor: pointer;
-    text-align: left;
-    font-size: inherit;
-    line-height: 1.35;
-    color: var(--zenith-text-normal);
-}
-.zenith-picker__list li button.zenith-picker__result:hover,
-.zenith-picker__list li button.zenith-picker__result.is-active {
-    background: var(--zenith-bg-hover);
-}
-.zenith-picker__list li button.zenith-picker__result:focus,
-.zenith-picker__list li button.zenith-picker__result:focus-visible {
-    outline: none;
-    box-shadow: none;
-}
-.zenith-picker__thumb {
-    width: 34px;
-    height: 48px;
-    flex-shrink: 0;
-    border-radius: var(--zenith-radius-xs);
-    background: var(--zenith-bg-tertiary) center / cover no-repeat;
-}
-.zenith-picker__body {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-    min-width: 0;
-}
-.zenith-picker__title {
-    font-size: 0.88rem;
-    font-weight: 500;
-    line-height: 1.3;
-    /* Two lines rather than one hard truncation: long anime/manga titles differ
-       only near the end ("… - Ketsubetsu-tan"), so cutting at one line makes
-       neighbouring entries indistinguishable. */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-.zenith-picker__sub {
-    font-size: 0.75rem;
-    color: var(--zenith-text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.zenith-picker__meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 3px;
-    flex-shrink: 0;
-    align-self: flex-start;
-    padding-top: 1px;
-}
-.zenith-picker__score {
-    font-size: 0.74rem;
-    font-weight: 700;
-    color: var(--zenith-warning);
-    font-variant-numeric: tabular-nums;
-}
-.zenith-picker__source {
-    font-size: 0.6rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--zenith-text-faint);
-}
-.zenith-picker__note {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    padding: 10px;
-    font-size: 0.82rem;
-    color: var(--zenith-text-muted);
-}
-.zenith-picker__note--error {
-    color: var(--zenith-danger);
-}
-.zenith-picker__panel button.zenith-picker__retry {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-xs);
-    background: transparent;
-    box-shadow: none;
-    color: var(--zenith-text-muted);
-    font-size: 0.75rem;
-    cursor: pointer;
-}
-.zenith-picker__panel button.zenith-picker__retry:hover {
-    background: var(--zenith-bg-hover);
-    color: var(--zenith-text-normal);
 }
 
 /* ── Progress control ─────────────────────────────── */
@@ -1578,13 +1406,6 @@ button.zenith-ctype__add {
     align-items: center;
     gap: var(--zenith-space-sm);
     flex-wrap: wrap;
-}
-.zenith-content-modal__external,
-.zenith-form__external {
-    font-size: 0.7rem;
-    color: var(--zenith-text-faint);
-    white-space: nowrap;
-    cursor: help;
 }
 
 .zenith-content-modal__dates {

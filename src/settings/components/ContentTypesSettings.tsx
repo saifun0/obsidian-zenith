@@ -4,23 +4,18 @@ import { useApp } from '../../context/AppContext';
 import { useZenithStore } from '../../store';
 import {
     effectiveContentTypes,
-    normalizeProviderId,
     CONTENT_FIELDS,
-    METADATA_PROVIDER_IDS,
     type ContentTypeConfig,
     type ContentFieldId,
-    type MetadataProviderId,
 } from '../../core/contentTypes';
-import { providerLabel } from '../../modules/content/services/metadata';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
 import { IconPickerModal } from '../../core/IconPickerModal';
-import { ColorField, Dropdown } from '../../components/ui/fields';
+import { ColorField } from '../../components/ui/fields';
 import { translateNow, useTranslation } from '../../core/i18n';
 
 /**
  * ContentTypesSettings — manage the content type catalogue: label, icon, colour,
- * metadata provider, the "creator" field's label, and which curated fields each
- * type shows. Editing materializes the full list into `settings.contentTypes`
+ * the "creator" field's label, and which curated fields each type shows. Editing materializes the full list into `settings.contentTypes`
  * (until then the built-in defaults apply).
  */
 export const ContentTypesSettings: React.FC = () => {
@@ -59,7 +54,6 @@ export const ContentTypesSettings: React.FC = () => {
                 label: translateNow('ctypes.newType'),
                 icon: 'package',
                 color: '#8b5cf6',
-                provider: 'wikipedia',
                 creatorLabel: translateNow('ctypes.defaultCreator'),
                 progressUnit: translateNow('ctypes.defaultUnit'),
                 fields: CONTENT_FIELDS.map((f) => f.id),
@@ -110,18 +104,6 @@ export const ContentTypesSettings: React.FC = () => {
                     </div>
 
                     <div className="zenith-ctype__row">
-                        <label className="zenith-ctype__field">
-                            <span>{t('ctypes.metadataSource')}</span>
-                            <Dropdown
-                                size="sm"
-                                value={normalizeProviderId(type.provider)}
-                                options={METADATA_PROVIDER_IDS.map((p) => ({
-                                    value: p,
-                                    label: providerLabel(p),
-                                }))}
-                                onChange={(p) => patch(type.id, { provider: p as MetadataProviderId })}
-                            />
-                        </label>
                         <label className="zenith-ctype__field">
                             <span>{t('ctypes.creatorLabel')}</span>
                             <input

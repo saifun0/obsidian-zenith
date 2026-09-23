@@ -80,7 +80,6 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
 
     // ── Content library ──
     contentTypes: { scope: 'shared', merge: 'byId' },
-    cacheCovers: { scope: 'shared' },
 
     // ── Calendar behaviour (config, not view state) ──
     calendarWidgetRowLabel: { scope: 'shared' },

@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useRef, type FC } from 'react';
+import React, { useState, useMemo, type FC } from 'react';
 import { Notice } from 'obsidian';
-import { Plus, Loader2, ImageOff, AlertTriangle } from 'lucide-react';
+import { Plus, Loader2, Image, ImageOff, AlertTriangle } from 'lucide-react';
 import { useZenithStore } from '../../../store';
 import { useApp } from '../../../context/AppContext';
 import { CONTENT_STATUSES } from '../../../core/constants';
@@ -12,19 +12,16 @@ import {
 } from '../../../core/contentTypes';
 import { ContentWriter } from '../services/contentWriter';
 import { findDuplicates } from '../services/contentDuplicates';
-import { enrichMetadata } from '../services/metadata';
-import type { MetadataResult } from '../services/metadata/types';
 import { DEFAULT_PROGRESS_UNIT, statusForProgress, type ProgressValue } from '../services/progress';
 import { resolveCover } from '../services/coverUrl';
-import { cacheCover, isRemoteCover } from '../services/coverCache';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
 import { Modal } from '../../../components/shared/Modal';
 import { Dropdown } from '../../../components/ui/fields';
 import { StarRating } from '../../../components/shared/StarRating';
-import { MetadataPicker } from './MetadataPicker';
 import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import { ProgressControl } from './ProgressControl';
+import { pickVaultImage } from '../../../components/shared/ImagePickerModal';
 
 interface ContentFormProps {
     onCancel: () => void;
@@ -39,20 +36,21 @@ const STATUS_KEY: Record<ContentStatus, string> = {
 };
 
 /**
- * ContentForm — the "add item" dialog: pick a type, type a title, and the type's
- * keyless provider auto-fills cover/year/creator/genres/rating/synopsis/length
- * from a picked result. Every field stays editable; providers are an assist, not
- * a requirement (types with the `none` provider are pure manual entry).
+ * ContentForm — the "add item" dialog: pick a type, then fill in what you know.
+ *
+ * Nothing is looked up. Auto-fill from online catalogues was tried and removed:
+ * it guessed wrong often enough that every item needed checking anyway, and a
+ * library is the user's own record rather than a mirror of someone's database.
+ * The cover is a picture from the vault or a link pasted by hand, shown from
+ * where it is and never downloaded.
  *
  * It lives in a real {@link Modal} rather than inline above the gallery: the
- * form is long, and inline it pushed the whole library down the page and had
- * nowhere sensible to put the search dropdown on a phone.
+ * form is long, and inline it pushed the whole library down the page.
  */
 export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
     const { app } = useApp();
     const t = useTranslation();
     const contentFolderPath = useZenithStore((s) => s.settings.contentFolderPath);
-    const cacheCovers = useZenithStore((s) => s.settings.cacheCovers);
     const existingItems = useZenithStore((s) => s.contentItems);
     const savedTypes = useZenithStore((s) => s.settings.contentTypes);
     const types = useMemo(() => effectiveContentTypes(savedTypes), [savedTypes]);
@@ -65,7 +63,6 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
     const [title, setTitle] = useState('');
     const [status, setStatus] = useState<ContentStatus>('backlog');
     const [rating, setRating] = useState(0);
-    const [externalRating, setExternalRating] = useState<number | undefined>(undefined);
     const [coverImage, setCoverImage] = useState('');
     const [year, setYear] = useState('');
     const [creator, setCreator] = useState('');
@@ -73,67 +70,8 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
     const [progress, setProgress] = useState<ProgressValue>({ current: 0 });
     const [tagsInput, setTagsInput] = useState('');
     const [description, setDescription] = useState('');
-    const [source, setSource] = useState('');
-    const [sourceId, setSourceId] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const [enriching, setEnriching] = useState(false);
     const [coverBroken, setCoverBroken] = useState(false);
-
-    // Set right after a pick so the resulting title change doesn't re-search.
-    const [justPicked, setJustPicked] = useState(false);
-    const enrichSeq = useRef(0);
-
-    /** Apply a metadata hit over the form, leaving anything it lacks untouched. */
-    const applyResult = (r: MetadataResult) => {
-        setTitle(r.title);
-        if (r.coverUrl) {
-            setCoverImage(r.coverUrl);
-            setCoverBroken(false);
-        }
-        if (r.year) setYear(String(r.year));
-        if (r.creator) setCreator(r.creator);
-        if (r.genres?.length) setGenresInput(r.genres.join(', '));
-        // The source's score is recorded as the source's, not as yours. Filling
-        // your stars with a number you haven't given means a library where
-        // "rated 8" and "IMDb says 8" are indistinguishable a year later.
-        if (typeof r.rating === 'number') setExternalRating(Math.round(r.rating * 10) / 10);
-        if (r.description) setDescription(r.description);
-        if (r.total) setProgress((p) => ({ current: p.current, total: r.total }));
-        setSource(r.source ?? '');
-        setSourceId(r.sourceId ?? '');
-    };
-
-    const pick = async (r: MetadataResult) => {
-        setJustPicked(true);
-        applyResult(r);
-
-        // Some sources (Steam) only return names from search; fetch the rest now.
-        if (r.enrichKey) {
-            const seq = ++enrichSeq.current;
-            setEnriching(true);
-            try {
-                const full = await enrichMetadata(typeCfg.provider, r);
-                if (seq === enrichSeq.current) applyResult(full);
-            } finally {
-                if (seq === enrichSeq.current) setEnriching(false);
-            }
-        }
-    };
-
-    const editTitle = (next: string) => {
-        setTitle(next);
-        // Typing over an auto-filled title invalidates its provenance.
-        if (justPicked) {
-            setJustPicked(false);
-            setSource('');
-            setSourceId('');
-        }
-    };
-
-    const changeType = (id: string) => {
-        setTypeId(id);
-        setJustPicked(false);
-    };
 
     // Nothing here blocks the save — it only shows what's already in the library
     // so adding a second copy is a decision rather than an accident.
@@ -159,12 +97,7 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
             const parsedYear = Number(year);
             const tracksProgress = shows('progress');
 
-            // Pull the artwork into the vault so the library still has covers
-            // offline. Best-effort: on failure the remote URL is kept as-is.
-            let cover = coverImage.trim();
-            if (cacheCovers && isRemoteCover(cover)) {
-                cover = (await cacheCover(app, contentFolderPath, trimmed, cover)) ?? cover;
-            }
+            const cover = coverImage.trim();
             // Starting or finishing something in the add form should land in the
             // right column without a second edit.
             const finalStatus = tracksProgress ? statusForProgress(progress, status) : status;
@@ -182,9 +115,6 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                 genres: splitList(genresInput),
                 progress: tracksProgress ? progress.current : undefined,
                 progressTotal: tracksProgress ? progress.total : undefined,
-                source: source.trim() || undefined,
-                sourceId: sourceId.trim() || undefined,
-                externalRating,
                 // An item added as already-finished is finished today; anything
                 // else has no date to claim yet.
                 finished: finalStatus === 'completed' ? getTodayString() : undefined,
@@ -236,7 +166,7 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                                     ? { borderColor: t.color, color: t.color, background: `${t.color}1f` }
                                     : undefined
                             }
-                            onClick={() => changeType(t.id)}
+                            onClick={() => setTypeId(t.id)}
                         >
                             <ObsidianIcon name={t.icon} size={14} />
                             {t.label}
@@ -258,11 +188,6 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                             {!coverPreview && (
                                 <span style={{ color: typeCfg.color }}>
                                     <ObsidianIcon name={typeCfg.icon} size={30} />
-                                </span>
-                            )}
-                            {enriching && (
-                                <span className="zenith-form__poster-busy">
-                                    <Loader2 size={18} className="zenith-spin" />
                                 </span>
                             )}
                         </div>
@@ -289,12 +214,13 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                             <label className="zenith-field__label" htmlFor="content-title">
                                 {t('content.form.titleLabel')}
                             </label>
-                            <MetadataPicker
-                                provider={typeCfg.provider}
+                            <input
+                                id="content-title"
+                                type="text"
+                                className="zenith-input zenith-field__input"
                                 value={title}
-                                onValueChange={editTitle}
-                                onPick={pick}
-                                suppressed={justPicked}
+                                onChange={(e) => setTitle(e.target.value)}
+                                autoFocus
                             />
                             {duplicates.length > 0 && (
                                 <div className="zenith-form__dupes">
@@ -326,17 +252,34 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                             <label className="zenith-field__label" htmlFor="content-cover">
                                 {t('content.form.cover')}
                             </label>
-                            <input
-                                id="content-cover"
-                                type="text"
-                                className="zenith-input zenith-field__input"
-                                placeholder={t('content.form.coverPlaceholder')}
-                                value={coverImage}
-                                onChange={(e) => {
-                                    setCoverImage(e.target.value);
-                                    setCoverBroken(false);
-                                }}
-                            />
+                            <div className="zenith-form__cover-row">
+                                <input
+                                    id="content-cover"
+                                    type="text"
+                                    className="zenith-input zenith-field__input"
+                                    placeholder={t('content.form.coverPlaceholder')}
+                                    value={coverImage}
+                                    onChange={(e) => {
+                                        setCoverImage(e.target.value);
+                                        setCoverBroken(false);
+                                    }}
+                                />
+                                {/* The list rather than a typed path: a wrong
+                                    path shows nothing and says nothing. */}
+                                <button
+                                    type="button"
+                                    className="zenith-btn zenith-btn--ghost"
+                                    onClick={() =>
+                                        pickVaultImage(app, t('settings.vaultImage.search'), (path) => {
+                                            setCoverImage(path);
+                                            setCoverBroken(false);
+                                        })
+                                    }
+                                >
+                                    <Image size={14} />
+                                    {t('content.form.coverPick')}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -393,14 +336,6 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                         <span className="zenith-field__label">{t('content.form.rating')}</span>
                         <div className="zenith-form__rating">
                             <StarRating value={rating} onChange={setRating} showValue ariaLabel={t('content.form.rating')} />
-                            {externalRating != null && (
-                                <span
-                                    className="zenith-form__external"
-                                    title={t('content.detail.externalRatingHint')}
-                                >
-                                    {t('content.detail.externalRating', { value: externalRating.toFixed(1) })}
-                                </span>
-                            )}
                         </div>
                     </div>
                 )}

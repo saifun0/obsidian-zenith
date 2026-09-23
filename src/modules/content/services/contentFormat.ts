@@ -39,8 +39,6 @@ export function normalizeContentItem(
     // writes it.
     const status = statusForProgress(progress, writtenStatus);
 
-    const externalRating = Number(fm.externalRating);
-
     return {
         id: filePath,
         title: (fm.title as string) || basename,
@@ -59,14 +57,8 @@ export function normalizeContentItem(
         progress: fm.progress != null ? String(fm.progress).trim() || undefined : undefined,
         progressCurrent: progress?.current,
         progressTotal: progress?.total,
-        externalRating:
-            Number.isFinite(externalRating) && externalRating > 0
-                ? Math.min(10, externalRating)
-                : undefined,
         started: toIsoDate(fm.started),
         finished: toIsoDate(fm.finished),
-        source: (fm.source as string)?.trim() || undefined,
-        sourceId: fm.sourceId != null ? String(fm.sourceId) : undefined,
         createdAt: stat?.ctime || undefined,
         updatedAt: stat?.mtime || undefined,
     };

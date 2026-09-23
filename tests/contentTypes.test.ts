@@ -16,22 +16,21 @@ describe('effectiveContentTypes', () => {
 
     it('returns the saved list untouched when nothing needs topping up', () => {
         const saved: ContentTypeConfig[] = [
-            { id: 'x', label: 'X', icon: 'star', color: '#fff', provider: 'none', progressUnit: 'parts', fields: [] },
+            { id: 'x', label: 'X', icon: 'star', color: '#fff', progressUnit: 'parts', fields: [] },
         ];
         expect(effectiveContentTypes(saved)).toBe(saved);
     });
 
     it('backfills progressUnit on types saved before the field existed', () => {
         const saved: ContentTypeConfig[] = [
-            { id: 'book', label: 'Book', icon: 'book-open', color: '#8b5cf6', provider: 'books', fields: ['progress'] },
-            { id: 'custom', label: 'Custom', icon: 'package', color: '#fff', provider: 'none', fields: [] },
+            { id: 'book', label: 'Book', icon: 'book-open', color: '#8b5cf6', fields: ['progress'] },
+            { id: 'custom', label: 'Custom', icon: 'package', color: '#fff', fields: [] },
         ];
         const out = effectiveContentTypes(saved);
         expect(out[0].progressUnit).toBe('pages');
         expect(out[1].progressUnit).toBe('units');
         // The user's own values survive untouched.
         expect(out[0].label).toBe('Book');
-        expect(out[0].provider).toBe('books');
     });
 
     it('deep-copies default fields so callers cannot mutate the constant', () => {

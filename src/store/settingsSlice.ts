@@ -442,11 +442,6 @@ export interface ZenithSettings {
     mediaSelected: string;
     /** Media module: saved/pinned image references (URLs or vault paths) */
     mediaSaved: string[];
-    /**
-     * Download cover art into the vault when adding an item, instead of linking
-     * to the provider's CDN. Keeps the library usable offline.
-     */
-    cacheCovers: boolean;
     /** Dashboard grid geometry (columns, row height, gap). */
     dashboardGrid: GridConfig;
     /** Content library: where you left the view. */
@@ -652,7 +647,7 @@ export interface SettingsSlice {
  * Bump when a migration is added, and gate that migration on the value below.
  * Version 1 is "everything written before versioning existed".
  */
-export const CURRENT_SETTINGS_VERSION = 10;
+export const CURRENT_SETTINGS_VERSION = 11;
 
 /**
  * Object-valued settings that must be merged field-by-field rather than
@@ -792,7 +787,6 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     folderIcons: {},
     mediaSelected: '',
     mediaSaved: [],
-    cacheCovers: true,
     dashboardGrid: { ...DEFAULT_GRID_CONFIG },
     contentView: { type: 'all', status: 'all', sort: 'title', desc: false },
     taskView: { tab: 'all', priority: 'all', tag: '', sort: 'manual', group: 'smart' },
@@ -963,6 +957,23 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
                         beforeProfilesSnapshot(merged, getTodayString()),
                     ];
                 }
+            }
+
+            // ── v10 → v11 ──
+            // The content library stopped going online: no auto-fill, no
+            // covers downloaded into the vault. Unlike the canvas settings
+            // above, there is nothing here to go back to — the switch and each
+            // type's catalogue name only described network access that is gone
+            // — so both are dropped rather than carried in data.json, and in
+            // every profile saved from now on, for ever.
+            if (from < 11) {
+                Reflect.deleteProperty(merged, 'cacheCovers');
+                merged.contentTypes = merged.contentTypes.map((type) => {
+                    if (!('provider' in type)) return type;
+                    const copy: Record<string, unknown> = { ...type };
+                    delete copy.provider;
+                    return copy as unknown as ContentTypeConfig;
+                });
             }
 
             return { settings: merged };

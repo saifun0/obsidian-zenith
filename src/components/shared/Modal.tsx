@@ -36,6 +36,28 @@ interface ModalProps {
 export const DialogInlineContext = createContext(false);
 
 /**
+ * Whether a key was pressed in an Obsidian modal opened over this dialog — the
+ * vault picture list opened from a form, say.
+ *
+ * Such a key is not the dialog's. Escape there means "close the list", and if
+ * the dialog took it too, one press would throw away the whole form; Shift+Tab
+ * would pull focus out of the list and back into the form behind it.
+ *
+ * "Over" is told by document order, because both sit on the same modal layer
+ * and the later one is drawn on top. A modal that comes *before* the dialog —
+ * the settings window a profile preview was opened from — is underneath, and
+ * its keys still belong to the dialog. A modal no longer in the document at all
+ * is one Obsidian closed on this very keypress, before it reached us.
+ */
+function fromModalAbove(e: KeyboardEvent, panel: HTMLElement | null): boolean {
+    const target = e.target as Partial<Element> | null;
+    const modal = target?.closest?.('.modal-container');
+    if (!modal || !panel) return false;
+    if (!modal.isConnected) return true;
+    return (panel.compareDocumentPosition(modal) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+}
+
+/**
  * Modal — the shared portal dialog shell.
  *
  * Portals to `<body>`, so the root carries `zenith-root` to re-declare the
@@ -65,6 +87,7 @@ export const Modal: React.FC<ModalProps> = ({
         if (inline) return;
         const win = host.defaultView ?? window;
         const onKey = (e: KeyboardEvent) => {
+            if (fromModalAbove(e, panelRef.current)) return;
             if (e.key === 'Escape') {
                 onClose();
                 return;
@@ -87,7 +110,7 @@ export const Modal: React.FC<ModalProps> = ({
             }
         };
 
-        // Bubble phase, not capture: a control inside the dialog (the metadata
+        // Bubble phase, not capture: a control inside the dialog (an open
         // dropdown) can then take Escape for itself via stopPropagation. In
         // capture phase the dialog would always win and close out from under it.
         win.addEventListener('keydown', onKey);

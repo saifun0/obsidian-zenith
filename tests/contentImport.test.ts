@@ -84,7 +84,6 @@ describe('parseImport — MyAnimeList', () => {
             progress: 21,
             progressTotal: 366,
             started: '2026-01-04',
-            sourceId: '269',
         });
     });
 
@@ -111,8 +110,9 @@ describe('parseImport — MyAnimeList', () => {
         expect(result?.items).toHaveLength(3);
     });
 
-    it('builds a source link back to MAL', () => {
-        expect(result?.items[0].source).toBe('https://myanimelist.net/anime/269');
+    it('brings nothing across that points back at the service', () => {
+        expect(result?.items[0]).not.toHaveProperty('source');
+        expect(result?.items[0]).not.toHaveProperty('sourceId');
     });
 });
 

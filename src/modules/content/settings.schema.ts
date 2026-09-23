@@ -15,20 +15,13 @@ export const contentSettingsSchema = coreSchema({
                     default: DEFAULT_CONTENT_FOLDER,
                     placeholder: DEFAULT_CONTENT_FOLDER,
                 },
-                {
-                    type: 'toggle',
-                    key: 'cacheCovers',
-                    labelKey: 'settings.cacheCovers',
-                    descKey: 'settings.cacheCovers.desc',
-                    default: true,
-                },
             ],
         },
         {
             id: 'types',
             titleKey: 'settings.contentTypes',
-            // A full editor with per-type icons, colours, metadata providers
-            // and field lists — genuinely bespoke, so it keeps its own UI.
+            // A full editor with per-type icons, colours and field lists —
+            // genuinely bespoke, so it keeps its own UI.
             fields: [{ type: 'custom', key: 'contentTypes', render: ContentTypesSettings }],
         },
     ],

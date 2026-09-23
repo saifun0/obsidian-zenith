@@ -16,10 +16,6 @@ export interface NewContentInput {
     genres?: string[];
     progress?: number;
     progressTotal?: number;
-    source?: string;
-    sourceId?: string;
-    /** The source's own score, 0–10 — never the user's. */
-    externalRating?: number;
     /** `YYYY-MM-DD`. */
     started?: string;
     finished?: string;
@@ -29,6 +25,11 @@ export interface NewContentInput {
  * ContentWriter — persists content-item mutations (rating, status, progress)
  * back to the YAML frontmatter of the source Markdown file, and creates new
  * content notes.
+ *
+ * Edits go through `processFrontMatter` and name only the keys they change, so
+ * whatever else a note carries — keys another plugin reads, or the
+ * `externalRating` / `source` / `sourceId` an older Zenith wrote — stays in
+ * the file exactly as it was.
  */
 export class ContentWriter {
     constructor(private readonly app: App) {}
@@ -126,13 +127,8 @@ export class ContentWriter {
                     .join(', ')}]`
             );
         }
-        if (input.externalRating != null && input.externalRating > 0) {
-            fm.push(`externalRating: ${Math.min(10, Math.round(input.externalRating * 10) / 10)}`);
-        }
         if (input.started) fm.push(`started: ${input.started}`);
         if (input.finished) fm.push(`finished: ${input.finished}`);
-        if (input.source?.trim()) fm.push(`source: ${this.yamlString(input.source)}`);
-        if (input.sourceId?.trim()) fm.push(`sourceId: ${this.yamlString(input.sourceId)}`);
         fm.push('---');
         fm.push('');
         if (input.description) fm.push(input.description.trim());

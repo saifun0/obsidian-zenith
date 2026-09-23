@@ -89,7 +89,6 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     journalTrackers: 'yes',
     journalTaskHeading: 'yes',
     contentTypes: 'yes',
-    cacheCovers: 'yes',
     calendarWidgetRowLabel: 'yes',
     calendarHorizonDays: 'yes',
     calendarSpanColors: 'yes',

@@ -20,7 +20,7 @@ files; there is no hidden database.
 | **Navigation** | A launcher widget with a button for every Zenith view — extendable by any module. |
 | **Tasks** | Parse, filter, search, group, create, edit, complete and delete tasks. |
 | **Journal** | Daily notes on a calendar, with configurable habit / scale / number tracking and the day's tasks. |
-| **Content** | Gallery + stats for tracked media: metadata auto-fill, half-star ratings, statuses, progress, and import from MyAnimeList / Goodreads / Letterboxd. |
+| **Content** | Gallery + stats for tracked media: half-star ratings, statuses, progress, covers from the vault or a link, and import from MyAnimeList / Goodreads / Letterboxd. Works offline. |
 | **Prayer** | Prayer times computed on the device, a countdown to the next one, and a record of what you prayed — kept in the daily note. |
 | **Media Banner** | Show a GIF/image (from the vault or a URL) above the file-explorer tree, with a picker. |
 

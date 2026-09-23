@@ -11,9 +11,8 @@ import type { NewContentInput } from './contentWriter';
  * responsible for writing notes.
  *
  * Nothing is fetched: an import brings across what the export actually contains
- * (title, score, status, progress, dates). Covers and synopses come later from
- * the ordinary "refresh metadata" action, which is why importing 400 items
- * doesn't hammer anyone's API.
+ * (title, score, status, progress, dates) and nothing more. The services' own
+ * ids and links stay behind — the library does not point back at them.
  */
 
 export type ImportFormat = 'mal' | 'goodreads' | 'letterboxd';
@@ -157,9 +156,9 @@ function parseMal(text: string, types: ImportTypeMap): ImportResult {
     const items: ImportedItem[] = [];
     let skipped = 0;
 
-    const sections: { tag: string; typeId: string; titleTag: string; idTag: string; totalTag: string; doneTag: string }[] = [
-        { tag: 'anime', typeId: types.anime, titleTag: 'series_title', idTag: 'series_animedb_id', totalTag: 'series_episodes', doneTag: 'my_watched_episodes' },
-        { tag: 'manga', typeId: types.manga, titleTag: 'manga_title', idTag: 'manga_mangadb_id', totalTag: 'manga_chapters', doneTag: 'my_read_chapters' },
+    const sections: { tag: string; typeId: string; titleTag: string; totalTag: string; doneTag: string }[] = [
+        { tag: 'anime', typeId: types.anime, titleTag: 'series_title', totalTag: 'series_episodes', doneTag: 'my_watched_episodes' },
+        { tag: 'manga', typeId: types.manga, titleTag: 'manga_title', totalTag: 'manga_chapters', doneTag: 'my_read_chapters' },
     ];
 
     for (const s of sections) {
@@ -171,7 +170,6 @@ function parseMal(text: string, types: ImportTypeMap): ImportResult {
             }
             const status = MAL_STATUS[(xmlValue(block, 'my_status') ?? '').toLowerCase()] ?? 'backlog';
             const score = toInt(xmlValue(block, 'my_score')) ?? 0;
-            const sourceId = xmlValue(block, s.idTag);
 
             items.push({
                 title,
@@ -182,8 +180,6 @@ function parseMal(text: string, types: ImportTypeMap): ImportResult {
                 ...completedProgress(status, toInt(xmlValue(block, s.doneTag)), toInt(xmlValue(block, s.totalTag))),
                 started: isoDate(xmlValue(block, 'my_start_date')),
                 finished: isoDate(xmlValue(block, 'my_finish_date')),
-                sourceId,
-                source: sourceId ? `https://myanimelist.net/${s.tag}/${sourceId}` : undefined,
             });
         }
     }
@@ -219,7 +215,6 @@ function parseGoodreads(rows: string[][], typeId: string): ImportResult {
         year: at('Original Publication Year'),
         yearFallback: at('Year Published'),
         dateRead: at('Date Read'),
-        id: at('Book Id'),
     };
 
     for (const row of rows.slice(1)) {
@@ -230,7 +225,6 @@ function parseGoodreads(rows: string[][], typeId: string): ImportResult {
         }
         const status = GOODREADS_STATUS[(row[col.shelf] ?? '').trim().toLowerCase()] ?? 'backlog';
         const finished = isoDate(row[col.dateRead]);
-        const id = (row[col.id] ?? '').trim();
 
         items.push({
             title,
@@ -242,8 +236,6 @@ function parseGoodreads(rows: string[][], typeId: string): ImportResult {
             year: toInt(row[col.year]) ?? toInt(row[col.yearFallback]),
             ...completedProgress(status, undefined, toInt(row[col.pages])),
             finished,
-            sourceId: id || undefined,
-            source: id ? `https://www.goodreads.com/book/show/${id}` : undefined,
         });
     }
 
@@ -259,7 +251,6 @@ function parseLetterboxd(rows: string[][], typeId: string): ImportResult {
         name: at('Name'),
         year: at('Year'),
         rating: at('Rating'),
-        uri: at('Letterboxd URI'),
         // `diary.csv` has both; `Watched Date` is the real one.
         watched: at('Watched Date'),
         date: at('Date'),
@@ -283,7 +274,6 @@ function parseLetterboxd(rows: string[][], typeId: string): ImportResult {
             tags: [],
             year: toInt(row[col.year]),
             finished: isoDate(row[col.watched]) ?? isoDate(row[col.date]),
-            source: (row[col.uri] ?? '').trim() || undefined,
         });
     }
 

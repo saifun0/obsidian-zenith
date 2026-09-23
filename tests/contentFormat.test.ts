@@ -70,9 +70,27 @@ describe('normalizeContentItem', () => {
             creator: 'Studio Pierrot',
             genres: ['action', 'adventure'],
             progress: 'Ep 120/366',
-            source: 'https://myanimelist.net/anime/269',
-            sourceId: '269',
         });
+    });
+
+    it('no longer reads what the online catalogues left behind', () => {
+        // Older notes keep these keys — the file is never cleaned — but they
+        // stop meaning anything to the library.
+        const item = normalizeContentItem(
+            {
+                title: 'Bleach',
+                type: 'anime',
+                externalRating: 7.8,
+                source: 'https://myanimelist.net/anime/269',
+                sourceId: 269,
+            },
+            'Bleach',
+            'content/Bleach.md',
+            ''
+        );
+        expect(item).not.toHaveProperty('externalRating');
+        expect(item).not.toHaveProperty('source');
+        expect(item).not.toHaveProperty('sourceId');
     });
 
     it('keeps the full body as description, letting frontmatter override it', () => {
@@ -196,22 +214,6 @@ describe('normalizeContentItem', () => {
                 ''
             );
             expect(item?.finished).toBe('2026-02-02');
-        });
-
-        it('keeps the provider score separate from the personal one', () => {
-            const item = normalizeContentItem(
-                { title: 'A', type: 'book', rating: 10, externalRating: 7.8 },
-                'A',
-                'A.md',
-                ''
-            );
-            expect(item).toMatchObject({ rating: 10, externalRating: 7.8 });
-        });
-
-        it('drops an unusable external rating', () => {
-            expect(
-                normalizeContentItem({ title: 'A', externalRating: 'n/a' }, 'A', 'A.md', '')?.externalRating
-            ).toBeUndefined();
         });
     });
 });

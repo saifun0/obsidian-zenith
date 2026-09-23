@@ -17,7 +17,6 @@ import { QuickAddForm } from '../../../modules/tasks/components/QuickAddForm';
 import { TaskFilters } from '../../../modules/tasks/components/TaskFilters';
 import type { TaskFilterState } from '../../../modules/tasks/components/TasksApp';
 import type { TaskAttachment } from '../../../modules/tasks/services/taskDetails';
-import { MetadataPicker } from '../../../modules/content/components/MetadataPicker';
 import { ProgressControl } from '../../../modules/content/components/ProgressControl';
 import type { ProgressValue } from '../../../modules/content/services/progress';
 import {
@@ -439,7 +438,6 @@ const DialogFields: React.FC = () => {
     const [attachments, setAttachments] = useState<TaskAttachment[]>([
         { kind: 'link', target: 'https://obsidian.md', label: 'Obsidian' },
     ]);
-    const [searchTitle, setSearchTitle] = useState('');
     const [progress, setProgress] = useState<ProgressValue>({ current: 3, total: 12 });
 
     return (
@@ -522,18 +520,6 @@ const DialogFields: React.FC = () => {
                         onChange={setDueTime}
                     />
                 </DialogField>
-            </Demo>
-            <Demo label="zenith-picker__input" source="MetadataPicker">
-                <DialogScope>
-                    <MetadataPicker
-                        provider="books"
-                        value={searchTitle}
-                        onValueChange={setSearchTitle}
-                        onPick={(result) => setSearchTitle(result.title)}
-                        suppressed={false}
-                        inputId="zenith-debug-picker"
-                    />
-                </DialogScope>
             </Demo>
             <Demo label="zenith-import__pick · option" source="ContentImportModal">
                 <ImportPick />
@@ -743,7 +729,6 @@ const InlineFields: React.FC = () => {
     const authCode = useText();
     const deviceName = useText('Desktop');
     const [typeColour, setTypeColour] = useState('#8b5cf6');
-    const [provider, setProvider] = useState('books');
     const [status, setStatus] = useState<ContentStatus>('in-progress');
 
     return (
@@ -861,19 +846,6 @@ const InlineFields: React.FC = () => {
                         />
                     </div>
                     <div className="zenith-ctype__row">
-                        <label className="zenith-ctype__field">
-                            <span>{t('ctypes.metadataSource')}</span>
-                            <Dropdown
-                                size="sm"
-                                value={provider}
-                                options={[
-                                    { value: 'books', label: 'Books' },
-                                    { value: 'movie', label: 'Movie' },
-                                    { value: 'anime', label: 'Anime' },
-                                ]}
-                                onChange={setProvider}
-                            />
-                        </label>
                         <label className="zenith-ctype__field">
                             <span>{t('ctypes.creatorLabel')}</span>
                             <input

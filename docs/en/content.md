@@ -10,8 +10,7 @@ YAML frontmatter (the note body becomes a short description preview):
 title: "The Great Gatsby"
 type: book        # any configured type: book | movie | show | anime | manga | game | music | other
 status: completed # backlog | in-progress | completed | dropped
-rating: 8         # YOUR score, 0–10 (half stars in the UI, so odd values are reachable)
-externalRating: 7.8          # the source's own score — never overwrites yours
+rating: 8         # your score, 0–10 (half stars in the UI, so odd values are reachable)
 cover: "covers/gatsby.jpg"   # vault path or https URL
 year: 1925
 creator: "F. Scott Fitzgerald"
@@ -21,8 +20,6 @@ progressTotal: 218
 started: 2026-01-04          # stamped when the status becomes "in progress"
 finished: 2026-02-11         # stamped when it becomes "completed"
 tags: [favourite]
-source: "https://books.google.com/gatsby"   # provenance from auto-fill
-sourceId: abc123
 ---
 
 Optional notes / description…
@@ -32,21 +29,18 @@ Optional notes / description…
 recording 5 of 12 pages is shown as *in progress*, and one whose progress has reached its
 total is shown as *completed*. The file itself isn't rewritten until something else edits it.
 
-Cover images may be a remote URL or a vault-relative path (resolved automatically). With
-**Settings → Content → Store cover art in the vault** on (the default), adding an item —
-or refreshing its metadata — downloads the cover into `<content folder>/covers/`, so the
-library keeps its artwork offline and survives a CDN going away.
+**Everything is yours to fill in.** Nothing is looked up online: the library holds what
+you write and nothing else. A cover is either a picture in the vault — **From vault** in the
+add form lists them — or a link you paste yourself. A linked cover is loaded from that
+address each time it is shown and never downloaded into the vault, so it needs a connection
+and disappears if the site removes it; a picture in the vault always works.
 
-**Two scores, never confused.** `rating` is yours; `externalRating` is whatever the source
-said. Auto-fill records the source's score as `externalRating` and leaves your stars
-unrated, and a refresh updates only `externalRating` — so a metadata refresh can't quietly
-replace the 10 you gave something with the 7.8 a website gave it.
+Notes written by earlier versions may carry `externalRating`, `source` and `sourceId` —
+what the online auto-fill used to record. They are no longer read, and they are never
+removed: editing the item leaves them in the file exactly as they were.
 
-An item's detail view can **refresh its metadata** from the source it was filled from, and
-**delete** it — the note goes to your vault's trash, honouring your "deleted files"
-preference. A refresh only overwrites provider-owned fields, and only when it can identify
-the same work again (that's what the stored `sourceId` is for), so it can't silently rebind
-an item to a different film with a similar name.
+An item's detail view can **delete** it — the note goes to your vault's trash, honouring
+your "deleted files" preference.
 
 **Started / finished dates** are stamped on the status transitions that cause them:
 beginning something records `started` (a re-read keeps the original), finishing it records
@@ -78,9 +72,10 @@ were unusable — before anything is written.
 
 Titles, scores (rescaled from 5 stars where needed), statuses, progress and the services'
 own start/finish dates all come across. Existing titles are skipped by default, so
-re-importing an updated export tops the library up instead of doubling it. **Covers and
-synopses are not fetched during an import** — 400 books would mean 400 requests nobody
-asked for; use "Refresh metadata" on the items you care about.
+re-importing an updated export tops the library up instead of doubling it. Covers and
+synopses aren't part of these exports, and nothing is fetched to fill them in. The services'
+own ids and links stay behind too — an imported item doesn't point back at where it came
+from.
 
 **Progress** is two numbers, so the UI can draw a bar, offer −/+ steppers and a "+1"
 straight from the dashboard widget. Reaching the total marks the item **completed**;
@@ -88,21 +83,6 @@ starting a backlog item moves it to **in progress**. Older free-text values
 (`progress: "Ep 5/12"`, `"p. 120"`, `"45%"`) are still parsed and are rewritten to the
 numeric form on the first edit. What one unit is called comes from the type
 (`progressUnit`: pages, episodes, chapters …) and is editable in settings.
-
-**Auto-fill** searches keyless metadata sources as you type a title, filling cover, year,
-creator, genres, rating, synopsis and total length. Each content type picks its source,
-and most chain more than one so a miss on the first still lands:
-
-| Type | Sources |
-| --- | --- |
-| Books | Google Books → Open Library |
-| Movies / TV | iTunes → Wikipedia |
-| Anime / Manga | AniList → MyAnimeList (Jikan) |
-| Games | Steam → Wikipedia |
-| Music | iTunes |
-| Anything else | Wikipedia |
-
-Every field stays editable, and a type can be set to **None** for pure manual entry.
 
 The **statistics** view goes beyond totals: what you finished in the last 30 days, how long
 things take you end to end, the average progress of everything in flight, your most common

@@ -13,7 +13,7 @@ export interface ContentItem {
     type: string; // book, movie, show, game, etc.
     filePath: string;
     description?: string;
-    // ── Curated metadata (all optional; auto-filled from providers or manual) ──
+    // ── Curated metadata (all optional, all the user's own) ──
     /** Release / publication year. */
     year?: number;
     /** Author / director / studio / … — label varies by type. */
@@ -26,20 +26,10 @@ export interface ContentItem {
     progressCurrent?: number;
     /** Total units, when known (12 episodes, 320 pages). */
     progressTotal?: number;
-    /**
-     * The source's own score, 0–10. Kept apart from {@link rating}, which is
-     * yours: a metadata refresh may update this freely, and must never touch
-     * the other one.
-     */
-    externalRating?: number;
     /** `YYYY-MM-DD` the item was started, stamped on the status transition. */
     started?: string;
     /** `YYYY-MM-DD` the item was finished. */
     finished?: string;
-    /** Provenance: source URL the metadata came from. */
-    source?: string;
-    /** Provenance: provider-native id (e.g. MAL id), for future re-sync. */
-    sourceId?: string;
     /** File creation time (ms) — powers "recently added" sorting. */
     createdAt?: number;
     /** File modification time (ms) — powers "recently updated" sorting. */

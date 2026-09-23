@@ -273,3 +273,32 @@ describe('loadSettings — v5 → v6: one location for the whole plugin', () => 
         expect(s.settingsVersion).toBe(CURRENT_SETTINGS_VERSION);
     });
 });
+
+describe('loadSettings — v10 → v11: the content library stops going online', () => {
+    const book = { id: 'book', label: 'Book', icon: 'book-open', color: '#8b5cf6', fields: ['progress'] };
+
+    it('drops the cover download switch and each type’s catalogue', () => {
+        const s = load({
+            settingsVersion: 10,
+            cacheCovers: false,
+            contentTypes: [{ ...book, provider: 'books' }] as never,
+        });
+        expect('cacheCovers' in s).toBe(false);
+        expect(s.contentTypes).toEqual([book]);
+    });
+
+    it('leaves everything else about a type as the user set it', () => {
+        const s = load({
+            settingsVersion: 10,
+            contentTypes: [{ ...book, label: 'Livre', provider: 'none', creatorLabel: 'Auteur' }] as never,
+        });
+        expect(s.contentTypes).toEqual([{ ...book, label: 'Livre', creatorLabel: 'Auteur' }]);
+    });
+
+    it('does not touch a config already past it', () => {
+        // A key a newer build might bring back under the same name is not ours
+        // to throw away twice.
+        const s = load({ settingsVersion: 11, cacheCovers: true } as never);
+        expect((s as unknown as Record<string, unknown>).cacheCovers).toBe(true);
+    });
+});
