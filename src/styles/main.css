@@ -4,6 +4,7 @@
 @import './shared.css';
 @import './ui.css';
 @import './modal.css';
+@import './notifications.css';
 @import '../components/ui/fields/fields.css';
 @import './dashboard.css';
 @import './dashboard-grid.css';

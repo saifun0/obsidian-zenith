@@ -47,4 +47,5 @@ it sits in.
 **Reminders** are off by default. Switched on, they raise an Obsidian notice a configurable
 number of minutes before each prayer — only while Obsidian is running, and with no adhan:
 a plugin cannot wake a sleeping phone, and promising otherwise would be a promise that
-breaks on the morning it matters.
+breaks on the morning it matters. Each reminder is also kept in the [notification center](notifications.md);
+one that came while Obsidian was closed waits there as missed instead of popping up late.

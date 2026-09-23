@@ -419,6 +419,27 @@ body.is-phone .zenith-dashboard__bg::before {
     background: var(--zenith-bg-secondary);
 }
 
+/* The bell carries its unread count in the corner, the way every bell does. */
+.zenith-dashboard button.zenith-dashboard__bell {
+    position: relative;
+}
+
+.zenith-dashboard__badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--zenith-accent);
+    color: var(--text-on-accent);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 16px;
+    text-align: center;
+}
+
 /* ── Narrow pane: the rail lies down again ───────────
    A column of buttons costs the same width whatever the pane is, and on a phone
    that width is a tenth of the board. Above it, it costs a line — which a short

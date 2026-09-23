@@ -1,4 +1,6 @@
+import { Platform } from 'obsidian';
 import { coreSchema, type CoreSettingsSchema } from './types';
+import { NOTIFICATIONS_MODULE } from '../../core/features';
 import { localizeModule } from '../../core/moduleLabels';
 import { createPlaceField } from '../components/PlaceField';
 
@@ -94,6 +96,74 @@ export const appearanceSchema: CoreSettingsSchema = coreSchema({
                     labelKey: 'settings.animations',
                     descKey: 'settings.animations.desc',
                     default: true,
+                },
+            ],
+        },
+    ],
+});
+
+/** `0` … `23` as `00:00` … `23:00`, for the quiet-hours pickers. */
+const HOURS = Array.from({ length: 24 }, (_, h) => ({
+    value: String(h),
+    label: `${String(h).padStart(2, '0')}:00`,
+}));
+
+/**
+ * The notification center's page. Not a module — every reminder source uses
+ * it — so it is a category of its own, like General.
+ */
+export const notificationsSchema: CoreSettingsSchema = coreSchema({
+    moduleId: NOTIFICATIONS_MODULE,
+    groups: [
+        {
+            id: 'delivery',
+            titleKey: 'settings.notify.delivery',
+            descKey: 'settings.notify.delivery.desc',
+            fields: [
+                {
+                    type: 'toggle',
+                    key: 'notifySystem',
+                    labelKey: 'settings.notifySystem',
+                    descKey: 'settings.notifySystem.desc',
+                    default: false,
+                    // A phone's notifications are out of a plugin's reach.
+                    disabledIf: () => !Platform.isDesktopApp,
+                },
+                {
+                    type: 'select',
+                    key: 'notifyQuietFrom',
+                    labelKey: 'settings.notifyQuietFrom',
+                    descKey: 'settings.notifyQuietFrom.desc',
+                    default: -1,
+                    numeric: true,
+                    options: [{ value: '-1', labelKey: 'settings.notifyQuiet.off' }, ...HOURS],
+                },
+                {
+                    type: 'select',
+                    key: 'notifyQuietTo',
+                    labelKey: 'settings.notifyQuietTo',
+                    default: 7,
+                    numeric: true,
+                    options: HOURS,
+                    showIf: (v) => typeof v.notifyQuietFrom === 'number' && v.notifyQuietFrom >= 0,
+                },
+                {
+                    type: 'multiselect',
+                    key: 'notifyMuted',
+                    labelKey: 'settings.notifyMuted',
+                    descKey: 'settings.notifyMuted.desc',
+                    default: [],
+                    // Whatever is registered right now: the sources are the
+                    // modules that are on, and they are asked rather than
+                    // listed here so a new one appears by itself.
+                    options: ({ plugin, t }) =>
+                        plugin.scheduler
+                            .sourceIds()
+                            .filter((id) => id !== 'center')
+                            .map((id) => ({
+                                value: id,
+                                label: t.has(`notify.source.${id}`) ? t(`notify.source.${id}`) : id,
+                            })),
                 },
             ],
         },

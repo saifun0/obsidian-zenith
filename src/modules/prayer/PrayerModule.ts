@@ -108,7 +108,7 @@ export class PrayerModule extends BaseModule {
             })
         );
 
-        this.reminders = new PrayerReminderService();
+        this.reminders = new PrayerReminderService(this.plugin);
         this.reminders.start();
     }
 

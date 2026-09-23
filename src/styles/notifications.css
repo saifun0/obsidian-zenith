@@ -1,0 +1,128 @@
+/* ── Notification center ─────────────────────────────
+   A plain list, the way the rest of the plugin draws lists: no card per item,
+   a hairline between them, and unread marked by a dot rather than a fill. */
+
+.zenith-notify-modal {
+    padding-top: 0;
+}
+
+.zenith-notify__bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--zenith-space-xs);
+    margin-bottom: var(--zenith-space-sm);
+}
+
+.zenith-notify__day {
+    margin: var(--zenith-space-md) 0 var(--zenith-space-xs);
+    font-size: var(--font-ui-smaller);
+    font-weight: 600;
+    color: var(--zenith-text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.zenith-notify__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.zenith-notify__item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--zenith-space-sm);
+    padding: var(--zenith-space-sm) 0 var(--zenith-space-sm) var(--zenith-space-md);
+    border-bottom: 1px solid var(--zenith-border);
+    position: relative;
+}
+
+.zenith-notify__item.is-unread::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: calc(var(--zenith-space-sm) + 6px);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--zenith-accent);
+}
+
+.zenith-notify__text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.zenith-notify__title {
+    color: var(--zenith-text-normal);
+}
+
+.zenith-notify__item:not(.is-unread) .zenith-notify__title {
+    color: var(--zenith-text-muted);
+}
+
+.zenith-notify__body,
+.zenith-notify__meta {
+    font-size: var(--font-ui-smaller);
+    color: var(--zenith-text-muted);
+}
+
+.zenith-notify__meta {
+    color: var(--zenith-text-faint);
+}
+
+.zenith-notify__missed {
+    margin-left: var(--zenith-space-sm);
+    color: var(--text-warning);
+}
+
+/* Always visible: this list is used on phones, and a phone has no hover. */
+.zenith-notify__actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.zenith-root button.zenith-notify__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-notify__action:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-notify__empty {
+    padding: var(--zenith-space-lg) 0;
+    text-align: center;
+    color: var(--zenith-text-faint);
+}
+
+/* ── The popup itself ─────────────────────────────── */
+
+.zenith-notice__title {
+    font-weight: 600;
+}
+
+.zenith-notice__body {
+    margin-top: 2px;
+    opacity: 0.85;
+}
+
+.zenith-notice.is-clickable {
+    cursor: pointer;
+}

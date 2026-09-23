@@ -37,7 +37,9 @@ describe('the registry', () => {
         for (const def of FEATURES) {
             for (const id of def.requires ?? []) expect(getFeature(id), `${def.id} → ${id}`).toBeDefined();
             for (const m of def.requiresModules ?? []) expect(BUILT_IN_MODULES.has(m)).toBe(true);
-            if (def.moduleId !== 'core') expect(BUILT_IN_MODULES.has(def.moduleId)).toBe(true);
+            if (def.moduleId !== 'core' && def.moduleId !== 'notifications') {
+                expect(BUILT_IN_MODULES.has(def.moduleId)).toBe(true);
+            }
         }
     });
 

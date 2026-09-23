@@ -11,6 +11,7 @@ import {
     Info,
     Brain,
     Bug,
+    Bell,
 } from 'lucide-react';
 import { useZenithStore } from '../../store';
 import { useApp } from '../../context/AppContext';
@@ -28,14 +29,21 @@ import { DebugPanel } from './debug/DebugPanel';
 import { Toggle } from '../controls';
 import { configurableModules } from '../moduleMenu';
 import { CoreSettingsForm } from '../schema/CoreSettingsForm';
-import { appearanceSchema, generalSchema } from '../schema/coreSchemas';
+import { appearanceSchema, generalSchema, notificationsSchema } from '../schema/coreSchemas';
 import { ModuleSettingsForm } from '../schema/ModuleSettingsForm';
 import { featureOnlySchema } from '../schema/featureGroup';
 import { CORE_MODULE, featureEnabled } from '../../core/features';
 
 const CORE_FEATURES = featureOnlySchema(CORE_MODULE);
 
-type Category = 'general' | 'appearance' | 'vault' | 'modules' | 'about' | 'debug';
+type Category =
+    | 'general'
+    | 'appearance'
+    | 'notifications'
+    | 'vault'
+    | 'modules'
+    | 'about'
+    | 'debug';
 
 export const SettingsApp: React.FC = () => {
     const { app, plugin } = useApp();
@@ -75,6 +83,7 @@ export const SettingsApp: React.FC = () => {
     const MENU: Array<{ id: Category; icon: React.ReactNode; titleKey: string; descKey: string }> = [
         { id: 'general', icon: <Settings size={18} />, titleKey: 'settings.general', descKey: 'settings.general.desc' },
         { id: 'appearance', icon: <Palette size={18} />, titleKey: 'settings.appearance', descKey: 'settings.appearance.desc' },
+        { id: 'notifications', icon: <Bell size={18} />, titleKey: 'settings.notifications', descKey: 'settings.notifications.desc' },
         { id: 'vault', icon: <FolderTree size={18} />, titleKey: 'settings.vault', descKey: 'settings.vault.desc' },
         { id: 'modules', icon: <LayoutGrid size={18} />, titleKey: 'settings.modules', descKey: 'settings.modules.desc' },
         { id: 'about', icon: <Info size={18} />, titleKey: 'settings.about', descKey: 'settings.about.desc' },
@@ -478,6 +487,7 @@ export const SettingsApp: React.FC = () => {
     const CATEGORY_TITLE: Record<Category, string> = {
         general: 'settings.general',
         appearance: 'settings.appearance',
+        notifications: 'settings.notifications',
         vault: 'settings.vault',
         modules: 'settings.modules',
         about: 'settings.about',
@@ -528,6 +538,11 @@ export const SettingsApp: React.FC = () => {
                         {!activeCategory && renderRootMenu()}
                         {activeCategory === 'general' && renderGeneral()}
                         {activeCategory === 'appearance' && renderAppearance()}
+                        {activeCategory === 'notifications' && (
+                            <div className="zenith-settings__content">
+                                <CoreSettingsForm schema={notificationsSchema} />
+                            </div>
+                        )}
                         {activeCategory === 'vault' && renderVault()}
                         {activeCategory === 'modules' && renderModules()}
                         {activeCategory === 'about' && renderAbout()}

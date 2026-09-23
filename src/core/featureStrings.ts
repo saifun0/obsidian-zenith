@@ -18,6 +18,10 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'feature.core.vaultScaffold': 'Vault structure',
         'feature.core.vaultScaffold.desc': 'A button that creates Zenith’s folders in one go.',
 
+        'feature.notify.center': 'Notification center',
+        'feature.notify.center.desc':
+            'Keep reminders — the ones you saw and the ones you missed — behind a bell on the dashboard.',
+
         'feature.dashboard.date': 'Today’s date',
         'feature.dashboard.background': 'Wallpaper',
         'feature.dashboard.background.desc': 'A picture behind the cards, with dimming and blur.',
@@ -114,6 +118,10 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
             'Значки у папок и заметок в проводнике — ставятся из их меню.',
         'feature.core.vaultScaffold': 'Заготовка хранилища',
         'feature.core.vaultScaffold.desc': 'Кнопка, которая одним нажатием создаёт папки Zenith.',
+
+        'feature.notify.center': 'Центр уведомлений',
+        'feature.notify.center.desc':
+            'Хранить напоминания — и увиденные, и пропущенные — за колокольчиком на дашборде.',
 
         'feature.dashboard.date': 'Сегодняшняя дата',
         'feature.dashboard.background': 'Фон',

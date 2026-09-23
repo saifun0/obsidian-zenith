@@ -206,6 +206,22 @@ export interface ZenithSettings {
     prayerNotifyBefore: number;
 
     /**
+     * Quiet hours for the notification center: whole hours, the start taken
+     * and the end not, wrapping midnight. Inside them nothing pops up — it
+     * waits in the center. `-1` is no quiet hours.
+     */
+    notifyQuietFrom: number;
+    notifyQuietTo: number;
+    /**
+     * Also raise the operating system's own notification, on a computer.
+     * Per device: a phone cannot, and one desktop may want it where another
+     * does not.
+     */
+    notifySystem: boolean;
+    /** Sources that only ever go into the center, without popping up. */
+    notifyMuted: string[];
+
+    /**
      * The board's wallpaper. `none`, an address on the web, or a picture in
      * the vault. See `dashboardBackground.ts` for why it is a layer rather
      * than a `background` on the board.
@@ -691,6 +707,10 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     prayerHijriOffset: 0,
     prayerNotify: false,
     prayerNotifyBefore: 10,
+    notifyQuietFrom: -1,
+    notifyQuietTo: 7,
+    notifySystem: false,
+    notifyMuted: [],
     navigatorLayout: 'grid',
     navigatorShowLabels: true,
     navigatorHiddenActions: [],

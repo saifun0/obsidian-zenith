@@ -1,153 +1,141 @@
-import { Notice } from 'obsidian';
 import { useZenithStore } from '../../store';
 import { resolveLocale, translate } from '../../core/i18n';
+import { featureEnabled } from '../../core/features';
+import { toLocalIsoDate } from '../../core/dateUtils';
+import type { EventSource, SourceEvent } from '../../core/scheduler';
+import type ZenithPlugin from '../../main';
 import { PRAYERS, type PrayerId } from './prayerConfig';
 import { prayerPlaceOf } from './prayerOptions';
 import { subscribeApi } from './prayerApi';
 import { dayTimesFor, ensurePrayerDay } from './prayerSource';
 import { dateAtMinutes, formatClock } from './prayerTimes';
 
-/**
- * How stale a wake-up may be before its notice is dropped.
- *
- * A laptop that slept through maghrib fires the timer the moment it wakes, and
- * "it's time for maghrib" two hours late is worse than silence — it is a wrong
- * statement about the present. The schedule still moves on to the next prayer.
- */
-const STALE_MS = 5 * 60 * 1000;
-
-interface Scheduled {
+interface PrayerEvent extends SourceEvent {
     prayer: PrayerId;
-    /** When the prayer itself comes in. */
-    at: Date;
-    /** When to speak up — the prayer, less the configured warning. */
-    fireAt: Date;
+    /** When the prayer itself comes in — `at` is that, less the warning. */
+    time: number;
 }
 
 /**
- * Notices at prayer time, while Obsidian is open.
- *
- * Deliberately modest: one timer, pointed at the next event, rebuilt whenever
- * the settings that decide it change. Not an alarm clock and not an adhan — a
- * plugin cannot wake a sleeping phone, and pretending otherwise would be a
- * promise the user relies on and it breaks.
+ * The most days one question is answered for. The scheduler asks about three
+ * days back at most and two ahead; this is only a floor under a mistake.
  */
-export class PrayerReminderService {
-    private timer: number | null = null;
-    private unsubscribe: (() => void) | null = null;
-    private unsubscribeApi: (() => void) | null = null;
+const MAX_DAYS = 10;
+
+/**
+ * Prayer reminders, as one source of the plugin's shared scheduler.
+ *
+ * Deliberately modest, as it always was: a notice at prayer time while
+ * Obsidian is open. Not an alarm clock and not an adhan — a plugin cannot wake
+ * a sleeping phone, and pretending otherwise would be a promise the user
+ * relies on and it breaks. What moved to the scheduler is the timer, and with
+ * it the part that used to be missing: a prayer that came while Obsidian was
+ * closed now waits in the notification center as missed, where before it was
+ * dropped without a word.
+ */
+export class PrayerReminderService implements EventSource<PrayerEvent> {
+    readonly id = 'prayer';
+    private disposers: Array<() => void> = [];
+
+    constructor(private readonly plugin: ZenithPlugin) {}
 
     start(): void {
-        this.schedule();
+        this.disposers.push(this.plugin.scheduler.register(this));
+        const reschedule = () => this.plugin.scheduler.reschedule();
         // A month arriving can move the next prayer by a minute or two, and the
         // timer was aimed with the calculated value — so it is re-aimed.
-        this.unsubscribeApi = subscribeApi(() => this.schedule());
+        this.disposers.push(subscribeApi(reschedule));
         // Any of these changes the answer to "when is the next prayer" — a
         // moved city or a switched method has to re-aim the timer, not wait for
         // the old one to fire.
-        this.unsubscribe = useZenithStore.subscribe(
-            (state) => {
-                const s = state.settings;
-                return [
-                    s.prayerNotify,
-                    s.prayerNotifyBefore,
-                    s.prayerSource,
-                    s.prayerApiMidnight,
-                    s.prayerMethod,
-                    s.prayerAsrMadhab,
-                    s.prayerHighLatRule,
-                    s.prayerFajrAngle,
-                    s.prayerIshaAngle,
-                    JSON.stringify(s.prayerAdjustments),
-                    JSON.stringify(prayerPlaceOf(s)),
-                ].join('|');
-            },
-            () => this.schedule()
+        this.disposers.push(
+            useZenithStore.subscribe(
+                (state) => {
+                    const s = state.settings;
+                    return [
+                        featureEnabled(s, 'prayer.reminders'),
+                        s.prayerNotifyBefore,
+                        s.prayerSource,
+                        s.prayerApiMidnight,
+                        s.prayerMethod,
+                        s.prayerAsrMadhab,
+                        s.prayerHighLatRule,
+                        s.prayerFajrAngle,
+                        s.prayerIshaAngle,
+                        JSON.stringify(s.prayerAdjustments),
+                        JSON.stringify(prayerPlaceOf(s)),
+                    ].join('|');
+                },
+                reschedule
+            )
         );
     }
 
     stop(): void {
-        this.clearTimer();
-        this.unsubscribe?.();
-        this.unsubscribe = null;
-        this.unsubscribeApi?.();
-        this.unsubscribeApi = null;
-    }
-
-    private clearTimer(): void {
-        if (this.timer !== null) {
-            window.clearTimeout(this.timer);
-            this.timer = null;
-        }
-    }
-
-    /** Point the timer at the next event, or at nothing when there isn't one. */
-    private schedule(): void {
-        this.clearTimer();
-
-        const { settings } = useZenithStore.getState();
-        if (!settings.prayerNotify) return;
-
-        const now = new Date();
-        const next = this.nextEvent(now);
-        if (!next) return;
-
-        const delay = next.fireAt.getTime() - now.getTime();
-        this.timer = window.setTimeout(() => {
-            this.fire(next);
-            this.schedule();
-        }, Math.max(0, delay));
-    }
-
-    private fire(event: Scheduled): void {
-        const { settings } = useZenithStore.getState();
-        const locale = resolveLocale(settings.language);
-        const now = Date.now();
-
-        if (now - event.fireAt.getTime() > STALE_MS) return;
-
-        const prayer = translate(locale, `prayer.${event.prayer}`);
-        const time = formatClock(
-            event.at.getHours() * 60 + event.at.getMinutes(),
-            locale
-        );
-        const minutesLeft = Math.round((event.at.getTime() - now) / 60000);
-
-        new Notice(
-            minutesLeft > 0
-                ? translate(locale, 'prayer.notice.soon', { prayer, time, count: minutesLeft })
-                : translate(locale, 'prayer.notice.now', { prayer, time })
-        );
+        this.disposers.forEach((d) => d());
+        this.disposers = [];
     }
 
     /**
-     * The next prayer whose warning hasn't passed yet.
+     * The reminders due in `[from, to)`.
      *
-     * Today and tomorrow are both searched: after isha the answer is tomorrow's
-     * fajr, and it has to be computed against tomorrow's date — the sun does
-     * not repeat itself closely enough to reuse today's.
+     * Walked day by day, because a day's times are computed against that date:
+     * the sun does not repeat itself closely enough to reuse today's for
+     * tomorrow. The walk starts a warning's length later than `from` as well,
+     * since a reminder for just after midnight belongs to a prayer of the next
+     * day.
      */
-    private nextEvent(now: Date): Scheduled | null {
+    events(from: number, to: number): PrayerEvent[] {
         const { settings } = useZenithStore.getState();
+        if (!featureEnabled(settings, 'prayer.reminders')) return [];
         const place = prayerPlaceOf(settings);
-        if (!place) return null;
+        if (!place) return [];
 
-        for (const offset of [0, 1]) {
-            const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+        const before = settings.prayerNotifyBefore * 60_000;
+        const out: PrayerEvent[] = [];
+        const first = new Date(from);
+        const last = to + before;
+        // Counted in calendar days rather than in 24-hour steps, so a
+        // daylight-saving night neither skips a day nor visits one twice.
+        for (let i = 0; i < MAX_DAYS; i++) {
+            const date = new Date(first.getFullYear(), first.getMonth(), first.getDate() + i);
+            if (date.getTime() > last) break;
             // The same resolution every surface uses: a notice that fired at a
             // different minute than the widget showed would be worse than none.
             ensurePrayerDay(place, date, settings);
             const { times } = dayTimesFor(place, date, settings);
+            const iso = toLocalIsoDate(date);
 
             for (const prayer of PRAYERS) {
                 const minutes = times[prayer];
                 if (!Number.isFinite(minutes)) continue;
-                const fireAt = dateAtMinutes(date, minutes - settings.prayerNotifyBefore);
-                if (fireAt.getTime() > now.getTime()) {
-                    return { prayer, at: dateAtMinutes(date, minutes), fireAt };
-                }
+                const time = dateAtMinutes(date, minutes).getTime();
+                const at = time - before;
+                if (at >= from && at < to) out.push({ key: `prayer:${iso}:${prayer}`, at, prayer, time });
             }
         }
-        return null;
+        return out;
+    }
+
+    deliver(event: PrayerEvent, late: boolean): void {
+        const locale = resolveLocale(useZenithStore.getState().settings.language);
+        const prayer = translate(locale, `prayer.${event.prayer}`);
+        const clock = new Date(event.time);
+        const time = formatClock(clock.getHours() * 60 + clock.getMinutes(), locale);
+        const minutesLeft = Math.round((event.time - Date.now()) / 60_000);
+
+        // Missed, it is a record of when the prayer was rather than a
+        // countdown to a moment already gone.
+        const title =
+            !late && minutesLeft > 0
+                ? translate(locale, 'prayer.notice.soon', { prayer, time, count: minutesLeft })
+                : late
+                  ? translate(locale, 'prayer.notice.at', { prayer, time })
+                  : translate(locale, 'prayer.notice.now', { prayer, time });
+
+        this.plugin.notifications.notify(
+            { key: event.key, source: this.id, title, at: event.at, open: { module: 'prayer' } },
+            late
+        );
     }
 }

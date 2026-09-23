@@ -134,6 +134,16 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     prayerNotify: { scope: 'shared' },
     prayerNotifyBefore: { scope: 'shared' },
 
+    // ── Notification center ──
+    // When not to be disturbed, and by what, is about the person. Whether this
+    // machine also raises its own system notification is about the machine —
+    // and a phone cannot at all. The records themselves are not settings and
+    // are not here: each device keeps its own, beside `data.json`'s settings.
+    notifyQuietFrom: { scope: 'shared' },
+    notifyQuietTo: { scope: 'shared' },
+    notifyMuted: { scope: 'shared' },
+    notifySystem: { scope: 'device' },
+
     // ── Weather ──
     weatherPlace: { scope: 'shared' },
     // Legacy free-text city. Nothing writes it any more, but it still has to

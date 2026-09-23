@@ -5,6 +5,7 @@ import { createContentSlice } from './contentSlice';
 import { createJournalSlice } from './journalSlice';
 import { createSettingsSlice } from './settingsSlice';
 import { createProjectSlice } from './projectSlice';
+import { createNotificationSlice } from './notificationSlice';
 import type { ZenithStore } from './types';
 
 // ── Combined Store Type ──────────────────────────────
@@ -35,6 +36,7 @@ export const useZenithStore = create<ZenithStore>()(
         ...createJournalSlice(...args),
         ...createSettingsSlice(...args),
         ...createProjectSlice(...args),
+        ...createNotificationSlice(...args),
     }))
 );
 
@@ -58,6 +60,7 @@ export function resetZenithStore(): void {
     s.setJournalLoading(false);
     s.setAvailableModules([]);
     s.setLoadedModules([]);
+    s.loadNotifications(null);
 }
 
 

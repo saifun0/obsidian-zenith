@@ -10,7 +10,11 @@ import { contentSettingsSchema } from '../src/modules/content/settings.schema';
 import { mediaSettingsSchema } from '../src/modules/media/settings.schema';
 import { projectsSettingsSchema } from '../src/modules/projects/settings.schema';
 import { syncSettingsSchema } from '../src/modules/sync/settings.schema';
-import { appearanceSchema, generalSchema } from '../src/settings/schema/coreSchemas';
+import {
+    appearanceSchema,
+    generalSchema,
+    notificationsSchema,
+} from '../src/settings/schema/coreSchemas';
 import { flattenFields, defaultsFromSchema } from '../src/settings/schema/helpers';
 import {
     isValueField,
@@ -28,6 +32,7 @@ import { withFeatureGroup } from '../src/settings/schema/featureGroup';
 const CORE_SCHEMAS: CoreSettingsSchema[] = [
     generalSchema,
     appearanceSchema,
+    notificationsSchema,
     dashboardSettingsSchema,
     navigatorSettingsSchema,
     prayerSettingsSchema,

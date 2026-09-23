@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Menu } from 'obsidian';
-import { RotateCw, LayoutGrid, Check, LayoutTemplate } from 'lucide-react';
+import { RotateCw, LayoutGrid, Check, LayoutTemplate, Bell } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { useFeature } from '../../../core/useFeature';
+import { NotificationCenterModal } from '../../../core/notifications/NotificationCenterModal';
+import { unreadCount } from '../../../core/notifications/notificationState';
 import { normalizeGridConfig } from '../grid/gridTypes';
 import { PromptModal } from '../../../core/PromptModal';
 import {
@@ -54,6 +56,10 @@ export const DashboardApp: React.FC = () => {
     const headingText = useZenithStore((s) => s.settings.dashboardHeadingText);
     const showDate = useFeature('dashboard.date');
     const presetsOn = useFeature('dashboard.presets');
+    const centerOn = useFeature('notify.center');
+    const notifications = useZenithStore((s) => s.notifications);
+    const bell = centerOn && notifications.records.length > 0;
+    const unread = unreadCount(notifications, Date.now());
 
     const presets = useZenithStore((s) => s.settings.dashboardPresets);
     const activePresetId = useZenithStore((s) => s.settings.dashboardPresetId);
@@ -276,6 +282,23 @@ export const DashboardApp: React.FC = () => {
                             {editing ? <Check size={16} /> : <LayoutGrid size={16} />}
                         </button>
                     </div>
+                    {/* Only once there is something in it: a bell over an empty
+                        center is a control that has nothing to say. */}
+                    {bell && (
+                        <button
+                            className="zenith-dashboard__action zenith-dashboard__action--lone zenith-dashboard__bell"
+                            onClick={() => new NotificationCenterModal(plugin).open()}
+                            aria-label={t('notify.title')}
+                            title={t('notify.title')}
+                        >
+                            <Bell size={16} />
+                            {unread > 0 && (
+                                <span className="zenith-dashboard__badge">
+                                    {unread > 99 ? '99+' : unread}
+                                </span>
+                            )}
+                        </button>
+                    )}
                     <button
                         className="zenith-dashboard__action zenith-dashboard__action--lone"
                         onClick={loadData}

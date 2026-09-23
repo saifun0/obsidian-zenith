@@ -31,6 +31,9 @@ import { dashboardWidgets, type DashboardWidgetDefinition } from './modules/dash
 import { navActions, type NavActionDefinition } from './modules/navigator/navigation';
 import { translateNow } from './core/i18n';
 import { moduleNameNow } from './core/moduleLabels';
+import { Scheduler } from './core/scheduler';
+import { NotificationCenter } from './core/notifications/NotificationCenter';
+import { NotificationCenterModal } from './core/notifications/NotificationCenterModal';
 
 /**
  * ZenithPlugin — Main entry point.
@@ -46,6 +49,10 @@ export default class ZenithPlugin extends Plugin {
 
     /** Decorates the file explorer with user-assigned folder/file icons. */
     folderIconService!: FolderIconService;
+    /** The one timer every reminder shares — see `core/scheduler.ts`. */
+    scheduler!: Scheduler;
+    /** Where reminders are recorded and shown — see `core/notifications`. */
+    notifications!: NotificationCenter;
 
     /** Installs, updates and removes third-party modules. Created on load. */
     moduleInstaller!: ModuleInstaller;
@@ -153,6 +160,27 @@ export default class ZenithPlugin extends Plugin {
                 .getState()
                 .loadSettings(this.pluginData.settings as Partial<ZenithSettings>);
         }
+        // Beside the settings, not inside them: a notification happened on
+        // this device, and is nobody's setting.
+        useZenithStore.getState().loadNotifications(this.pluginData.notifications);
+
+        // ── Reminders ────────────────────────────────
+        // Before the modules, which register what they want to be reminded
+        // of as they load; started once the layout is ready, so what was
+        // missed while Obsidian was closed is caught up with every source
+        // already in place.
+        this.scheduler = new Scheduler({
+            now: () => Date.now(),
+            setTimer: (fn, ms) => window.setTimeout(fn, ms),
+            clearTimer: (handle) => window.clearTimeout(handle),
+            loadWatermark: () => useZenithStore.getState().notifications.watermark,
+            saveWatermark: (at) =>
+                useZenithStore.getState().updateNotifications((s) => ({ ...s, watermark: at })),
+        });
+        this.notifications = new NotificationCenter(this, this.scheduler);
+        this.disposers.push(this.scheduler.register(this.notifications));
+        this.disposers.push(() => this.scheduler.stop());
+        this.app.workspace.onLayoutReady(() => this.scheduler.start());
 
         // ── Register built-in modules ───────────────
         this.moduleManager.init(this);
@@ -198,6 +226,11 @@ export default class ZenithPlugin extends Plugin {
 
         // ── Global commands (available regardless of active view) ──
         registerQuickAddTaskCommand(this);
+        this.addCommand({
+            id: 'open-notifications',
+            name: 'Open notifications',
+            callback: () => new NotificationCenterModal(this).open(),
+        });
 
         // Temporary: answers whether this device allows the runtime evaluation
         // third-party modules need. iOS has no console to check that from.
@@ -247,6 +280,17 @@ export default class ZenithPlugin extends Plugin {
 
         // ── Ribbon icon → opens default (or first active) module ──
         this.addRibbonIcon('brain', 'Zenith', () => this.openDefaultModule());
+
+        // ── Persist notifications on change, the same way ──
+        this.disposers.push(
+            useZenithStore.subscribe(
+                (state) => state.notifications,
+                (notifications) => {
+                    this.pluginData.notifications = notifications;
+                    this.persistData();
+                }
+            )
+        );
 
         // ── Persist settings on change (debounced, in-memory) ──
         this.disposers.push(

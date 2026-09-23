@@ -55,6 +55,12 @@ export interface FeatureDefinition {
 /** The pseudo-module of what no module owns — always running. */
 export const CORE_MODULE = 'core';
 
+/** The notification center's page. Not a module either, and always running. */
+export const NOTIFICATIONS_MODULE = 'notifications';
+
+/** Pseudo-modules: pages of settings with no module behind them to switch off. */
+const ALWAYS_RUNNING: ReadonlySet<string> = new Set([CORE_MODULE, NOTIFICATIONS_MODULE]);
+
 interface FeatureOptions {
     default?: boolean;
     requires?: readonly string[];
@@ -94,6 +100,7 @@ export const FEATURES = [
     // ── Outside any module ──
     feature('core.folderIcons', CORE_MODULE),
     feature('core.vaultScaffold', CORE_MODULE),
+    feature('notify.center', NOTIFICATIONS_MODULE),
 
     // ── Dashboard ──
     feature('dashboard.date', 'dashboard', { settingKey: 'dashboardShowDate', default: false }),
@@ -207,7 +214,7 @@ export function featureBlock(
     const def = BY_ID.get(id);
     if (!def) return null;
     for (const moduleId of [def.moduleId, ...(def.requiresModules ?? [])]) {
-        if (moduleId !== CORE_MODULE && !settings.activeModuleIds.includes(moduleId)) {
+        if (!ALWAYS_RUNNING.has(moduleId) && !settings.activeModuleIds.includes(moduleId)) {
             return { kind: 'module', moduleId };
         }
     }
