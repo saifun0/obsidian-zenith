@@ -114,7 +114,11 @@ export const SyncQuickApp: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         <div className="zenith-syncq">
             <p className="zenith-syncq__when">
                 {t('sync.quick.lastRun')}
-                <strong>{relativeTime(t, status.lastRunAt)}</strong>
+                {/* The later of the two, so this agrees with the status bar,
+                    which is usually how this dialog was opened: a check that
+                    found nothing to move is a sync as far as anyone reading
+                    this line is concerned. */}
+                <strong>{relativeTime(t, Math.max(status.lastRunAt, status.checkedAt))}</strong>
             </p>
 
             {!status.configured ? (
