@@ -83,6 +83,8 @@ const EN: Dict = {
     'settings.place.search': 'Search for a city…',
     'settings.place.searching': 'Searching…',
     'settings.place.none': 'No matching places.',
+    'settings.place.failed': 'Couldn’t reach the place search. Check your connection.',
+    'settings.place.people': '{count} people',
     'settings.place.detect': 'Detect',
     'settings.place.locating': 'Asking your device…',
     'settings.place.denied':
@@ -1737,6 +1739,8 @@ const RU: Dict = {
     'settings.place.search': 'Поиск города…',
     'settings.place.searching': 'Ищем…',
     'settings.place.none': 'Ничего не найдено.',
+    'settings.place.failed': 'Поиск мест недоступен — проверьте подключение.',
+    'settings.place.people': '{count} жителей',
     'settings.place.detect': 'Определить',
     'settings.place.locating': 'Спрашиваем устройство…',
     'settings.place.denied':
