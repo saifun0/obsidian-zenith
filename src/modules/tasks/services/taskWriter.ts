@@ -1,12 +1,13 @@
 import { App, TFile, TFolder, normalizePath } from 'obsidian';
 import {
+    applyTaskPatch,
     buildTaskLine,
-    buildTaskBody,
     parseTaskText,
     nextRecurrenceDate,
     daysBetweenIso,
     shiftIsoDate,
     type TaskInput,
+    type TaskPatch,
 } from './taskFormat';
 import { buildDetailLines, detailRange, writeDetails, type TaskDetails } from './taskDetails';
 import { charFromStatus, type TaskStatus } from '../../../core/constants';
@@ -23,27 +24,16 @@ const CHECKBOX_PARTS_RE = /^(\s*[-*]\s+)\[([^\]])\]\s?(.*)$/;
 /** File that new tasks are appended to (inside the configured tasks folder). */
 const DEFAULT_TASK_FILE = 'Zenith Inbox.md';
 
-/** The date stamps a status change owns: ✅ when finished, ❌ when given up on. */
-const OUTCOME_DATE_RE = /\s*(?:✅|❌)\s*\d{4}-\d{2}-\d{2}/g;
-
-/** The accumulated-time marker, for replacing it in place. */
-const SPENT_MARKER_RE = /⏱\s*\d+(?:h\d*)?m?/;
-
-/** Trailing `#tags`, which by convention end the line. */
-const TRAILING_TAGS_RE = /(\s+#[\w/-]+)+\s*$/;
-
 /**
- * Put a marker at the end of a line's fields, before any trailing tags.
- *
- * Tags are written last by the same convention every other reader of this
- * format follows, and appending after them would make `#work ⏱ 25m` — which
- * reads as a tag with something stuck to it.
+ * The date stamps a status change owns: ✅ when finished, ❌ when given up on.
+ * Each status clears the other's, so moving a task back to "to do" leaves no
+ * date claiming it ended.
  */
-function insertBeforeTags(body: string, marker: string): string {
-    const tags = body.match(TRAILING_TAGS_RE);
-    if (!tags) return `${body.trimEnd()} ${marker}`;
-    const head = body.slice(0, body.length - tags[0].length).trimEnd();
-    return `${head} ${marker}${tags[0].trimEnd()}`;
+function outcomeStamps(status: TaskStatus, today: string): TaskPatch {
+    return {
+        doneDate: status === 'done' ? today : null,
+        cancelledDate: status === 'cancelled' ? today : null,
+    };
 }
 
 export type NewTaskInput = TaskInput;
@@ -67,6 +57,48 @@ function titlesMatch(body: string, expected: string): boolean {
     return found === expected.trim();
 }
 
+/**
+ * The next occurrence of a recurring task, or null if the task doesn't recur
+ * or has no date to recur from. Dates are shifted by the same delta so their
+ * spacing is preserved.
+ *
+ * It is the finished line with a few things changed, not a new line built
+ * from what was understood of it — so whatever else the line carries comes
+ * along. What is left behind is what belonged to the occurrence that was
+ * done: its outcome stamp, the time spent on it, its block link and 🆔
+ * (another line with the same ones would break every link and dependency on
+ * them) and its ⛔, which the Tasks plugin drops for the same reason. A `➕`
+ * becomes today, since that is when this one was made.
+ */
+function recurrenceRollover(body: string, prefix: string, today: string): string | null {
+    const parsed = parseTaskText(body, { priority: 'none', tags: [] });
+    if (!parsed.recurrence) return null;
+
+    const ref = parsed.dueDate ?? parsed.scheduledDate ?? parsed.startDate;
+    if (!ref) return null;
+
+    const next = nextRecurrenceDate(parsed.recurrence, ref);
+    if (!next) return null;
+
+    const delta = daysBetweenIso(ref, next);
+    const shift = (date: string | undefined) => (date ? shiftIsoDate(date, delta) : undefined);
+    return `${prefix}[ ] ${applyTaskPatch(body, {
+        dueDate: shift(parsed.dueDate),
+        scheduledDate: shift(parsed.scheduledDate),
+        startDate: shift(parsed.startDate),
+        createdDate: parsed.createdDate ? today : undefined,
+        // The hour repeats with the day: a weekly class is at the same time
+        // next week, and it stays because nothing here removes it. Time
+        // *spent* does not — it belongs to the occurrence that was worked on.
+        spentMinutes: null,
+        doneDate: null,
+        cancelledDate: null,
+        id: null,
+        dependsOn: null,
+        blockLink: null,
+    })}`;
+}
+
 export class TaskWriter {
     constructor(private readonly app: App) {}
 
@@ -77,8 +109,10 @@ export class TaskWriter {
      * the next occurrence above; cancelling stamps ❌ instead. Both are the
      * Tasks-plugin conventions, so a note still means the same thing to other
      * readers — and either way the previous stamp is cleared first, so moving a
-     * task back to "to do" leaves no date claiming it ended. Returns true on
-     * success.
+     * task back to "to do" leaves no date claiming it ended.
+     *
+     * A line that says `🏁 delete` is removed once done, as the Tasks plugin
+     * removes it. Returns true on success.
      */
     async setStatusInFile(
         filePath: string,
@@ -104,63 +138,36 @@ export class TaskWriter {
             // the next occurrence of a task they never had.
             if (!titlesMatch(m[3], expectedTitle)) return data;
 
-            const [, prefix, , rawBody] = m;
-            const char = charFromStatus(status);
-            let body = rawBody.replace(OUTCOME_DATE_RE, '').trimEnd();
+            const [, prefix, , body] = m;
+            const today = getTodayString();
+            lines[idx] = `${prefix}[${charFromStatus(status)}] ${applyTaskPatch(
+                body,
+                outcomeStamps(status, today)
+            )}`;
 
-            const rollover: string[] = [];
-            if (status === 'done') {
-                const next = this.recurrenceRollover(body, prefix);
-                if (next) rollover.push(next);
-                body = `${body} ✅ ${getTodayString()}`.trim();
-            } else if (status === 'cancelled') {
-                // No rollover: a recurrence you gave up on shouldn't reappear
-                // tomorrow as though nothing had happened.
-                body = `${body} ❌ ${getTodayString()}`.trim();
+            // No rollover on cancel: a recurrence you gave up on shouldn't
+            // reappear tomorrow as though nothing had happened.
+            const next = status === 'done' ? recurrenceRollover(body, prefix, today) : null;
+            const doneWith =
+                status === 'done' &&
+                parseTaskText(body, { priority: 'none', tags: [] }).onCompletion === 'delete';
+
+            if (doneWith && next) {
+                // The next occurrence takes the finished one's place, and the
+                // description under it with it — it is still the same chore.
+                lines[idx] = next;
+            } else if (doneWith) {
+                // Nothing comes after it, so it goes the way a delete goes:
+                // with the lines that belong to it.
+                const { end } = detailRange(lines, idx);
+                lines.splice(idx, end - idx);
+            } else if (next) {
+                lines.splice(idx, 0, next);
             }
-
-            lines[idx] = `${prefix}[${char}] ${body}`;
-            if (rollover.length) lines.splice(idx, 0, ...rollover);
             ok = true;
             return lines.join('\n');
         });
         return ok;
-    }
-
-    /**
-     * Build the next occurrence line for a recurring task body, or null if the
-     * task doesn't recur / has no anchor date. Dates are shifted by the same
-     * delta so their relative spacing is preserved.
-     */
-    private recurrenceRollover(body: string, prefix: string): string | null {
-        const parsed = parseTaskText(body, { priority: 'none', tags: [] });
-        if (!parsed.recurrence) return null;
-
-        const ref = parsed.dueDate ?? parsed.scheduledDate ?? parsed.startDate;
-        if (!ref) return null;
-
-        const next = nextRecurrenceDate(parsed.recurrence, ref);
-        if (!next) return null;
-
-        const delta = daysBetweenIso(ref, next);
-        const shifted: TaskInput = {
-            title: parsed.title,
-            priority: parsed.priority,
-            tags: parsed.tags,
-            recurrence: parsed.recurrence,
-            dueDate: parsed.dueDate ? shiftIsoDate(parsed.dueDate, delta) : undefined,
-            scheduledDate: parsed.scheduledDate
-                ? shiftIsoDate(parsed.scheduledDate, delta)
-                : undefined,
-            startDate: parsed.startDate ? shiftIsoDate(parsed.startDate, delta) : undefined,
-            // The hour repeats with the day: a weekly class is at the same time
-            // next week, and dropping ⏰ here would empty the hour grid one
-            // occurrence at a time. Time *spent* is not carried — that belongs
-            // to the occurrence that was worked on, not to the next one.
-            dueTime: parsed.dueTime,
-            dueEndTime: parsed.dueEndTime,
-        };
-        return `${prefix}[ ] ${buildTaskBody(shifted)}`;
     }
 
     /**
@@ -218,8 +225,13 @@ export class TaskWriter {
     }
 
     /**
-     * Rewrite an existing task line in place (edit all fields), preserving its
-     * indentation, list marker and status char. Returns true on success.
+     * Change some of a task's fields in place, keeping its indentation, list
+     * marker, status char — and everything on the line the patch does not
+     * name. Returns true on success.
+     *
+     * The patch is laid over the line as it is in the file now, not over the
+     * line as it was when the dialog opened: a date stamped on it since, or a
+     * tag typed by hand, is not the dialog's to undo.
      *
      * `details` is optional and, when given, replaces the indented block under
      * the line — description and attachments. Omitting it leaves whatever is
@@ -229,33 +241,11 @@ export class TaskWriter {
     async updateTaskInFile(
         filePath: string,
         lineNumber: number,
-        input: NewTaskInput,
+        patch: TaskPatch,
         expectedTitle: string,
         details?: TaskDetails
     ): Promise<boolean> {
-        const file = this.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof TFile)) return false;
-
-        let ok = false;
-        await this.app.vault.process(file, (data) => {
-            const lines = data.split('\n');
-            const idx = lineNumber - 1;
-            if (idx < 0 || idx >= lines.length) return data;
-
-            const m = lines[idx].match(CHECKBOX_PARTS_RE);
-            if (!m) return data;
-            // This one replaces the whole line and its block, so a stale
-            // number does not corrupt a neighbouring task — it overwrites it.
-            if (!titlesMatch(m[3], expectedTitle)) return data;
-
-            const [, prefix, char] = m;
-            lines[idx] = `${prefix}[${char}] ${buildTaskBody(input)}`;
-            ok = true;
-            // The block is rewritten after the line, so the line's own indent —
-            // which the block is measured against — is already the new one.
-            return (details ? writeDetails(lines, idx, details) : lines).join('\n');
-        });
-        return ok;
+        return this.patchLine(filePath, lineNumber, patch, expectedTitle, details);
     }
 
     /**
@@ -284,23 +274,24 @@ export class TaskWriter {
     }
 
     /**
-     * Edit one line's title and extras, keeping everything else it carries.
-     *
-     * For subtasks, which have no full editor of their own. The line is parsed,
-     * the given fields replace their counterparts, and the rest — tags, dates,
-     * priority — is written back as it was. A rebuild from a form that only
-     * knows four fields would drop the others.
+     * `updateTaskInFile` without the title check, for the subtask editor, which
+     * has never asked for one. Everything else about it is the same patch.
      */
     async updateLineExtras(
         filePath: string,
         lineNumber: number,
-        patch: {
-            title?: string;
-            dueTime?: string;
-            dueEndTime?: string;
-            timerMinutes?: number;
-            details?: TaskDetails;
-        }
+        patch: TaskPatch,
+        details?: TaskDetails
+    ): Promise<boolean> {
+        return this.patchLine(filePath, lineNumber, patch, null, details);
+    }
+
+    private async patchLine(
+        filePath: string,
+        lineNumber: number,
+        patch: TaskPatch,
+        expectedTitle: string | null,
+        details?: TaskDetails
     ): Promise<boolean> {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return false;
@@ -313,23 +304,16 @@ export class TaskWriter {
 
             const m = lines[idx].match(CHECKBOX_PARTS_RE);
             if (!m) return data;
+            // A stale number does not corrupt a neighbouring task, it rewrites
+            // it — and with `details`, replaces its description too.
+            if (expectedTitle !== null && !titlesMatch(m[3], expectedTitle)) return data;
 
             const [, prefix, char, body] = m;
-            const parsed = parseTaskText(body, { priority: 'none', tags: [] });
-            const next: TaskInput = {
-                ...parsed,
-                title: patch.title?.trim() || parsed.title,
-                // The end travels with the start: keeping the parsed end while
-                // the patch moves the start is how a line ends up claiming
-                // `⏰ 11:00-10:30`.
-                dueTime: patch.dueTime,
-                dueEndTime: patch.dueEndTime,
-                timerMinutes: patch.timerMinutes,
-            };
-
-            lines[idx] = `${prefix}[${char}] ${buildTaskBody(next)}`;
+            lines[idx] = `${prefix}[${char}] ${applyTaskPatch(body, patch)}`;
             ok = true;
-            return (patch.details ? writeDetails(lines, idx, patch.details) : lines).join('\n');
+            // The block is rewritten after the line, so the line's own indent —
+            // which the block is measured against — is already the new one.
+            return (details ? writeDetails(lines, idx, details) : lines).join('\n');
         });
         return ok;
     }
@@ -346,37 +330,11 @@ export class TaskWriter {
     /**
      * Set the `⏱` total on a line, adding the marker when it isn't there yet.
      *
-     * Surgical on purpose. Rebuilding the line from parsed fields would be
-     * simpler and would silently drop any marker this plugin doesn't know
-     * about — and the timer stops on a line the user may be editing by hand.
+     * Through the same patch as every other edit, so it touches nothing else:
+     * the timer stops on a line the user may be editing by hand.
      */
-    async setSpentInFile(filePath: string, lineNumber: number, spent: string): Promise<boolean> {
-        const file = this.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof TFile)) return false;
-
-        let ok = false;
-        await this.app.vault.process(file, (data) => {
-            const lines = data.split('\n');
-            const idx = lineNumber - 1;
-            if (idx < 0 || idx >= lines.length) return data;
-
-            const m = lines[idx].match(CHECKBOX_PARTS_RE);
-            if (!m) return data;
-
-            const [, prefix, char, body] = m;
-            const marker = `⏱ ${spent}`;
-            // Tags trail the line by convention, so a fresh marker goes before
-            // them rather than after — otherwise `#work ⏱ 25m` reads as a tag
-            // with a time stuck to it.
-            const next = SPENT_MARKER_RE.test(body)
-                ? body.replace(SPENT_MARKER_RE, marker)
-                : insertBeforeTags(body, marker);
-
-            lines[idx] = `${prefix}[${char}] ${next}`;
-            ok = true;
-            return lines.join('\n');
-        });
-        return ok;
+    async setSpentInFile(filePath: string, lineNumber: number, minutes: number): Promise<boolean> {
+        return this.patchLine(filePath, lineNumber, { spentMinutes: minutes }, null);
     }
 
     /**
@@ -424,34 +382,6 @@ export class TaskWriter {
             // middle of a list.
             const { end } = detailRange(lines, idx);
             lines.splice(idx, end - idx);
-            ok = true;
-            return lines.join('\n');
-        });
-        return ok;
-    }
-
-    /**
-     * Replace the text of a checkbox line (e.g. a subtask), preserving its
-     * indentation, list marker and status char. Returns true on success.
-     */
-    async setLineTitleInFile(
-        filePath: string,
-        lineNumber: number,
-        title: string
-    ): Promise<boolean> {
-        const file = this.app.vault.getAbstractFileByPath(filePath);
-        if (!(file instanceof TFile)) return false;
-
-        let ok = false;
-        await this.app.vault.process(file, (data) => {
-            const lines = data.split('\n');
-            const idx = lineNumber - 1;
-            if (idx < 0 || idx >= lines.length) return data;
-
-            const m = lines[idx].match(CHECKBOX_PARTS_RE);
-            if (!m) return data;
-
-            lines[idx] = `${m[1]}[${m[2]}] ${title.trim()}`;
             ok = true;
             return lines.join('\n');
         });

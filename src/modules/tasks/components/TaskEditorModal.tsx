@@ -8,7 +8,12 @@ import type { Priority, TaskStatus } from '../../../core/constants';
 import type { Task } from '../../../store/taskSlice';
 import { TaskWriter } from '../services/taskWriter';
 import { resolveTaskTarget } from '../services/taskTarget';
-import { formatDuration, normalizeTimeOfDay, parseDuration } from '../services/taskFormat';
+import {
+    diffTaskFields,
+    formatDuration,
+    normalizeTimeOfDay,
+    parseDuration,
+} from '../services/taskFormat';
 import type { TaskAttachment, TaskDetails } from '../services/taskDetails';
 import { AttachmentField } from './AttachmentField';
 import { splitProjectLink, withProjectLink } from '../../projects/services/projectLink';
@@ -145,14 +150,13 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
             dueDate: dueDate || undefined,
             // An hour with no day is an hour of nothing in particular, so it is
             // dropped rather than written against a date that isn't there. The
-            // end follows the start for the same reason — and `buildTaskBody`
-            // drops it again if it isn't actually later.
+            // end follows the start for the same reason — and the writer drops
+            // it again if it isn't actually later.
             dueTime: dueDate ? normalizeTimeOfDay(dueTime) : undefined,
             dueEndTime: dueDate && dueTime ? normalizeTimeOfDay(dueEndTime) : undefined,
             timerMinutes: parseDuration(timerText),
-            // Time already spent belongs to the timer, not to this form — it is
-            // carried through untouched so saving an edit can't reset it.
-            spentMinutes: editTask?.spentMinutes,
+            // No `spentMinutes`: time already spent belongs to the timer, and a
+            // field this form does not own is one its save leaves alone.
             startDate: startDate || undefined,
             scheduledDate: scheduledDate || undefined,
             recurrence: recurrence.trim() || undefined,
@@ -176,7 +180,10 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                 const ok = await writer.updateTaskInFile(
                     editTask.filePath,
                     editTask.lineNumber,
-                    input,
+                    // Only what the user changed in the dialog is written, so
+                    // the rest of the line stays as it was — including what
+                    // the dialog has no field for.
+                    diffTaskFields(editTask, input),
                     // The title as it was when the dialog opened, not the one
                     // being saved: the check is that the line is still the
                     // task the user opened, and renaming it is the commonest
@@ -184,7 +191,18 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                     editTask.title,
                     details
                 );
-                if (!ok) {
+                // Status last, and against the new title: marking done may
+                // insert the next occurrence above, which moves the line.
+                const settled =
+                    ok &&
+                    (status === editTask.status ||
+                        (await writer.setStatusInFile(
+                            editTask.filePath,
+                            editTask.lineNumber,
+                            status,
+                            trimmed
+                        )));
+                if (!settled) {
                     new Notice(t('tasks.error.update'));
                     return;
                 }

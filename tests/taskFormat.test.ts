@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
+    applyTaskPatch,
+    diffTaskFields,
     buildTaskLine,
     buildTaskBody,
     parseTaskText,
@@ -8,6 +10,7 @@ import {
     shiftIsoDate,
     daysBetweenIso,
     type TaskInput,
+    type TaskPatch,
 } from '../src/modules/tasks/services/taskFormat';
 
 const NO_DEFAULTS = { priority: 'none' as const, dueDate: undefined, tags: [] };
@@ -285,5 +288,225 @@ describe('date shifting', () => {
     it('daysBetweenIso', () => {
         expect(daysBetweenIso('2025-01-01', '2025-01-08')).toBe(7);
         expect(daysBetweenIso('2025-01-10', '2025-01-01')).toBe(-9);
+    });
+});
+
+/**
+ * Lines the way the Tasks plugin documents them. None of them is a line this
+ * plugin wrote, which is the point: an edit that touches one field must leave
+ * every other byte of somebody else's line where it was.
+ */
+const TASKS_DOCS_LINES = [
+    'take out the trash 🔁 every Sunday 📅 2021-04-25',
+    'do laundry ⏫ 🔁 every week 📅 2021-02-15',
+    '#task Pay bills ➕ 2023-06-01 ⏳ 2023-06-03 📅 2023-06-10',
+    'do something 🆔 abcdef',
+    'do something else ⛔ abcdef,123456',
+    'Mow the lawn 🔁 every week 🏁 delete 📅 2024-02-15',
+    '#task Water the plants 🔺 🔁 every day when done',
+    'Something 🔽 🛫 2021-04-09 ⏳ 2021-04-10 📅 2021-04-11 ❌ 2021-04-12 ✅ 2021-04-13 ^dcf64c',
+    'Buy groceries ⏬ ⌛ 2023-01-01 📆 2023-01-02',
+    'Call mom 🗓️ 2024-05-01 ⏱️ 1h25m',
+    'Standup ⏰ 9:05 – 9:20',
+    '  spaced   out   📅 2024-01-01   #tag  ',
+];
+
+describe('a line nobody changed stays byte for byte', () => {
+    for (const line of TASKS_DOCS_LINES) {
+        it(line, () => {
+            const parsed = parseTaskText(line, NO_DEFAULTS);
+
+            // An empty patch, and a form saved without touching anything.
+            expect(applyTaskPatch(line, {})).toBe(line);
+            expect(diffTaskFields(parsed, { ...parsed })).toEqual({});
+
+            // Every field written back with the value it already has: the
+            // glyph variant, the spacing, the unpadded hour all survive.
+            const same: TaskPatch = {
+                title: parsed.title,
+                priority: parsed.priority,
+                recurrence: parsed.recurrence ?? null,
+                startDate: parsed.startDate ?? null,
+                scheduledDate: parsed.scheduledDate ?? null,
+                dueDate: parsed.dueDate ?? null,
+                dueTime: parsed.dueTime ?? null,
+                dueEndTime: parsed.dueEndTime ?? null,
+                spentMinutes: parsed.spentMinutes ?? null,
+                timerMinutes: parsed.timerMinutes ?? null,
+                doneDate: parsed.doneDate ?? null,
+                cancelledDate: parsed.cancelledDate ?? null,
+                addTags: parsed.tags,
+            };
+            expect(applyTaskPatch(line, same)).toBe(line);
+        });
+    }
+});
+
+describe('markers there is no field for', () => {
+    it('keeps ➕ and 🆔 through a title edit', () => {
+        const line = 'Pay bills ➕ 2023-06-01 🆔 abc123 📅 2023-06-10 #money';
+        expect(applyTaskPatch(line, { title: 'Pay all the bills' })).toBe(
+            'Pay all the bills ➕ 2023-06-01 🆔 abc123 📅 2023-06-10 #money'
+        );
+    });
+
+    it('keeps them out of the title', () => {
+        const parsed = parseTaskText('Pay bills 🆔 abc ⛔ x,y 🏁 keep ➕ 2023-06-01 ^blk', NO_DEFAULTS);
+        expect(parsed.title).toBe('Pay bills');
+        expect(parsed.createdDate).toBe('2023-06-01');
+        expect(parsed.onCompletion).toBe('keep');
+    });
+
+    it('keeps markers nobody has heard of, in the order they were written', () => {
+        const line = 'Plan 🍎 trip 📅 2024-01-01 [custom:: x] 🧭 north';
+        expect(applyTaskPatch(line, { dueDate: '2024-02-02' })).toBe(
+            'Plan 🍎 trip 📅 2024-02-02 [custom:: x] 🧭 north'
+        );
+    });
+
+    it('keeps a block link last, where Obsidian can still find it', () => {
+        expect(applyTaskPatch('Task ^abc-1', { dueDate: '2024-01-01' })).toBe(
+            'Task 📅 2024-01-01 ^abc-1'
+        );
+        expect(applyTaskPatch('Task #a ^abc', { addTags: ['b'] })).toBe('Task #a #b ^abc');
+    });
+});
+
+describe('a recurrence rule ends at the next marker', () => {
+    it.each([
+        ['Mow 🔁 every week 🏁 delete 📅 2024-02-15', 'every week'],
+        ['Mow 🔁 every day 🆔 abc', 'every day'],
+        ['Mow 🔁 every day ⛔ abc', 'every day'],
+        ['Mow 🔁 every day ➕ 2024-01-01', 'every day'],
+        ['Mow 🔁 every 2 weeks #garden', 'every 2 weeks'],
+        ['Mow 🔁 every week 🧭 somewhere', 'every week'],
+    ])('%s', (line, rule) => {
+        const parsed = parseTaskText(line, NO_DEFAULTS);
+        expect(parsed.recurrence).toBe(rule);
+        expect(parsed.title).toBe(line.includes('🧭') ? 'Mow 🧭 somewhere' : 'Mow');
+    });
+
+    it('reads 🏁 once the rule has stopped before it', () => {
+        expect(parseTaskText('Mow 🔁 every week 🏁 delete', NO_DEFAULTS).onCompletion).toBe(
+            'delete'
+        );
+    });
+});
+
+describe('🔺 and ⏬', () => {
+    it('read as the extreme levels', () => {
+        expect(parseTaskText('A 🔺', NO_DEFAULTS).priority).toBe('urgent');
+        expect(parseTaskText('A ⏬', NO_DEFAULTS).priority).toBe('low');
+    });
+
+    it('survive an edit that did not change the priority', () => {
+        expect(
+            applyTaskPatch('Water 🔺 🔁 every day', { title: 'Water plants', priority: 'urgent' })
+        ).toBe('Water plants 🔺 🔁 every day');
+        expect(applyTaskPatch('Nap ⏬', { priority: 'low' })).toBe('Nap ⏬');
+    });
+
+    it('give way when the user picks another priority', () => {
+        expect(applyTaskPatch('Water 🔺 🔁 every day', { priority: 'high' })).toBe(
+            'Water 🔼 🔁 every day'
+        );
+        expect(applyTaskPatch('Water 🔺 🔁 every day', { priority: 'none' })).toBe(
+            'Water 🔁 every day'
+        );
+    });
+});
+
+describe('applyTaskPatch', () => {
+    it('adds a marker where it would have been written, ahead of trailing tags', () => {
+        expect(applyTaskPatch('Buy milk #home', { dueDate: '2024-01-01' })).toBe(
+            'Buy milk 📅 2024-01-01 #home'
+        );
+        expect(applyTaskPatch('Buy milk ⏫ #home', { doneDate: '2024-01-02' })).toBe(
+            'Buy milk ⏫ ✅ 2024-01-02 #home'
+        );
+        expect(applyTaskPatch('Buy milk 📅 2024-01-01', { priority: 'urgent' })).toBe(
+            'Buy milk ⏫ 📅 2024-01-01'
+        );
+    });
+
+    it('removes a marker and the space that went with it', () => {
+        expect(applyTaskPatch('Task 📅 2024-01-01 #t', { dueDate: null })).toBe('Task #t');
+        expect(applyTaskPatch('📅 2024-01-01 Task', { dueDate: null })).toBe('Task');
+        expect(applyTaskPatch('Task 📅 2024-01-01', { dueDate: null })).toBe('Task');
+    });
+
+    it('changes a value in place, wherever the user put it', () => {
+        expect(applyTaskPatch('📅 2024-01-01 Task #t', { dueDate: '2024-03-03' })).toBe(
+            '📅 2024-03-03 Task #t'
+        );
+    });
+
+    it('moves the start of an hour range and keeps the end while it still fits', () => {
+        expect(applyTaskPatch('Class ⏰ 09:00-10:30', { dueTime: '09:30' })).toBe(
+            'Class ⏰ 09:30-10:30'
+        );
+        expect(applyTaskPatch('Class ⏰ 09:00-10:30', { dueTime: '11:00' })).toBe('Class ⏰ 11:00');
+        expect(applyTaskPatch('Class ⏰ 09:00-10:30', { dueTime: null })).toBe('Class');
+    });
+
+    it('adds and removes only the tags it is told to', () => {
+        expect(applyTaskPatch('Task #a #b', { removeTags: ['a'], addTags: ['c', 'b'] })).toBe(
+            'Task #b #c'
+        );
+    });
+
+    it('replaces a title split by markers with one piece', () => {
+        expect(applyTaskPatch('Buy 📅 2024-01-01 milk #t', { title: 'Buy bread' })).toBe(
+            'Buy bread 📅 2024-01-01 #t'
+        );
+    });
+
+    it('settles a marker written twice', () => {
+        expect(applyTaskPatch('A 📅 2024-01-01 📅 2024-01-05', { dueDate: '2024-02-01' })).toBe(
+            'A 📅 2024-02-01'
+        );
+    });
+});
+
+describe('tags by Obsidian rules', () => {
+    it('reads tags in any alphabet', () => {
+        expect(parseInlineTags('купить хлеб #дом #работа/срочно')).toEqual([
+            'дом',
+            'работа/срочно',
+        ]);
+    });
+
+    it('does not read what Obsidian does not', () => {
+        expect(parseInlineTags('learn C# and see page#top and fix #123')).toEqual([]);
+        expect(parseTaskText('fix #123', NO_DEFAULTS).title).toBe('fix #123');
+    });
+});
+
+describe('diffTaskFields', () => {
+    it('names only what changed, and leaves inherited tags off the line', () => {
+        const before = parseTaskText('Task ⏫ 📅 2024-01-01 ✅ 2024-01-02 #a', {
+            priority: 'none',
+            tags: ['inherited'],
+        });
+        const patch = diffTaskFields(before, {
+            title: 'Task',
+            priority: 'urgent',
+            tags: ['inherited', 'a', 'b'],
+            dueDate: '2024-01-03',
+        });
+        expect(patch).toEqual({ addTags: ['b'], dueDate: '2024-01-03' });
+    });
+
+    it('clears a field the form owns and the user emptied', () => {
+        const before = parseTaskText('Task 📅 2024-01-01 ⏲ 25m', NO_DEFAULTS);
+        expect(diffTaskFields(before, { dueDate: undefined, timerMinutes: undefined })).toEqual({
+            dueDate: null,
+            timerMinutes: null,
+        });
+    });
+
+    it('leaves alone a field the form does not have', () => {
+        const before = parseTaskText('Task ✅ 2024-01-01', NO_DEFAULTS);
+        expect(diffTaskFields(before, { title: 'Task' })).toEqual({});
     });
 });

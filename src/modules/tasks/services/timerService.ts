@@ -2,7 +2,7 @@ import { Notice, type App } from 'obsidian';
 import { useZenithStore } from '../../../store';
 import { translate, resolveLocale } from '../../../core/i18n';
 import { TaskWriter } from './taskWriter';
-import { parseTaskText, formatDuration } from './taskFormat';
+import { parseTaskText } from './taskFormat';
 import { isDue, isWorthWriting, startSession, totalAfter, type TimerSession } from './taskTimer';
 
 /**
@@ -140,22 +140,12 @@ export class TimerService {
         return parseTaskText(body, { priority: 'none', tags: [] }).spentMinutes ?? 0;
     }
 
-    /**
-     * Write the new total onto the line, leaving everything else as it is.
-     *
-     * A surgical replacement rather than a rebuild from parsed fields: the line
-     * may carry markers this plugin doesn't know about, and rewriting it from
-     * what we understood would silently drop them.
-     */
+    /** Write the new total onto the line, leaving everything else as it is. */
     private async writeSpent(
         filePath: string,
         lineNumber: number,
         minutes: number
     ): Promise<boolean> {
-        return new TaskWriter(this.app).setSpentInFile(
-            filePath,
-            lineNumber,
-            formatDuration(minutes)
-        );
+        return new TaskWriter(this.app).setSpentInFile(filePath, lineNumber, minutes);
     }
 }

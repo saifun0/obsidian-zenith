@@ -27,7 +27,7 @@ the popular *Tasks* plugin convention):
 
 | Marker | Meaning |
 | --- | --- |
-| `⏫` / `🔼` / `🔽` | Urgent / high / low priority |
+| `⏫` / `🔼` / `🔽` | Urgent / high / low priority (`🔺` and `⏬` read as urgent and low) |
 | `📅 YYYY-MM-DD` | Due date |
 | `🛫 YYYY-MM-DD` | Start date |
 | `⏳ YYYY-MM-DD` | Scheduled date |
@@ -36,11 +36,21 @@ the popular *Tasks* plugin convention):
 | `⏰ HH:MM` / `⏰ HH:MM-HH:MM` | Time of day, optionally with an end — what puts the task on the calendar's hour grid |
 | `⏱ 1h25m` | Time already spent (kept by the task timer) |
 | `⏲ 45m` | Countdown the timer was last set to — also the planned length on the hour grid |
-| `#tag` (incl. `#a/b`) | Tag |
+| `#tag` (incl. `#a/b`, `#работа`) | Tag — by Obsidian's rules, so `C#`, `page#anchor` and `#123` are not tags |
+
+Zenith edits a line **only where you changed it**. Everything else stays as you wrote it —
+the order, the spacing, `📆` instead of `📅`, and markers Zenith has no field for: the
+*Tasks* plugin's `➕` created date, `🆔` id, `⛔` depends-on and `🏁` on-completion, a
+`^block-link`, your own emoji. A marker a line didn't have yet is added where Zenith would
+have written it, ahead of trailing tags.
 
 Completing a **recurring** task stamps its ✅ date and inserts the next occurrence above it
-with its dates advanced. A file may also declare **defaults** via YAML frontmatter
-(`priority`, `due`, `tags`); inline markers on a line override them.
+with its dates advanced. The new occurrence keeps the line as it was, minus what belonged to
+the finished one: the ✅ stamp, the time spent, the `🆔`, `⛔` and block link (a copy would
+break whatever points at them); a `➕` becomes today. A task marked `🏁 delete` is removed
+once done — a recurring one leaves its next occurrence, with the description under it. A
+file may also declare **defaults** via YAML frontmatter (`priority`, `due`, `tags`); inline
+markers on a line override them, and editing a task doesn't copy them onto the line.
 
 The Tasks view adds a **status picker** on each row, a rich **create/edit modal** (status,
 priority, tags with autocomplete, due/start/scheduled dates, recurrence, subtasks), and a

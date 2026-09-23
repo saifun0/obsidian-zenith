@@ -4,7 +4,12 @@ import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import type { SubTask } from '../../../store/taskSlice';
 import { TaskWriter } from '../services/taskWriter';
-import { formatDuration, normalizeTimeOfDay, parseDuration } from '../services/taskFormat';
+import {
+    diffTaskFields,
+    formatDuration,
+    normalizeTimeOfDay,
+    parseDuration,
+} from '../services/taskFormat';
 import type { TaskAttachment, TaskDetails } from '../services/taskDetails';
 import { AttachmentField } from './AttachmentField';
 import { Modal } from '../../../components/shared/Modal';
@@ -61,16 +66,16 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
         try {
             const writer = new TaskWriter(app);
             const details: TaskDetails = { description: notes.trim(), attachments };
-            // The line is rewritten from its own parsed fields plus the two the
-            // form owns, so anything else on it — a tag, a marker this plugin
-            // doesn't know — survives being edited here.
-            const ok = await writer.updateLineExtras(filePath, subtask.lineNumber, {
+            // Only the fields this form owns, and of those only the ones that
+            // changed — so anything else on the line, a tag or a marker this
+            // plugin doesn't know, survives being edited here.
+            const patch = diffTaskFields(subtask, {
                 title: trimmed,
                 dueTime: normalizeTimeOfDay(dueTime),
                 dueEndTime: dueTime ? normalizeTimeOfDay(dueEndTime) : undefined,
                 timerMinutes: parseDuration(timerText),
-                details,
             });
+            const ok = await writer.updateLineExtras(filePath, subtask.lineNumber, patch, details);
             if (!ok) {
                 new Notice(t('tasks.error.update'));
                 return;

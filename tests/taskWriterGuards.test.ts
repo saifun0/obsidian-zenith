@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { TFile } from 'obsidian';
 import { TaskWriter } from '../src/modules/tasks/services/taskWriter';
 import type { App } from 'obsidian';
@@ -166,7 +166,7 @@ describe('marking a task done by line number', () => {
 });
 
 describe('rewriting a task by line number', () => {
-    const input = { title: 'Call the plumber again', priority: 'none' as const, tags: [] };
+    const input = { title: 'Call the plumber again' };
 
     it('replaces the line it was told about', async () => {
         const { app, store } = fakeApp('Day.md', NOTE);
@@ -216,5 +216,133 @@ describe('rewriting a task by line number', () => {
         ).toBe(true);
         expect(store.text).not.toContain('- [ ] Call the plumber\n');
         expect(store.text).toContain('Call the plumber again');
+    });
+});
+
+/**
+ * What an edit leaves on the line.
+ *
+ * Every write used to rebuild the line from the fields this plugin reads, so
+ * whatever it did not read went on the first save — `➕` from every task, and
+ * from a drop into "Today" the hour, the time spent and the completion stamp.
+ */
+describe('editing keeps what the edit did not touch', () => {
+    it('keeps ➕ and 🆔 through a rename', async () => {
+        const { app, store } = fakeApp(
+            'Day.md',
+            '- [ ] Pay bills ➕ 2023-06-01 🆔 abc 📅 2023-06-10 #money'
+        );
+
+        const ok = await new TaskWriter(app).updateTaskInFile(
+            'Day.md',
+            1,
+            { title: 'Pay all the bills' },
+            'Pay bills'
+        );
+
+        expect(ok).toBe(true);
+        expect(store.text).toBe('- [ ] Pay all the bills ➕ 2023-06-01 🆔 abc 📅 2023-06-10 #money');
+    });
+
+    it('moves only the date when a task is dropped into another bucket', async () => {
+        const { app, store } = fakeApp(
+            'Day.md',
+            '- [x] Class 📅 2024-01-01 ⏰ 09:00-10:30 ⏱ 1h ✅ 2024-01-01'
+        );
+
+        await new TaskWriter(app).updateTaskInFile('Day.md', 1, { dueDate: null }, 'Class');
+
+        expect(store.text).toBe('- [x] Class ⏰ 09:00-10:30 ⏱ 1h ✅ 2024-01-01');
+    });
+
+    it('keeps a 🔺 through an edit that did not change the priority', async () => {
+        const { app, store } = fakeApp('Day.md', '- [ ] Water the plants 🔺 🔁 every day');
+
+        await new TaskWriter(app).updateTaskInFile(
+            'Day.md',
+            1,
+            { title: 'Water the plants', priority: 'urgent', dueDate: '2024-05-01' },
+            'Water the plants'
+        );
+
+        expect(store.text).toBe('- [ ] Water the plants 🔺 🔁 every day 📅 2024-05-01');
+    });
+
+    it('writes the time spent without touching the rest', async () => {
+        const { app, store } = fakeApp('Day.md', '- [ ] Write 🆔 w1 ⏱ 25m ^blk');
+
+        await new TaskWriter(app).setSpentInFile('Day.md', 1, 50);
+
+        expect(store.text).toBe('- [ ] Write 🆔 w1 ⏱ 50m ^blk');
+    });
+});
+
+describe('finishing a recurring task', () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date(2024, 1, 15, 12, 0, 0));
+    });
+    afterEach(() => vi.useRealTimers());
+
+    it('leaves behind what belonged to the finished occurrence', async () => {
+        const { app, store } = fakeApp(
+            'Chores.md',
+            '- [ ] Pay rent 🆔 rent1 ⛔ bank ➕ 2024-01-01 🔁 every month 📅 2024-02-01 ⏱ 20m #home ^blk'
+        );
+
+        const ok = await new TaskWriter(app).setStatusInFile('Chores.md', 1, 'done', 'Pay rent');
+
+        expect(ok).toBe(true);
+        expect(store.text.split('\n')).toEqual([
+            // Another 🆔 or block link like these would break whatever points
+            // at them; ➕ is when this occurrence was made, which is today.
+            '- [ ] Pay rent ➕ 2024-02-15 🔁 every month 📅 2024-03-01 #home',
+            '- [x] Pay rent 🆔 rent1 ⛔ bank ➕ 2024-01-01 🔁 every month 📅 2024-02-01 ⏱ 20m ✅ 2024-02-15 #home ^blk',
+        ]);
+    });
+
+    it('rolls a `🏁 delete` task over and removes the finished one', async () => {
+        const { app, store } = fakeApp(
+            'Chores.md',
+            [
+                '- [ ] Mow the lawn 🔁 every week 🏁 delete 📅 2024-02-15',
+                '\tthe back garden too',
+                '- [ ] Something else',
+            ].join('\n')
+        );
+
+        await new TaskWriter(app).setStatusInFile('Chores.md', 1, 'done', 'Mow the lawn');
+
+        // The rule used to swallow `🏁 delete`, and the task never repeated.
+        // The description stays with the chore it describes.
+        expect(store.text.split('\n')).toEqual([
+            '- [ ] Mow the lawn 🔁 every week 🏁 delete 📅 2024-02-22',
+            '\tthe back garden too',
+            '- [ ] Something else',
+        ]);
+    });
+
+    it('removes a finished `🏁 delete` task that does not repeat, with its lines', async () => {
+        const { app, store } = fakeApp(
+            'Chores.md',
+            ['- [ ] Throw out the boxes 🏁 delete', '\tthe big ones', '- [ ] Next'].join('\n')
+        );
+
+        await new TaskWriter(app).setStatusInFile('Chores.md', 1, 'done', 'Throw out the boxes');
+
+        expect(store.text).toBe('- [ ] Next');
+    });
+
+    it('keeps a `🏁 delete` task that was only cancelled', async () => {
+        const { app, store } = fakeApp('Chores.md', '- [ ] Throw out the boxes 🏁 delete');
+
+        await new TaskWriter(app).setStatusInFile(
+            'Chores.md',
+            1,
+            'cancelled',
+            'Throw out the boxes'
+        );
+
+        expect(store.text).toBe('- [-] Throw out the boxes 🏁 delete ❌ 2024-02-15');
     });
 });

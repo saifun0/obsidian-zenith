@@ -113,7 +113,18 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
         setEditingLine(null);
         if (!text || text === sub.title) return;
         try {
-            if (await writer().setLineTitleInFile(filePath, sub.lineNumber, text)) await reload();
+            // Only the title changes: a rename that wrote the text over the
+            // whole line took the subtask's hour, timer and tags with it.
+            const ok = await writer().updateTaskInFile(
+                filePath,
+                sub.lineNumber,
+                { title: text },
+                sub.title
+            );
+            // A refusal means the note moved under us; say so rather than
+            // leave the old title standing as if the rename had worked.
+            if (ok) await reload();
+            else new Notice(t('tasks.error.update'));
         } catch (err) {
             console.error('Zenith: failed to edit subtask:', err);
             new Notice(t('tasks.error.save'));

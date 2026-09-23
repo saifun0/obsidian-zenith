@@ -182,19 +182,13 @@ export const TaskList: FC<TaskListProps> = ({ tasks, groupMode = 'none', reorder
             const writer = new TaskWriter(app);
             // Dates first, then status: marking done stamps a ✅ and may insert
             // the next occurrence of a recurring task, so it has to go last.
+            // Only the date: the rest of the line — its hour, time spent, a
+            // completion stamp — is not the drop's to rewrite.
             if (patch.dueDate !== undefined) {
                 await writer.updateTaskInFile(
                     task.filePath,
                     task.lineNumber,
-                    {
-                        title: task.title,
-                        priority: task.priority,
-                        tags: task.tags,
-                        dueDate: patch.dueDate ?? undefined,
-                        startDate: task.startDate,
-                        scheduledDate: task.scheduledDate,
-                        recurrence: task.recurrence,
-                    },
+                    { dueDate: patch.dueDate },
                     task.title
                 );
             }
