@@ -22,6 +22,10 @@ import type { ZenithSettings } from '../store/settingsSlice';
  *
  * Views get `--zenith-inset-top` / `--zenith-inset-bottom` and, when either is
  * above zero, the class `has-zenith-insets`, which pads them (`base.css`).
+ * The settings page gets `--zenith-inset-top` too: Obsidian floats its back
+ * button, title and close button over the settings' scroll area, below the
+ * status bar, so what covers its top is measured from those
+ * (`SettingsApp.css`).
  * Overlays drawn over everything — dialogs, sheets, the lightbox — only need
  * the system's bands, and read `--zenith-safe-top` / `--zenith-safe-bottom`
  * from `body`.
@@ -53,11 +57,12 @@ export interface InsetReading {
     navbar: number;
     /** Whether the bands in force were set by hand. */
     manual: boolean;
-    /** The largest inset any open Zenith view was given. */
+    /** The largest inset any open Zenith view, or the settings page, was given. */
     applied: Bands;
 }
 
 const VIEW_SELECTOR = '.workspace-leaf-content > .view-content.zenith-root';
+const SETTINGS_SELECTOR = '.zenith-custom-settings-container.is-mobile-settings';
 
 /** Portrait: the only orientation the hand-set bands are meant for. */
 const portrait = () => window.innerHeight >= window.innerWidth;
@@ -67,6 +72,32 @@ const visible = (el: Element | null): el is HTMLElement => {
     const r = el.getBoundingClientRect();
     return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden';
 };
+
+/**
+ * The lowest edge of anything Obsidian floats over the top of `el` — in the
+ * settings modal on a phone, its back button, title and close button.
+ *
+ * Found by position rather than by class name, since those names are
+ * Obsidian's to change: small things in the same modal, outside `el`, lying
+ * across its top in the upper part of the screen. Anything tall is a panel,
+ * not a button, and is left out.
+ */
+function floatingChromeBottom(el: HTMLElement, screenHeight: number): number {
+    const root = el.closest('.modal-container') ?? el.closest('.modal');
+    if (!root) return 0;
+    const box = el.getBoundingClientRect();
+    let bottom = 0;
+    root.querySelectorAll<HTMLElement>('*').forEach((node) => {
+        if (el.contains(node) || node.contains(el)) return;
+        const r = node.getBoundingClientRect();
+        if (!r.width || !r.height || r.height > 160) return;
+        if (r.top > screenHeight * 0.3 || r.bottom <= box.top || r.bottom <= bottom) return;
+        if (r.right <= box.left || r.left >= box.right) return;
+        if (getComputedStyle(node).visibility === 'hidden') return;
+        bottom = r.bottom;
+    });
+    return bottom;
+}
 
 export class MobileInsets {
     private probe: HTMLElement | null = null;
@@ -136,6 +167,9 @@ export class MobileInsets {
             el.style.removeProperty('--zenith-inset-bottom');
             el.removeClass('has-zenith-insets');
         });
+        document.querySelectorAll<HTMLElement>(SETTINGS_SELECTOR).forEach((el) => {
+            el.style.removeProperty('--zenith-inset-top');
+        });
     }
 
     /** Re-read on every change, once a frame at most. */
@@ -204,6 +238,16 @@ export class MobileInsets {
             el.toggleClass('has-zenith-insets', inset.top > 0 || inset.bottom > 0);
             applied.top = Math.max(applied.top, inset.top);
             applied.bottom = Math.max(applied.bottom, inset.bottom);
+        });
+
+        // The settings page: the status bar, and Obsidian's buttons over it.
+        document.querySelectorAll<HTMLElement>(SETTINGS_SELECTOR).forEach((el) => {
+            this.watch(el);
+            if (!visible(el)) return;
+            const top = Math.max(screen.top, floatingChromeBottom(el, height));
+            const inset = Math.max(0, Math.round(top - el.getBoundingClientRect().top));
+            el.style.setProperty('--zenith-inset-top', `${inset}px`);
+            applied.top = Math.max(applied.top, inset);
         });
 
         this.reading = { system, navbar, manual, applied };

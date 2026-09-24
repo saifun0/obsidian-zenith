@@ -39,9 +39,13 @@
    edge-to-edge. On a phone that padding was the only thing keeping the first
    row out from under the floating back/close buttons, which sit *over* the
    scroll area — so it comes back here, plus the bottom safe-area inset the
-   home indicator needs. */
+   home indicator needs. How far down those buttons reach depends on the
+   phone: under a Dynamic Island the status bar alone is 59px. So the top is
+   what `core/mobileInsets.ts` measured, with 48px as the floor for when
+   nothing was. */
 .zenith-custom-settings-container.is-mobile-settings .zenith-settings {
-    padding: 48px 16px calc(32px + var(--zenith-safe-bottom, env(safe-area-inset-bottom, 0px)));
+    padding: max(48px, calc(var(--zenith-inset-top, 0px) + 8px)) 16px
+        calc(32px + var(--zenith-safe-bottom, env(safe-area-inset-bottom, 0px)));
 }
 
 /* A measured value in a settings row: read, not edited. */

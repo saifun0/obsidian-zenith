@@ -16,7 +16,9 @@ and the last one scrolls to above the buttons, not under them.
 A view gets exactly the part that covers it. Where Obsidian already keeps a view clear, which
 is the usual case with the view header shown, nothing changes. The dashboard's wallpaper still
 reaches the screen's edges; only the cards step back. Dialogs, sheets and the image viewer
-keep clear of the camera and the gesture bar.
+keep clear of the camera and the gesture bar. Zenith's settings page starts below the back and
+close buttons Obsidian floats over it; under a Dynamic Island they reach well past the status
+bar.
 
 **By hand**, in *Settings → Appearance → Phone → Screen edges*, you give how tall each band
 is from the screen's edge. Use it if a view still slips under the camera or the buttons on

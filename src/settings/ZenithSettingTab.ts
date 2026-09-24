@@ -41,6 +41,12 @@ export class ZenithSettingTab extends PluginSettingTab {
                 React.createElement(SettingsApp)
             )
         );
+
+        const insets = this.plugin.mobileInsets;
+        if (insets) {
+            insets.schedule();
+            window.setTimeout(() => insets.schedule(), 400);
+        }
     }
 
     hide(): void {
