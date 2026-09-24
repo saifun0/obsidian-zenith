@@ -5,7 +5,7 @@ import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
-import { activeTrackers } from '../../../core/journalConfig';
+import { usableTrackers } from '../services/usableTrackers';
 import { useReducedMotion } from '../../../components/shared/useCrossFade';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import { entriesByDate, journalStats } from '../services/journalStats';
@@ -35,19 +35,20 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
     const wordsOn = useFeature('journal.wordCount');
     const { plugin } = useApp();
     const entries = useZenithStore((s) => s.journalEntries);
-    const configured = useZenithStore((s) => s.settings.journalTrackers);
+    const settings = useZenithStore((s) => s.settings);
     const animations = useZenithStore((s) => s.settings.uiAnimations);
     const reduced = useReducedMotion();
-    const trackers = useMemo(() => activeTrackers(configured), [configured]);
+    const trackers = useMemo(() => usableTrackers(settings), [settings]);
+    const weekStart = settings.journalWeekStart;
 
     const today = getTodayString();
     const stats = useMemo(
-        () => journalStats(entries, trackers, today, WINDOW_DAYS),
-        [entries, trackers, today]
+        () => journalStats(entries, trackers, today, WINDOW_DAYS, weekStart),
+        [entries, trackers, today, weekStart]
     );
     const rows = useMemo(
-        () => recentHabits(entriesByDate(entries), trackers, today, WINDOW_DAYS),
-        [entries, trackers, today]
+        () => recentHabits(entriesByDate(entries), trackers, today, WINDOW_DAYS, weekStart),
+        [entries, trackers, today, weekStart]
     );
 
     const showMetrics = size === 'lg';

@@ -4,7 +4,8 @@ import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
-import { activeTrackers, type JournalTracker } from '../../../core/journalConfig';
+import type { JournalTracker } from '../../../core/journalConfig';
+import { usableTrackers } from '../services/usableTrackers';
 import type { TrackerValue } from '../../../store/journalSlice';
 import { entriesByDate, currentStreak } from '../services/journalStats';
 import { setTrackerValue, openDailyNote } from '../services/journalActions';
@@ -125,7 +126,7 @@ const DailyNoteBody: FC<DailyNoteBlockProps> = ({ sourcePath }) => {
             </div>
 
             <TrackerRail
-                trackers={activeTrackers(settings.journalTrackers)}
+                trackers={usableTrackers(settings)}
                 values={entry?.values ?? {}}
                 onChange={change}
                 layout="rail"

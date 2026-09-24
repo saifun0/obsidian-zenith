@@ -1,6 +1,7 @@
 import type { JournalEntry, TrackerValue } from '../../../store/journalSlice';
 import { coerceTrackerValue, SCALE_MAX, type JournalTracker } from '../../../core/journalConfig';
 import { addDays } from './journalDates';
+import { dayState, weeklyReading, type WeeklyReading } from './habitMonth';
 
 /** Entries indexed by their date, for O(1) calendar lookups. */
 export function entriesByDate(entries: JournalEntry[]): Map<string, JournalEntry> {
@@ -132,6 +133,13 @@ export interface TrackerStat {
     series: TrackerPoint[];
     /** The value a full bar represents, for drawing the series. */
     scaleMax: number;
+    /**
+     * A habit being quit: recorded days in the window, and how many of them
+     * were kept — "12 of 15 recorded days without it", never "15 days".
+     */
+    quit?: { kept: number; recorded: number };
+    /** A weekly goal: its weeks over the window, and the run of kept weeks. */
+    weekly?: WeeklyReading;
 }
 
 export interface JournalStatsResult {
@@ -181,7 +189,8 @@ export function journalStats(
     entries: JournalEntry[],
     trackers: JournalTracker[],
     today: string,
-    windowDays = 30
+    windowDays = 30,
+    weekStart: 'mon' | 'sun' = 'mon'
 ): JournalStatsResult {
     const byDate = entriesByDate(entries);
 
@@ -218,6 +227,19 @@ export function journalStats(
                   ? 1
                   : Math.max(tracker.max ?? 0, ...recorded, 1);
 
+        let quit: TrackerStat['quit'];
+        if (tracker.mode === 'quit') {
+            let kept = 0;
+            let recordedDays = 0;
+            for (const date of window) {
+                const entry = byDate.get(date);
+                if (!isJournalled(entry)) continue;
+                recordedDays += 1;
+                if (dayState(tracker, entry, date, today) === 'done') kept += 1;
+            }
+            quit = { kept, recorded: recordedDays };
+        }
+
         return {
             tracker,
             windowDays,
@@ -227,6 +249,11 @@ export function journalStats(
             rate: windowDays > 0 ? days / windowDays : 0,
             series,
             scaleMax,
+            quit,
+            weekly:
+                tracker.goalPeriod === 'week'
+                    ? weeklyReading(byDate, tracker, window, today, weekStart)
+                    : undefined,
         };
     });
 

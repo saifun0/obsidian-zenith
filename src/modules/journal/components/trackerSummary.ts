@@ -36,6 +36,29 @@ export function summarizeTracker(stat: TrackerStat, t: Translator): TrackerSumma
     const { tracker, average, days } = stat;
     const dayShort = t('journal.stats.dayShort');
 
+    // Given up rather than kept up: counted over the days that were written
+    // down, and said so, because a day nobody recorded is not a day without.
+    if (stat.quit) {
+        const { kept, recorded } = stat.quit;
+        return {
+            value: `${kept}`,
+            suffix: `/${recorded}`,
+            basis: t('journal.quit.basis', { kept, recorded, label: tracker.label }),
+        };
+    }
+
+    // A weekly goal reads as this week against its count, with the run of
+    // kept weeks beside it — the daily coverage would call three good gym
+    // days a 43% week.
+    if (stat.weekly) {
+        const { current, run } = stat.weekly;
+        return {
+            value: `${current.done}`,
+            suffix: `/${current.count}`,
+            basis: t.plural('journal.goals.weekBasis', run),
+        };
+    }
+
     if (tracker.kind === 'scale') {
         return {
             value: average === null ? '—' : average.toFixed(1),

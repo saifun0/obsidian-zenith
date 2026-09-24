@@ -5,7 +5,8 @@ import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
-import { activeTrackers, type JournalTracker } from '../../../core/journalConfig';
+import type { JournalTracker } from '../../../core/journalConfig';
+import { usableTrackers } from '../services/usableTrackers';
 import type { TrackerValue } from '../../../store/journalSlice';
 import { IconButton } from '../../../components/shared/IconButton';
 import { ViewHeader } from '../../../components/shared';
@@ -35,10 +36,7 @@ export const JournalApp: FC = () => {
     const [monthAnchor, setMonthAnchor] = useState(today);
 
     // Switched-off trackers keep their history but leave every surface.
-    const trackers = useMemo(
-        () => activeTrackers(settings.journalTrackers),
-        [settings.journalTrackers]
-    );
+    const trackers = useMemo(() => usableTrackers(settings), [settings]);
     const byDate = useMemo(() => entriesByDate(entries), [entries]);
     const entry = byDate.get(selected);
 

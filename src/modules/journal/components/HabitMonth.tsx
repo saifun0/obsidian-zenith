@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type FC } from 'react';
 import { useApp } from '../../../context/AppContext';
-import { useTranslation } from '../../../core/i18n';
+import { useTranslation, type Translator } from '../../../core/i18n';
+import { useZenithStore } from '../../../store';
 import { isoToDate, monthLabel } from '../../../core/calendarDates';
 import type { JournalTracker } from '../../../core/journalConfig';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
@@ -38,6 +39,31 @@ interface HabitMonthProps {
  * step into should open where you are, not on the 1st with three weeks of
  * scrolling in between.
  */
+/**
+ * The figure at the end of a row: the month's rate for a daily habit, this
+ * week against its count for a weekly one, and kept of recorded for a habit
+ * being quit.
+ */
+function rowFigure(row: HabitRow): string {
+    if (row.weekly) return `${row.weekly.current.done}/${row.weekly.current.count}`;
+    if (row.tracker.mode === 'quit') return `${row.done}/${row.recorded}`;
+    return `${Math.round(row.rate * 100)}%`;
+}
+
+function rowTitle(row: HabitRow, t: Translator): string {
+    if (row.weekly) {
+        return `${row.tracker.label} — ${t.plural('journal.goals.weekBasis', row.weekly.run)}`;
+    }
+    if (row.tracker.mode === 'quit') {
+        return t('journal.quit.basis', {
+            kept: row.done,
+            recorded: row.recorded,
+            label: row.tracker.label,
+        });
+    }
+    return `${row.tracker.label} — ${Math.round(row.rate * 100)}%`;
+}
+
 export const HabitMonth: FC<HabitMonthProps> = ({
     byDate,
     trackers,
@@ -71,9 +97,10 @@ export const HabitMonth: FC<HabitMonthProps> = ({
     /** Live entrance animations, cancelled if the view moves on mid-sequence. */
     const playingRef = useRef<Animation[]>([]);
 
+    const weekStart = useZenithStore((s) => s.settings.journalWeekStart);
     const month = useMemo(
-        () => habitMonth(byDate, trackers, anchor, today),
-        [byDate, trackers, anchor, today]
+        () => habitMonth(byDate, trackers, anchor, today, weekStart),
+        [byDate, trackers, anchor, today, weekStart]
     );
     const summary = useMemo(() => summarize(month.rows), [month.rows]);
     const monthKey = anchor.slice(0, 7);
@@ -269,7 +296,7 @@ export const HabitMonth: FC<HabitMonthProps> = ({
      */
     const clickCell = (row: HabitRow, cell: HabitCell, button: HTMLElement) => {
         if (row.tracker.kind === 'check') {
-            write(row.tracker, cell.date, cell.state === 'done' ? null : true);
+            write(row.tracker, cell.date, cell.value === true ? null : true);
             return;
         }
 
@@ -349,15 +376,13 @@ export const HabitMonth: FC<HabitMonthProps> = ({
                                         '--hmon-row': index,
                                     } as CSSProperties
                                 }
-                                title={`${row.tracker.label} — ${Math.round(row.rate * 100)}%`}
+                                title={rowTitle(row, t)}
                             >
                                 <span className="zenith-hmon__label-icon">
                                     <DynamicIcon name={row.tracker.icon} size={14} />
                                 </span>
                                 <span className="zenith-hmon__label-text">{row.tracker.label}</span>
-                                <span className="zenith-hmon__label-rate">
-                                    {Math.round(row.rate * 100)}%
-                                </span>
+                                <span className="zenith-hmon__label-rate">{rowFigure(row)}</span>
                             </div>
                             <HabitTrack
                                 row={row}

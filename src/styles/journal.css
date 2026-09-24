@@ -1291,6 +1291,19 @@ body.is-phone .zenith-jstats {
     border: 1px dashed color-mix(in srgb, var(--zenith-text-faint) 40%, transparent);
 }
 
+/* A planned day off: a bar across the mark rather than a ring, so it reads as
+   neither a miss nor a gap. */
+.zenith-hmon__cell.is-rest .zenith-hmon__mark {
+    border: none;
+    background: linear-gradient(
+        to bottom,
+        transparent calc(50% - 1px),
+        color-mix(in srgb, var(--hmon-color) 55%, transparent) calc(50% - 1px),
+        color-mix(in srgb, var(--hmon-color) 55%, transparent) calc(50% + 1px),
+        transparent calc(50% + 1px)
+    );
+}
+
 .zenith-hmon__total {
     padding-top: 6px;
     color: var(--zenith-text-faint);

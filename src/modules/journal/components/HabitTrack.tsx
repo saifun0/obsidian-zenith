@@ -23,6 +23,7 @@ export function valueLabel(row: HabitRow, cell: HabitCell, t: Translator): strin
     const { tracker } = row;
     const value = coerceTrackerValue(tracker.kind, cell.value);
 
+    if (cell.state === 'rest') return t('habits.rest');
     if (value === undefined) {
         return cell.state === 'empty' ? t('journal.stats.noEntry') : t('habits.notDone');
     }

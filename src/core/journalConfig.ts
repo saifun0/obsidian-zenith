@@ -35,6 +35,26 @@ export const SCALE_MAX = 5;
  */
 export const DEFAULT_SCALE_GOAL = 4;
 
+/** Over what a goal is counted: each day on its own, or days in a week. */
+export type GoalPeriod = 'day' | 'week';
+
+/** Which side of the target is good: reach it, or stay under it. */
+export type GoalDirection = 'atLeast' | 'atMost';
+
+/** The fields that make up a tracker's goal — what a goal record keeps. */
+export const GOAL_FIELDS = ['goal', 'max', 'goalPeriod', 'goalCount', 'goalDirection'] as const;
+export type GoalField = (typeof GOAL_FIELDS)[number];
+
+/**
+ * A goal as it was, until a day. Kept when the goal changes so the days before
+ * it are still judged by what was asked of them then: raising "three times a
+ * week" to five must not quietly turn last month's good weeks into failures.
+ */
+export interface GoalRecord extends Partial<Pick<JournalTracker, GoalField>> {
+    /** The last day this goal was in force, `YYYY-MM-DD`. */
+    until: string;
+}
+
 export interface JournalTracker {
     /** Frontmatter key. Assigned at creation; see `uniqueTrackerId`. */
     id: string;
@@ -61,6 +81,32 @@ export interface JournalTracker {
      */
     goal?: number;
     /**
+     * `week`: the goal is met on `goalCount` days of each week rather than on
+     * every day — "sport three times a week". Absent means every day.
+     */
+    goalPeriod?: GoalPeriod;
+    /** Days a week the goal has to be met, 1–7, when the period is a week. */
+    goalCount?: number;
+    /**
+     * `atMost` turns a `number` or `scale` target into a limit: coffee, two
+     * cups at most. Absent means at least.
+     */
+    goalDirection?: GoalDirection;
+    /** Earlier goals, oldest first. See {@link GoalRecord}. */
+    goalHistory?: GoalRecord[];
+    /**
+     * `quit`: a habit being given up. A day counts when it is recorded and the
+     * habit is not — no tick, a count of zero — and only recorded days count at
+     * all: an unwritten day is not a day without smoking, it is a day nobody
+     * said anything about.
+     */
+    mode?: 'quit';
+    /**
+     * Runtime only, never saved: whether `tracker: rest` in a note marks a day
+     * of rest. Set by the journal while its goals feature is on.
+     */
+    restDays?: boolean;
+    /**
      * Left out of the check-in and the habit grid, without being deleted.
      *
      * A tracker you've stopped keeping is not a tracker you want to lose: its
@@ -75,6 +121,82 @@ export interface JournalTracker {
 /** The trackers a surface should actually show. */
 export function activeTrackers(trackers: readonly JournalTracker[]): JournalTracker[] {
     return trackers.filter((tracker) => !tracker.disabled);
+}
+
+/**
+ * Words that mark a day of rest when written as a tracker's value
+ * (`sport: rest`). A rest day neither breaks a run nor adds to it — the week's
+ * planned day off is not a lapse, and not an achievement either.
+ */
+export const REST_WORDS: readonly string[] = ['rest', 'отдых'] as const;
+
+export function isRestWord(text: string | undefined): boolean {
+    return !!text && REST_WORDS.includes(text.trim().toLowerCase());
+}
+
+/** A tracker with every goal extension taken off — how it reads while the feature is off. */
+export function withoutGoalExtensions(tracker: JournalTracker): JournalTracker {
+    const out = { ...tracker };
+    delete out.goalPeriod;
+    delete out.goalCount;
+    delete out.goalDirection;
+    delete out.goalHistory;
+    delete out.restDays;
+    return out;
+}
+
+/**
+ * The tracker with the goal that was in force on `date`.
+ *
+ * The first record whose `until` has not passed by that date wins; a date after
+ * every record gets the current goal.
+ */
+export function goalOn(tracker: JournalTracker, date?: string): JournalTracker {
+    const history = tracker.goalHistory;
+    if (!date || !history?.length) return tracker;
+    const record = [...history]
+        .sort((a, b) => a.until.localeCompare(b.until))
+        .find((r) => date <= r.until);
+    if (!record) return tracker;
+    const out: JournalTracker = { ...tracker };
+    for (const field of GOAL_FIELDS) {
+        (out as unknown as Record<string, unknown>)[field] = record[field];
+    }
+    return out;
+}
+
+/** Whether two versions of a tracker ask for different things. */
+export function goalChanged(a: JournalTracker, b: JournalTracker): boolean {
+    return GOAL_FIELDS.some((field) => a[field] !== b[field]);
+}
+
+/**
+ * `after`, with `before`'s goal kept as history when the goal changed.
+ *
+ * The old goal runs until yesterday: today is when the new one starts. Changed
+ * twice in one day, the goal before today is already on record and is not
+ * recorded again — only the last of the day's edits is what today asks.
+ */
+export function withGoalHistory(
+    before: JournalTracker,
+    after: JournalTracker,
+    yesterday: string
+): JournalTracker {
+    if (!goalChanged(before, after)) return after;
+    const history = before.goalHistory ?? [];
+    if (history.some((r) => r.until >= yesterday)) return after;
+    const record: GoalRecord = { until: yesterday };
+    for (const field of GOAL_FIELDS) {
+        if (before[field] !== undefined) {
+            (record as unknown as Record<string, unknown>)[field] = before[field];
+        }
+    }
+    return { ...after, goalHistory: [...history, record] };
+}
+
+/** Days a week a weekly goal asks for, kept within 1–7. */
+export function weeklyCount(tracker: JournalTracker): number {
+    return Math.min(7, Math.max(1, Math.round(tracker.goalCount ?? 3)));
 }
 
 /**
@@ -198,12 +320,20 @@ export function trackerGoal(tracker: JournalTracker): number {
     return tracker.max && tracker.max > 0 ? tracker.max : 0;
 }
 
-/** Whether a day's recorded value counts as done. */
-export function meetsGoal(tracker: JournalTracker, raw: unknown): boolean {
-    const value = coerceTrackerValue(tracker.kind, raw);
+/**
+ * Whether a day's recorded value counts as done — by the goal in force on
+ * `date`, when a date is given.
+ *
+ * A limit (`atMost`) is met by staying under it, zero included; a check box
+ * has no amount to stay under, so it only ever reads "at least".
+ */
+export function meetsGoal(tracker: JournalTracker, raw: unknown, date?: string): boolean {
+    const t = goalOn(tracker, date);
+    const value = coerceTrackerValue(t.kind, raw);
     if (value === undefined) return false;
     if (typeof value === 'boolean') return value;
-    const goal = trackerGoal(tracker);
+    const goal = trackerGoal(t);
+    if (t.goalDirection === 'atMost') return value <= goal;
     return goal > 0 ? value >= goal : value > 0;
 }
 
@@ -218,6 +348,9 @@ export function trackerFill(tracker: JournalTracker, raw: unknown): number {
     const value = coerceTrackerValue(tracker.kind, raw);
     if (value === undefined) return 0;
     if (typeof value === 'boolean') return value ? 1 : 0;
+    // A limit is full when kept, not when approached: two coffees of a
+    // two-coffee limit is a kept day, not a nearly-full one.
+    if (tracker.goalDirection === 'atMost') return meetsGoal(tracker, raw) ? 1 : 0.2;
 
     const goal = trackerGoal(tracker);
     if (goal <= 0) return value > 0 ? 1 : 0;

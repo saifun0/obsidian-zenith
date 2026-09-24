@@ -51,6 +51,24 @@ means what it says: a journal of pure prose.
 Values whose tracker was later renamed or removed are **kept** in the note and still parsed,
 so re-adding a tracker finds its history rather than a blank slate.
 
+**Goals beyond "every day"** (*Journal → Features → Weekly goals and limits*):
+
+- **Days a week.** "Exercise, 3 days a week": a week is kept when the goal is met on that
+  many of its days, whichever they are. The habit month shows this week as `2/3`, and the
+  statistics count kept weeks in a row. A week not yet over is never a broken one.
+- **At most.** A number or scale target can be a limit — "coffee, 2 at most". A day is kept
+  by staying under it, zero included; going over is a miss, not a partial day.
+- **Rest days.** Write `rest` (or `отдых`) as a tracker's value — `sport: rest` — and that day
+  neither breaks a streak nor adds to it: a planned day off is not a lapse.
+- **Changing a goal does not rewrite the past.** The old goal is kept for the days before
+  today, so raising "3 a week" to 5 does not turn last month's good weeks into failures.
+
+**Habits to quit** (*Journal → Features → Habits to quit*): set a check-box or number
+tracker's **Habit** to *To quit*, and a day counts when it is **recorded** and the habit is
+not — no tick, a count of zero. Only recorded days count at all, and the figure says so:
+*12 of 15 recorded days without smoking*, never "15 days without", because a day nobody
+wrote about is not a day without it.
+
 ## In the note itself
 
 A ` ```zenith-daily ` code block renders the day's check-in inside the note: every tracker

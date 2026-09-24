@@ -12,9 +12,13 @@ import {
     TRACKER_KINDS,
     uniqueTrackerId,
     trackerIdProblem,
+    weeklyCount,
+    withGoalHistory,
     type JournalTracker,
     type TrackerKind,
 } from '../../core/journalConfig';
+import { addDays } from '../../modules/journal/services/journalDates';
+import { useFeature } from '../../core/useFeature';
 import { DEFAULT_JOURNAL_FOLDER } from '../../core/constants';
 import type { JournalWeekStart } from '../../store/settingsSlice';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
@@ -109,8 +113,18 @@ export const JournalSettings: React.FC = () => {
     const commit = (next: JournalTracker[]) => updateSettings({ journalTrackers: next });
     // Addressed by position rather than id, because one of the editable fields
     // *is* the id — matching on it would miss the row being renamed.
+    //
+    // A change to the goal keeps the old one as history, so the days before
+    // today are still judged by what they were asked.
+    const yesterday = addDays(getTodayString(), -1);
     const patch = (index: number, partial: Partial<JournalTracker>) =>
-        commit(trackers.map((tr, i) => (i === index ? { ...tr, ...partial } : tr)));
+        commit(
+            trackers.map((tr, i) =>
+                i === index ? withGoalHistory(tr, { ...tr, ...partial }, yesterday) : tr
+            )
+        );
+    const goalsOn = useFeature('journal.goals');
+    const quitOn = useFeature('journal.quitHabits');
     const remove = (index: number) => commit(trackers.filter((_, i) => i !== index));
 
     const add = (kind: TrackerKind) => {
@@ -278,6 +292,85 @@ export const JournalSettings: React.FC = () => {
                         </>
                     )}
                 </div>
+
+                {(goalsOn || quitOn) && (
+                    <div className="zenith-ctype__row">
+                        {quitOn && tracker.kind !== 'scale' && (
+                            <label className="zenith-ctype__field">
+                                <span>{t('settings.journalTrackers.mode')}</span>
+                                <Dropdown
+                                    size="sm"
+                                    value={tracker.mode ?? 'build'}
+                                    options={(['build', 'quit'] as const).map((mode) => ({
+                                        value: mode,
+                                        label: t(`settings.journalTrackers.mode.${mode}`),
+                                    }))}
+                                    onChange={(mode) =>
+                                        patch(index, { mode: mode === 'quit' ? 'quit' : undefined })
+                                    }
+                                />
+                            </label>
+                        )}
+                        {goalsOn && tracker.mode !== 'quit' && (
+                            <label className="zenith-ctype__field">
+                                <span title={t('settings.journalTrackers.goalKept')}>
+                                    {t('settings.journalTrackers.period')}
+                                </span>
+                                <Dropdown
+                                    size="sm"
+                                    value={tracker.goalPeriod ?? 'day'}
+                                    options={(['day', 'week'] as const).map((period) => ({
+                                        value: period,
+                                        label: t(`settings.journalTrackers.period.${period}`),
+                                    }))}
+                                    onChange={(period) =>
+                                        patch(index, {
+                                            goalPeriod:
+                                                period === 'week' ? 'week' : undefined,
+                                            goalCount:
+                                                period === 'week' ? weeklyCount(tracker) : undefined,
+                                        })
+                                    }
+                                />
+                            </label>
+                        )}
+                        {goalsOn && tracker.mode !== 'quit' && tracker.goalPeriod === 'week' && (
+                            <label className="zenith-ctype__field">
+                                <span>{t('settings.journalTrackers.count')}</span>
+                                <Dropdown
+                                    size="sm"
+                                    value={String(weeklyCount(tracker))}
+                                    options={Array.from({ length: 7 }, (_, i) => ({
+                                        value: String(i + 1),
+                                        label: String(i + 1),
+                                    }))}
+                                    onChange={(count) => patch(index, { goalCount: Number(count) })}
+                                />
+                            </label>
+                        )}
+                        {goalsOn && tracker.mode !== 'quit' && tracker.kind !== 'check' && (
+                            <label className="zenith-ctype__field">
+                                <span>{t('settings.journalTrackers.direction')}</span>
+                                <Dropdown
+                                    size="sm"
+                                    value={tracker.goalDirection ?? 'atLeast'}
+                                    options={(['atLeast', 'atMost'] as const).map((direction) => ({
+                                        value: direction,
+                                        label: t(`settings.journalTrackers.direction.${direction}`),
+                                    }))}
+                                    onChange={(direction) =>
+                                        patch(index, {
+                                            goalDirection:
+                                                direction === 'atMost'
+                                                    ? 'atMost'
+                                                    : undefined,
+                                        })
+                                    }
+                                />
+                            </label>
+                        )}
+                    </div>
+                )}
 
                 {problem && (
                     <div className="zenith-settings__hint zenith-settings__hint--warn">
