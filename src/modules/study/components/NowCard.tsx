@@ -166,10 +166,18 @@ export const NowCard: FC<{
                     <span className="zenith-study-now__then">
                         <span>{t('study.then')}</span>
                         <b>{timeOf(next.start)}</b>
+                        {/* The whole next slot: both subgroups' rooms, not the first one's. */}
                         <span className="zenith-study-now__then-subject">
-                            {next.lesson.subject}
+                            {slotTitle(next, lessons)}
                         </span>
-                        <RoomPill room={next.lesson.room} />
+                        <RoomPill
+                            room={
+                                sameSlot(next, lessons)
+                                    .map((l) => l.lesson.room)
+                                    .filter(Boolean)
+                                    .join(' / ') || undefined
+                            }
+                        />
                     </span>
                 )}
             </div>
