@@ -16,6 +16,9 @@ import {
 import { clearTranslations, registerTranslations, translateNow } from './i18n';
 import { messageText, msg, type Message } from './message';
 import { useZenithStore } from '../store';
+import { removeModuleExtensions } from './extensions/registry';
+import { eventBus } from './extensions/events';
+import { resetFailures } from './extensions/health';
 import type ZenithPlugin from '../main';
 
 /**
@@ -30,7 +33,7 @@ import type ZenithPlugin from '../main';
  * the startup path may wait for a human: a module that has not been approved
  * simply does not run, and asking happens later, from settings.
  */
-export type ConsentGate = (id: string, code: string) => boolean;
+export type ConsentGate = (id: string, code: string, permissions: readonly string[]) => boolean;
 
 /** Refuse to evaluate anything implausibly large — 4 MB is a runaway file. */
 const MAX_MODULE_BYTES = 4 * 1024 * 1024;
@@ -42,7 +45,9 @@ export type ModuleProblemKind =
     | 'needs-consent'
     | 'eval-error'
     | 'onload-error'
-    | 'blocked';
+    | 'blocked'
+    /** Switched off after failing again and again — see `extensions/health`. */
+    | 'disabled';
 
 export interface ModuleProblem {
     id: string;
@@ -131,7 +136,11 @@ export class ModuleManager {
     getApi(id: string): ZenithModuleApi {
         let api = this.apis.get(id);
         if (!api) {
-            api = createModuleApi(this.plugin, id, this.ledger);
+            const manifest = this.availableManifests.get(id);
+            api = createModuleApi(this.plugin, id, this.ledger, {}, {
+                permissions: manifest?.permissions ?? [],
+                apiVersion: manifest?.apiVersion ?? 1,
+            });
             this.apis.set(id, api);
         }
         return api;
@@ -224,6 +233,8 @@ export class ModuleManager {
                 author: checked.manifest.author,
                 version: checked.manifest.version,
                 isBuiltIn: false,
+                permissions: checked.manifest.permissions,
+                apiVersion: checked.manifest.apiVersion,
             });
         }
 
@@ -326,6 +337,13 @@ export class ModuleManager {
             this.note(id, 'blocked', msg('modules.problem.blocked'));
             return undefined;
         }
+        // Safe mode: every third-party module stays installed and enabled, and
+        // none of them runs — for when one of them is the reason Obsidian
+        // does not work.
+        if (useZenithStore.getState().settings.safeMode) {
+            this.note(id, 'blocked', msg('modules.problem.safeMode'));
+            return undefined;
+        }
 
         const problem = this.problems.get(id);
         if (problem && (problem.kind === 'incompatible' || problem.kind === 'id-collision')) {
@@ -349,7 +367,7 @@ export class ModuleManager {
             // Last gate before someone else's code runs. Catches a module whose
             // file no longer matches what was installed — edited by hand, or
             // changed by vault sync from another device.
-            if (this.consentGate && !this.consentGate(id, code)) {
+            if (this.consentGate && !this.consentGate(id, code, manifest.permissions ?? [])) {
                 this.note(id, 'needs-consent', msg('modules.needsConsent'));
                 return undefined;
             }
@@ -459,7 +477,45 @@ export class ModuleManager {
             }
         }
         this.ledger.disposeAll(id);
+        // Whatever it reached into Zenith's own views with goes too, even if
+        // the module never kept the disposers it was handed.
+        removeModuleExtensions(id);
+        eventBus.removeModule(id);
         this.loadedIds.delete(id);
+    }
+
+    /**
+     * Switch off a module whose extensions keep failing: unloaded now, off in
+     * settings until the user switches it back on, and a line saying why.
+     */
+    async disableForFailures(id: string, lastError: string): Promise<void> {
+        const manifest = this.availableManifests.get(id);
+        if (!manifest || manifest.isBuiltIn) return;
+        await this.enqueue(async () => {
+            await this.unloadModule(id);
+        });
+        const { settings, updateSettings } = useZenithStore.getState();
+        updateSettings({ activeModuleIds: settings.activeModuleIds.filter((a) => a !== id) });
+        this.note(id, 'disabled', msg('modules.problem.disabled', { error: lastError }));
+        new Notice(translateNow('modules.disabledNotice', { name: manifest.name }));
+    }
+
+    /**
+     * Run every third-party module again from its current state — after safe
+     * mode is switched, so they stop (or start) without restarting Obsidian.
+     */
+    async restartThirdParty(): Promise<void> {
+        const active = new Set(useZenithStore.getState().settings.activeModuleIds);
+        for (const manifest of Array.from(this.availableManifests.values())) {
+            if (manifest.isBuiltIn) continue;
+            if (!active.has(manifest.id) && !this.loadedIds.has(manifest.id)) continue;
+            resetFailures(manifest.id);
+            this.problems.delete(manifest.id);
+            await this.refreshModule(manifest.id);
+            if (active.has(manifest.id) && !this.loadedIds.has(manifest.id)) {
+                await this.enqueue(() => this.loadModule(manifest.id));
+            }
+        }
     }
 
     /** Load all modules marked active in settings. */

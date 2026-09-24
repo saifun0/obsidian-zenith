@@ -12,6 +12,7 @@ import { setTrackerValue, openDailyNote } from '../services/journalActions';
 import { addDays, buildDateMatcher, relativeNotePath, dayLabel } from '../services/journalDates';
 import { TrackerRail } from './TrackerRail';
 import { DailyPrompt } from './DailyPrompt';
+import { Replaceable } from '../../../core/extensions/ExtensionSlot';
 import { useFeature } from '../../../core/useFeature';
 
 interface DailyNoteBlockProps {
@@ -134,7 +135,11 @@ const DailyNoteBody: FC<DailyNoteBlockProps> = ({ sourcePath }) => {
                 layout="rail"
             />
 
-            {promptOn && <DailyPrompt date={date} />}
+            {promptOn && (
+                <Replaceable id="journal.day.prompt" props={{ date }}>
+                    <DailyPrompt date={date} />
+                </Replaceable>
+            )}
         </div>
     );
 };

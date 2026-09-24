@@ -106,3 +106,88 @@ and appear under **Settings → Active Modules → Third-party**. Module ids are
 `[A-Za-z0-9_-]` since they become a path segment. A manifest can also carry a
 `translations` block so the module names itself in the reader's language before any of its
 code has run — see [Language](language.md).
+
+## API version 2: reaching into Zenith's own modules
+
+`zenith.apiVersion` is **2**. Version 1 modules keep working unchanged. A module becomes
+version 2 by declaring what it will do in its manifest:
+
+```json
+{
+    "id": "due-badges",
+    "name": "Due badges",
+    "apiVersion": 2,
+    "permissions": ["tasks:read", "ui:slots", "features"]
+}
+```
+
+### Permissions
+
+| Permission | What it opens |
+| --- | --- |
+| `tasks:read` | `zenith.tasks.list()`, task actions and filters, `task:*` events |
+| `tasks:write` | `zenith.tasks.setStatus(task, status)`, `zenith.tasks.update(task, patch)` |
+| `journal:read` | `zenith.journal.entries()`, `journal:recorded` events |
+| `journal:write` | `zenith.journal.record(date, patch)` |
+| `content:read` / `content:write` | `zenith.content.list()` / `setStatus`, `setProgress` |
+| `content:metadata` | `zenith.content.registerMetadataProvider(...)` |
+| `calendar:layers` | `zenith.calendar.registerLayer(...)` |
+| `prayer:provider` | `zenith.prayer.registerProvider(...)` |
+| `ui:slots` | `zenith.ui.registerSlot(...)`, `zenith.ui.replace(...)` |
+| `settings:<module>` | `zenith.settingsPages.addSection('<module>', ...)` |
+| `features` | `zenith.features.register(...)` |
+| `network:<host>` | `zenith.network.request(url)` to exactly that host |
+
+An unknown permission makes the manifest invalid — a typo must not pass for nothing. The
+consent dialog lists the permissions in plain words; a module whose list changes on update
+is asked about again. Calling something without its permission throws a
+`ZenithPermissionError` that names the permission to add. A version-2 module has no
+`zenith.store`: the whole store is exactly what permissions divide up.
+
+### Extension points
+
+- **Slots** — named places in built-in views: `tasks.item.afterTitle`,
+  `journal.day.afterTrackers`, `prayer.day.afterList`. Register a React `component` or a
+  DOM `mount(el, props)` (return a cleanup function if you need one).
+- **Replaceable pieces** — `journal.day.prompt` (the question of the day in the daily
+  note): draw it your way; if yours throws, Zenith's comes back.
+- **Tasks** — `registerAction({ id, label, icon, when, run })` adds to a task's *More — from
+  modules* menu; `registerFilter({ id, label, test })` to the filter popover. Writes go
+  through Zenith's task writer, which changes a line only if it still says what the
+  module was shown.
+- **Journal** — `record(date, { key: value })` writes frontmatter through
+  `processFrontMatter`, creating the day's note if needed; `null` removes a key.
+- **Calendar** — `registerLayer({ id, label, color, events(from, to) })`: read-only events
+  in a strip above the grid — another calendar, a timetable.
+- **Content** — `registerMetadataProvider({ id, label, types, search(query, typeId) })`:
+  a *Fill from …* button under the title in the new-item form. Zenith itself looks nothing
+  up; this is the only way autofill comes back, with the module's own `network:` host.
+- **Prayer** — `registerProvider({ id, label, year(year, place) })` returns a year of
+  `HH:MM` times by date; it appears as *Timetable from* in the prayer settings and is
+  cached and refreshed like Aladhan's.
+- **Settings** — `addSection('<module>', { id, title, component | mount })` adds a section
+  to a built-in module's page; `features.register({ name, label, description, default })`
+  adds a switch of your own, saved into profiles.
+- **Events** — `zenith.events.on('task:created' | 'task:completed' | 'journal:recorded',
+  handler)`. Read-only, derived from the notes — a task ticked in the editor or on another
+  device counts too. A task is "the same" when its note and title are.
+
+Every registration is taken back when the module unloads. See `modules_def/due-badges` for
+a module that uses a slot, a task action, an event and a feature switch.
+
+### Safety — and what it is not
+
+- **Isolation, not a sandbox.** Module code is evaluated with `new Function`: it cannot see
+  Zenith's internals, but it has `window`, `app` and the vault like any Obsidian plugin.
+  Permissions are a contract and a help when reviewing code — the real protection is your
+  consent, the pinned hash and source you can read.
+- **Pinned code.** Approval is tied to the SHA-256 of `main.js` (it was a 32-bit FNV
+  checksum, which is easy to collide; modules approved under it are asked about once more).
+  A changed file, or a changed permission list, needs approving again.
+- **Boundaries.** Every extension runs inside an error boundary: a failing piece disappears
+  from its spot (a replacement falls back to Zenith's own). Three failures in a session and
+  the module is switched off, with a notice.
+- **Activity.** Writes a module makes through the API are logged under it in *Settings →
+  Modules* (*Permissions and activity*), on this device, the last 200.
+- **Safe mode.** *Settings → Modules → Safe mode*, or the command *Toggle safe mode*: no
+  third-party module runs on this device; they stay installed and enabled.

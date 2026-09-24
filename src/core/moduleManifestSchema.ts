@@ -2,6 +2,7 @@ import { isSafeModuleId } from './modulePaths';
 import { LOCALES, type TranslationTable } from './i18n';
 import { msg, type Message } from './message';
 import { satisfiesMin } from './semver';
+import { parsePermissions, type Permission } from './modulePermissions';
 
 /**
  * Validating a third-party `manifest.json`.
@@ -32,13 +33,21 @@ export interface ThirdPartyManifest {
      * text you are reading when you decide whether to enable it.
      */
     translations?: TranslationTable;
+    /** What it will do with Zenith — see `modulePermissions`. Empty when it declared none. */
+    permissions: Permission[];
+    /**
+     * 2 when the manifest says so or declares permissions at all — a module
+     * that lists what it needs is written against the permission-aware API.
+     */
+    apiVersion: number;
 }
 
 export type ManifestProblem =
     | { kind: 'bad-id'; id: unknown }
     | { kind: 'reserved-id'; id: string }
     | { kind: 'missing-name' }
-    | { kind: 'incompatible'; required: string; actual: string };
+    | { kind: 'incompatible'; required: string; actual: string }
+    | { kind: 'bad-permission'; permission: string };
 
 export type ManifestCheck =
     | { ok: true; manifest: ThirdPartyManifest }
@@ -121,6 +130,13 @@ export function validateManifest(
         };
     }
 
+    // Refused rather than ignored: a misspelt permission would otherwise be a
+    // module that fails at the first call, after the user agreed to it.
+    const permissions = parsePermissions(source.permissions);
+    if (permissions.invalid.length) {
+        return { ok: false, problem: { kind: 'bad-permission', permission: permissions.invalid[0] } };
+    }
+
     return {
         ok: true,
         manifest: {
@@ -134,6 +150,8 @@ export function validateManifest(
             minAppVersion: text(source.minAppVersion) || undefined,
             notes: text(source.notes) || undefined,
             translations: translationTable(source.translations),
+            permissions: permissions.permissions,
+            apiVersion: source.apiVersion === 2 || Array.isArray(source.permissions) ? 2 : 1,
         },
     };
 }
@@ -158,5 +176,7 @@ export function describeManifestProblem(problem: ManifestProblem): Message {
                 required: problem.required,
                 actual: problem.actual,
             });
+        case 'bad-permission':
+            return msg('modules.manifest.badPermission', { permission: problem.permission });
     }
 }

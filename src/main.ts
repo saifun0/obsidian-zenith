@@ -36,6 +36,7 @@ import { Scheduler } from './core/scheduler';
 import { NotificationCenter } from './core/notifications/NotificationCenter';
 import { NotificationCenterModal } from './core/notifications/NotificationCenterModal';
 import { FirstRunModal } from './core/profiles/FirstRunModal';
+import { startExtensionHost } from './core/extensions/extensionHost';
 
 /**
  * ZenithPlugin — Main entry point.
@@ -201,7 +202,11 @@ export default class ZenithPlugin extends Plugin {
         // stall Obsidian's whole startup. An unapproved module is recorded as
         // needing consent and left alone; the settings page offers the button.
         this.moduleInstaller = new ModuleInstaller(this);
-        this.moduleManager.setConsentGate((id, code) => this.moduleInstaller.isApproved(id, code));
+        this.moduleManager.setConsentGate((id, code, permissions) =>
+            this.moduleInstaller.isApproved(id, code, permissions)
+        );
+        // Events for modules, and switching off one that keeps failing.
+        this.disposers.push(startExtensionHost(this));
 
         // ── Icon packs ────────────────────────────────
         // Before module discovery, which registers each module's own artwork
@@ -241,6 +246,13 @@ export default class ZenithPlugin extends Plugin {
 
         // ── Global commands (available regardless of active view) ──
         registerQuickAddTaskCommand(this);
+        // Safe mode: every third-party module stops, stays installed, and
+        // comes back when this is run again — without restarting Obsidian.
+        this.addCommand({
+            id: 'toggle-safe-mode',
+            name: 'Toggle safe mode (third-party modules)',
+            callback: () => void this.setSafeMode(!useZenithStore.getState().settings.safeMode),
+        });
         this.addCommand({
             id: 'open-notifications',
             name: 'Open notifications',
@@ -519,6 +531,13 @@ export default class ZenithPlugin extends Plugin {
      * can call this from its `onload()`. Returns a disposer that should be
      * called from the module's `onunload()`.
      */
+    /** Turn safe mode on or off, and restart the third-party modules to match. */
+    async setSafeMode(on: boolean): Promise<void> {
+        useZenithStore.getState().updateSettings({ safeMode: on });
+        await this.moduleManager.restartThirdParty();
+        new Notice(translateNow(on ? 'modules.safeMode.on' : 'modules.safeMode.off'));
+    }
+
     registerDashboardWidget(def: DashboardWidgetDefinition): () => void {
         return dashboardWidgets.register(def);
     }

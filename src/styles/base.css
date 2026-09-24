@@ -385,3 +385,8 @@ body.zenith-is-dragging {
     user-select: none;
     -webkit-user-select: none;
 }
+
+/* A module's piece inside a built-in view: inline, and nothing more. */
+.zenith-ext:empty {
+    display: none;
+}

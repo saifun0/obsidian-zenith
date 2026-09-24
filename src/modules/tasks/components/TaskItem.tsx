@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState, type FC } from 'react';
-import { Notice } from 'obsidian';
+import { Menu, Notice } from 'obsidian';
 import {
     Calendar,
     Tag,
@@ -12,6 +12,7 @@ import {
     ListChecks,
     Timer,
     Plus,
+    MoreHorizontal,
 } from 'lucide-react';
 import type { Task } from '../../../store/taskSlice';
 import type { TaskStatus } from '../../../core/constants';
@@ -28,6 +29,8 @@ import { SubtaskTree, flattenSubtasks } from './SubtaskList';
 import { TaskAttachments } from './TaskAttachments';
 import { TaskTimerButton } from './TaskTimerButton';
 import { formatDuration } from '../services/taskFormat';
+import { ExtensionSlot } from '../../../core/extensions/ExtensionSlot';
+import { extensions, useExtensions } from '../../../core/extensions/registry';
 import { countSubtasks } from '../services/taskStats';
 import { useBranchAnchors } from './useBranchAnchors';
 import { useSortableRows, type SortableRow } from './useSortableRows';
@@ -172,6 +175,21 @@ export const TaskItem: FC<TaskItemProps> = ({
         }
     };
 
+    // What third-party modules offer for this task, in a menu of their own:
+    // Zenith's buttons stay where they are, whatever is installed.
+    const actions = useExtensions(extensions.taskActions);
+    const offered = actions.filter((a) => !a.when || a.when(task));
+    const openModuleActions = (e: React.MouseEvent) => {
+        const menu = new Menu();
+        for (const action of offered) {
+            menu.addItem((item) => {
+                item.setTitle(action.label).onClick(() => void action.run(task));
+                if (action.icon) item.setIcon(action.icon);
+            });
+        }
+        menu.showAtMouseEvent(e.nativeEvent);
+    };
+
     const handleOpen = () => {
         if (task.filePath) void openFileAtLine(app, task.filePath, task.lineNumber - 1);
     };
@@ -224,6 +242,7 @@ export const TaskItem: FC<TaskItemProps> = ({
                         >
                             {task.title}
                         </span>
+                        <ExtensionSlot id="tasks.item.afterTitle" props={{ task }} />
                     </div>
 
                     <div className="zenith-task-meta">
@@ -350,6 +369,16 @@ export const TaskItem: FC<TaskItemProps> = ({
                     >
                         <Pencil size={14} />
                     </button>
+                    {offered.length > 0 && (
+                        <button
+                            className="zenith-task-item__action"
+                            onClick={openModuleActions}
+                            aria-label={t('tasks.moduleActions')}
+                            title={t('tasks.moduleActions')}
+                        >
+                            <MoreHorizontal size={14} />
+                        </button>
+                    )}
                     <button
                         className="zenith-task-item__action zenith-task-item__action--danger"
                         onClick={handleDelete}

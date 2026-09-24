@@ -1,5 +1,5 @@
 import type { ZenithSettings } from '../../store/settingsSlice';
-import { FEATURES, featurePatch, getFeature, ownFeatureValue } from '../features';
+import { allFeatures, featurePatch, getFeature, ownFeatureValue } from '../features';
 
 /**
  * Profiles: the whole shape of how someone uses the plugin — which modules
@@ -158,6 +158,9 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     // not a way to install or configure a stranger's module.
     moduleSettings: 'no',
     allowThirdPartyModules: 'no',
+    safeMode: 'no',
+    moduleActivity: 'no',
+    prayerProviderId: 'no',
     installedModules: 'no',
     // Personal: a profile is shared, and a birth date is nobody else's.
     dashboardBirthDate: 'no',
@@ -240,7 +243,7 @@ export function captureProfile(
         }
     }
     const features: Record<string, boolean> = {};
-    for (const def of FEATURES) features[def.id] = ownFeatureValue(settings, def);
+    for (const def of allFeatures()) features[def.id] = ownFeatureValue(settings, def);
     return {
         zenith: PROFILE_FORMAT,
         version: PROFILE_VERSION,
@@ -488,7 +491,7 @@ export function profilePatch(
     // the previous steps left them, or the `features` map would be rebuilt
     // from the stale one every time.
     let working: ZenithSettings = { ...settings, ...patch };
-    for (const def of FEATURES) {
+    for (const def of allFeatures()) {
         const want = profile.features[def.id];
         if (typeof want !== 'boolean') continue;
         if (mode === 'add' && !want) continue;
@@ -545,14 +548,14 @@ export function diffProfile(
 
     const featuresOn: string[] = [];
     const featuresOff: string[] = [];
-    for (const def of FEATURES) {
+    for (const def of allFeatures()) {
         if (!running(def.moduleId)) continue;
         const was = ownFeatureValue(settings, def);
         const will = ownFeatureValue(after, def);
         if (was !== will) (will ? featuresOn : featuresOff).push(def.id);
     }
 
-    const featureKeys = new Set(FEATURES.map((f) => f.settingKey).filter(Boolean) as string[]);
+    const featureKeys = new Set(allFeatures().map((f) => f.settingKey).filter(Boolean) as string[]);
     const settingsChanged = Object.keys(patch).filter(
         (key) => key !== 'activeModuleIds' && key !== 'features' && !featureKeys.has(key)
     );

@@ -33,6 +33,7 @@ import { configurableModules } from '../moduleMenu';
 import { CoreSettingsForm } from '../schema/CoreSettingsForm';
 import { appearanceSchema, generalSchema, notificationsSchema } from '../schema/coreSchemas';
 import { ModuleSettingsForm } from '../schema/ModuleSettingsForm';
+import { ExtensionSections, ModuleDetails } from './ModuleExtras';
 import { featureOnlySchema } from '../schema/featureGroup';
 import { CORE_MODULE, featureEnabled } from '../../core/features';
 
@@ -276,7 +277,14 @@ export const SettingsApp: React.FC = () => {
     const renderModuleSettings = (id: string) => {
         // The journal brings its own page (habits editor, template, the core
         // Daily notes conflict check) rather than a handful of fields.
-        if (id === 'journal') return <JournalSettings />;
+        if (id === 'journal') {
+            return (
+                <>
+                    <JournalSettings />
+                    <ExtensionSections moduleId="journal" />
+                </>
+            );
+        }
 
         // A module that describes its settings renders itself. The switch below
         // is what is left of the old hardcoded table, and shrinks as modules are
@@ -295,6 +303,7 @@ export const SettingsApp: React.FC = () => {
                     ) : (
                         <ModuleSettingsForm schema={schema} />
                     )}
+                    {isBuiltIn && <ExtensionSections moduleId={id} />}
                 </div>
             );
         }
@@ -367,6 +376,26 @@ export const SettingsApp: React.FC = () => {
                         </div>
                     </div>
 
+                    {/* Safe mode: the way out when a module is the reason
+                        something is broken — also a command, for when this
+                        page is what does not open. */}
+                    <div className="zenith-settings__item">
+                        <div className="zenith-settings__item-info">
+                            <span className="zenith-settings__item-name">{t('settings.safeMode')}</span>
+                            <span className="zenith-settings__item-desc">
+                                {t('settings.safeMode.desc')}
+                            </span>
+                        </div>
+                        <div className="zenith-settings__item-control">
+                            <Toggle
+                                checked={settings.safeMode}
+                                onChange={(v) =>
+                                    void plugin.setSafeMode(v).then(() => forceRefresh((n) => n + 1))
+                                }
+                            />
+                        </div>
+                    </div>
+
                     {thirdParty.length > 0 ? (
                         <>
                             {!settings.allowThirdPartyModules && (
@@ -389,6 +418,10 @@ export const SettingsApp: React.FC = () => {
                                             checked={settings.activeModuleIds.includes(module.id)}
                                             onChange={(checked) => toggleModule(module.id, checked)}
                                             onSettings={() => setActiveModuleId(module.id)}
+                                        />
+                                        <ModuleDetails
+                                            moduleId={module.id}
+                                            permissions={module.permissions ?? []}
                                         />
                                         {/* A folder the user can see doing
                                             nothing is a mystery; say why. */}

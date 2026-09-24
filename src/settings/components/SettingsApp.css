@@ -1690,3 +1690,48 @@ button.zenith-settings__reveal:focus-visible {
         width: 92px !important;
     }
 }
+
+/* ── Under a third-party module: permissions, and what it wrote ── */
+.zenith-module-details {
+    font-size: 0.8rem;
+}
+
+.zenith-module-details ul {
+    margin: 4px 0 8px;
+    padding-left: 18px;
+}
+
+.zenith-module-details__label {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-module-details__empty {
+    margin: 4px 0;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-module-details__log time {
+    color: var(--zenith-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-module-details__log code {
+    margin-left: 6px;
+    font-size: 0.72rem;
+}
+
+/* ── What a module asks for, in the consent dialog ── */
+.zenith-consent__permissions ul {
+    margin: 4px 0 8px;
+    padding-left: 20px;
+}
+
+.zenith-consent__note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}

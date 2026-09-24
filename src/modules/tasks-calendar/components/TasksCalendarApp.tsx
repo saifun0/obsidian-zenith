@@ -32,6 +32,7 @@ import { CalendarToolbar, type CalendarToggle, type CalendarViewMode } from './C
 import { MonthGrid } from './MonthGrid';
 import { WeekGrid } from './WeekGrid';
 import { AgendaList } from './AgendaList';
+import { LayerStrip } from './LayerStrip';
 import { useFeature } from '../../../core/useFeature';
 
 const MODES: CalendarViewMode[] = ['month', 'week', 'day', 'list'];
@@ -394,6 +395,8 @@ export const TasksCalendarApp: FC = () => {
                 onToggle={toggle}
                 onFocus={setFocus}
             />
+
+            <LayerStrip t={t} days={days} />
 
             {mode === 'month' && (
                 <MonthGrid

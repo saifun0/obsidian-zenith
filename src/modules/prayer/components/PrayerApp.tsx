@@ -24,6 +24,7 @@ import {
 import { PrayerNoPlace } from './PrayerNoPlace';
 import { PrayerMethodPrompt } from './PrayerMethodPrompt';
 import { FastingPanel } from './FastingPanel';
+import { ExtensionSlot } from '../../../core/extensions/ExtensionSlot';
 import { PrayerDayHead } from './PrayerDayHead';
 import { PrayerStatsPanel } from './PrayerStatsPanel';
 import { PrayerRow, PrayerMarkerRow } from './PrayerRow';
@@ -197,6 +198,8 @@ export const PrayerApp: FC = () => {
             </section>
 
             {fastingOn && <FastingPanel date={selected} locked={isFuture} />}
+
+            <ExtensionSlot id="prayer.day.afterList" props={{ date: selected }} />
 
             {statsOn && (
                 <PrayerStatsPanel

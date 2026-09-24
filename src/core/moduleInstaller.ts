@@ -1,6 +1,7 @@
 import { useZenithStore } from '../store';
 import type { InstalledModuleRecord } from '../store/settingsSlice';
-import { fnv1a } from './hash';
+import { moduleCodeHash } from './hash';
+import { parsePermissions, samePermissions } from './modulePermissions';
 import { vaultModuleFs, type ModuleFs } from './moduleFs';
 import { modulePaths, type ModulePaths } from './modulePaths';
 import { askConsent } from './ThirdPartyConsentModal';
@@ -111,6 +112,7 @@ export class ModuleInstaller {
                 code: payload.code,
                 reason: existing ? 'source-changed' : 'first-install',
                 previousOrigin: existing?.consentedOrigin,
+                previousPermissions: existing?.consentedPermissions,
             });
             if (!accepted) return { ok: false, cancelled: true };
 
@@ -132,9 +134,10 @@ export class ModuleInstaller {
                 source: { ...source, resolvedRef: payload.resolvedRef },
                 installedAt: existing?.installedAt ?? now,
                 updatedAt: existing ? now : undefined,
-                codeHash: fnv1a(payload.code),
+                codeHash: moduleCodeHash(payload.code),
                 consentedAt: now,
                 consentedOrigin: payload.origin,
+                consentedPermissions: payload.manifest.permissions,
             });
 
             await this.plugin.refreshAvailableModules();
@@ -192,10 +195,14 @@ export class ModuleInstaller {
      * hash no longer matches means the file changed since it was approved —
      * edited locally, or replaced by sync from another device.
      */
-    isApproved(id: string, code: string): boolean {
+    isApproved(id: string, code: string, permissions: readonly string[] = []): boolean {
         const record = this.getRecord(id);
         if (!record) return false;
-        return record.codeHash === fnv1a(code);
+        // A record from before SHA-256 holds an FNV checksum, which never
+        // matches: such a module is approved once more, on purpose — keeping
+        // the old check would keep the weakness it was replaced for.
+        if (record.codeHash !== moduleCodeHash(code)) return false;
+        return samePermissions(record.consentedPermissions, permissions);
     }
 
     /**
@@ -217,22 +224,40 @@ export class ModuleInstaller {
 
             // Prefer the module's own manifest so the dialog can show what it
             // claims about itself, but never fail for the want of one.
-            let manifest = { id, name: record?.name ?? id, description: '', version: '0.0.0' };
+            let manifest = {
+                id,
+                name: record?.name ?? id,
+                description: '',
+                version: '0.0.0',
+                permissions: [] as string[],
+            };
             const manifestPath = this.paths.manifest(id);
             if (await this.fs.exists(manifestPath)) {
                 try {
                     const raw = JSON.parse(await this.fs.read(manifestPath));
-                    manifest = { ...manifest, ...raw, id };
+                    manifest = {
+                        ...manifest,
+                        ...raw,
+                        id,
+                        permissions: parsePermissions((raw as { permissions?: unknown })?.permissions)
+                            .permissions,
+                    };
                 } catch {
                     /* an unreadable manifest is not a reason to block approval */
                 }
             }
 
+            const sameCode = record?.codeHash === moduleCodeHash(code);
             const accepted = await askConsent(this.plugin.app, {
                 manifest,
                 origin: record?.consentedOrigin ?? 'installed outside Zenith (no install record)',
                 code,
-                reason: record ? 'code-changed' : 'first-install',
+                reason: !record
+                    ? 'first-install'
+                    : sameCode
+                      ? 'permissions-changed'
+                      : 'code-changed',
+                previousPermissions: record?.consentedPermissions,
             });
             if (!accepted) return { ok: false, cancelled: true };
 
@@ -244,9 +269,10 @@ export class ModuleInstaller {
                 source: record?.source ?? { kind: 'vault', ref: mainPath },
                 installedAt: record?.installedAt ?? now,
                 updatedAt: record ? now : undefined,
-                codeHash: fnv1a(code),
+                codeHash: moduleCodeHash(code),
                 consentedAt: now,
                 consentedOrigin: record?.consentedOrigin ?? `vault: ${mainPath}`,
+                consentedPermissions: manifest.permissions,
             });
 
             await this.plugin.moduleManager.refreshModule(id);

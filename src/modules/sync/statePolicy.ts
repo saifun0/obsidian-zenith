@@ -216,6 +216,12 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // Consent to run third-party code is deliberately shared: the user made a
     // considered decision once and should not have to repeat it per device.
     allowThirdPartyModules: { scope: 'shared' },
+    // Troubleshooting this device, and what happened on it.
+    safeMode: { scope: 'device' },
+    moduleActivity: { scope: 'device' },
+    // A module's provider exists only where the module is installed; the
+    // module record syncs, so the choice can too.
+    prayerProviderId: { scope: 'shared' },
 
     // ── Live state ──
     activeTimer: { scope: 'shared', merge: 'timer' },

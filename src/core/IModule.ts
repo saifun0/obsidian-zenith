@@ -11,6 +11,10 @@ export interface ModuleManifest {
     author?: string;
     version?: string;
     isBuiltIn: boolean;
+    /** A third-party module's declared permissions. */
+    permissions?: string[];
+    /** The module API it is written against — see `moduleApi`. */
+    apiVersion?: number;
 }
 
 /**

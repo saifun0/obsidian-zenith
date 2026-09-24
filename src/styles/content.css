@@ -1675,3 +1675,38 @@ button.zenith-ctype__add {
     flex-wrap: wrap;
     gap: var(--zenith-space-sm) var(--zenith-space-md);
 }
+
+/* ── Filling an item in from a module's provider ── */
+.zenith-form__lookup {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.zenith-form__lookup-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.zenith-form__lookup .zenith-form__lookup-button,
+.zenith-form__lookup .zenith-form__lookup-result {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    height: auto;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    text-align: left;
+    white-space: normal;
+    background: none;
+    box-shadow: none;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+}
+
+.zenith-form__lookup .zenith-form__lookup-result:hover {
+    background: var(--zenith-bg-hover);
+}

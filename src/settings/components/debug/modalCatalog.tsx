@@ -102,6 +102,7 @@ const SAMPLE_CONSENT: ConsentRequest = {
         description: 'A module that does not exist, so that this dialog can be looked at.',
         version: '1.0.0',
         author: 'Zenith debug tools',
+        permissions: ['tasks:read', 'ui:slots', 'network:api.example.com'],
     },
     origin: 'https://github.com/example/zenith-sample-module',
     code: 'module.exports = class SampleModule {\n    onload() {}\n    onunload() {}\n};\n',

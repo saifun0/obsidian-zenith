@@ -1,0 +1,13 @@
+.due-badge {
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    background: var(--background-modifier-hover);
+}
+
+.due-badge.is-late {
+    color: var(--text-error);
+}

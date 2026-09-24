@@ -14,6 +14,7 @@ import type { ModuleRegistrationLedger } from './moduleLedger';
 import type { DashboardWidgetDefinition } from '../modules/dashboard/widgets';
 import type { NavActionDefinition } from '../modules/navigator/navigation';
 import type ZenithPlugin from '../main';
+import { createModuleApiV2, type ModuleApiV2 } from './moduleApiV2';
 
 /**
  * What `require('zenith')` hands a third-party module.
@@ -26,9 +27,15 @@ import type ZenithPlugin from '../main';
  * One instance per module id, so registrations are attributed and can be
  * reclaimed on unload even if the module forgets to clean up after itself.
  */
-export const ZENITH_MODULE_API_VERSION = 1;
+export const ZENITH_MODULE_API_VERSION = 2;
 
-export interface ZenithModuleApi {
+/**
+ * Version 2 adds everything in `ModuleApiV2` — reaching into Zenith's own
+ * modules, by permission. A version-1 module (no `permissions` in its
+ * manifest) sees exactly the API it was written against: the new namespaces
+ * are there, but refuse without the permissions it never declared.
+ */
+export interface ZenithModuleApi extends ModuleApiV2 {
     readonly apiVersion: number;
     readonly pluginVersion: string;
     readonly moduleId: string;
@@ -83,7 +90,13 @@ export interface ZenithModuleApi {
      * generated or fetched rather than shipped.
      */
     registerTranslations(table: TranslationTable): () => void;
-    /** The Zenith store: hook, `.getState()` and `.subscribe()`. */
+    /**
+     * The Zenith store: hook, `.getState()` and `.subscribe()`.
+     *
+     * Version 1 only. It is all of the user's data at once, which is exactly
+     * what permissions exist to divide up — so a module that declares
+     * permissions reads through `tasks`, `journal` and `content` instead.
+     */
     readonly store: typeof useZenithStore;
     /** This module's own settings bucket. */
     readonly settings: ModuleSettingsAccessor;
@@ -95,9 +108,14 @@ export function createModuleApi(
     plugin: ZenithPlugin,
     moduleId: string,
     ledger: ModuleRegistrationLedger,
-    settingsDefaults: Record<string, unknown> = {}
+    settingsDefaults: Record<string, unknown> = {},
+    access: { permissions: readonly string[]; apiVersion: number } = {
+        permissions: [],
+        apiVersion: 1,
+    }
 ): ZenithModuleApi {
     return {
+        ...createModuleApiV2(plugin, moduleId, ledger, access.permissions),
         apiVersion: ZENITH_MODULE_API_VERSION,
         pluginVersion: plugin.manifest.version,
         moduleId,
@@ -168,7 +186,15 @@ export function createModuleApi(
         t: (key, params) =>
             translate(resolveLocale(useZenithStore.getState().settings.language), key, params),
 
-        store: useZenithStore,
+        get store(): typeof useZenithStore {
+            if (access.apiVersion >= 2) {
+                throw new Error(
+                    `Zenith: module "${moduleId}" declares permissions, so it reads Zenith's data ` +
+                        `through tasks, journal and content rather than the whole store.`
+                );
+            }
+            return useZenithStore;
+        },
         settings: createModuleSettings(moduleId, settingsDefaults),
 
         notice: (message, timeoutMs) => {

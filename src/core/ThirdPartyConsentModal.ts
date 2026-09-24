@@ -1,6 +1,6 @@
 import { Modal, type App } from 'obsidian';
-import type { ThirdPartyManifest } from './moduleManifestSchema';
 import { translateNow as t } from './i18n';
+import { describePermission, samePermissions } from './modulePermissions';
 
 /**
  * Asking before running someone else's code.
@@ -16,13 +16,23 @@ import { translateNow as t } from './i18n';
  */
 
 export interface ConsentRequest {
-    manifest: ThirdPartyManifest;
+    manifest: {
+        id?: string;
+        name: string;
+        version: string;
+        description: string;
+        author?: string;
+        notes?: string;
+        permissions?: readonly string[];
+    };
     /** Complete origin string — never abbreviated. */
     origin: string;
     code: string;
-    reason: 'first-install' | 'source-changed' | 'code-changed';
+    reason: 'first-install' | 'source-changed' | 'code-changed' | 'permissions-changed';
     /** For `source-changed`: what it used to be. */
     previousOrigin?: string;
+    /** What was agreed to last time, to say what changed. */
+    previousPermissions?: readonly string[];
 }
 
 export class ThirdPartyConsentModal extends Modal {
@@ -62,6 +72,41 @@ export class ThirdPartyConsentModal extends Modal {
                     from: request.previousOrigin,
                     to: request.origin,
                 }),
+            });
+        }
+
+        // What it will do with Zenith, in words. Said as an agreement, because
+        // that is all it is: the module could reach further, and the dialog
+        // must not suggest otherwise.
+        const permissions = request.manifest.permissions ?? [];
+        const changed =
+            request.previousPermissions !== undefined &&
+            !samePermissions(request.previousPermissions, permissions);
+        if (request.reason === 'permissions-changed' || changed) {
+            contentEl.createEl('p', {
+                cls: 'zenith-consent__warning',
+                text: t('consent.permissionsChanged'),
+            });
+        }
+        const asks = contentEl.createDiv({ cls: 'zenith-consent__permissions' });
+        asks.createEl('p', {
+            cls: 'zenith-consent__claimed',
+            text: t(permissions.length ? 'consent.permissions' : 'consent.permissions.none'),
+        });
+        if (permissions.length) {
+            const list = asks.createEl('ul');
+            for (const permission of permissions) {
+                const { key, params } = describePermission(permission);
+                const isNew =
+                    request.previousPermissions !== undefined &&
+                    !request.previousPermissions.includes(permission);
+                list.createEl('li', {
+                    text: t(key, params) + (isNew ? ` — ${t('consent.permissions.new')}` : ''),
+                });
+            }
+            asks.createEl('p', {
+                cls: 'zenith-consent__note',
+                text: t('consent.permissions.honest'),
             });
         }
 

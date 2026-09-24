@@ -9,6 +9,7 @@ import { TASK_STRINGS } from '../modules/tasks/strings';
 import { JOURNAL_STRINGS } from '../modules/journal/strings';
 import { CONTENT_STRINGS } from '../modules/content/strings';
 import { DASHBOARD_STRINGS } from '../modules/dashboard/strings';
+import { MODULE_STRINGS } from './moduleStrings';
 
 /**
  * Minimal i18n for Zenith's own UI.
@@ -3557,6 +3558,7 @@ export const DICTS: Record<Locale, Dict> = {
         ...JOURNAL_STRINGS.en,
         ...CONTENT_STRINGS.en,
         ...DASHBOARD_STRINGS.en,
+        ...MODULE_STRINGS.en,
     },
     ru: {
         ...RU,
@@ -3568,6 +3570,7 @@ export const DICTS: Record<Locale, Dict> = {
         ...JOURNAL_STRINGS.ru,
         ...CONTENT_STRINGS.ru,
         ...DASHBOARD_STRINGS.ru,
+        ...MODULE_STRINGS.ru,
     },
 };
 

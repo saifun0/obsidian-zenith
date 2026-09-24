@@ -21,6 +21,7 @@ import { StarRating } from '../../../components/shared/StarRating';
 import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import { ProgressControl } from './ProgressControl';
+import { MetadataLookup } from './MetadataLookup';
 import { pickVaultImage } from '../../../components/shared/ImagePickerModal';
 
 interface ContentFormProps {
@@ -221,6 +222,24 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 autoFocus
+                            />
+                            <MetadataLookup
+                                typeId={typeId}
+                                query={title}
+                                onPick={(found) => {
+                                    setTitle(found.title);
+                                    if (found.creator) setCreator(found.creator);
+                                    if (found.year) setYear(String(found.year));
+                                    if (found.coverImage) {
+                                        setCoverImage(found.coverImage);
+                                        setCoverBroken(false);
+                                    }
+                                    if (found.genres?.length) setGenresInput(found.genres.join(', '));
+                                    if (found.description) setDescription(found.description);
+                                    if (found.progressTotal) {
+                                        setProgress({ ...progress, total: found.progressTotal });
+                                    }
+                                }}
                             />
                             {duplicates.length > 0 && (
                                 <div className="zenith-form__dupes">

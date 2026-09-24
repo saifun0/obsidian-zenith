@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ModuleInstaller } from '../src/core/moduleInstaller';
 import { useZenithStore, resetZenithStore } from '../src/store';
-import { fnv1a } from '../src/core/hash';
+import { fnv1a, moduleCodeHash } from '../src/core/hash';
 import type ZenithPlugin from '../src/main';
 
 /** Just enough plugin for the installer's constructor. */
@@ -19,7 +19,7 @@ function record(overrides: Record<string, unknown> = {}) {
         version: '1.0.0',
         source: { kind: 'vault' as const, ref: 'a.js' },
         installedAt: 1,
-        codeHash: fnv1a(CODE),
+        codeHash: moduleCodeHash(CODE),
         consentedAt: 1,
         consentedOrigin: 'vault: a.js',
         ...overrides,
@@ -64,5 +64,23 @@ describe('isApproved', () => {
     it('keeps modules apart', () => {
         useZenithStore.getState().updateSettings({ installedModules: [record()] });
         expect(installer.isApproved('b', CODE)).toBe(false);
+    });
+
+    it('asks once more for a module approved under the old checksum', () => {
+        // FNV-1a is 32 bits: a different file with the same value is easy to
+        // make. Keeping the old match would keep that weakness.
+        useZenithStore
+            .getState()
+            .updateSettings({ installedModules: [record({ codeHash: fnv1a(CODE) })] });
+        expect(installer.isApproved('a', CODE)).toBe(false);
+    });
+
+    it('asks again when the permissions change', () => {
+        useZenithStore.getState().updateSettings({
+            installedModules: [record({ consentedPermissions: ['tasks:read'] })],
+        });
+        expect(installer.isApproved('a', CODE, ['tasks:read'])).toBe(true);
+        expect(installer.isApproved('a', CODE, ['tasks:read', 'tasks:write'])).toBe(false);
+        expect(installer.isApproved('a', CODE, [])).toBe(false);
     });
 });

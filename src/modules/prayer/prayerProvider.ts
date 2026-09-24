@@ -161,7 +161,7 @@ const TIMING_FIELD: Record<PrayerTimeId, string> = {
  * next day restores the convention the rest of the module counts on, where
  * "after midnight" is a number above 1440 rather than a small one.
  */
-function unwrapDay(timings: Record<string, unknown>): DayMinutes | null {
+export function unwrapDay(timings: Record<string, unknown>): DayMinutes | null {
     const out = {} as DayMinutes;
     let previous = -Infinity;
     let known = 0;

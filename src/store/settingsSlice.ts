@@ -20,6 +20,7 @@ import { normalizeSession, type TimerSession } from '../modules/tasks/services/t
 import type { ContentTypeConfig } from '../core/contentTypes';
 import type { WeatherPlace } from '../modules/weather/weatherTypes';
 import { DEFAULT_REVIEW_NOTES, type ReviewNotes } from '../modules/journal/services/reviewPeriods';
+import type { ModuleActivity } from '../core/moduleActivity';
 import type { GeoPlace } from '../services/geocode';
 import {
     DEFAULT_METHOD_ID,
@@ -82,6 +83,11 @@ export interface InstalledModuleRecord {
     /** When the user accepted running this module, and the origin they saw. */
     consentedAt: number;
     consentedOrigin: string;
+    /**
+     * The permissions the user agreed to. A module asking for a different
+     * list — more, or other — is asked about again.
+     */
+    consentedPermissions?: string[];
     /** Cleared on a successful load. */
     lastError?: string;
 }
@@ -416,6 +422,15 @@ export interface ZenithSettings {
      * needs a deliberate yes.
      */
     allowThirdPartyModules: boolean;
+    /**
+     * Start with no third-party module running, on this device — for when one
+     * of them keeps Obsidian from working. Modules stay installed and enabled.
+     */
+    safeMode: boolean;
+    /** What modules wrote through Zenith's API — see `moduleActivity`. */
+    moduleActivity: ModuleActivity[];
+    /** The timetable provider when times come from a published table: '' for Aladhan, or a module's. */
+    prayerProviderId: string;
     /**
      * What the installer put on disk, so Update / Reinstall / Uninstall know
      * where each module came from.
@@ -830,6 +845,9 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     weatherShowAir: true,
     moduleSettings: {},
     allowThirdPartyModules: false,
+    safeMode: false,
+    moduleActivity: [],
+    prayerProviderId: '',
     installedModules: [],
     settingsVersion: CURRENT_SETTINGS_VERSION,
     weatherUnit: 'c',
