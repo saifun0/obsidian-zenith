@@ -127,7 +127,9 @@ export const StudyApp: FC = () => {
                 <>
                     <section className="zenith-study-view__today">
                         <NowCard schedule={schedule} opts={opts} today={today} now={now} roomy />
-                        <DayBand lessons={todayLessons} now={now} />
+                        {['before', 'during', 'break'].includes(
+                            dayState(todayLessons, now).kind
+                        ) && <DayBand lessons={todayLessons} now={now} />}
                     </section>
 
                     {opts.twoWeeks && (
@@ -322,7 +324,9 @@ const WeekGrid: FC<{
                                             type="button"
                                             className={`zenith-study-cell is-kind-${item.lesson.kind}${live ? ' is-now' : ''}${past ? ' is-past' : ''}`}
                                             onClick={() => onOpen(item, date)}
-                                            title={item.lesson.teacher ?? ''}
+                                            title={[item.lesson.subject, item.lesson.teacher]
+                                                .filter(Boolean)
+                                                .join(' · ')}
                                         >
                                             <span className="zenith-study-cell__subject">
                                                 {item.lesson.subject}

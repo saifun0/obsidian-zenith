@@ -127,6 +127,15 @@
     overflow-y: auto;
 }
 
+.zenith-study__list-title {
+    padding: 2px 8px 4px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--zenith-text-muted);
+}
+
 .is-stacked .zenith-study__list {
     padding-top: 10px;
     border-top: 1px solid var(--zenith-border);
@@ -645,10 +654,6 @@
     border-radius: var(--zenith-radius-md);
 }
 
-.zenith-study-grid__cell.is-today {
-    background: color-mix(in srgb, var(--zenith-accent) 5%, transparent);
-}
-
 .zenith-study-cell {
     display: flex;
     flex-direction: column;
@@ -669,6 +674,8 @@
 
 .zenith-study .zenith-study-cell {
     height: auto;
+    overflow: hidden;
+    white-space: normal;
     border: none;
     border-left: 3px solid var(--study-kind);
     background: var(--zenith-bg-secondary);
@@ -688,7 +695,14 @@
     opacity: 0.5;
 }
 
+/* Three lines at most: a subject can be a sentence long ("research work
+   (gaining first skills in…)"), and the whole of it is in the tooltip. */
 .zenith-study-cell__subject {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    max-width: 100%;
+    overflow: hidden;
     font-size: 13px;
     font-weight: 600;
     line-height: 1.25;
@@ -696,8 +710,16 @@
 }
 
 .zenith-study-cell__meta {
+    max-width: 100%;
+    overflow: hidden;
     font-size: 11px;
     color: var(--zenith-text-faint);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zenith-study-cell .zenith-study-room {
+    max-width: 100%;
 }
 
 .zenith-study-view__days {
@@ -729,6 +751,19 @@
     font-weight: 600;
     color: var(--zenith-accent);
     background: color-mix(in srgb, var(--zenith-accent) 14%, transparent);
+}
+
+/* In the view there is room for a long subject: two lines, not an ellipsis. */
+.zenith-study-view .zenith-study-row {
+    white-space: normal;
+}
+
+.zenith-study-view .zenith-study-row__subject {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .zenith-study-view__none {

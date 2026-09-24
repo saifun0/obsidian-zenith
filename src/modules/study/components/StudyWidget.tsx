@@ -3,16 +3,18 @@ import { Maximize2 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
+import { addDays, isoToDate } from '../../../core/calendarDates';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import {
     dayState,
     isoDay,
     lessonsOn,
+    nextStudyDay,
+    shownDays,
     slotsOf,
+    termState,
     weekLessons,
     weekOfCycle,
-    shownDays,
-    termState,
 } from '../studyTime';
 import { dayName, useStudyNow, useStudyOptions, useStudySchedule, weekName } from '../useStudy';
 import { DayBand, LessonRow, StudySetup, rowState } from './parts';
@@ -65,16 +67,23 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     // Every hook runs before the early return below: today's lessons are
     // simply none while there is no timetable.
     const lessons = lessonsOn(schedule, today, opts);
+    const state = dayState(lessons, now);
+    // Once today has nothing left — over, or never begun — the list is the
+    // next day with classes: a column of finished classes answers nothing.
+    const dayOver = state.kind === 'after' || state.kind === 'free';
+    const upcoming = dayOver ? nextStudyDay(schedule, today, opts) : null;
+    const listed = dayOver ? (upcoming?.lessons ?? []) : lessons;
 
     // A short card scrolls its list to what is on now, or next: the finished
     // first class is not what anyone opens the dashboard to see.
-    const focusRow = lessons.find((l) => l.end > now)?.lesson.id;
+    const focusRow = dayOver ? undefined : lessons.find((l) => l.end > now)?.lesson.id;
     useEffect(() => {
         const box = listRef.current;
         const row = focusRow
             ? box?.querySelector<HTMLElement>(`[data-lesson="${focusRow}"]`)
             : null;
-        if (box && row) box.scrollTop = Math.max(0, row.offsetTop - box.offsetTop - 4);
+        if (!box) return;
+        box.scrollTop = row ? Math.max(0, row.offsetTop - box.offsetTop - 4) : 0;
     }, [focusRow, width]);
 
     const dialogs = (
@@ -98,7 +107,6 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     }
 
     const week = weekOfCycle(today, opts);
-    const state = dayState(lessons, now);
     const nextStart =
         state.kind === 'before' || state.kind === 'break'
             ? state.next.start
@@ -106,7 +114,7 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
               ? (state.next?.start ?? null)
               : null;
     const split = width >= SPLIT;
-    const showList = size !== 'sm' && lessons.length > 0;
+    const showList = size !== 'sm' && listed.length > 0;
     const showWeek =
         size === 'lg' && termState(today, opts) !== 'before' && termState(today, opts) !== 'after';
 
@@ -142,17 +150,26 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
                 now={now}
                 roomy={split || size !== 'sm'}
             />
-            <DayBand lessons={lessons} now={now} />
+            {!dayOver && <DayBand lessons={lessons} now={now} />}
         </div>
     );
 
+    const upcomingTitle =
+        upcoming &&
+        (upcoming.date === addDays(today, 1)
+            ? t('study.list.tomorrow')
+            : `${dayName(isoDay(upcoming.date), t.locale, 'long')}, ${isoToDate(
+                  upcoming.date
+              ).toLocaleDateString(t.locale, { day: 'numeric', month: 'long' })}`);
+
     const list = showList && (
         <div className="zenith-study__list" ref={listRef}>
-            {lessons.map((item) => (
+            {upcomingTitle && <span className="zenith-study__list-title">{upcomingTitle}</span>}
+            {listed.map((item) => (
                 <LessonRow
                     key={item.lesson.id}
                     item={item}
-                    state={rowState(item, now, nextStart)}
+                    state={dayOver ? 'later' : rowState(item, now, nextStart)}
                     showTeacher={split}
                 />
             ))}
