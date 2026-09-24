@@ -15,7 +15,8 @@ plugin, is not a startup and opens nothing.
 
 With the **Homepage** plugin on, the switch is replaced by a line saying so: that plugin
 decides what opens first, and two plugins racing to open their page would each win some of
-the time. To start on the dashboard, choose *Zenith Dashboard* in Homepage's settings.
+the time. To start on the dashboard, add the *Zenith: Open Dashboard* command in
+Homepage's settings.
 
 On a phone, the board first draws its cards — headers, sizes, the shape of the board — and
 fills them in once the app has finished starting, so opening it does not make a slow start

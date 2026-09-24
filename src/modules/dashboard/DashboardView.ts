@@ -26,7 +26,7 @@ export class DashboardView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Zenith Dashboard';
+        return 'Dashboard';
     }
 
     getIcon(): string {

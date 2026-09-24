@@ -3,7 +3,6 @@ import { createRoot, type Root } from 'react-dom/client';
 import { createElement } from 'react';
 import { VIEW_TYPE_STUDY } from '../../core/constants';
 import { AppContext } from '../../context/AppContext';
-import { translateNow } from '../../core/i18n';
 import { StudyApp } from './components/StudyApp';
 import type ZenithPlugin from '../../main';
 
@@ -23,7 +22,7 @@ export class StudyView extends ItemView {
     }
 
     getDisplayText(): string {
-        return translateNow('study.title');
+        return 'Study';
     }
 
     getIcon(): string {

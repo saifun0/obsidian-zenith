@@ -91,9 +91,12 @@ card's real width, not only its size, so the same card works in a sidebar and on
 ## The view
 
 *Open the timetable* shows today at the top and then the week. In a wide pane it is the
-paper grid: a row per bell, a column per day, today tinted and the current class
-outlined. In a narrow pane or on a phone it is a list of days. With a two-week cycle
-either week can be shown. Tapping a class opens its card:
+paper grid: a row per bell with its times, a column per day, today's date in the accent
+colour and the current class outlined. Every class in a row is the row's height, with the
+room at its foot, so rooms line up; a subject longer than two lines is whole in the
+tooltip. A bell no one has class at that week shrinks to its times. In a narrow pane or on
+a phone it is a list of days, with the bell times under it. With a two-week cycle either
+week can be shown. Tapping a class opens its card:
 - when it is next;
 - **Task for the next class**, which adds a task due on that day, tagged `#study`;
 - edit;

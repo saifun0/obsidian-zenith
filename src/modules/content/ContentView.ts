@@ -23,7 +23,7 @@ export class ContentView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Zenith Content';
+        return 'Content';
     }
 
     getIcon(): string {

@@ -667,13 +667,29 @@
     color: var(--zenith-text-normal);
 }
 
+.zenith-study-grid__slot.is-empty,
+.zenith-study-grid__slot.is-empty b {
+    color: var(--zenith-text-faint);
+}
+
+/* Tall enough for the fullest tile — two lines of subject, what it is, the
+   room — so a row of short names is as tall as a row of long ones. */
 .zenith-study-grid__cell {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    min-height: 62px;
+    min-height: 84px;
     padding: 2px;
     border-radius: var(--zenith-radius-md);
+}
+
+.zenith-study-grid__cell.is-empty {
+    min-height: 0;
+}
+
+/* Tiles fill the cell: one tile is the row's height, two share it. */
+.zenith-study-grid__cell > .zenith-study-cell {
+    flex: 1 1 auto;
 }
 
 .zenith-study-cell {
@@ -717,18 +733,20 @@
     opacity: 0.5;
 }
 
-/* Three lines at most: a subject can be a sentence long ("research work
-   (gaining first skills in…)"), and the whole of it is in the tooltip. */
+/* Two lines at most: a subject can be a sentence long ("research work
+   (gaining first skills in…)"), and the whole of it is in the tooltip. A
+   long word is hyphenated where the language allows, not cut anywhere. */
 .zenith-study-cell__subject {
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     max-width: 100%;
     overflow: hidden;
     font-size: 13px;
     font-weight: 600;
     line-height: 1.25;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 
 .zenith-study-cell__meta {
@@ -740,8 +758,11 @@
     white-space: nowrap;
 }
 
+/* At the tile's foot, so the rooms of a row line up. */
 .zenith-study-cell .zenith-study-room {
     max-width: 100%;
+    margin-top: auto;
+    padding-top: 4px;
 }
 
 .zenith-study-view__days {
@@ -750,7 +771,8 @@
     gap: 18px;
 }
 
-.zenith-study-view__day h3 {
+.zenith-study-view__day h3,
+.zenith-study-view__bells h3 {
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
@@ -795,14 +817,31 @@
     color: var(--zenith-text-faint);
 }
 
-.zenith-study-view__bells {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 14px;
+/* The bell timetable under the list of days, the way a school prints it:
+   numbered, in columns, read down. */
+.zenith-study-view__bells ol {
     margin: 0;
-    font-size: 12px;
+    padding: 0 0 0 8px;
+    columns: 128px;
+    column-gap: 24px;
+    list-style: none;
+    font-size: 12.5px;
     color: var(--zenith-text-muted);
     font-variant-numeric: tabular-nums;
+}
+
+.zenith-study-view__bells li {
+    display: flex;
+    gap: 10px;
+    padding: 3px 0;
+    break-inside: avoid;
+}
+
+.zenith-study-view__bells li b {
+    min-width: 1.1em;
+    font-weight: 600;
+    color: var(--zenith-text-faint);
+    text-align: right;
 }
 
 /* ── Controls shared by the dialogs ──────────────── */

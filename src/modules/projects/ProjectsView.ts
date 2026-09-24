@@ -23,7 +23,7 @@ export class ProjectsView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Zenith Projects';
+        return 'Projects';
     }
 
     getIcon(): string {

@@ -221,15 +221,18 @@ export const StudyApp: FC = () => {
                         </div>
                     )}
 
-                    {schedule.bells.length > 0 && (
-                        <p className="zenith-study-view__bells">
-                            <b>{t('study.bells')}</b>
-                            {schedule.bells.map((b) => (
-                                <span key={b.n}>
-                                    {b.n} · {b.start}–{b.end}
-                                </span>
-                            ))}
-                        </p>
+                    {!grid && schedule.bells.length > 0 && (
+                        <section className="zenith-study-view__bells">
+                            <h3>{t('study.bells')}</h3>
+                            <ol>
+                                {schedule.bells.map((b) => (
+                                    <li key={b.n}>
+                                        <b>{b.n}</b>
+                                        {b.start}–{b.end}
+                                    </li>
+                                ))}
+                            </ol>
+                        </section>
                     )}
                 </>
             )}
@@ -254,6 +257,11 @@ export const StudyApp: FC = () => {
  * The paper timetable: a row per bell, a column per day. A class whose own
  * time falls in no bell goes in a last row of its own rather than being
  * squeezed into the nearest one.
+ *
+ * Calm before complete: every tile in a row is the row's height, a subject
+ * gets two lines (the whole of it is in the tooltip) and the room sits at the
+ * tile's foot, so rooms line up across the week. A bell nobody has class at
+ * this week shrinks to its times.
  */
 const WeekGrid: FC<{
     days: number[];
@@ -285,7 +293,11 @@ const WeekGrid: FC<{
     ];
 
     return (
-        <div className="zenith-study-grid" style={{ ['--study-days' as string]: days.length }}>
+        <div
+            className="zenith-study-grid"
+            lang={t.locale}
+            style={{ ['--study-days' as string]: days.length }}
+        >
             <span className="zenith-study-grid__corner" />
             {days.map((day) => {
                 const date = addDays(monday, day - 1);
@@ -299,57 +311,62 @@ const WeekGrid: FC<{
                     </span>
                 );
             })}
-            {rows.map((row) => (
-                <React.Fragment key={row.key}>
-                    <span className="zenith-study-grid__slot">{row.label}</span>
-                    {days.map((day) => {
-                        const date = addDays(monday, day - 1);
-                        const isToday = date === today;
-                        const items = (byDay.get(day) ?? []).filter(
-                            (i) => slotOf(i.lesson, bells) === row.slot
-                        );
-                        return (
-                            <div
-                                key={day}
-                                className={`zenith-study-grid__cell${isToday ? ' is-today' : ''}`}
-                            >
-                                {items.map((item) => {
-                                    const live =
-                                        isToday &&
-                                        now !== null &&
-                                        item.start <= now &&
-                                        now < item.end;
-                                    const past = isToday && now !== null && item.end <= now;
-                                    return (
-                                        <button
-                                            key={item.lesson.id}
-                                            type="button"
-                                            className={`zenith-study-cell is-kind-${item.lesson.kind}${live ? ' is-now' : ''}${past ? ' is-past' : ''}`}
-                                            onClick={() => onOpen(item, date)}
-                                            title={[item.lesson.subject, item.lesson.teacher]
-                                                .filter(Boolean)
-                                                .join(' · ')}
-                                        >
-                                            <span className="zenith-study-cell__subject">
-                                                {item.lesson.subject}
-                                            </span>
-                                            <span className="zenith-study-cell__meta">
-                                                {lessonMeta(item.lesson, t)}
-                                            </span>
-                                            {row.slot === undefined && (
-                                                <span className="zenith-study-cell__meta">
-                                                    {timeOf(item.start)}–{timeOf(item.end)}
+            {rows.map((row) => {
+                const inRow = (day: number) =>
+                    (byDay.get(day) ?? []).filter((i) => slotOf(i.lesson, bells) === row.slot);
+                const empty = days.every((day) => !inRow(day).length);
+                return (
+                    <React.Fragment key={row.key}>
+                        <span className={`zenith-study-grid__slot${empty ? ' is-empty' : ''}`}>
+                            {row.label}
+                        </span>
+                        {days.map((day) => {
+                            const date = addDays(monday, day - 1);
+                            const isToday = date === today;
+                            const items = inRow(day);
+                            return (
+                                <div
+                                    key={day}
+                                    className={`zenith-study-grid__cell${isToday ? ' is-today' : ''}${empty ? ' is-empty' : ''}`}
+                                >
+                                    {items.map((item) => {
+                                        const live =
+                                            isToday &&
+                                            now !== null &&
+                                            item.start <= now &&
+                                            now < item.end;
+                                        const past = isToday && now !== null && item.end <= now;
+                                        return (
+                                            <button
+                                                key={item.lesson.id}
+                                                type="button"
+                                                className={`zenith-study-cell is-kind-${item.lesson.kind}${live ? ' is-now' : ''}${past ? ' is-past' : ''}`}
+                                                onClick={() => onOpen(item, date)}
+                                                title={[item.lesson.subject, item.lesson.teacher]
+                                                    .filter(Boolean)
+                                                    .join(' · ')}
+                                            >
+                                                <span className="zenith-study-cell__subject">
+                                                    {item.lesson.subject}
                                                 </span>
-                                            )}
-                                            <RoomPill room={item.lesson.room} />
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        );
-                    })}
-                </React.Fragment>
-            ))}
+                                                <span className="zenith-study-cell__meta">
+                                                    {lessonMeta(item.lesson, t)}
+                                                </span>
+                                                {row.slot === undefined && (
+                                                    <span className="zenith-study-cell__meta">
+                                                        {timeOf(item.start)}–{timeOf(item.end)}
+                                                    </span>
+                                                )}
+                                                <RoomPill room={item.lesson.room} />
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })}
+                    </React.Fragment>
+                );
+            })}
         </div>
     );
 };
