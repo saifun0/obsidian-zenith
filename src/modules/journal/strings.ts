@@ -28,6 +28,17 @@ export const JOURNAL_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'journal.goals.weekBasis.one': 'this week · {count} week kept in a row',
         'journal.goals.weekBasis.other': 'this week · {count} weeks kept in a row',
         'habits.rest': 'Rest day',
+
+        'feature.journal.yearPixels': 'Year in pixels',
+        'feature.journal.yearPixels.desc':
+            'The whole year as squares, one a day, coloured by the mood or another tracker.',
+        'journal.year.open': 'The year in pixels',
+        'journal.year.month': 'Back to the month',
+        'journal.year.prev': 'Previous year',
+        'journal.year.next': 'Next year',
+        'journal.year.this': 'This year',
+        'journal.year.by': 'Coloured by',
+        'journal.year.neutral': 'Grey: nothing recorded',
     },
     ru: {
         'feature.journal.goals': 'Цели на неделю и пределы',
@@ -55,5 +66,16 @@ export const JOURNAL_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'journal.goals.weekBasis.few': 'эта неделя · {count} недели подряд',
         'journal.goals.weekBasis.many': 'эта неделя · {count} недель подряд',
         'habits.rest': 'День отдыха',
+
+        'feature.journal.yearPixels': 'Год в пикселях',
+        'feature.journal.yearPixels.desc':
+            'Весь год квадратиками, по одному на день, в цвет настроения или другого трекера.',
+        'journal.year.open': 'Год в пикселях',
+        'journal.year.month': 'Назад к месяцу',
+        'journal.year.prev': 'Предыдущий год',
+        'journal.year.next': 'Следующий год',
+        'journal.year.this': 'Этот год',
+        'journal.year.by': 'Цвет по',
+        'journal.year.neutral': 'Серое — ничего не записано',
     },
 };

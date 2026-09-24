@@ -152,6 +152,7 @@ export const FEATURES = [
     feature('journal.habitMonth', 'journal'),
     feature('journal.goals', 'journal'),
     feature('journal.quitHabits', 'journal'),
+    feature('journal.yearPixels', 'journal'),
     feature('journal.wordCount', 'journal'),
     feature('journal.stats', 'journal'),
     feature('journal.widget', 'journal'),

@@ -78,6 +78,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
             'journal.habitMonth',
             'journal.goals',
             'journal.quitHabits',
+            'journal.yearPixels',
             'journal.wordCount',
             'journal.stats',
             'journal.widget',

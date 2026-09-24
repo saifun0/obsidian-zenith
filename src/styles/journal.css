@@ -2127,3 +2127,88 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
         animation: none;
     }
 }
+
+/* ── Year in pixels ───────────────────────────────────
+   Twelve rows of up to 31 squares: the same day of every month in one
+   column, so a season reads as a band. */
+.zenith-root button.zenith-jcal__scale {
+    margin-left: auto;
+}
+
+.zenith-jyear__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.zenith-jyear__row {
+    display: grid;
+    grid-template-columns: 1.4em repeat(31, minmax(0, 1fr));
+    gap: 3px;
+    align-items: center;
+}
+
+.zenith-jyear__month {
+    font-size: 0.66rem;
+    color: var(--zenith-text-faint);
+    text-transform: uppercase;
+}
+
+.zenith-root button.zenith-jyear__px {
+    aspect-ratio: 1;
+    min-width: 0;
+    width: 100%;
+    height: auto;
+    padding: 0;
+    border: 1px solid color-mix(in srgb, var(--zenith-text-faint) 25%, transparent);
+    border-radius: 2px;
+    background: transparent;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-jyear__px.is-filled {
+    border-color: transparent;
+    background: color-mix(
+        in srgb,
+        var(--jyear-color) calc(var(--jyear-strength, 1) * 100%),
+        transparent
+    );
+}
+
+.zenith-root button.zenith-jyear__px.is-future {
+    opacity: 0.35;
+}
+
+.zenith-root button.zenith-jyear__px.is-today {
+    outline: 1px solid var(--zenith-accent);
+    outline-offset: 1px;
+}
+
+.zenith-root button.zenith-jyear__px.is-selected {
+    outline: 2px solid var(--zenith-text-normal);
+    outline-offset: 1px;
+}
+
+.zenith-jyear__foot {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-sm);
+}
+
+.zenith-jyear__legend {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.zenith-jyear__legend-px {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.zenith-jyear__hint {
+    font-size: 0.72rem;
+    color: var(--zenith-text-faint);
+}

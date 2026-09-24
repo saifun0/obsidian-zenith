@@ -1,6 +1,6 @@
 import { useFeature } from '../../../core/useFeature';
 import React, { useMemo, type FC } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Grid3x3 } from 'lucide-react';
 import { coerceTrackerValue, trackerColor, type JournalTracker } from '../../../core/journalConfig';
 import { useTranslation } from '../../../core/i18n';
 import type { JournalEntry } from '../../../store/journalSlice';
@@ -29,6 +29,8 @@ interface JournalCalendarProps {
     onSelect: (date: string) => void;
     onOpen: (date: string) => void;
     onMonthChange: (anchor: string) => void;
+    /** Switch to the year in pixels; absent while that feature is off. */
+    onYear?: () => void;
 }
 
 /**
@@ -57,6 +59,7 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
     onSelect,
     onOpen,
     onMonthChange,
+    onYear,
 }) => {
     const t = useTranslation();
     const wordsOn = useFeature('journal.wordCount');
@@ -120,6 +123,16 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
                 >
                     <ChevronRight size={16} />
                 </button>
+                {onYear && (
+                    <button
+                        className="zenith-jcal__nav zenith-jcal__scale"
+                        onClick={onYear}
+                        title={t('journal.year.open')}
+                        aria-label={t('journal.year.open')}
+                    >
+                        <Grid3x3 size={15} />
+                    </button>
+                )}
             </div>
 
             <div className="zenith-jcal__weekdays">

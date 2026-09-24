@@ -15,6 +15,7 @@ import { setTrackerValue, openDailyNote, createDailyNote } from '../services/jou
 import { addDays } from '../services/journalDates';
 import { useFeature } from '../../../core/useFeature';
 import { JournalCalendar } from './JournalCalendar';
+import { YearPixels } from './YearPixels';
 import { DayPanel } from './DayPanel';
 import { JournalStats } from './JournalStats';
 
@@ -44,6 +45,14 @@ export const JournalApp: FC = () => {
     const wordsOn = useFeature('journal.wordCount');
     const monthOn = useFeature('journal.habitMonth');
     const moodColorsOn = useFeature('journal.moodColors');
+    const yearPixelsOn = useFeature('journal.yearPixels');
+    const [scale, setScale] = useState<'month' | 'year'>('month');
+    const [pixelYear, setPixelYear] = useState(() => Number(today.slice(0, 4)));
+    const [pixelTrackerId, setPixelTrackerId] = useState<string | null>(null);
+    const pixelTracker =
+        trackers.find((tr) => tr.id === pixelTrackerId) ??
+        trackers.find((tr) => tr.kind === 'scale') ??
+        trackers[0];
 
     /** The calendar tints days by the first scale tracker — normally the mood. */
     const colorBy = useMemo(
@@ -166,19 +175,45 @@ export const JournalApp: FC = () => {
             )}
 
             <div className="zenith-journal__body">
-                <JournalCalendar
-                    monthAnchor={monthAnchor}
-                    selected={selected}
-                    today={today}
-                    byDate={byDate}
-                    weekStart={settings.journalWeekStart}
-                    colorBy={colorBy}
-                    trackers={trackers}
-                    taskDays={taskDays}
-                    onSelect={selectDate}
-                    onOpen={(date) => void openDailyNote(app, settings, date)}
-                    onMonthChange={setMonthAnchor}
-                />
+                {yearPixelsOn && scale === 'year' ? (
+                    <YearPixels
+                        year={pixelYear}
+                        byDate={byDate}
+                        trackers={trackers}
+                        tracker={pixelTracker}
+                        selected={selected}
+                        today={today}
+                        onSelect={(date) => {
+                            setSelected(date);
+                            setMonthAnchor(date);
+                        }}
+                        onYear={setPixelYear}
+                        onTracker={setPixelTrackerId}
+                        onMonth={() => setScale('month')}
+                    />
+                ) : (
+                    <JournalCalendar
+                        monthAnchor={monthAnchor}
+                        selected={selected}
+                        today={today}
+                        byDate={byDate}
+                        weekStart={settings.journalWeekStart}
+                        colorBy={colorBy}
+                        trackers={trackers}
+                        taskDays={taskDays}
+                        onSelect={selectDate}
+                        onOpen={(date) => void openDailyNote(app, settings, date)}
+                        onMonthChange={setMonthAnchor}
+                        onYear={
+                            yearPixelsOn
+                                ? () => {
+                                      setPixelYear(Number(monthAnchor.slice(0, 4)));
+                                      setScale('year');
+                                  }
+                                : undefined
+                        }
+                    />
+                )}
 
                 <DayPanel
                     date={selected}

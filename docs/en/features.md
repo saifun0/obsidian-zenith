@@ -42,7 +42,7 @@ off and says what it is waiting for.
 | Tasks | Capture into the daily note, natural input, capture from links (off by default), reminders (off by default), subtasks, attachments, timer, drag and drop, group by date, group by note, statistics, activity heatmap, widget |
 | Calendar | Week and day views, all 24 hours, moving tasks on the hour grid, agenda, start-to-due bars, tasks from daily notes, highlight on hover, week-ahead widget, overdue strip |
 | Projects | Tasks in projects (links and progress), widget |
-| Journal | Check-in block, calendar coloured by mood, habit month, weekly goals and limits, habits to quit, word count, statistics, check-in widget |
+| Journal | Check-in block, calendar coloured by mood, habit month, weekly goals and limits, habits to quit, year in pixels, word count, statistics, check-in widget |
 | Content | Continue shelf, “+1” button, select several, filter by genre, import, statistics, widget |
 | Prayer | Sunrise, voluntary prayers, Hijri date, week strip, statistics, reminders, widget |
 | Weather | Hourly forecast, sunrise & sunset, air quality |

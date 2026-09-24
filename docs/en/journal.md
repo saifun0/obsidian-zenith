@@ -100,6 +100,12 @@ dot marks days with a task due. Click a day to select it, double-click to open i
 The day panel's controls work on days that have no note yet — they create it on first use —
 and **‹ ›** beside the date step a day at a time.
 
+**The year in pixels** (*Journal → Features → Year in pixels*): the button beside the
+month's arrows turns the calendar into the whole year — twelve rows of squares, one a day,
+coloured by the mood or any other tracker you pick. The same day of every month lines up
+in a column, so a season reads as a band. A day with nothing recorded stays grey rather
+than taking the colour of a bad one, and a click selects the day as the month does.
+
 **Statistics** are always on screen, above the calendar. They open with coverage over the
 last 30 days — current and longest streak, entries written, words. A day counts toward a
 streak only once it has words or a recorded value, so clicking through the calendar can't
