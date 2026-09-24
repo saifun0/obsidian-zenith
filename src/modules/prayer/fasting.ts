@@ -132,3 +132,46 @@ export function fastChoices(date: string, offset = 0): FastKind[] {
         ? ['ramadan', 'broken', 'excused']
         : ['qada', 'nafl'];
 }
+
+/**
+ * Whether `date` is being fasted: any day whose note records a fast, and every
+ * day of Ramadan unless its note says the fast was broken or excused. Unlike
+ * the progress above, this one does presume — it only decides what a
+ * countdown is called, and in Ramadan "until iftar" is the likelier question.
+ */
+export function isFastDay(fasts: ReadonlyMap<string, FastKind>, date: string, offset = 0): boolean {
+    const kind = fasts.get(date);
+    if (kind === 'broken' || kind === 'excused') return false;
+    return kind !== undefined || monthOf(date, offset) === RAMADAN_MONTH;
+}
+
+export interface FastCountdown {
+    moment: 'iftar' | 'suhoor';
+    minutesAway: number;
+}
+
+/**
+ * What the countdown to the next prayer means on a fasting day: maghrib is
+ * iftar; fajr is the end of suhoor — `imsak` minutes before it, for those who
+ * stop eating early. Fajr after isha belongs to tomorrow, so it is tomorrow's
+ * fast that decides. Null when the day is not a fast, the next prayer is
+ * neither, or imsak has already passed (the plain "fajr in…" is right again).
+ */
+export function fastCountdown(
+    next: { id: string; minutesAway: number; tomorrow: boolean },
+    today: string,
+    fasts: ReadonlyMap<string, FastKind>,
+    offset = 0,
+    imsak = 0
+): FastCountdown | null {
+    if (next.id === 'maghrib' && !next.tomorrow) {
+        return isFastDay(fasts, today, offset)
+            ? { moment: 'iftar', minutesAway: next.minutesAway }
+            : null;
+    }
+    if (next.id !== 'fajr') return null;
+    const day = next.tomorrow ? addDays(today, 1) : today;
+    if (!isFastDay(fasts, day, offset)) return null;
+    const minutesAway = next.minutesAway - Math.max(0, imsak);
+    return minutesAway > 0 ? { moment: 'suhoor', minutesAway } : null;
+}

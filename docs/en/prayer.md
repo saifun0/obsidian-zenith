@@ -93,3 +93,15 @@ With **Voluntary fast days** on, the view says when a day is a recommended volun
 Mondays and Thursdays, the white days (13–15), Ashura and the day of Arafah — and never on
 the two Eids or the days of Tashriq, which is why the 13th of Dhu al-Hijjah is not offered
 as a white day.
+
+### Iftar and suhoor
+
+*Prayer → Display → Iftar and suhoor.* In Ramadan, and on any day whose note records a fast,
+the countdown says what it is counting to: before maghrib *1h 20m until iftar*, before fajr
+*suhoor ends in 5h 10m*. Fajr after isha belongs to tomorrow, so it is tomorrow's fast that
+decides — the last night of Ramadan counts to fajr as usual. A Ramadan day marked **Broken**
+or **Excused** keeps the plain countdown.
+
+**Imsak** moves the end of suhoor earlier by that many minutes. It is 0 by default — the
+timetable's fajr — since some stop eating ten minutes or so before it and some do not. Once
+imsak has passed, the countdown is to fajr again.

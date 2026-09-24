@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
     fastChoices,
+    fastCountdown,
     fastsByDate,
     parseFast,
     qadaCount,
@@ -92,5 +93,52 @@ describe('fastChoices', () => {
     it('offers Ramadan’s choices in Ramadan, and the year’s otherwise', () => {
         expect(fastChoices('2026-02-20')).toEqual(['ramadan', 'broken', 'excused']);
         expect(fastChoices('2026-04-27')).toEqual(['qada', 'nafl']);
+    });
+});
+
+describe('fastCountdown', () => {
+    const none = new Map<string, FastKind>();
+    const maghrib = { id: 'maghrib', minutesAway: 90, tomorrow: false };
+    const fajrToday = { id: 'fajr', minutesAway: 120, tomorrow: false };
+    const fajrTomorrow = { id: 'fajr', minutesAway: 400, tomorrow: true };
+
+    it('calls maghrib iftar in Ramadan, and fajr the end of suhoor', () => {
+        expect(fastCountdown(maghrib, '2026-02-20', none)).toEqual({
+            moment: 'iftar',
+            minutesAway: 90,
+        });
+        expect(fastCountdown(fajrToday, '2026-02-20', none)).toEqual({
+            moment: 'suhoor',
+            minutesAway: 120,
+        });
+    });
+
+    it('does so on any day whose note records a fast', () => {
+        const fasts = new Map<string, FastKind>([['2026-04-27', 'nafl']]);
+        expect(fastCountdown(maghrib, '2026-04-27', fasts)?.moment).toBe('iftar');
+        expect(fastCountdown(maghrib, '2026-04-28', fasts)).toBeNull();
+    });
+
+    it('asks tomorrow about fajr after isha', () => {
+        // The last evening of Sha'ban: tomorrow is 1 Ramadan.
+        expect(fastCountdown(fajrTomorrow, '2026-02-17', none)?.moment).toBe('suhoor');
+        // The last evening of Ramadan: tomorrow is Eid.
+        expect(fastCountdown(fajrTomorrow, '2026-03-19', none)).toBeNull();
+    });
+
+    it('stays quiet on a Ramadan day recorded as not fasted', () => {
+        const fasts = new Map<string, FastKind>([['2026-02-20', 'excused']]);
+        expect(fastCountdown(maghrib, '2026-02-20', fasts)).toBeNull();
+    });
+
+    it('counts to imsak, and gives fajr back once imsak has passed', () => {
+        expect(fastCountdown(fajrToday, '2026-02-20', none, 0, 10)?.minutesAway).toBe(110);
+        const close = { id: 'fajr', minutesAway: 5, tomorrow: false };
+        expect(fastCountdown(close, '2026-02-20', none, 0, 10)).toBeNull();
+    });
+
+    it('leaves the other prayers alone', () => {
+        const asr = { id: 'asr', minutesAway: 30, tomorrow: false };
+        expect(fastCountdown(asr, '2026-02-20', none)).toBeNull();
     });
 });

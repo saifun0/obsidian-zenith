@@ -88,6 +88,15 @@ export const PRAYER_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'fast.hint.whiteDays': 'One of the white days (13–15) — a sunnah fast.',
         'fast.hint.ashura': 'Ashura — a sunnah fast.',
         'fast.hint.arafah': 'The day of Arafah — a sunnah fast for those not on Hajj.',
+
+        'feature.prayer.iftarSuhoor': 'Iftar and suhoor',
+        'feature.prayer.iftarSuhoor.desc':
+            'In Ramadan and on days with a fast in the note, the countdown to maghrib reads “until iftar” and the one to fajr “suhoor ends in”.',
+        'prayer.iftarIn': '{time} until iftar',
+        'prayer.suhoorIn': 'suhoor ends in {time}',
+        'settings.prayerImsak': 'Imsak',
+        'settings.prayerImsak.desc':
+            'How many minutes before fajr suhoor ends. Zero follows the timetable; some stop eating ten minutes early to be safe.',
     },
     ru: {
         'prayer.rounding.nearest': 'До ближайшей минуты',
@@ -174,5 +183,14 @@ export const PRAYER_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'fast.hint.whiteDays': 'Один из белых дней (13–15) — желательный пост.',
         'fast.hint.ashura': 'Ашура — желательный пост.',
         'fast.hint.arafah': 'День Арафа — желательный пост для тех, кто не в хадже.',
+
+        'feature.prayer.iftarSuhoor': 'Ифтар и сухур',
+        'feature.prayer.iftarSuhoor.desc':
+            'В Рамадан и в дни с постом в заметке отсчёт до магриба подписан «до ифтара», до фаджра — «сухур заканчивается через».',
+        'prayer.iftarIn': '{time} до ифтара',
+        'prayer.suhoorIn': 'сухур заканчивается через {time}',
+        'settings.prayerImsak': 'Имсак',
+        'settings.prayerImsak.desc':
+            'За сколько минут до фаджра заканчивается сухур. Ноль — по таблице; некоторые прекращают есть на десять минут раньше, для надёжности.',
     },
 };

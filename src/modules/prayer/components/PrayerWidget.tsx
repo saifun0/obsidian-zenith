@@ -7,7 +7,8 @@ import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import { EXTRA_PRAYERS, PRAYERS, isPerformed, type ExtraPrayerId, type PrayerId } from '../prayerConfig';
-import { formatClock, formatCountdown, hasEntered, nextPrayer } from '../prayerTimes';
+import { formatClock, hasEntered, nextPrayer } from '../prayerTimes';
+import { useCountdownText } from './useCountdownText';
 import { setExtraPrayer, setPrayerStatus, statusForTap } from '../prayerActions';
 import { dayOf } from '../prayerStats';
 import {
@@ -65,6 +66,7 @@ export const PrayerWidget: FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
     const extras = usePrayerExtras();
     const weekStripOn = useFeature('prayer.weekStrip');
     const openMenu = usePrayerMenu(today);
+    const countdownText = useCountdownText(today);
 
     // The preset says how much room the grid gave us; only the element knows
     // how wide that is in this pane. A sidebar `md` is narrower than a `sm` on
@@ -142,11 +144,7 @@ export const PrayerWidget: FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
                   ? 'lg'
                   : 'md';
 
-    const countdown = next
-        ? t('prayer.in', {
-              time: formatCountdown(next.minutesAway, t('common.hourShort'), t('common.minShort')),
-          })
-        : t('prayer.noTimes');
+    const countdown = next ? countdownText(next) : t('prayer.noTimes');
 
     const marks = (
         <span className="zenith-prayer__minimarks">

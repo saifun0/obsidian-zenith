@@ -240,6 +240,11 @@ export interface ZenithSettings {
     prayerExtras: string[];
     /** ±days on the Hijri date, since the month starts by local sighting. */
     prayerHijriOffset: number;
+    /**
+     * Minutes before fajr that suhoor ends (imsak). Zero follows the
+     * timetable; some keep a margin of ten minutes or so.
+     */
+    prayerImsakOffset: number;
     /** Notify when a prayer comes in (only while Obsidian is open). */
     prayerNotify: boolean;
     /** Minutes of warning before the time itself. */
@@ -770,6 +775,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     prayerShowSunrise: true,
     prayerExtras: ['witr'],
     prayerHijriOffset: 0,
+    prayerImsakOffset: 0,
     prayerNotify: false,
     prayerNotifyBefore: 10,
     taskRemindBefore: 0,

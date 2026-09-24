@@ -137,6 +137,7 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     prayerShowSunrise: { scope: 'shared' },
     prayerExtras: { scope: 'shared' },
     prayerHijriOffset: { scope: 'shared' },
+    prayerImsakOffset: { scope: 'shared' },
     // Notification preferences are shared: wanting to be told a prayer has come
     // in is about the person, not the machine. A device that cannot notify
     // simply does nothing with it.

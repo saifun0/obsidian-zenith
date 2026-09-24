@@ -7,7 +7,8 @@ import { buildDateMatcher, relativeNotePath } from '../../journal/services/journ
 import { EXTRA_PRAYERS, PRAYERS, isPerformed, type PrayerId } from '../prayerConfig';
 import { setExtraPrayer, setPrayerStatus, statusForTap } from '../prayerActions';
 import { dayOf } from '../prayerStats';
-import { formatClock, formatCountdown, hasEntered, nextPrayer } from '../prayerTimes';
+import { formatClock, hasEntered, nextPrayer } from '../prayerTimes';
+import { useCountdownText } from './useCountdownText';
 import {
     useDayTimes,
     useNowMinutes,
@@ -59,6 +60,7 @@ export const PrayerNoteBlock: FC<PrayerNoteBlockProps> = ({ sourcePath }) => {
     const nowMinutes = useNowMinutes();
     const extras = usePrayerExtras();
     const openMenu = usePrayerMenu(date);
+    const countdownText = useCountdownText(today);
 
     if (!place || !day) {
         return <div className="zenith-prayer__note">{t('prayer.noPlace')}</div>;
@@ -87,14 +89,7 @@ export const PrayerNoteBlock: FC<PrayerNoteBlockProps> = ({ sourcePath }) => {
             <div className="zenith-prayer__block-head">
                 {next ? (
                     <span>
-                        {t(`prayer.${next.id}`)}{' '}
-                        {t('prayer.in', {
-                            time: formatCountdown(
-                                next.minutesAway,
-                                t('common.hourShort'),
-                                t('common.minShort')
-                            ),
-                        })}
+                        {t(`prayer.${next.id}`)} {countdownText(next)}
                         {' · '}
                         <b>{formatClock(next.at, t.locale)}</b>
                     </span>

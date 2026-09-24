@@ -1,13 +1,10 @@
 import React, { type FC } from 'react';
 import { ChevronLeft, ChevronRight, CloudDownload, CloudOff, MapPin, PenLine } from 'lucide-react';
 import { useTranslation } from '../../../core/i18n';
+import { getTodayString } from '../../../core/dateUtils';
 import type { PrayerDay } from '../prayerStats';
-import {
-    formatClock,
-    formatCountdown,
-    type NextPrayer,
-    type PrayerTimeId,
-} from '../prayerTimes';
+import { formatClock, type NextPrayer, type PrayerTimeId } from '../prayerTimes';
+import { useCountdownText } from './useCountdownText';
 import { PrayerTimeline } from './PrayerTimeline';
 import type { TimesSource } from '../usePrayer';
 
@@ -63,6 +60,7 @@ export const PrayerDayHead: FC<PrayerDayHeadProps> = ({
     onOpenNote,
 }) => {
     const t = useTranslation();
+    const countdownText = useCountdownText(getTodayString());
 
     return (
         <header className="zenith-prayer__head">
@@ -140,15 +138,7 @@ export const PrayerDayHead: FC<PrayerDayHeadProps> = ({
                     <span className="zenith-prayer__next-time">
                         {formatClock(next.at, t.locale)}
                     </span>
-                    <span className="zenith-prayer__countdown">
-                        {t('prayer.in', {
-                            time: formatCountdown(
-                                next.minutesAway,
-                                t('common.hourShort'),
-                                t('common.minShort')
-                            ),
-                        })}
-                    </span>
+                    <span className="zenith-prayer__countdown">{countdownText(next)}</span>
                 </div>
             )}
 

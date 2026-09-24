@@ -138,6 +138,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
             'prayer.reminders',
             'prayer.fasting',
             'prayer.fastingHints',
+            'prayer.iftarSuhoor',
             'prayer.widget',
             'journal.dailyBlock',
         ],
