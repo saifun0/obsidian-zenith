@@ -21,6 +21,7 @@ import type { ContentTypeConfig } from '../core/contentTypes';
 import type { WeatherPlace } from '../modules/weather/weatherTypes';
 import { DEFAULT_REVIEW_NOTES, type ReviewNotes } from '../modules/journal/services/reviewPeriods';
 import type { ModuleActivity } from '../core/moduleActivity';
+import type { Recents } from '../modules/search/recents';
 import type { StudySchedule } from '../modules/study/studyModel';
 import type { GeoPlace } from '../services/geocode';
 import {
@@ -439,6 +440,8 @@ export interface ZenithSettings {
     safeMode: boolean;
     /** What modules wrote through Zenith's API — see `moduleActivity`. */
     moduleActivity: ModuleActivity[];
+    /** What was picked in Search, how often and when — see `search/recents.ts`. */
+    searchRecents: Recents;
     /** The timetable provider when times come from a published table: '' for Aladhan, or a module's. */
     prayerProviderId: string;
 
@@ -733,7 +736,7 @@ export interface SettingsSlice {
  * Bump when a migration is added, and gate that migration on the value below.
  * Version 1 is "everything written before versioning existed".
  */
-export const CURRENT_SETTINGS_VERSION = 12;
+export const CURRENT_SETTINGS_VERSION = 13;
 
 /**
  * Object-valued settings that must be merged field-by-field rather than
@@ -860,6 +863,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
         'media',
         'sync',
         'picture',
+        'search',
     ],
     features: {},
     profiles: [],
@@ -877,6 +881,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     allowThirdPartyModules: false,
     safeMode: false,
     moduleActivity: [],
+    searchRecents: {},
     prayerProviderId: '',
     studySchedule: { bells: [], lessons: [] },
     studyTwoWeeks: false,
@@ -1101,6 +1106,14 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             if (from < 12 && Object.keys(saved).length > 0) {
                 merged.prayerMethodChosen =
                     merged.prayerMethod !== 'russia' || merged.prayerAsrMadhab !== 'hanafi';
+            }
+
+            // ── v12 → v13 ──
+            // Search arrived. Switched on for the reason the navigator and the
+            // picture were — a built-in module nobody can see is a module
+            // nobody switches on — and it changes nothing until it is opened.
+            if (from < 13 && !merged.activeModuleIds.includes('search')) {
+                merged.activeModuleIds = [...merged.activeModuleIds, 'search'];
             }
 
             return { settings: merged };

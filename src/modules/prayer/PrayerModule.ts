@@ -81,7 +81,7 @@ export class PrayerModule extends BaseModule {
             ctx.addChild(new PrayerBlockRenderer(el, this.plugin, ctx.sourcePath));
         });
 
-        this.addCommand({
+        this.addViewCommand({
             id: 'open-prayer',
             name: 'Open Prayer tracker',
             callback: () => this.activateView(),

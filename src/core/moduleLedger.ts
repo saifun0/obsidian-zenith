@@ -14,6 +14,8 @@
 export class ModuleRegistrationLedger {
     private views = new Map<string, Set<string>>();
     private commands = new Map<string, Set<string>>();
+    /** Commands that only open the module's view — see `markViewCommand`. */
+    private viewCommands = new Map<string, Set<string>>();
     private codeBlocks = new Map<string, Set<string>>();
     private disposers = new Map<string, Array<() => void>>();
 
@@ -38,6 +40,23 @@ export class ModuleRegistrationLedger {
     }
     markCommand(moduleId: string, commandId: string): void {
         this.bucket(this.commands, moduleId).add(commandId);
+    }
+
+    /** The commands a module added, by their own (unprefixed) ids. */
+    commandsOf(moduleId: string): ReadonlySet<string> {
+        return this.commands.get(moduleId) ?? new Set();
+    }
+
+    /**
+     * A command that does nothing but open the module's view. Search lists the
+     * view itself, from the navigation registry, and leaves these out rather
+     * than offer the same thing twice.
+     */
+    markViewCommand(moduleId: string, commandId: string): void {
+        this.bucket(this.viewCommands, moduleId).add(commandId);
+    }
+    isViewCommand(moduleId: string, commandId: string): boolean {
+        return this.viewCommands.get(moduleId)?.has(commandId) ?? false;
     }
 
     hasCodeBlock(moduleId: string, language: string): boolean {
@@ -79,6 +98,7 @@ export class ModuleRegistrationLedger {
         this.disposeAll(moduleId);
         this.views.delete(moduleId);
         this.commands.delete(moduleId);
+        this.viewCommands.delete(moduleId);
         this.codeBlocks.delete(moduleId);
     }
 }

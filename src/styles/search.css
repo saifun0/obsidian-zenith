@@ -1,0 +1,84 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Search
+   Obsidian's own prompt (`.prompt`, `.suggestion-item`), so the panel looks
+   like the command palette in any theme and sits where it does on a phone.
+   Only what the palette has no answer for is drawn here: the group headings,
+   what a new task was read into, and the ✓.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* The line is the point of the panel: larger than the palette's on a desktop.
+   A phone keeps Obsidian's, which is sized for the keyboard under it. */
+body:not(.is-mobile) .zenith-search input.prompt-input {
+    font-size: var(--font-ui-large);
+}
+
+.zenith-search .zenith-search__heading {
+    padding: var(--size-4-2) var(--size-4-3) var(--size-2-2);
+    font-size: var(--font-ui-smaller);
+    font-weight: var(--font-semibold);
+    color: var(--text-muted);
+}
+
+.zenith-search .zenith-search__group:first-child .zenith-search__heading {
+    padding-top: 0;
+}
+
+/* One line a row, cut short rather than wrapped: the list is for scanning. */
+.zenith-search .zenith-search__row.mod-complex {
+    align-items: center;
+}
+
+.zenith-search .zenith-search__row .suggestion-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zenith-search .zenith-search__row .suggestion-aux {
+    gap: var(--size-4-2);
+    min-width: 0;
+}
+
+/* "Task" before a line that will become one. */
+.zenith-search .zenith-search__kind {
+    margin-inline-end: var(--size-4-2);
+    color: var(--text-accent);
+}
+
+.zenith-search .zenith-search__detail {
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.zenith-search .zenith-search__chips {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--size-2-2);
+}
+
+.zenith-search .zenith-search__chip {
+    padding: 1px var(--size-4-2);
+    border-radius: var(--radius-s);
+    background: var(--background-modifier-hover);
+    font-size: var(--font-ui-smaller);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* ✓ on the row the keys are on, or under the pointer; on a touch screen,
+   where there is neither, on every task. */
+.zenith-search .zenith-search__done {
+    visibility: hidden;
+}
+
+.zenith-search .zenith-search__row.is-selected .zenith-search__done,
+.zenith-search .zenith-search__row:hover .zenith-search__done,
+.is-mobile .zenith-search .zenith-search__done {
+    visibility: visible;
+}
+
+.is-mobile .zenith-search .zenith-search__done {
+    --icon-size: var(--icon-m);
+    padding: var(--size-2-3);
+}

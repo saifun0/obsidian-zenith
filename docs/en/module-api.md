@@ -98,6 +98,45 @@ list is built from the registry, so third-party buttons are hideable too.
 Registering is independent of the launcher being switched on, so a module never has to check
 whether the Navigation module is active before offering a way into its view.
 
+## Search
+
+The **Search** panel lists what each module gives it. A module adds a source from its
+`onload()`; like a nav action, it is disposed on unload, and registering does not depend on
+Search being switched on:
+
+```ts
+const dispose = this.plugin.registerSearchSource({
+    id: 'my-module',
+    label: 'My things',          // the group's heading, or `labelKey`
+    icon: 'sparkles',            // for rows without their own
+    order: 70,                   // where the group goes among equal matches
+    // Everything it can offer, read when the panel opens.
+    items: () => myThings().map((thing) => ({
+        id: `my-module:${thing.id}`, // stable: "recently picked" is remembered by it
+        title: thing.name,
+        aliases: [thing.otherName], // found by these too
+        tags: thing.tags,           // without `#`
+        detail: thing.status,       // a few words on the right
+        run: () => openThing(thing),               // Enter
+        complete: () => finish(thing),             // Ctrl/Cmd+Enter or ✓; the panel stays
+        reveal: () => openNote(thing),             // Alt+Enter
+    })),
+    // Rows the query itself calls for, like a date's note.
+    suggest: (query) => [],
+    // Creating from the line: "thing Name" → a row that makes "Name".
+    creators: () => [
+        {
+            keywords: ['thing', 'штука'],
+            row: (text) => ({ title: text, label: 'New thing', run: () => makeThing(text) }),
+        },
+    ],
+});
+```
+
+Your commands are listed under *Actions* without this, while your module is on. To name one
+in Zenith's language, add `module.<your id>.command.<command id>` to your translations; it is
+then found by that name and by the English one.
+
 ## Third-party modules
 
 Built modules can be dropped into the plugin's `modules/<id>/` folder (each with a

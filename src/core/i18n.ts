@@ -11,6 +11,7 @@ import { CONTENT_STRINGS } from '../modules/content/strings';
 import { DASHBOARD_STRINGS } from '../modules/dashboard/strings';
 import { MODULE_STRINGS } from './moduleStrings';
 import { STUDY_STRINGS } from '../modules/study/strings';
+import { SEARCH_STRINGS } from '../modules/search/strings';
 
 /**
  * Minimal i18n for Zenith's own UI.
@@ -3585,6 +3586,7 @@ export const DICTS: Record<Locale, Dict> = {
         ...DASHBOARD_STRINGS.en,
         ...MODULE_STRINGS.en,
         ...STUDY_STRINGS.en,
+        ...SEARCH_STRINGS.en,
     },
     ru: {
         ...RU,
@@ -3598,6 +3600,7 @@ export const DICTS: Record<Locale, Dict> = {
         ...DASHBOARD_STRINGS.ru,
         ...MODULE_STRINGS.ru,
         ...STUDY_STRINGS.ru,
+        ...SEARCH_STRINGS.ru,
     },
 };
 

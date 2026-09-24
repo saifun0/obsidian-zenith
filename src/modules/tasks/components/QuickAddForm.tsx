@@ -40,7 +40,12 @@ function stillTyped(ignored: ReadonlySet<string>, title: string): ReadonlySet<st
 }
 
 /** What a chip says: the value understood, not the words typed — those are in the field. */
-function chipLabel(piece: QuickPiece, parsed: QuickParse, date: string, t: Translator): string {
+export function chipLabel(
+    piece: QuickPiece,
+    parsed: QuickParse,
+    date: string,
+    t: Translator
+): string {
     switch (piece.kind) {
         case 'date':
             return `📅 ${new Date(`${date}T00:00:00`).toLocaleDateString(t.locale, {

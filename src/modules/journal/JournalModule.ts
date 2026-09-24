@@ -20,6 +20,7 @@ import { Notice } from 'obsidian';
 import { openDailyNote } from './services/journalActions';
 import { journalTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
+import { journalSearchSource } from './searchSource';
 
 /**
  * JournalModule — daily notes: a calendar of the year, a check-in for the day
@@ -101,14 +102,15 @@ export class JournalModule extends BaseModule {
             ctx.addChild(new JournalBlockRenderer(el, this.plugin, ctx.sourcePath));
         });
 
-        this.addCommand({
+        this.addViewCommand({
             id: 'open-journal',
             name: 'Open Journal',
             callback: () => this.activateView(),
         });
 
-        // The fast path: capture today without going through the calendar.
-        this.addCommand({
+        // The fast path: capture today without going through the calendar. The
+        // launcher has the same, as "Today's note", which is what Search lists.
+        this.addViewCommand({
             id: 'open-today-note',
             name: "Open today's note",
             callback: () => {
@@ -175,6 +177,8 @@ export class JournalModule extends BaseModule {
                 component: RitualWidget,
             })
         );
+
+        this.disposers.push(this.plugin.registerSearchSource(journalSearchSource(this.plugin)));
 
         // Two ways in from the launcher: the calendar view, and the fast path
         // straight into today's note — which is what the module is for.

@@ -35,7 +35,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
     {
         id: 'minimum',
         icon: 'circle',
-        modules: ['dashboard', 'tasks', 'journal'],
+        modules: ['dashboard', 'tasks', 'journal', 'search'],
         on: [
             ...BASICS,
             'dashboard.openOnStartup',
@@ -65,13 +65,14 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
             'study',
             'media',
             'sync',
+            'search',
         ],
         on: 'all',
     },
     {
         id: 'habits',
         icon: 'repeat',
-        modules: ['dashboard', 'navigator', 'journal', 'tasks'],
+        modules: ['dashboard', 'navigator', 'journal', 'tasks', 'search'],
         on: [
             ...BASICS,
             'dashboard.openOnStartup',
@@ -99,7 +100,15 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
         id: 'planning',
         icon: 'calendar-check',
         // The journal only as the place captured tasks are written to.
-        modules: ['dashboard', 'navigator', 'tasks', 'tasks-calendar', 'projects', 'journal'],
+        modules: [
+            'dashboard',
+            'navigator',
+            'tasks',
+            'tasks-calendar',
+            'projects',
+            'journal',
+            'search',
+        ],
         on: [
             ...BASICS,
             'dashboard.openOnStartup',
@@ -136,7 +145,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
         icon: 'moon-star',
         // The journal in its smallest form: the day's prayers are written
         // into the daily note.
-        modules: ['dashboard', 'navigator', 'prayer', 'journal'],
+        modules: ['dashboard', 'navigator', 'prayer', 'journal', 'search'],
         on: [
             ...BASICS,
             'dashboard.openOnStartup',
@@ -157,7 +166,15 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
     {
         id: 'study',
         icon: 'graduation-cap',
-        modules: ['dashboard', 'navigator', 'study', 'tasks', 'tasks-calendar', 'journal'],
+        modules: [
+            'dashboard',
+            'navigator',
+            'study',
+            'tasks',
+            'tasks-calendar',
+            'journal',
+            'search',
+        ],
         on: [
             ...BASICS,
             'dashboard.openOnStartup',
@@ -180,7 +197,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
     {
         id: 'reading',
         icon: 'book-open',
-        modules: ['dashboard', 'navigator', 'content'],
+        modules: ['dashboard', 'navigator', 'content', 'search'],
         on: [
             ...BASICS,
             'dashboard.openOnStartup',

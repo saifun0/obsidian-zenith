@@ -9,6 +9,7 @@ import { tasksSettingsSchema } from './settings.schema';
 import type { SettingsSchema } from '../../settings/schema/types';
 import { tasksTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
+import { tasksSearchSource } from './searchSource';
 
 /**
  * TasksModule — manages the Tasks view and related commands.
@@ -64,7 +65,7 @@ export class TasksModule extends BaseModule {
         });
 
         // Register command to open Tasks
-        this.addCommand({
+        this.addViewCommand({
             id: 'open-tasks',
             name: 'Open Tasks',
             callback: () => this.activateView(),
@@ -85,6 +86,8 @@ export class TasksModule extends BaseModule {
                 component: TasksWidget,
             })
         );
+
+        this.disposers.push(this.plugin.registerSearchSource(tasksSearchSource(this.plugin)));
 
         // And a button on the dashboard's launcher.
         this.disposers.push(

@@ -31,7 +31,9 @@ export class ProjectFormModal extends Modal {
     constructor(
         app: App,
         private readonly plugin: ZenithPlugin,
-        private readonly project?: Project
+        private readonly project?: Project,
+        /** A new project's name, when it was typed before the form opened. */
+        private readonly initialTitle?: string
     ) {
         super(app);
     }
@@ -54,6 +56,7 @@ export class ProjectFormModal extends Modal {
                 { value: { app: this.app, plugin: this.plugin } },
                 createElement(ProjectForm, {
                     project: this.project,
+                    initialTitle: this.initialTitle,
                     onClose: () => this.close(),
                 })
             )

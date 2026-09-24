@@ -8,6 +8,7 @@ import { ContentWidget } from './components/ContentWidget';
 import type ZenithPlugin from '../../main';
 import { contentTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
+import { contentSearchSource } from './searchSource';
 
 /**
  * ContentModule — gallery-style content tracker.
@@ -32,7 +33,7 @@ export class ContentModule extends BaseModule {
     async onload(): Promise<void> {
         this.registerView(VIEW_TYPE_CONTENT, (leaf) => new ContentView(leaf, this.plugin));
 
-        this.addCommand({
+        this.addViewCommand({
             id: 'open-content',
             name: 'Open Content Library',
             callback: () => this.activateView(),
@@ -67,6 +68,8 @@ export class ContentModule extends BaseModule {
                 component: ChallengeWidget,
             })
         );
+
+        this.disposers.push(this.plugin.registerSearchSource(contentSearchSource(this.plugin)));
 
         this.disposers.push(
             this.plugin.registerNavAction({

@@ -13,6 +13,7 @@ import { iconRegistry, describeSvgProblem } from './icons';
 import type { ModuleRegistrationLedger } from './moduleLedger';
 import type { DashboardWidgetDefinition } from '../modules/dashboard/widgets';
 import type { NavActionDefinition } from '../modules/navigator/navigation';
+import type { SearchSource } from '../modules/search/searchSources';
 import type ZenithPlugin from '../main';
 import { createModuleApiV2, type ModuleApiV2 } from './moduleApiV2';
 
@@ -51,6 +52,12 @@ export interface ZenithModuleApi extends ModuleApiV2 {
      * Auto-removed on unload, like a widget.
      */
     registerNavAction(definition: NavActionDefinition): () => void;
+    /**
+     * Give Search something to find: your module's things, rows that create
+     * them from the typed line, rows for what the query itself asks. Your
+     * commands are listed without this. Auto-removed on unload.
+     */
+    registerSearchSource(source: SearchSource): () => void;
     /** Deduped by MODULE ID, so it survives a hot reload. */
     registerView(viewType: string, creator: ViewCreator): void;
     addCommand(command: Command): void;
@@ -130,6 +137,12 @@ export function createModuleApi(
 
         registerNavAction(definition) {
             const dispose = plugin.registerNavAction(definition);
+            ledger.addDisposer(moduleId, dispose);
+            return dispose;
+        },
+
+        registerSearchSource(source) {
+            const dispose = plugin.registerSearchSource(source);
             ledger.addDisposer(moduleId, dispose);
             return dispose;
         },

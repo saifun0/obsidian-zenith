@@ -219,6 +219,8 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // Troubleshooting this device, and what happened on it.
     safeMode: { scope: 'device' },
     moduleActivity: { scope: 'device' },
+    // A phone and a desktop are reached for different things.
+    searchRecents: { scope: 'device' },
     // A module's provider exists only where the module is installed; the
     // module record syncs, so the choice can too.
     prayerProviderId: { scope: 'shared' },

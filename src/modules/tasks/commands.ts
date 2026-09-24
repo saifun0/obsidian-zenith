@@ -18,4 +18,7 @@ export function registerQuickAddTaskCommand(plugin: ZenithPlugin): void {
             new QuickAddTaskModal(plugin.app, useZenithStore.getState().settings).open();
         },
     });
+    // Registered by the plugin rather than the module, so that it outlives the
+    // module's switch, but it is a tasks command: Search lists it with them.
+    plugin.moduleManager.getLedger().markCommand('tasks', 'quick-add-task');
 }

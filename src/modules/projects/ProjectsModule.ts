@@ -8,6 +8,7 @@ import { ProjectsWidget } from './components/ProjectsWidget';
 import type ZenithPlugin from '../../main';
 import { projectsTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
+import { projectsSearchSource } from './searchSource';
 
 /**
  * ProjectsModule — Project management, task aggregation and progress tracking.
@@ -31,7 +32,7 @@ export class ProjectsModule extends BaseModule {
     async onload(): Promise<void> {
         this.registerView(VIEW_TYPE_PROJECTS, (leaf) => new ProjectsView(leaf, this.plugin));
 
-        this.addCommand({
+        this.addViewCommand({
             id: 'open-projects',
             name: 'Open Projects',
             callback: () => this.activateView(),
@@ -61,6 +62,8 @@ export class ProjectsModule extends BaseModule {
                 component: ProjectsWidget,
             })
         );
+
+        this.disposers.push(this.plugin.registerSearchSource(projectsSearchSource(this.plugin)));
 
         // Register Projects navigation action in the Navigator
         this.disposers.push(

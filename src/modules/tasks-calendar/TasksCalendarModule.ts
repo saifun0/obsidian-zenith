@@ -33,7 +33,7 @@ export class TasksCalendarModule extends BaseModule {
             (leaf) => new TasksCalendarView(leaf, this.plugin)
         );
 
-        this.addCommand({
+        this.addViewCommand({
             id: 'open-tasks-calendar',
             name: 'Open Tasks Calendar',
             callback: () => this.activateView(),

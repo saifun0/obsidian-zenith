@@ -35,7 +35,8 @@ export class MediaModule extends BaseModule {
         this.banner = new MediaBannerService(this.plugin);
         this.banner.start();
 
-        this.addCommand({
+        // Its launcher button below does the same, and Search lists that.
+        this.addViewCommand({
             id: 'open-media-picker',
             name: 'Open image / GIF picker',
             callback: () => new MediaPickerModal(this.plugin.app).open(),

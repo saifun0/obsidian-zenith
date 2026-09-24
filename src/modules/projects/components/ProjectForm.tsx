@@ -15,6 +15,8 @@ import { ProjectCard } from './ProjectCard';
 export interface ProjectFormProps {
     /** The project being edited, or nothing when one is being made. */
     project?: Project;
+    /** A new project's name, already typed elsewhere — "проект Ремонт" in Search. */
+    initialTitle?: string;
     onClose: () => void;
 }
 
@@ -38,13 +40,13 @@ const splitTags = (raw: string): string[] =>
  * being write-once fields — before this they could only be changed by opening
  * the note and editing YAML by hand.
  */
-export const ProjectForm: FC<ProjectFormProps> = ({ project, onClose }) => {
+export const ProjectForm: FC<ProjectFormProps> = ({ project, initialTitle, onClose }) => {
     const t = useTranslation();
     const { app } = useApp();
     const folder = useZenithStore((s) => s.settings.projectsFolderPath);
 
     const editing = !!project;
-    const [title, setTitle] = useState(project?.title ?? '');
+    const [title, setTitle] = useState(project?.title ?? initialTitle ?? '');
     const [status, setStatus] = useState<ProjectStatus>(project?.status ?? 'active');
     const [priority, setPriority] = useState<Priority>(project?.priority ?? 'medium');
     const [startDate, setStartDate] = useState(project?.startDate ?? '');

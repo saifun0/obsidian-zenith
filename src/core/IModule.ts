@@ -152,6 +152,15 @@ export abstract class BaseModule implements IModule {
     }
 
     /**
+     * Add the command that opens the module's view. The same as `addCommand`,
+     * except that Search leaves it out: it lists the view already.
+     */
+    protected addViewCommand(command: Command): void {
+        this.addCommand(command);
+        if (command.id) this.ledger.markViewCommand(this.id, command.id);
+    }
+
+    /**
      * Register a Markdown code-block renderer, idempotently.
      *
      * Obsidian throws when a language is registered twice and, like views and

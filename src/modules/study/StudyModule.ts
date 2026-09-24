@@ -40,7 +40,7 @@ export class StudyModule extends BaseModule {
     onload(): Promise<void> {
         this.registerView(VIEW_TYPE_STUDY, (leaf) => new StudyView(leaf, this.plugin));
 
-        this.addCommand({
+        this.addViewCommand({
             id: 'open-study',
             name: 'Open the timetable',
             callback: () => void this.activateView(),

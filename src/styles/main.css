@@ -22,6 +22,7 @@
 @import './journal.css';
 @import './media.css';
 @import './sync.css';
+@import './search.css';
 @import '../settings/components/SettingsApp.css';
 @import '../components/ui/CheckboxCard.css';
 @import '../settings/components/debug/Debug.css';

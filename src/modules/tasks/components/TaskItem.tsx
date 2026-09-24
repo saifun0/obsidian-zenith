@@ -41,7 +41,7 @@ import type { DropPosition } from '../services/taskMove';
 // Priority is drawn by `zenith-task-item--priority-*` as a wash under the row
 // (see tasks.css), so nothing here needs a colour for it.
 
-function formatDueDate(dueDate: string, t: Translator): string {
+export function formatDueDate(dueDate: string, t: Translator): string {
     const date = new Date(dueDate + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);

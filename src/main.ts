@@ -21,6 +21,7 @@ import { PrayerModule } from './modules/prayer/PrayerModule';
 import { StudyModule } from './modules/study/StudyModule';
 import { MediaModule } from './modules/media/MediaModule';
 import { SyncModule } from './modules/sync/SyncModule';
+import { SearchModule } from './modules/search/SearchModule';
 import { useZenithStore, resetZenithStore } from './store';
 import type { ZenithSettings } from './store';
 import type { SettingsSyncService } from './modules/sync/services/settingsSync';
@@ -32,6 +33,7 @@ import { registerUriCapture } from './core/uri/uriCapture';
 import { registerQuickAddTaskCommand } from './modules/tasks/commands';
 import { dashboardWidgets, type DashboardWidgetDefinition } from './modules/dashboard/widgets';
 import { navActions, type NavActionDefinition } from './modules/navigator/navigation';
+import { searchSources, type SearchSource } from './modules/search/searchSources';
 import { translateNow } from './core/i18n';
 import { moduleNameNow } from './core/moduleLabels';
 import { Scheduler } from './core/scheduler';
@@ -201,6 +203,7 @@ export default class ZenithPlugin extends Plugin {
         this.moduleManager.register(new StudyModule(this));
         this.moduleManager.register(new MediaModule(this));
         this.moduleManager.register(new SyncModule(this));
+        this.moduleManager.register(new SearchModule(this));
 
         // Only run code the user has already approved, and decide that without
         // asking anything: this runs during `onload`, where a dialog would
@@ -568,5 +571,14 @@ export default class ZenithPlugin extends Plugin {
      */
     registerNavAction(def: NavActionDefinition): () => void {
         return navActions.register(def);
+    }
+
+    /**
+     * Give the Search panel something to find (see `searchSources.ts`). Same
+     * contract as `registerNavAction`, and for the same reason independent of
+     * the search module being on.
+     */
+    registerSearchSource(source: SearchSource): () => void {
+        return searchSources.register(source);
     }
 }

@@ -52,7 +52,7 @@ export class DashboardModule extends BaseModule {
             (leaf) => new DashboardView(leaf, this.plugin)
         );
 
-        this.addCommand({
+        this.addViewCommand({
             id: 'open-dashboard',
             name: 'Open Dashboard',
             callback: () => this.activateView(),

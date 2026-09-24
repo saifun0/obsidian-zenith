@@ -112,7 +112,7 @@ export class SyncModule extends BaseModule {
             )
         );
 
-        this.addCommand({
+        this.addViewCommand({
             id: 'open-sync',
             name: 'Open sync',
             callback: () => this.activateView(),
