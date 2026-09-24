@@ -167,6 +167,7 @@ export const FEATURES = [
     feature('content.genreFilter', 'content'),
     feature('content.import', 'content'),
     feature('content.readings', 'content'),
+    feature('content.challenge', 'content'),
     feature('content.stats', 'content'),
     feature('content.widget', 'content'),
 

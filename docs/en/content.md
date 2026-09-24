@@ -63,6 +63,13 @@ years later is two readings of a few weeks, not one of seven years (which is wha
 say). The item's card lists every reading, and the statistics count what was read more than
 once. Sending an item back to the backlog drops the reading that had begun, not the history.
 
+**Yearly challenge** (*Content → Features → Yearly challenge*). Set how many of each type to
+finish this year under *Settings → Content → Goals for 2026* — "24 books". The statistics and
+a **Challenge** card on the dashboard show each goal as done / target, and whether the pace
+keeps up: *3 behind pace*, *on pace*, *2 ahead* — in whole items, since half a book behind is
+not behind. What counts is a reading finished in the year; with **Count re-reads** off, only
+what is finished for the first time. Each year's goals stay with that year.
+
 ## Working with the library
 
 Every poster is a control, not just a picture. **Right-click** any card for a menu: set

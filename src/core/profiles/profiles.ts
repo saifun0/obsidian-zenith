@@ -94,6 +94,8 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     journalTrackers: 'yes',
     journalTaskHeading: 'yes',
     contentTypes: 'yes',
+    contentChallenges: 'yes',
+    contentChallengeRereads: 'yes',
     calendarWidgetRowLabel: 'yes',
     calendarHorizonDays: 'yes',
     calendarSpanColors: 'yes',
@@ -324,6 +326,13 @@ const SHAPES: Partial<Record<SettingsKey, (v: unknown) => boolean>> = {
         ),
     prayerAdjustments: (v) =>
         isRecord(v) && Object.values(v).every((n) => typeof n === 'number' && Number.isFinite(n)),
+    contentChallenges: (v) =>
+        isRecord(v) &&
+        Object.values(v).every(
+            (year) =>
+                isRecord(year) &&
+                Object.values(year).every((n) => typeof n === 'number' && Number.isFinite(n))
+        ),
     folderIcons: (v) => isRecord(v) && Object.values(v).every((s) => typeof s === 'string'),
     location: isPlaceOrNull,
     prayerPlace: isPlaceOrNull,

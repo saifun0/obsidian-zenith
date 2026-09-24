@@ -1,6 +1,8 @@
 import { DEFAULT_CONTENT_FOLDER } from '../../core/constants';
 import { coreSchema } from '../../settings/schema/types';
 import { ContentTypesSettings } from '../../settings/components/ContentTypesSettings';
+import { whenFeature } from '../../settings/schema/featureGroup';
+import { ChallengeField } from './components/ChallengeField';
 
 export const contentSettingsSchema = coreSchema({
     moduleId: 'content',
@@ -15,6 +17,13 @@ export const contentSettingsSchema = coreSchema({
                     default: DEFAULT_CONTENT_FOLDER,
                     placeholder: DEFAULT_CONTENT_FOLDER,
                 },
+            ],
+        },
+        {
+            id: 'challenge',
+            showIf: whenFeature('content.challenge'),
+            fields: [
+                { type: 'custom', key: 'contentChallenges', row: true, render: ChallengeField },
             ],
         },
         {

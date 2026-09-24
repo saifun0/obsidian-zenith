@@ -1601,3 +1601,77 @@ button.zenith-ctype__add {
     color: var(--zenith-text-normal);
     font-variant-numeric: tabular-nums;
 }
+
+/* ── Yearly challenge ── */
+.zenith-challenge {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-md);
+}
+
+.zenith-challenge.is-compact {
+    gap: var(--zenith-space-sm);
+    padding: var(--zenith-space-sm) var(--zenith-space-md);
+}
+
+.zenith-challenge__row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.zenith-challenge__head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--challenge-color, var(--zenith-accent));
+}
+
+.zenith-challenge__label {
+    flex: 1;
+    min-width: 0;
+    color: var(--zenith-text-normal);
+    font-size: 0.85rem;
+}
+
+.zenith-challenge__count {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--zenith-text-normal);
+}
+
+.zenith-challenge__bar {
+    display: block;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--zenith-bg-secondary);
+    overflow: hidden;
+}
+
+.zenith-challenge__bar > span {
+    display: block;
+    height: 100%;
+    background: var(--challenge-color, var(--zenith-accent));
+}
+
+.zenith-challenge__status {
+    font-size: 0.75rem;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-challenge__row.is-behind .zenith-challenge__status {
+    color: var(--zenith-warning);
+}
+
+.zenith-challenge__empty {
+    margin: 0;
+    padding: var(--zenith-space-md);
+    color: var(--zenith-text-faint);
+    font-size: 0.82rem;
+}
+
+.zenith-challenge-settings {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-sm) var(--zenith-space-md);
+}

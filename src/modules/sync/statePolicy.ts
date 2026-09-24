@@ -84,6 +84,8 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     taskImageSize: { scope: 'shared' },
 
     // ── Content library ──
+    contentChallenges: { scope: 'shared', merge: 'record' },
+    contentChallengeRereads: { scope: 'shared' },
     contentTypes: { scope: 'shared', merge: 'byId' },
 
     // ── Calendar behaviour (config, not view state) ──

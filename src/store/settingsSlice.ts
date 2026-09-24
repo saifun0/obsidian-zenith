@@ -153,6 +153,10 @@ export interface ZenithSettings {
      * materializes the full list here.
      */
     contentTypes: ContentTypeConfig[];
+    /** Yearly goals: `{ "2026": { "book": 24 } }`. See `challenge.ts`. */
+    contentChallenges: Record<string, Record<string, number>>;
+    /** Whether a re-read counts towards the year's goal. */
+    contentChallengeRereads: boolean;
     /** What the right-hand label on a Week Ahead row shows. */
     calendarWidgetRowLabel: CalendarRowLabel;
     /** Days on the Week Ahead axis. */
@@ -726,6 +730,8 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     journalCaptureTasks: true,
     journalTaskHeading: '',
     contentTypes: [],
+    contentChallenges: {},
+    contentChallengeRereads: true,
     calendarWidgetRowLabel: 'countdown',
     calendarHorizonDays: 7,
     calendarShowOverdue: true,

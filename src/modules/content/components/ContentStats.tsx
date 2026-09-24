@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { ChallengeBars, useChallenge } from './ChallengeBars';
+import { useFeature } from '../../../core/useFeature';
 import { Clock } from 'lucide-react';
 import type { ContentItem } from '../../../store/contentSlice';
 import { PieChart } from '../../../components/shared/PieChart';
@@ -43,6 +45,8 @@ const DAY_MS = 86_400_000;
  */
 export const ContentStats: React.FC<ContentStatsProps> = ({ items, onSelectGenre }) => {
     const t = useTranslation();
+    const challengeOn = useFeature('content.challenge');
+    const challenge = useChallenge();
     const savedTypes = useZenithStore((s) => s.settings.contentTypes);
     const types = useMemo(() => effectiveContentTypes(savedTypes), [savedTypes]);
 
@@ -128,6 +132,12 @@ export const ContentStats: React.FC<ContentStatsProps> = ({ items, onSelectGenre
                     </Card>
                 )}
             </div>
+
+            {challengeOn && challenge.length > 0 && (
+                <Card className="zenith-content-stats__chart" padding="lg">
+                    <ChallengeBars progress={challenge} />
+                </Card>
+            )}
 
             <div className="zenith-content-stats__charts">
                 <Card className="zenith-content-stats__chart" padding="lg">

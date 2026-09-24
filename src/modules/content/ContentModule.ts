@@ -3,6 +3,7 @@ import { contentSettingsSchema } from './settings.schema';
 import type { SettingsSchema } from '../../settings/schema/types';
 import { VIEW_TYPE_CONTENT } from '../../core/constants';
 import { ContentView } from './ContentView';
+import { ChallengeWidget } from './components/ChallengeWidget';
 import { ContentWidget } from './components/ContentWidget';
 import type ZenithPlugin from '../../main';
 import { contentTranslations } from './i18n';
@@ -52,6 +53,18 @@ export class ContentModule extends BaseModule {
                 defaultSize: 'md',
                 order: 40,
                 component: ContentWidget,
+            }),
+            this.plugin.registerDashboardWidget({
+                id: 'content.challenge',
+                feature: 'content.challenge',
+                title: 'Reading challenge',
+                titleKey: 'widget.challenge',
+                description: "This year's goals, and whether the pace keeps up.",
+                icon: 'target',
+                sizes: ['sm', 'md'],
+                defaultSize: 'sm',
+                order: 41,
+                component: ChallengeWidget,
             })
         );
 
