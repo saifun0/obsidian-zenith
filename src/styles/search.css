@@ -67,15 +67,18 @@ body:not(.is-mobile) .zenith-search input.prompt-input {
 }
 
 /* ✓ on the row the keys are on, or under the pointer; on a touch screen,
-   where there is neither, on every task. */
+   where there is neither, on every task. Out of the way otherwise, so the
+   dates on the right line up with the other rows'. */
 .zenith-search .zenith-search__done {
-    visibility: hidden;
+    display: none;
+    /* Inside the row's height, so the row does not grow when it appears. */
+    margin-block: calc(-1 * var(--size-2-2));
 }
 
 .zenith-search .zenith-search__row.is-selected .zenith-search__done,
 .zenith-search .zenith-search__row:hover .zenith-search__done,
 .is-mobile .zenith-search .zenith-search__done {
-    visibility: visible;
+    display: flex;
 }
 
 .is-mobile .zenith-search .zenith-search__done {
