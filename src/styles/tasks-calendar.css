@@ -998,6 +998,45 @@
     opacity: 0.25;
 }
 
+/* ── Classes ─────────────────────────────────────────
+   The Study timetable behind the hours: a faint wash, drawn before the tasks
+   so any task sits on top, and in the way of nothing — a tap or a drag goes
+   through to the grid. It says the hour is taken, not what to do; a week of
+   hatching would say it louder than the tasks. */
+.zenith-tcal__class {
+    position: absolute;
+    left: 1px;
+    right: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    box-sizing: border-box;
+    padding: 3px 6px;
+    overflow: hidden;
+    border-left: 2px solid color-mix(in srgb, var(--zenith-text-faint) 45%, transparent);
+    border-radius: var(--zenith-radius-xs);
+    background: color-mix(in srgb, var(--zenith-text-normal) 4%, transparent);
+    color: var(--zenith-text-faint);
+    font-size: 0.7rem;
+    line-height: 1.25;
+    pointer-events: none;
+}
+
+.zenith-tcal__class-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.zenith-tcal__class-room {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* ── Spotlight ───────────────────────────────────────
    Hovering a task lights every piece of it — each row a bar crosses, the chips
    it has on other days, its block on the hours — and fades every other task, so

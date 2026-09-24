@@ -15,6 +15,7 @@ import { TimeGrid } from './TimeGrid';
 import { useSpotlight } from './useSpotlight';
 import { canPlace } from '../services/calendarDrag';
 import { useScheduleDrag, type SlotAt } from './useScheduleDrag';
+import type { CalendarClass } from '../../study/calendarClasses';
 
 /** The hour gutter occupies column 1, so the first day starts at column 2. */
 const DAY_COLUMN_OFFSET = 2;
@@ -39,6 +40,8 @@ interface WeekGridProps {
     onOpenDay?: (date: string) => void;
     onOpenEntry: (entry: CalendarEntry) => void;
     onOpenSpan: (segment: SpanSegment) => void;
+    /** The Study timetable, behind the hours; absent while off. */
+    classes?: Map<string, CalendarClass[]> | null;
 }
 
 /**
@@ -68,6 +71,7 @@ export const WeekGrid: FC<WeekGridProps> = ({
     onOpenDay,
     onOpenEntry,
     onOpenSpan,
+    classes,
 }) => {
     const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
     const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' });
@@ -189,6 +193,7 @@ export const WeekGrid: FC<WeekGridProps> = ({
                 onOpenEntry={onOpenEntry}
                 drag={drag}
                 slotAtRef={slotAt}
+                classes={classes}
             />
         </div>
     );

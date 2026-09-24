@@ -37,6 +37,7 @@ import {
     setStudyPreview,
     studyPreviewOffset,
 } from '../src/modules/study/previewClock';
+import { calendarClasses } from '../src/modules/study/calendarClasses';
 
 const TODAY = '2026-09-24'; // a Thursday, ISO week 39
 
@@ -353,5 +354,32 @@ describe('the preview clock', () => {
         expect(monday).toEqual(['before', 'during', 'after', 'free']);
         const saturday = previewPresets(SCHEDULE, '2026-09-26', OPTS);
         expect(saturday).toEqual([{ id: 'free', date: '2026-09-26', minute: 12 * 60 }]);
+    });
+});
+
+describe('classes on the calendar', () => {
+    it('gives each date its classes, one stretch per slot', () => {
+        const days = ['2026-09-24', '2026-09-25', '2026-09-26'];
+        const map = calendarClasses(SCHEDULE, days, OPTS);
+        expect(map.get('2026-09-24')).toEqual([
+            { key: '2026-09-24:510', start: 510, end: 600, subject: 'Maths', room: '305' },
+            {
+                key: '2026-09-24:610',
+                start: 610,
+                end: 700,
+                subject: 'Physics / Chemistry',
+                room: '214 / 215',
+            },
+        ]);
+        expect(map.get('2026-09-25')?.map((c) => [c.subject, c.room])).toEqual([['English', '']]);
+        // A day without classes is simply not there.
+        expect(map.has('2026-09-26')).toBe(false);
+    });
+
+    it('follows the subgroup and the term', () => {
+        const mine = calendarClasses(SCHEDULE, [TODAY], { ...OPTS, subgroup: 2 });
+        expect(mine.get(TODAY)?.map((c) => c.subject)).toEqual(['Maths', 'Chemistry']);
+        const holidays = calendarClasses(SCHEDULE, [TODAY], { ...OPTS, termEnd: '2026-09-01' });
+        expect(holidays.size).toBe(0);
     });
 });

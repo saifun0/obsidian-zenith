@@ -172,3 +172,13 @@ land. Moving keeps whatever end the line states and writes none it did not. Movi
 another day changes the date the `⏰` belongs to — and when that is the **due date**, it
 asks first: that is a deadline moving, not a meeting. Done and cancelled tasks stay where
 they happened. Switch it off under **Calendar → Features → Move on the hour grid**.
+
+## Classes on the hour grid
+
+With the [Study](study.md) module on, the week and day views draw your timetable behind the
+tasks: each class a faint block with its subject and room, so the free hours between
+classes are plain to see. The blocks follow your subgroup, the current week of a two-week
+cycle and the term, and two subgroups at once are one block. They are in the way of
+nothing: a task sits on top, and a tap or a drag goes through to the grid — a task can be
+planned next to a class, or into one. Switch them off under **Calendar → Features →
+Classes on the hour grid**.

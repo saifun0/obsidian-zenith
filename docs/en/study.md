@@ -102,6 +102,12 @@ week can be shown. Tapping a class opens its card:
 - edit;
 - delete.
 
+## In the calendar
+
+The week and day views of the tasks calendar draw your classes faintly behind the tasks, to
+plan the hours between them: see [Classes on the hour grid](tasks.md#classes-on-the-hour-grid).
+Switch them off under **Calendar → Features → Classes on the hour grid**.
+
 ## Reminders
 
 *Study → Class reminders* (off by default): a notification a set number of minutes before

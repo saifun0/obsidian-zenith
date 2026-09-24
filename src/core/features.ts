@@ -144,6 +144,10 @@ export const FEATURES = [
     feature('calendar.timeViews', 'tasks-calendar'),
     feature('calendar.allHours', 'tasks-calendar', { requires: ['calendar.timeViews'] }),
     feature('calendar.dragSchedule', 'tasks-calendar', { requires: ['calendar.timeViews'] }),
+    feature('calendar.classes', 'tasks-calendar', {
+        requires: ['calendar.timeViews'],
+        requiresModules: ['study'],
+    }),
     feature('calendar.agenda', 'tasks-calendar'),
     feature('calendar.spans', 'tasks-calendar'),
     feature('calendar.dailyNotes', 'tasks-calendar', { requiresModules: ['journal'] }),

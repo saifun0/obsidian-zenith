@@ -170,6 +170,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
             'tasks.smartGroups',
             'tasks.widget',
             'calendar.timeViews',
+            'calendar.classes',
             'calendar.agenda',
             'calendar.widget',
             'journal.dailyBlock',

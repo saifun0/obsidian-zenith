@@ -12,6 +12,9 @@ export const STUDY_STRINGS: { en: Record<string, string>; ru: Record<string, str
         'feature.study.widget.desc': 'What is on now and next, the day at a glance and the week.',
         'feature.study.reminders': 'Class reminders',
         'feature.study.reminders.desc': 'A notification before each class, with the room.',
+        'feature.calendar.classes': 'Classes on the hour grid',
+        'feature.calendar.classes.desc':
+            'Your timetable, faint behind the week and day views, to plan the hours around it.',
         'feature.study.homework': 'Tasks for the next class',
         'feature.study.homework.desc':
             'In a lesson’s card: add a task due on the day the subject is next taught.',
@@ -218,6 +221,9 @@ export const STUDY_STRINGS: { en: Record<string, string>; ru: Record<string, str
         'feature.study.widget.desc': 'Что сейчас и что дальше, день целиком и неделя.',
         'feature.study.reminders': 'Напоминания о парах',
         'feature.study.reminders.desc': 'Уведомление перед каждой парой, с аудиторией.',
+        'feature.calendar.classes': 'Пары на сетке часов',
+        'feature.calendar.classes.desc':
+            'Расписание бледным фоном в неделе и дне — чтобы планировать время между парами.',
         'feature.study.homework': 'Задания к следующей паре',
         'feature.study.homework.desc':
             'В карточке пары: добавить задачу со сроком на день, когда предмет будет в следующий раз.',

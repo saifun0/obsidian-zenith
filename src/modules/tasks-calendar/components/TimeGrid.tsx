@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, type FC, type MutableRefObject } fro
 import type { Translator } from '../../../core/i18n';
 import { useNow } from '../../../core/useNow';
 import type { CalendarEntry, EntryKind } from '../services/calendarTasks';
+import type { CalendarClass } from '../../study/calendarClasses';
 import { formatMinutes, hourWindow, layoutDay, type TimedBlock } from '../services/calendarTime';
 import { TimeBlock } from './TimeBlock';
 import type { ScheduleDrag, SlotAt } from './useScheduleDrag';
@@ -26,6 +27,8 @@ interface TimeGridProps {
     drag?: ScheduleDrag | null;
     /** Filled with how to find the day and minute under a point. */
     slotAtRef?: MutableRefObject<SlotAt | null>;
+    /** The Study timetable per date, drawn behind the tasks; absent while off. */
+    classes?: Map<string, CalendarClass[]> | null;
 }
 
 /**
@@ -40,6 +43,11 @@ interface TimeGridProps {
  * Blocks are positioned absolutely inside their column rather than placed in
  * grid rows, because they have to overlap: two tasks at 15:30 and 15:45 share
  * the same rows and split the width instead of pushing each other down.
+ *
+ * Classes from the Study timetable, when shown, are the one thing drawn
+ * behind the tasks rather than among them: faint, full width, and in the way
+ * of nothing — a tap or a drag goes through them to the grid, so the hour
+ * between two classes, or a class itself, can be planned into.
  */
 export const TimeGrid: FC<TimeGridProps> = ({
     t,
@@ -52,6 +60,7 @@ export const TimeGrid: FC<TimeGridProps> = ({
     onOpenEntry,
     drag,
     slotAtRef,
+    classes,
 }) => {
     const now = useNow();
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -66,14 +75,17 @@ export const TimeGrid: FC<TimeGridProps> = ({
             days.map((date) => ({
                 date,
                 blocks: layoutDay(timedByDate.get(date) ?? [], defaultSlot),
+                classes: classes?.get(date) ?? [],
             })),
-        [days, timedByDate, defaultSlot]
+        [days, timedByDate, defaultSlot, classes]
     );
 
+    // Classes count toward the hours drawn: an 08:00 class pulls the window
+    // open like an 08:00 task would.
     const visible = useMemo(
         () =>
             hourWindow(
-                columns.flatMap((column) => column.blocks),
+                columns.flatMap((column) => [...column.blocks, ...column.classes]),
                 allHours
             ),
         [columns, allHours]
@@ -88,7 +100,8 @@ export const TimeGrid: FC<TimeGridProps> = ({
     // whatever the first thing in it is. Landing at 00:00 every time would mean
     // scrolling past an empty night before the view says anything.
     const firstBlock = columns.reduce<number | null>((min, column) => {
-        for (const block of column.blocks) if (min === null || block.start < min) min = block.start;
+        for (const block of [...column.blocks, ...column.classes])
+            if (min === null || block.start < min) min = block.start;
         return min;
     }, null);
 
@@ -156,7 +169,7 @@ export const TimeGrid: FC<TimeGridProps> = ({
                     ))}
                 </div>
 
-                {columns.map(({ date, blocks }) => (
+                {columns.map(({ date, blocks, classes: taken }) => (
                     <div
                         className={`zenith-tcal__daycol ${date === today ? 'is-today' : ''}`}
                         key={date}
@@ -176,6 +189,22 @@ export const TimeGrid: FC<TimeGridProps> = ({
                                 : undefined
                         }
                     >
+                        {taken.map((c) => (
+                            <div
+                                key={c.key}
+                                className="zenith-tcal__class"
+                                style={{
+                                    top: `${(c.start - originMinutes) * pixelsPerMinute}px`,
+                                    height: `${Math.max((c.end - c.start) * pixelsPerMinute - 2, 14)}px`,
+                                }}
+                            >
+                                <span className="zenith-tcal__class-title">{c.subject}</span>
+                                {c.room && (
+                                    <span className="zenith-tcal__class-room">{c.room}</span>
+                                )}
+                            </div>
+                        ))}
+
                         {blocks.map((block: TimedBlock<CalendarEntry>) => (
                             <TimeBlock
                                 key={block.item.key}

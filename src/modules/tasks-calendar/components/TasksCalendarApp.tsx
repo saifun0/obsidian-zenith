@@ -21,6 +21,7 @@ import {
 import { buildDateMatcher, relativeNotePath } from '../../journal/services/journalDates';
 import { openDailyNote } from '../../journal/services/journalActions';
 import { TaskWriter } from '../../tasks/services/taskWriter';
+import { useCalendarClasses } from '../../study/calendarClasses';
 import {
     buildCalendar,
     countEntries,
@@ -117,6 +118,7 @@ export const TasksCalendarApp: FC = () => {
     const dailyNotesOn = useFeature('calendar.dailyNotes');
     const allHoursOn = useFeature('calendar.allHours');
     const dragScheduleOn = useFeature('calendar.dragSchedule');
+    const classesOn = useFeature('calendar.classes');
     const modes = useMemo(() => calendarModes(timeViewsOn, agendaOn), [timeViewsOn, agendaOn]);
 
     // What the toolbar's switches are stored as, and what is drawn: a switch
@@ -230,6 +232,9 @@ export const TasksCalendarApp: FC = () => {
         const base = mode === 'month' ? `${shownMonth}-01` : anchor;
         return monthGrid(base, weekStart).filter((date) => sameMonth(date, base));
     }, [mode, anchor, weekStart, shownMonth]);
+
+    // Only the hour grid has a place for them: a class is a stretch of hours.
+    const classes = useCalendarClasses(days, classesOn && (mode === 'week' || mode === 'day'));
 
     /** What the month view actually draws: several months of whole weeks. */
     const run = useMemo(
@@ -432,6 +437,7 @@ export const TasksCalendarApp: FC = () => {
                     onOpenDay={openDay}
                     onOpenEntry={openEntry}
                     onOpenSpan={openSpan}
+                    classes={classes}
                 />
             )}
 
