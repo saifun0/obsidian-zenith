@@ -6,6 +6,7 @@ import type { Translator } from '../../core/i18n';
 import type { ZenithSettings } from '../../store/settingsSlice';
 import { normalizeSchedule, type StudySchedule } from './studyModel';
 import type { StudyOptions } from './studyTime';
+import { useStudyPreviewOffset } from './previewClock';
 
 /** The timetable as settings hold it, cleaned once per change. */
 export function useStudySchedule(): StudySchedule {
@@ -35,10 +36,19 @@ export function useStudyOptions(): StudyOptions {
     );
 }
 
-/** Today and the minute of it, re-rendering as the minute turns. */
-export function useStudyNow(): { today: string; now: number } {
-    const date = useNow(60_000);
-    return { today: toLocalIsoDate(date), now: date.getHours() * 60 + date.getMinutes() };
+/**
+ * Today and the minute of it, re-rendering as the minute turns. With a preview
+ * time set in the debug tools, that time instead — `preview` says so.
+ */
+export function useStudyNow(): { today: string; now: number; preview: boolean } {
+    const real = useNow(60_000);
+    const offset = useStudyPreviewOffset();
+    const date = offset === null ? real : new Date(real.getTime() + offset);
+    return {
+        today: toLocalIsoDate(date),
+        now: date.getHours() * 60 + date.getMinutes(),
+        preview: offset !== null,
+    };
 }
 
 /** "1-я неделя", "Числитель", "Odd week" — as the user asked the weeks to be called. */

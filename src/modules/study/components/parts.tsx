@@ -1,10 +1,11 @@
 import React, { type FC } from 'react';
-import { ClipboardPaste, Copy, GraduationCap, MapPin, PencilLine } from 'lucide-react';
+import { ClipboardPaste, Clock, Copy, GraduationCap, MapPin, PencilLine, X } from 'lucide-react';
 import { Notice } from 'obsidian';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import { timeOf, type StudyLesson } from '../studyModel';
 import type { DayLesson } from '../studyTime';
 import { aiPrompt } from '../studyPrompt';
+import { clearStudyPreview } from '../previewClock';
 
 /** A kind of class, in words. */
 export function kindLabel(t: Translator, kind: StudyLesson['kind']): string {
@@ -179,5 +180,28 @@ export const StudySetup: FC<{
                 </button>
             </div>
         </div>
+    );
+};
+
+/**
+ * On the card and in the view while the debug tools' preview time is on: a
+ * timetable at a made-up hour must not pass for the real one. A tap goes back
+ * to the real time.
+ */
+export const PreviewBadge: FC<{ now: number }> = ({ now }) => {
+    const t = useTranslation();
+    const time = timeOf(now);
+    return (
+        <button
+            type="button"
+            className="zenith-study__preview"
+            onClick={clearStudyPreview}
+            title={`${t('study.preview.badge')} · ${t('study.preview.reset')}`}
+            aria-label={`${t('study.preview.badge')} ${time}. ${t('study.preview.reset')}`}
+        >
+            <Clock size={11} aria-hidden />
+            {time}
+            <X size={11} aria-hidden />
+        </button>
     );
 };

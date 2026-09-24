@@ -20,6 +20,7 @@ import { dayName, useStudyNow, useStudyOptions, useStudySchedule, weekName } fro
 import {
     DayBand,
     LessonRow,
+    PreviewBadge,
     RoomPill,
     StudySetup,
     copyPrompt,
@@ -56,7 +57,7 @@ export const StudyApp: FC = () => {
     const opts = useStudyOptions();
     const weekStyle = useZenithStore((s) => s.settings.studyWeekNames);
     const updateSettings = useZenithStore((s) => s.updateSettings);
-    const { today, now } = useStudyNow();
+    const { today, now, preview } = useStudyNow();
     const current = weekOfCycle(today, opts);
     const [shown, setShown] = useState<1 | 2>(current);
     const [dialog, setDialog] = useState<Dialog>(null);
@@ -89,6 +90,7 @@ export const StudyApp: FC = () => {
         <>
             {opts.twoWeeks && <span>{weekName(t, current, weekStyle)}</span>}
             <span>{t.plural('study.weekLessons', total)}</span>
+            {preview && <PreviewBadge now={now} />}
         </>
     ) : undefined;
 

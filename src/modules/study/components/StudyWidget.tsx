@@ -17,7 +17,7 @@ import {
     weekOfCycle,
 } from '../studyTime';
 import { dayName, useStudyNow, useStudyOptions, useStudySchedule, weekName } from '../useStudy';
-import { DayBand, LessonRow, StudySetup, rowState } from './parts';
+import { DayBand, LessonRow, PreviewBadge, StudySetup, rowState } from './parts';
 import { NowCard } from './NowCard';
 import { ImportDialog } from './ImportDialog';
 import { EditorDialog } from './EditorDialog';
@@ -50,7 +50,7 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const schedule = useStudySchedule();
     const opts = useStudyOptions();
     const weekStyle = useZenithStore((s) => s.settings.studyWeekNames);
-    const { today, now } = useStudyNow();
+    const { today, now, preview } = useStudyNow();
     const [dialog, setDialog] = useState<'import' | 'edit' | null>(null);
     const listRef = useRef<HTMLDivElement>(null);
 
@@ -129,6 +129,7 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
             {opts.twoWeeks && (
                 <span className="zenith-study__week">{weekName(t, week, weekStyle)}</span>
             )}
+            {preview && <PreviewBadge now={now} />}
             <button
                 type="button"
                 className="zenith-study__open"

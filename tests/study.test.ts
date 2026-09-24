@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import {
     conflicts,
     generateBells,
@@ -30,6 +30,13 @@ import {
     type StudyOptions,
 } from '../src/modules/study/studyTime';
 import { aiPrompt, PROMPT_EXAMPLE } from '../src/modules/study/studyPrompt';
+import {
+    clearStudyPreview,
+    previewOffset,
+    previewPresets,
+    setStudyPreview,
+    studyPreviewOffset,
+} from '../src/modules/study/previewClock';
 
 const TODAY = '2026-09-24'; // a Thursday, ISO week 39
 
@@ -300,5 +307,51 @@ describe('reminders', () => {
             '10:00',
         ]);
         expect(events[0].key).toBe('study:2026-09-24:510');
+    });
+});
+
+describe('the preview clock', () => {
+    afterEach(() => {
+        clearStudyPreview();
+        vi.useRealTimers();
+    });
+
+    it('moves Study to a chosen minute in whole minutes, and back', () => {
+        const real = new Date(2026, 8, 24, 9, 17, 42);
+        expect(previewOffset('2026-09-25', 10 * 60 + 30, real)).toBe((24 * 60 + 73) * 60_000);
+
+        vi.useFakeTimers();
+        vi.setSystemTime(real);
+        expect(studyPreviewOffset()).toBeNull();
+        setStudyPreview('2026-09-24', 9 * 60 + 17);
+        expect(studyPreviewOffset()).toBe(0);
+        setStudyPreview('2026-09-24', 8 * 60);
+        expect(studyPreviewOffset()).toBe(-77 * 60_000);
+        clearStudyPreview();
+        expect(studyPreviewOffset()).toBeNull();
+    });
+
+    it('offers the moments the day has', () => {
+        const at = previewPresets(SCHEDULE, TODAY, OPTS).map((p) => [p.id, p.date, p.minute]);
+        expect(at).toEqual([
+            ['before', TODAY, 8 * 60],
+            ['during', TODAY, 10 * 60 + 30],
+            ['break', TODAY, 10 * 60 + 5],
+            ['after', TODAY, 12 * 60 + 10],
+            ['free', '2026-09-26', 12 * 60],
+        ]);
+        // Each moment is what it says it is.
+        const lessons = lessonsOn(SCHEDULE, TODAY, OPTS);
+        for (const [id, , minute] of at.slice(0, 4)) {
+            expect(dayState(lessons, minute as number).kind).toBe(id);
+        }
+    });
+
+    it('leaves out what the day does not have', () => {
+        // Monday: one class, so no break; Saturday: nothing but the day off itself.
+        const monday = previewPresets(SCHEDULE, '2026-09-28', OPTS).map((p) => p.id);
+        expect(monday).toEqual(['before', 'during', 'after', 'free']);
+        const saturday = previewPresets(SCHEDULE, '2026-09-26', OPTS);
+        expect(saturday).toEqual([{ id: 'free', date: '2026-09-26', minute: 12 * 60 }]);
     });
 });

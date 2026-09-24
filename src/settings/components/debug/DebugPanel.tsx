@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { apiVersion, Platform } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
+import { useZenithStore } from '../../../store';
+import { StudyClockDebug } from '../../../modules/study/components/StudyClockDebug';
 import { ZENITH_MODULE_API_VERSION } from '../../../core/moduleApi';
 import { Segmented } from '../../controls';
 import { ComponentGallery } from './ComponentGallery';
@@ -22,15 +24,18 @@ import { StringsAudit } from './StringsAudit';
  * Seven tabs, each a different kind of "is this what I think it is":
  * what the controls look like, what every dialog and every field looks like,
  * what the store holds, what the loader believes, whether a reminder reaches
- * you, and which language is answering.
+ * you, and which language is answering. An eighth while Study is on: the
+ * timetable at any hour, without waiting for it.
  */
 
-type Tab = 'components' | 'modals' | 'inputs' | 'state' | 'modules' | 'notify' | 'strings';
+type Tab =
+    'components' | 'modals' | 'inputs' | 'state' | 'modules' | 'notify' | 'study' | 'strings';
 
 export const DebugPanel: React.FC = () => {
     const t = useTranslation();
     const { plugin } = useApp();
     const [tab, setTab] = useState<Tab>('components');
+    const study = useZenithStore((s) => s.settings.activeModuleIds.includes('study'));
 
     // One line rather than a facts table: it is the same handful of values
     // every time, and every one of them belongs in a bug report.
@@ -56,6 +61,9 @@ export const DebugPanel: React.FC = () => {
                     { value: 'state', label: t('debug.tab.state'), icon: 'braces' },
                     { value: 'modules', label: t('debug.tab.modules'), icon: 'blocks' },
                     { value: 'notify', label: t('debug.tab.notify'), icon: 'bell' },
+                    ...(study
+                        ? [{ value: 'study', label: t('debug.tab.study'), icon: 'graduation-cap' }]
+                        : []),
                     { value: 'strings', label: t('debug.tab.strings'), icon: 'languages' },
                 ]}
             />
@@ -66,6 +74,7 @@ export const DebugPanel: React.FC = () => {
             {tab === 'state' && <StateInspector />}
             {tab === 'modules' && <ModuleDiagnostics />}
             {tab === 'notify' && <NotificationDebug />}
+            {tab === 'study' && study && <StudyClockDebug />}
             {tab === 'strings' && <StringsAudit />}
         </div>
     );

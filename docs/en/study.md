@@ -104,3 +104,12 @@ either week can be shown. Tapping a class opens its card:
 *Study → Class reminders* (off by default): a notification a set number of minutes before
 each class — the subject, how soon, and the room. There is one per time slot, even when
 two subgroups share it.
+
+## Checking the card at another time
+
+*Settings → About → Debug tools → Study* sets the time the Study card and view take as
+now: any date and minute, or one of the moments of that day — before classes, in a class,
+a break, after classes, the next day off. The clock keeps running from there, so
+countdowns still count. While it is on, the card and the view show the preview time in
+orange; tapping it goes back to the real time. Reminders and the rest of Obsidian keep the
+real time, and a restart returns to it.
