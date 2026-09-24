@@ -676,6 +676,20 @@
     max-width: 22rem;
 }
 
+/* On a phone Obsidian stretches a notice across the screen and lays out what
+   is in it as a row, so this block came out only as wide as its own minimum:
+   the bar stopped two thirds of the way across, and the count sat beside the
+   title instead of at the end. There it takes the notice's whole width. */
+.is-phone .notice-message:has(> .zenith-syncnotice) {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.is-phone .zenith-syncnotice {
+    min-width: 0;
+    max-width: none;
+}
+
 .zenith-syncnotice__head {
     display: flex;
     align-items: baseline;
