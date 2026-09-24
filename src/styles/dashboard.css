@@ -14,6 +14,11 @@
        so nothing would keep the two in step on its own. */
     --zenith-dash-pad-y: var(--zenith-space-lg);
     --zenith-dash-pad-x: var(--zenith-space-md);
+    /* Top and bottom, plus whatever of the pane a phone's chrome covers
+       (`core/mobileInsets.ts`): the wallpaper runs under the camera and the
+       buttons, the cards stop short of them. */
+    --zenith-dash-pad-top: calc(var(--zenith-dash-pad-y) + var(--zenith-inset-top, 0px));
+    --zenith-dash-pad-bottom: calc(var(--zenith-space-2xl) + var(--zenith-inset-bottom, 0px));
     --zenith-dash-rail-w: 34px;
 
     /* The rail is out of the flow, so the board would happily run underneath
@@ -25,7 +30,7 @@
     );
 
     position: relative;
-    padding: var(--zenith-dash-pad-y) var(--zenith-dash-gutter) var(--zenith-space-2xl);
+    padding: var(--zenith-dash-pad-top) var(--zenith-dash-gutter) var(--zenith-dash-pad-bottom);
     animation: zenith-fade-in var(--zenith-transition-slow);
 }
 
@@ -277,8 +282,8 @@ body.is-phone .zenith-dashboard__bg::before {
    absolutely positioned element cannot be sticky itself. */
 .zenith-dashboard__railwrap {
     position: absolute;
-    top: var(--zenith-dash-pad-y);
-    bottom: var(--zenith-space-2xl);
+    top: var(--zenith-dash-pad-top);
+    bottom: var(--zenith-dash-pad-bottom);
     right: var(--zenith-dash-pad-x);
     width: var(--zenith-dash-rail-w);
     pointer-events: none;
@@ -290,8 +295,8 @@ body.is-phone .zenith-dashboard__bg::before {
 .zenith-dashboard__rail {
     position: sticky;
     /* The same air the board has above it, so a stuck rail does not end up
-       flush against the top of the pane. */
-    top: var(--zenith-dash-pad-y);
+       flush against the top of the pane — or under a phone's camera. */
+    top: var(--zenith-dash-pad-top);
     display: flex;
     flex-direction: column;
     align-items: flex-end;

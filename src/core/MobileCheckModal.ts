@@ -56,6 +56,21 @@ async function runChecks(plugin: ZenithPlugin): Promise<CheckResult[]> {
         },
     ];
 
+    // What covers the screen's edges, as `mobileInsets.ts` measured it.
+    const insets = plugin.mobileInsets?.reading;
+    if (insets) {
+        results.push({
+            name: 'Screen edges',
+            ok: true,
+            detail: [
+                `system ${Math.round(insets.system.top)}/${Math.round(insets.system.bottom)} px`,
+                `navbar ${insets.navbar} px`,
+                `views get ${insets.applied.top}/${insets.applied.bottom} px`,
+                insets.manual ? 'set by hand' : 'measured',
+            ].join(' · '),
+        });
+    }
+
     // The gate. Everything else is pointless if this fails.
     results.push(
         await attempt('new Function (CSP gate)', () => {

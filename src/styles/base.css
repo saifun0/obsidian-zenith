@@ -14,6 +14,33 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── A phone's own chrome ───────────────────────────
+   `core/mobileInsets.ts` measures how much of a view the camera and status bar
+   cover at the top and Obsidian's buttons at the bottom. A transparent border,
+   not padding: the scroll area itself stops short of the covered bands, so
+   nothing scrolls under them, and a stuck header sticks below the camera
+   rather than behind it. The border shows the view's own background. The
+   dashboard, whose wallpaper has to reach the edges, pads its board instead. */
+.view-content.zenith-root.has-zenith-insets:not(.zenith-dash-host) {
+    box-sizing: border-box;
+    border-top: var(--zenith-inset-top, 0px) solid transparent;
+    border-bottom: var(--zenith-inset-bottom, 0px) solid transparent;
+}
+
+/* Reads the system's bands for `mobileInsets.ts`: Obsidian's own variables,
+   which it fills where the WebView's `env()` reports nothing, or `env()`. */
+.zenith-inset-probe {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    padding-top: max(var(--safe-area-inset-top, 0px), env(safe-area-inset-top, 0px));
+    padding-bottom: max(var(--safe-area-inset-bottom, 0px), env(safe-area-inset-bottom, 0px));
+    visibility: hidden;
+    pointer-events: none;
+}
+
 /* ── Lucide icon sizing guard ───────────────────────
    Obsidian's app stylesheet sets a global `svg` width, which collapses our
    lucide icons to half-width (e.g. a 16×16 refresh icon renders 8×16). Lucide

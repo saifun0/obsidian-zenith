@@ -619,7 +619,8 @@ button.zenith-task-item__action {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 40px;
+    padding: calc(40px + var(--zenith-safe-top, 0px)) 40px
+        calc(40px + var(--zenith-safe-bottom, 0px));
     background: rgba(0, 0, 0, 0.82);
     backdrop-filter: blur(3px);
     animation: zenith-fade-in 0.12s ease;
@@ -637,7 +638,7 @@ button.zenith-task-item__action {
 /* One bar, top-right, holding the name and the two ways out. */
 .zenith-lightbox__bar {
     position: fixed;
-    top: 16px;
+    top: calc(16px + var(--zenith-safe-top, 0px));
     right: 16px;
     left: 16px;
     display: flex;

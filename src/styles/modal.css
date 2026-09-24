@@ -349,7 +349,8 @@
     .zenith-dialog__panel {
         max-width: none;
         max-height: 94vh;
-        max-height: 94dvh;
+        /* Tall as the screen allows, short of the camera's band. */
+        max-height: calc(100dvh - var(--zenith-safe-top, 0px) - 16px);
         height: auto;
         border-radius: var(--zenith-radius-lg) var(--zenith-radius-lg) 0 0;
         border-bottom: none;
@@ -357,11 +358,11 @@
     }
 
     .zenith-dialog__body {
-        padding: 16px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+        padding: 16px 14px calc(16px + var(--zenith-safe-bottom, env(safe-area-inset-bottom, 0px)));
     }
 
     .zenith-dialog__footer {
-        padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+        padding: 10px 14px calc(10px + var(--zenith-safe-bottom, env(safe-area-inset-bottom, 0px)));
     }
 
     .zenith-dialog__footer .zenith-btn {

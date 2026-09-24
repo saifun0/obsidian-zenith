@@ -136,6 +136,10 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     navigatorShowLabels: 'yes',
     navigatorHiddenActions: 'yes',
     uiDensity: 'yes',
+    // A measurement of one phone, not a preference.
+    mobileInsets: 'no',
+    mobileInsetTop: 'no',
+    mobileInsetBottom: 'no',
     uiAnimations: 'yes',
     accentColor: 'yes',
     defaultModuleId: 'yes',

@@ -1005,7 +1005,7 @@ button.zenith-content-modal__chip {
     }
     .zenith-content-modal__body {
         padding: var(--zenith-space-lg) var(--zenith-space-md)
-            calc(var(--zenith-space-lg) + env(safe-area-inset-bottom, 0px));
+            calc(var(--zenith-space-lg) + var(--zenith-safe-bottom, env(safe-area-inset-bottom, 0px)));
         overflow: visible;
     }
 }

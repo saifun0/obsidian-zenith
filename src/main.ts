@@ -1,7 +1,8 @@
-import { Plugin, Notice, debounce } from 'obsidian';
+import { Plugin, Notice, Platform, debounce } from 'obsidian';
 import { ModuleManager } from './core/ModuleManager';
 import { ModuleInstaller } from './core/moduleInstaller';
 import { MobileCheckModal } from './core/MobileCheckModal';
+import { MobileInsets } from './core/mobileInsets';
 import { DataService } from './core/DataService';
 import { FolderIconService } from './core/FolderIconService';
 import { iconPackPaths } from './core/modulePaths';
@@ -122,6 +123,8 @@ export default class ZenithPlugin extends Plugin {
 
     /** Injected <style> that carries the user's custom accent color. */
     private accentStyleEl: HTMLStyleElement | null = null;
+    /** What covers each view on a phone; `null` on desktop. */
+    mobileInsets: MobileInsets | null = null;
 
     /** Apply (or clear) the custom accent color across Zenith views. */
     private applyAccent(color: string): void {
@@ -289,6 +292,16 @@ export default class ZenithPlugin extends Plugin {
                 (color) => this.applyAccent(color)
             )
         );
+
+        // ── Clear of a phone's own chrome ────────────
+        if (Platform.isMobile) {
+            this.mobileInsets = new MobileInsets(this);
+            this.mobileInsets.start();
+            this.register(() => {
+                this.mobileInsets?.stop();
+                this.mobileInsets = null;
+            });
+        }
 
         // ── Density / motion ─────────────────────────
         this.applyAppearance();

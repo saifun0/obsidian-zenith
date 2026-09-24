@@ -337,6 +337,15 @@ export interface ZenithSettings {
 
     /** How much breathing room the interface uses. */
     uiDensity: UiDensity;
+    /**
+     * Keeping views clear of a phone's own chrome — the camera and status bar
+     * at the top, Obsidian's buttons at the bottom. `auto` measures what covers
+     * each view (`core/mobileInsets.ts`); `manual` takes the two heights below,
+     * in px, for portrait.
+     */
+    mobileInsets: 'auto' | 'manual';
+    mobileInsetTop: number;
+    mobileInsetBottom: number;
     /** Motion. Forced off anyway when the OS asks for reduced motion. */
     uiAnimations: boolean;
 
@@ -835,6 +844,9 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     navigatorHiddenActions: [],
     uiDensity: 'comfortable',
     uiAnimations: true,
+    mobileInsets: 'auto',
+    mobileInsetTop: 32,
+    mobileInsetBottom: 64,
     activeModuleIds: [
         'dashboard',
         'navigator',

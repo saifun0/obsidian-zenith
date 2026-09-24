@@ -3,6 +3,7 @@ import { coreSchema, type CoreSettingsSchema } from './types';
 import { NOTIFICATIONS_MODULE } from '../../core/features';
 import { localizeModule } from '../../core/moduleLabels';
 import { createPlaceField } from '../components/PlaceField';
+import { InsetsReadout } from '../components/InsetsReadout';
 
 /**
  * The three categories that are not modules.
@@ -96,6 +97,49 @@ export const appearanceSchema: CoreSettingsSchema = coreSchema({
                     labelKey: 'settings.animations',
                     descKey: 'settings.animations.desc',
                     default: true,
+                },
+            ],
+        },
+        {
+            // Only a phone or a tablet has a camera cut-out and Obsidian's
+            // bottom buttons to keep clear of.
+            id: 'phone',
+            titleKey: 'settings.phone',
+            showIf: () => Platform.isMobile,
+            fields: [
+                { type: 'custom', key: 'mobileInsetsReadout', row: true, render: InsetsReadout },
+                {
+                    type: 'segmented',
+                    key: 'mobileInsets',
+                    labelKey: 'settings.mobileInsets',
+                    descKey: 'settings.mobileInsets.desc',
+                    default: 'auto',
+                    options: [
+                        { value: 'auto', labelKey: 'settings.mobileInsets.auto' },
+                        { value: 'manual', labelKey: 'settings.mobileInsets.manual' },
+                    ],
+                },
+                {
+                    type: 'slider',
+                    key: 'mobileInsetTop',
+                    labelKey: 'settings.mobileInsetTop',
+                    default: 32,
+                    min: 0,
+                    max: 120,
+                    step: 2,
+                    unitKey: 'settings.pxUnit',
+                    showIf: (v) => v.mobileInsets === 'manual',
+                },
+                {
+                    type: 'slider',
+                    key: 'mobileInsetBottom',
+                    labelKey: 'settings.mobileInsetBottom',
+                    default: 64,
+                    min: 0,
+                    max: 160,
+                    step: 2,
+                    unitKey: 'settings.pxUnit',
+                    showIf: (v) => v.mobileInsets === 'manual',
                 },
             ],
         },

@@ -41,7 +41,15 @@
    scroll area — so it comes back here, plus the bottom safe-area inset the
    home indicator needs. */
 .zenith-custom-settings-container.is-mobile-settings .zenith-settings {
-    padding: 48px 16px calc(32px + env(safe-area-inset-bottom, 0px));
+    padding: 48px 16px calc(32px + var(--zenith-safe-bottom, env(safe-area-inset-bottom, 0px)));
+}
+
+/* A measured value in a settings row: read, not edited. */
+.zenith-settings__readout {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 /* Our own back/title row would otherwise stack a second header under

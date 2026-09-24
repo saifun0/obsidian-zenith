@@ -237,6 +237,10 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
 
     // ── Device-local: layout and chrome ──
     uiDensity: { scope: 'device' },
+    // Every phone's cut-out and every Obsidian's buttons are their own.
+    mobileInsets: { scope: 'device' },
+    mobileInsetTop: { scope: 'device' },
+    mobileInsetBottom: { scope: 'device' },
     uiAnimations: { scope: 'device' },
     dashboardGrid: { scope: 'device' },
     dashboardLayout: { scope: 'device' },
