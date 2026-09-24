@@ -67,6 +67,7 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     journalFolderPath: { scope: 'shared' },
     journalDateFormat: { scope: 'shared' },
     journalTemplatePath: { scope: 'shared' },
+    journalPromptPath: { scope: 'shared' },
 
     // ── Journal ──
     journalWeekStart: { scope: 'shared' },

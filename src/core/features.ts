@@ -153,6 +153,8 @@ export const FEATURES = [
     feature('journal.goals', 'journal'),
     feature('journal.quitHabits', 'journal'),
     feature('journal.yearPixels', 'journal'),
+    // Off by default: a line in every day's note is not something to add unasked.
+    feature('journal.dailyPrompt', 'journal', { default: false }),
     feature('journal.wordCount', 'journal'),
     feature('journal.stats', 'journal'),
     feature('journal.widget', 'journal'),

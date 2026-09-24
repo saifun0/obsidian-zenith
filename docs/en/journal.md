@@ -160,6 +160,13 @@ Obsidian's own Daily Notes uses, so an existing template drops in unchanged. Wit
 template configured, a short built-in body is used. A template that brings its own
 frontmatter is merged with, not duplicated.
 
+**Question of the day** (*Journal → Features → Question of the day*, off by default): one
+question a day, the same on every device, shown under the check-in block; the arrow beside it
+writes it into the note under *Notes* as a quote to answer beneath — only when you click.
+A template can carry it too, as `{{prompt}}`. The questions come from a note of your own —
+one a line, set under **Questions** — or, with none set, from a small built-in set in the
+interface language, kept neutral on purpose. No streaks: the point is the writing.
+
 **Tasks land in the day.** With **Capture tasks in the daily note** on (the default), every
 task created from the Tasks view or the *Quick add task* command is written into today's
 note — creating it if the day hasn't been started — under the heading configured in

@@ -125,6 +125,7 @@ export const JournalSettings: React.FC = () => {
         );
     const goalsOn = useFeature('journal.goals');
     const quitOn = useFeature('journal.quitHabits');
+    const promptOn = useFeature('journal.dailyPrompt');
     const remove = (index: number) => commit(trackers.filter((_, i) => i !== index));
 
     const add = (kind: TrackerKind) => {
@@ -475,6 +476,29 @@ export const JournalSettings: React.FC = () => {
                 </div>
                 <div className="zenith-settings__hint">{t('settings.journalTemplate.block')}</div>
             </div>
+
+            {/* ── The day's question ── */}
+            {promptOn && (
+                <div className="zenith-settings__item zenith-settings__item--stack">
+                    <div className="zenith-settings__item-info">
+                        <span className="zenith-settings__item-name">
+                            {t('settings.journalPrompt')}
+                        </span>
+                        <span className="zenith-settings__item-desc">
+                            {t('settings.journalPrompt.desc')}
+                        </span>
+                    </div>
+                    <div className="zenith-settings__item-control">
+                        <input
+                            type="text"
+                            className="zenith-settings__input"
+                            value={settings.journalPromptPath}
+                            placeholder={t('settings.journalPrompt.placeholder')}
+                            onChange={(e) => updateSettings({ journalPromptPath: e.target.value })}
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* ── Week start ── */}
             <div className="zenith-settings__item">

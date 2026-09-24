@@ -5,6 +5,7 @@ import { featureEnabled } from '../../../core/features';
 import { insertUnderHeading, appendBlock } from '../../../services/markdownSections';
 import type { ZenithSettings } from '../../../store/settingsSlice';
 import { journalNotePath, isoToDate, formatJournalDate } from './journalDates';
+import { BUILTIN_PROMPTS, parsePrompts, pickPrompt } from './dailyPrompt';
 
 /** The subset of settings the journal services need, resolved once per call. */
 export interface JournalConfig {
@@ -20,6 +21,10 @@ export interface JournalConfig {
      * counts as on.
      */
     withBlock?: boolean;
+    /** The day's question fills `{{prompt}}` — only while that feature is on. */
+    prompts?: boolean;
+    /** A note of questions; empty for the built-in set. */
+    promptPath?: string;
 }
 
 export function journalConfig(settings: ZenithSettings): JournalConfig {
@@ -30,6 +35,8 @@ export function journalConfig(settings: ZenithSettings): JournalConfig {
         taskHeading: settings.journalTaskHeading,
         locale: resolveLocale(settings.language),
         withBlock: featureEnabled(settings, 'journal.dailyBlock'),
+        prompts: featureEnabled(settings, 'journal.dailyPrompt'),
+        promptPath: settings.journalPromptPath,
     };
 }
 
@@ -51,9 +58,17 @@ const pad = (n: number): string => String(n).padStart(2, '0');
  * that pattern may contain `/` to nest folders, which would read as nonsense in
  * the middle of a sentence.
  */
-export function applyTemplate(template: string, date: string, title: string): string {
+export function applyTemplate(
+    template: string,
+    date: string,
+    title: string,
+    prompt = ''
+): string {
     const now = new Date();
     return template
+        // The day's question, or nothing: a literal `{{prompt}}` left in a
+        // note is worse than an empty line.
+        .replace(/\{\{\s*prompt\s*\}\}/g, prompt)
         .replace(/\{\{\s*date\s*:\s*([^}]+?)\s*\}\}/g, (_m, fmt: string) =>
             formatJournalDate(isoToDate(date), fmt)
         )
@@ -111,7 +126,12 @@ export class JournalWriter {
         await this.ensureFolder(path.slice(0, path.lastIndexOf('/')));
 
         const title = path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/i, '');
-        const body = applyTemplate(await this.readTemplate(config), date, title);
+        const template = await this.readTemplate(config);
+        const prompt =
+            config.prompts && /\{\{\s*prompt\s*\}\}/.test(template)
+                ? ((await this.promptFor(config, date)) ?? '')
+                : '';
+        const body = applyTemplate(template, date, title, prompt);
 
         try {
             return await this.app.vault.create(path, withDate(body, date));
@@ -121,6 +141,19 @@ export class JournalWriter {
             if (raced) return raced;
             throw err;
         }
+    }
+
+    /** The day's question: from the user's note of them, or the built-in set. */
+    async promptFor(config: JournalConfig, date: string): Promise<string | null> {
+        const path = config.promptPath?.trim();
+        if (path) {
+            const file = this.app.vault.getAbstractFileByPath(normalizePath(path));
+            if (file instanceof TFile) {
+                const own = parsePrompts(await this.app.vault.cachedRead(file));
+                if (own.length) return pickPrompt(own, date);
+            }
+        }
+        return pickPrompt(BUILTIN_PROMPTS[config.locale], date);
     }
 
     /** Template text for a new note: the configured file, or the built-in body. */

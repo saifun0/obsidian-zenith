@@ -62,6 +62,7 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     projectsFolderPath: 'path',
     journalFolderPath: 'path',
     journalTemplatePath: 'path',
+    journalPromptPath: 'path',
     dashboardBgPath: 'path',
     folderIcons: 'path',
 

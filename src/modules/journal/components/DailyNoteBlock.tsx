@@ -11,6 +11,7 @@ import { entriesByDate, currentStreak } from '../services/journalStats';
 import { setTrackerValue, openDailyNote } from '../services/journalActions';
 import { addDays, buildDateMatcher, relativeNotePath, dayLabel } from '../services/journalDates';
 import { TrackerRail } from './TrackerRail';
+import { DailyPrompt } from './DailyPrompt';
 import { useFeature } from '../../../core/useFeature';
 
 interface DailyNoteBlockProps {
@@ -40,6 +41,7 @@ export const DailyNoteBlock: FC<DailyNoteBlockProps> = ({ sourcePath }) => {
 const DailyNoteBody: FC<DailyNoteBlockProps> = ({ sourcePath }) => {
     const t = useTranslation();
     const wordsOn = useFeature('journal.wordCount');
+    const promptOn = useFeature('journal.dailyPrompt');
     const { app } = useApp();
     const entries = useZenithStore((s) => s.journalEntries);
     const settings = useZenithStore((s) => s.settings);
@@ -131,6 +133,8 @@ const DailyNoteBody: FC<DailyNoteBlockProps> = ({ sourcePath }) => {
                 onChange={change}
                 layout="rail"
             />
+
+            {promptOn && <DailyPrompt date={date} />}
         </div>
     );
 };

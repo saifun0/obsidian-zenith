@@ -120,6 +120,8 @@ export interface ZenithSettings {
     journalDateFormat: string;
     /** Vault path to a note used as the body of a freshly created daily note. */
     journalTemplatePath: string;
+    /** A note of questions for the day, one a line. Empty: the built-in set. */
+    journalPromptPath: string;
     /** First column of the journal calendar. */
     journalWeekStart: JournalWeekStart;
     /**
@@ -707,6 +709,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     journalFolderPath: DEFAULT_JOURNAL_FOLDER,
     journalDateFormat: DEFAULT_JOURNAL_FORMAT,
     journalTemplatePath: '',
+    journalPromptPath: '',
     journalWeekStart: 'mon',
     journalTrackers: DEFAULT_TRACKERS.map((t) => ({ ...t })),
     journalCaptureTasks: true,

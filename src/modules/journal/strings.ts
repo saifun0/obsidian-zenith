@@ -39,6 +39,15 @@ export const JOURNAL_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'journal.year.this': 'This year',
         'journal.year.by': 'Coloured by',
         'journal.year.neutral': 'Grey: nothing recorded',
+
+        'feature.journal.dailyPrompt': 'Question of the day',
+        'feature.journal.dailyPrompt.desc':
+            'One question a day in the check-in block, and in the template as {{prompt}}. Written into the note only when you ask.',
+        'settings.journalPrompt': 'Questions',
+        'settings.journalPrompt.desc':
+            'A note with one question a line. Empty: a small built-in set in the interface language.',
+        'settings.journalPrompt.placeholder': 'Templates/Questions.md',
+        'journal.prompt.insert': 'Write it into the note',
     },
     ru: {
         'feature.journal.goals': 'Цели на неделю и пределы',
@@ -77,5 +86,14 @@ export const JOURNAL_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'journal.year.this': 'Этот год',
         'journal.year.by': 'Цвет по',
         'journal.year.neutral': 'Серое — ничего не записано',
+
+        'feature.journal.dailyPrompt': 'Вопрос дня',
+        'feature.journal.dailyPrompt.desc':
+            'Один вопрос в день в блоке отметок и в шаблоне как {{prompt}}. В заметку пишется только по вашей просьбе.',
+        'settings.journalPrompt': 'Вопросы',
+        'settings.journalPrompt.desc':
+            'Заметка с вопросами, по одному в строке. Пусто — небольшой встроенный набор на языке интерфейса.',
+        'settings.journalPrompt.placeholder': 'Шаблоны/Вопросы.md',
+        'journal.prompt.insert': 'Записать в заметку',
     },
 };
