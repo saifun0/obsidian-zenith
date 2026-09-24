@@ -115,6 +115,7 @@ export const TasksCalendarApp: FC = () => {
     const spansOn = useFeature('calendar.spans');
     const dailyNotesOn = useFeature('calendar.dailyNotes');
     const allHoursOn = useFeature('calendar.allHours');
+    const dragScheduleOn = useFeature('calendar.dragSchedule');
     const modes = useMemo(() => calendarModes(timeViewsOn, agendaOn), [timeViewsOn, agendaOn]);
 
     // What the toolbar's switches are stored as, and what is drawn: a switch
@@ -424,6 +425,7 @@ export const TasksCalendarApp: FC = () => {
                     focus={focus}
                     defaultSlot={settings.calendarSlotMinutes}
                     allHours={view.allHours}
+                    dragSchedule={dragScheduleOn}
                     onOpenDay={openDay}
                     onOpenEntry={openEntry}
                     onOpenSpan={openSpan}

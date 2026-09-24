@@ -1557,3 +1557,48 @@
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 }
+
+/* ── Moving tasks on the hour grid ─────────────────────
+   The block stays put and fades while a ghost shows where it would land:
+   letting go writes the ghost, Escape leaves the block where it was. */
+.zenith-root button.zenith-tcal__event.is-movable {
+    cursor: grab;
+    touch-action: pan-y;
+}
+
+.zenith-root button.zenith-tcal__event.is-moving {
+    opacity: 0.35;
+}
+
+.zenith-tcal__event-resize {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 6px;
+    cursor: ns-resize;
+}
+
+.zenith-tcal__ghost {
+    position: absolute;
+    left: 1px;
+    right: 2px;
+    z-index: 3;
+    padding: 2px 6px;
+    border: 1px dashed var(--zenith-accent);
+    border-radius: var(--zenith-radius-xs);
+    background: color-mix(in srgb, var(--zenith-accent) 18%, transparent);
+    color: var(--zenith-text-normal);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+.zenith-tcal__week.is-scheduling {
+    cursor: grabbing;
+    user-select: none;
+}
+
+.zenith-root button.zenith-tcal__chip.is-placeable {
+    cursor: grab;
+}

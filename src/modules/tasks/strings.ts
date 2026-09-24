@@ -57,6 +57,17 @@ export const TASK_STRINGS: { en: Record<string, string>; ru: Record<string, stri
         'tasks.digest.today.other': '{count} tasks for today',
         'tasks.digest.overdue.one': '{count} overdue',
         'tasks.digest.overdue.other': '{count} overdue',
+
+        'feature.calendar.dragSchedule': 'Move on the hour grid',
+        'feature.calendar.dragSchedule.desc':
+            'Drag a task to another hour or day, stretch it by its foot, drop an all-day task onto an hour. A tap on an empty slot gives one of that day’s tasks an hour; the arrow keys move a focused one.',
+        'calendar.drag.moveDue': 'Move the deadline to {date}?',
+        'calendar.drag.moveDueBody': '“{title}” is due on its day — this changes its 📅.',
+        'calendar.drag.moveDueConfirm': 'Move',
+        'calendar.drag.failed':
+            'Zenith: the task could not be moved — its note has changed. Try again.',
+        'calendar.drag.nothingToPlace': 'No tasks without a time on this day.',
+        'calendar.drag.pick': 'Which task goes at {time}?',
     },
     ru: {
         'feature.tasks.naturalInput': 'Ввод обычной фразой',
@@ -113,5 +124,16 @@ export const TASK_STRINGS: { en: Record<string, string>; ru: Record<string, stri
         'tasks.digest.overdue.one': '{count} просрочена',
         'tasks.digest.overdue.few': '{count} просрочены',
         'tasks.digest.overdue.many': '{count} просрочено',
+
+        'feature.calendar.dragSchedule': 'Перенос по часовой сетке',
+        'feature.calendar.dragSchedule.desc':
+            'Перетащите задачу на другой час или день, растяните за нижний край, бросьте задачу без времени на час. Касание пустого слота даёт время одной из задач дня; стрелки двигают выбранную.',
+        'calendar.drag.moveDue': 'Перенести срок на {date}?',
+        'calendar.drag.moveDueBody': '«{title}» — срок в этот день, перенос изменит её 📅.',
+        'calendar.drag.moveDueConfirm': 'Перенести',
+        'calendar.drag.failed':
+            'Zenith: задачу не удалось перенести — заметка изменилась. Попробуйте ещё раз.',
+        'calendar.drag.nothingToPlace': 'В этот день нет задач без времени.',
+        'calendar.drag.pick': 'Какую задачу поставить на {time}?',
     },
 };

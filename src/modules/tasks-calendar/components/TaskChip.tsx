@@ -30,6 +30,10 @@ interface TaskChipProps {
     /** Hide the note name — the compact month cells have no room for it. */
     compact?: boolean;
     onOpen: (entry: CalendarEntry) => void;
+    /** Pressed to be dragged onto the hour grid — set only where that is possible. */
+    onPointerDown?: (e: React.PointerEvent) => void;
+    /** A click that ends a drag is not a request to open. */
+    swallowClick?: () => boolean;
 }
 
 /**
@@ -38,7 +42,15 @@ interface TaskChipProps {
  * hang a status control off without making mis-clicks the norm. The agenda has
  * the room and does offer one.
  */
-export const TaskChip: FC<TaskChipProps> = ({ entry, t, dim, compact, onOpen }) => {
+export const TaskChip: FC<TaskChipProps> = ({
+    entry,
+    t,
+    dim,
+    compact,
+    onOpen,
+    onPointerDown,
+    swallowClick,
+}) => {
     const { task, kind, overdueBy } = entry;
     const kindLabel = t(kindKey(kind));
     const marker = KIND_MARKER[kind] ?? '';
@@ -50,12 +62,15 @@ export const TaskChip: FC<TaskChipProps> = ({ entry, t, dim, compact, onOpen }) 
                 `is-${kind}`,
                 dim ? 'is-dim' : '',
                 task.priority !== 'none' ? `is-priority-${task.priority}` : '',
+                onPointerDown ? 'is-placeable' : '',
             ]
                 .filter(Boolean)
                 .join(' ')}
             data-task={task.id}
+            onPointerDown={onPointerDown}
             onClick={(e) => {
                 e.stopPropagation();
+                if (swallowClick?.()) return;
                 onOpen(entry);
             }}
             title={`${marker} ${kindLabel} · ${noteName(task.filePath)}\n${task.title}`}

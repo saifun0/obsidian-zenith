@@ -1,4 +1,4 @@
-import React, { useMemo, type FC } from 'react';
+import React, { useMemo, useRef, type FC } from 'react';
 import type { Translator } from '../../../core/i18n';
 import { isoToDate } from '../../../core/calendarDates';
 import {
@@ -13,6 +13,8 @@ import { TaskChip } from './TaskChip';
 import { SpanRibbon } from './SpanRibbon';
 import { TimeGrid } from './TimeGrid';
 import { useSpotlight } from './useSpotlight';
+import { canPlace } from '../services/calendarDrag';
+import { useScheduleDrag, type SlotAt } from './useScheduleDrag';
 
 /** The hour gutter occupies column 1, so the first day starts at column 2. */
 const DAY_COLUMN_OFFSET = 2;
@@ -32,6 +34,8 @@ interface WeekGridProps {
     defaultSlot: number;
     /** Draw all 24 hours rather than the waking-hours window. */
     allHours: boolean;
+    /** Tasks can be moved on the hour grid. */
+    dragSchedule?: boolean;
     onOpenDay?: (date: string) => void;
     onOpenEntry: (entry: CalendarEntry) => void;
     onOpenSpan: (segment: SpanSegment) => void;
@@ -60,6 +64,7 @@ export const WeekGrid: FC<WeekGridProps> = ({
     focus,
     defaultSlot,
     allHours,
+    dragSchedule = false,
     onOpenDay,
     onOpenEntry,
     onOpenSpan,
@@ -82,12 +87,21 @@ export const WeekGrid: FC<WeekGridProps> = ({
         return { timed, allDay };
     }, [days, calendar]);
 
+    const slotAt = useRef<SlotAt | null>(null);
+    const drag = useScheduleDrag({
+        enabled: dragSchedule,
+        t,
+        defaultSlot,
+        slotAt,
+        allDayByDate: split.allDay,
+    });
+
     const columns = {
         ['--tcal-days' as string]: days.length,
     } as React.CSSProperties;
 
     return (
-        <div className="zenith-tcal__week" {...spotlight}>
+        <div className={`zenith-tcal__week${drag?.ghost ? ' is-scheduling' : ''}`} {...spotlight}>
             <div className="zenith-tcal__week-heads" style={columns}>
                 <span className="zenith-tcal__gutter-head" aria-hidden="true" />
                 {days.map((date) => (
@@ -152,6 +166,12 @@ export const WeekGrid: FC<WeekGridProps> = ({
                                 compact={days.length > 1}
                                 dim={focus !== null && entry.kind !== focus}
                                 onOpen={onOpenEntry}
+                                onPointerDown={
+                                    drag && canPlace(entry.task, date)
+                                        ? (e) => drag.startChip(e, entry, date)
+                                        : undefined
+                                }
+                                swallowClick={drag?.swallowClick}
                             />
                         ))}
                     </div>
@@ -167,6 +187,8 @@ export const WeekGrid: FC<WeekGridProps> = ({
                 defaultSlot={defaultSlot}
                 allHours={allHours}
                 onOpenEntry={onOpenEntry}
+                drag={drag}
+                slotAtRef={slotAt}
             />
         </div>
     );

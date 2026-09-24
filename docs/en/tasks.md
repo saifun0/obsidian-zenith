@@ -152,3 +152,23 @@ says nothing. Only while Obsidian is running; one that came while it was closed 
 center as missed, and the morning summary read late the same day is still today's. If the
 **Reminder** plugin is on too, the settings say so — it reads `⏰` as well, and a task could
 be announced twice.
+
+## Moving tasks on the calendar's hour grid
+
+In the week and day views, a task's time can be changed where it is drawn:
+
+- **Drag a block** to another hour, or across to another day. It lands on a quarter hour.
+- **Drag its foot** to stretch or shorten it. That writes the end of the `⏰` range
+  (`⏰ 09:00-10:30`) — never `⏲`, which is how long you set a timer for.
+- **Drop a task from the all-day band** onto an hour to give it one.
+- **Tap an empty slot** — the way in on a phone, where a finger on a block scrolls instead —
+  and pick which of that day's tasks without a time goes there.
+- **Arrow keys** on a focused block: ↑↓ move it a quarter hour, Shift+↑↓ change its end, ←→
+  move it a day. It is written a moment after the last press, or at once with Enter; Escape
+  puts it back.
+
+While a block moves it stays where it is, faded, and a dashed ghost shows where it would
+land. Moving keeps whatever end the line states and writes none it did not. Moving to
+another day changes the date the `⏰` belongs to — and when that is the **due date**, it
+asks first: that is a deadline moving, not a meeting. Done and cancelled tasks stay where
+they happened. Switch it off under **Calendar → Features → Move on the hour grid**.

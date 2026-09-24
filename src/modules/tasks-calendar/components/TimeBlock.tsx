@@ -4,6 +4,7 @@ import type { CalendarEntry } from '../services/calendarTasks';
 import { formatMinutes, type TimedBlock } from '../services/calendarTime';
 import { KindIcon, kindKey } from './kindUi';
 import { noteName } from './TaskChip';
+import type { ScheduleDrag } from './useScheduleDrag';
 
 /** Below this many minutes a block has no room for a second line. */
 const COMPACT_MINUTES = 45;
@@ -21,6 +22,12 @@ interface TimeBlockProps {
     originMinutes: number;
     pixelsPerMinute: number;
     onOpen: (entry: CalendarEntry) => void;
+    /** The day this block is drawn on. */
+    date: string;
+    /** Moving tasks on the grid; absent while the feature is off. */
+    drag?: ScheduleDrag | null;
+    /** This block is being moved: the ghost shows where it goes. */
+    moving?: boolean;
 }
 
 /**
@@ -44,6 +51,9 @@ export const TimeBlock: FC<TimeBlockProps> = ({
     originMinutes,
     pixelsPerMinute,
     onOpen,
+    date,
+    drag,
+    moving,
 }) => {
     const { item: entry, start, end, stated, column, columns } = block;
     const { task, kind } = entry;
@@ -52,6 +62,8 @@ export const TimeBlock: FC<TimeBlockProps> = ({
     const width = 100 / columns;
     const label = `${formatMinutes(start)}${stated ? `–${formatMinutes(end)}` : ''}`;
     const kindLabel = t(kindKey(kind));
+    // A finished task stays where it happened.
+    const movable = !!drag && kind !== 'done' && kind !== 'cancelled';
 
     return (
         <button
@@ -62,6 +74,8 @@ export const TimeBlock: FC<TimeBlockProps> = ({
                 stated ? '' : 'is-open-end',
                 minutes < COMPACT_MINUTES ? 'is-compact' : '',
                 minutes < TINY_MINUTES ? 'is-tiny' : '',
+                movable ? 'is-movable' : '',
+                moving ? 'is-moving' : '',
                 task.priority === 'urgent' || task.priority === 'high'
                     ? `is-priority-${task.priority}`
                     : '',
@@ -75,8 +89,11 @@ export const TimeBlock: FC<TimeBlockProps> = ({
                 width: `calc(${width}% - 3px)`,
             }}
             data-task={task.id}
+            onPointerDown={movable ? (e) => drag.startBlock(e, block, 'move') : undefined}
+            onKeyDown={movable ? (e) => drag.keyBlock(e, block, date) : undefined}
             onClick={(e) => {
                 e.stopPropagation();
+                if (drag?.swallowClick()) return;
                 onOpen(entry);
             }}
             title={`⏰ ${label} · ${kindLabel} · ${noteName(task.filePath)}\n${task.title}${
@@ -92,6 +109,14 @@ export const TimeBlock: FC<TimeBlockProps> = ({
             <span className="zenith-tcal__event-title">{task.title}</span>
             {roomy && minutes >= 60 && (
                 <span className="zenith-tcal__event-note">{noteName(task.filePath)}</span>
+            )}
+            {movable && (
+                // The foot: dragged, it moves the end of the ⏰ range.
+                <span
+                    className="zenith-tcal__event-resize"
+                    aria-hidden="true"
+                    onPointerDown={(e) => drag.startBlock(e, block, 'resize')}
+                />
             )}
         </button>
     );

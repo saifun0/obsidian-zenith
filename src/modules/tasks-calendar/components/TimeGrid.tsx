@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useRef, type FC } from 'react';
+import React, { useEffect, useMemo, useRef, type FC, type MutableRefObject } from 'react';
 import type { Translator } from '../../../core/i18n';
 import { useNow } from '../../../core/useNow';
 import type { CalendarEntry, EntryKind } from '../services/calendarTasks';
 import { formatMinutes, hourWindow, layoutDay, type TimedBlock } from '../services/calendarTime';
 import { TimeBlock } from './TimeBlock';
+import type { ScheduleDrag, SlotAt } from './useScheduleDrag';
 
 /** Height of one hour row, in pixels. The grid's only unit of scale. */
 const HOUR_HEIGHT = 46;
@@ -21,6 +22,10 @@ interface TimeGridProps {
     /** Draw all 24 rows rather than the waking-hours window. */
     allHours: boolean;
     onOpenEntry: (entry: CalendarEntry) => void;
+    /** Moving tasks on the grid; absent while the feature is off. */
+    drag?: ScheduleDrag | null;
+    /** Filled with how to find the day and minute under a point. */
+    slotAtRef?: MutableRefObject<SlotAt | null>;
 }
 
 /**
@@ -45,9 +50,12 @@ export const TimeGrid: FC<TimeGridProps> = ({
     defaultSlot,
     allHours,
     onOpenEntry,
+    drag,
+    slotAtRef,
 }) => {
     const now = useNow();
     const scrollRef = useRef<HTMLDivElement>(null);
+    const gridRef = useRef<HTMLDivElement>(null);
     const showsToday = days.includes(today);
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
@@ -99,6 +107,26 @@ export const TimeGrid: FC<TimeGridProps> = ({
         node.scrollTop = Math.max(0, target);
     }, [dayKey, originMinutes, pixelsPerMinute]);
 
+    // The day and minute under a point, for whoever is dragging across the
+    // grid — the columns are measured where they are, so a scrolled or
+    // resized grid needs no bookkeeping.
+    if (slotAtRef) {
+        slotAtRef.current = (x, y) => {
+            const cols = gridRef.current?.querySelectorAll<HTMLElement>('.zenith-tcal__daycol');
+            if (!cols) return null;
+            for (let i = 0; i < cols.length; i++) {
+                const r = cols[i].getBoundingClientRect();
+                if (x >= r.left && x < r.right) {
+                    return {
+                        date: days[i],
+                        minutes: originMinutes + (y - r.top) / pixelsPerMinute,
+                    };
+                }
+            }
+            return null;
+        };
+    }
+
     const nowTop = (nowMinutes - originMinutes) * pixelsPerMinute;
     const nowInWindow = nowMinutes >= originMinutes && nowMinutes <= visible.to * 60;
 
@@ -106,6 +134,7 @@ export const TimeGrid: FC<TimeGridProps> = ({
         <div className="zenith-tcal__hours" ref={scrollRef}>
             <div
                 className="zenith-tcal__hour-grid"
+                ref={gridRef}
                 style={{
                     height: `${height}px`,
                     ['--tcal-days' as string]: days.length,
@@ -131,19 +160,56 @@ export const TimeGrid: FC<TimeGridProps> = ({
                     <div
                         className={`zenith-tcal__daycol ${date === today ? 'is-today' : ''}`}
                         key={date}
+                        onClick={
+                            drag
+                                ? (e) => {
+                                      // The empty grid only: a block's own click
+                                      // opens the block.
+                                      if (e.target !== e.currentTarget || drag.swallowClick())
+                                          return;
+                                      const r = e.currentTarget.getBoundingClientRect();
+                                      drag.tapSlot(
+                                          date,
+                                          originMinutes + (e.clientY - r.top) / pixelsPerMinute
+                                      );
+                                  }
+                                : undefined
+                        }
                     >
                         {blocks.map((block: TimedBlock<CalendarEntry>) => (
                             <TimeBlock
                                 key={block.item.key}
                                 block={block}
+                                date={date}
                                 t={t}
                                 dim={focus !== null && block.item.kind !== focus}
                                 roomy={days.length === 1}
                                 originMinutes={originMinutes}
                                 pixelsPerMinute={pixelsPerMinute}
                                 onOpen={onOpenEntry}
+                                drag={drag}
+                                moving={drag?.ghost?.taskId === block.item.task.id}
                             />
                         ))}
+
+                        {drag?.ghost && drag.ghost.slot.date === date && (
+                            <div
+                                className="zenith-tcal__ghost"
+                                style={{
+                                    top: `${(drag.ghost.slot.start - originMinutes) * pixelsPerMinute}px`,
+                                    height: `${Math.max(
+                                        (drag.ghost.slot.end - drag.ghost.slot.start) *
+                                            pixelsPerMinute -
+                                            2,
+                                        16
+                                    )}px`,
+                                }}
+                                aria-hidden="true"
+                            >
+                                {formatMinutes(drag.ghost.slot.start)}–
+                                {formatMinutes(drag.ghost.slot.end)}
+                            </div>
+                        )}
 
                         {nowInWindow && (
                             <div
