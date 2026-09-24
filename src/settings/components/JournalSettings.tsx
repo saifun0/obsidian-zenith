@@ -20,6 +20,7 @@ import {
 import { addDays } from '../../modules/journal/services/journalDates';
 import { useFeature } from '../../core/useFeature';
 import { RITUAL_STEPS } from '../../modules/journal/services/rituals';
+import { ReviewNotesSettings } from '../../modules/journal/components/ReviewNotesSettings';
 import { DEFAULT_JOURNAL_FOLDER } from '../../core/constants';
 import type { JournalWeekStart } from '../../store/settingsSlice';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
@@ -128,6 +129,7 @@ export const JournalSettings: React.FC = () => {
     const quitOn = useFeature('journal.quitHabits');
     const promptOn = useFeature('journal.dailyPrompt');
     const ritualsOn = useFeature('journal.rituals');
+    const reviewsOn = useFeature('journal.reviews');
     const hours = Array.from({ length: 24 }, (_, h) => ({
         value: String(h),
         label: `${String(h).padStart(2, '0')}:00`,
@@ -564,6 +566,9 @@ export const JournalSettings: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* ── Review notes ── */}
+            {reviewsOn && <ReviewNotesSettings />}
 
             {/* ── Week start ── */}
             <div className="zenith-settings__item">

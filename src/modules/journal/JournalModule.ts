@@ -4,6 +4,11 @@ import { getTodayString } from '../../core/dateUtils';
 import { useZenithStore } from '../../store';
 import { JournalView } from './JournalView';
 import { JournalBlockRenderer } from './JournalCodeBlock';
+import { SummaryBlockRenderer } from './SummaryCodeBlock';
+import { YearReviewModal } from './YearReviewModal';
+import { SUMMARY_BLOCK_LANG, openReviewNote } from './services/reviewNotes';
+import { REVIEW_PERIODS, type ReviewPeriod } from './services/reviewPeriods';
+import { defaultReviewYear } from './services/yearReview';
 import { JournalCheckinWidget } from './components/JournalCheckinWidget';
 import { JournalStatsWidget } from './components/JournalStatsWidget';
 import { RitualWidget } from './components/RitualWidget';
@@ -42,8 +47,54 @@ export class JournalModule extends BaseModule {
         new RitualModal(this.plugin.app, this.plugin, kind).open();
     }
 
+    /** A feature's command, or a line on why it does nothing while the feature is off. */
+    private whenOn(feature: string, run: () => void): void {
+        const { settings } = useZenithStore.getState();
+        if (!featureEnabled(settings, feature)) {
+            new Notice(translate(resolveLocale(settings.language), 'review.off'));
+            return;
+        }
+        run();
+    }
+
     async onload(): Promise<void> {
         this.registerView(VIEW_TYPE_JOURNAL, (leaf) => new JournalView(leaf, this.plugin));
+
+        // A period's numbers, counted live wherever the block is put.
+        this.registerCodeBlock(SUMMARY_BLOCK_LANG, (source, el, ctx) => {
+            ctx.addChild(new SummaryBlockRenderer(el, this.plugin, source, ctx));
+        });
+
+        // Review notes: created by these commands, never on their own.
+        const commandName: Record<ReviewPeriod, string> = {
+            week: "Open this week's note",
+            month: "Open this month's note",
+            quarter: "Open this quarter's note",
+            year: "Open this year's note",
+        };
+        for (const period of REVIEW_PERIODS) {
+            this.addCommand({
+                id: `open-${period}-note`,
+                name: commandName[period],
+                callback: () =>
+                    this.whenOn('journal.reviews', () => {
+                        const { settings } = useZenithStore.getState();
+                        void openReviewNote(this.plugin.app, settings, period, getTodayString());
+                    }),
+            });
+        }
+        this.addCommand({
+            id: 'year-in-review',
+            name: 'Year in review',
+            callback: () =>
+                this.whenOn('journal.yearInReview', () =>
+                    new YearReviewModal(
+                        this.plugin.app,
+                        this.plugin,
+                        defaultReviewYear(getTodayString())
+                    ).open()
+                ),
+        });
 
         // The day's check-in, rendered inside the note itself.
         this.registerCodeBlock(JOURNAL_BLOCK_LANG, (_source, el, ctx) => {

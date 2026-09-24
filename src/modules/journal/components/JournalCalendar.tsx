@@ -8,6 +8,7 @@ import type { JournalWeekStart } from '../../../store/settingsSlice';
 import { isJournalled } from '../services/journalStats';
 import { keptOn } from '../services/habitMonth';
 import { monthGrid, weekdayLabels, monthLabel, isoToDate, sameMonth } from '../services/journalDates';
+import { weekOfRange } from '../services/reviewPeriods';
 
 interface JournalCalendarProps {
     /** Any date inside the month being shown. */
@@ -31,6 +32,8 @@ interface JournalCalendarProps {
     onMonthChange: (anchor: string) => void;
     /** Switch to the year in pixels; absent while that feature is off. */
     onYear?: () => void;
+    /** Open the note of the week a row is; absent while reviews are off. */
+    onWeek?: (date: string) => void;
 }
 
 /**
@@ -60,6 +63,7 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
     onOpen,
     onMonthChange,
     onYear,
+    onWeek,
 }) => {
     const t = useTranslation();
     const wordsOn = useFeature('journal.wordCount');
@@ -100,7 +104,7 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
     };
 
     return (
-        <div className="zenith-jcal">
+        <div className={`zenith-jcal${onWeek ? ' has-weeks' : ''}`}>
             <div className="zenith-jcal__head">
                 <button
                     className="zenith-jcal__nav"
@@ -136,6 +140,7 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
             </div>
 
             <div className="zenith-jcal__weekdays">
+                {onWeek && <span className="zenith-jcal__weekday is-week" aria-hidden="true" />}
                 {weekdays.map((label, i) => (
                     <span key={i} className="zenith-jcal__weekday">
                         {label}
@@ -144,7 +149,7 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
             </div>
 
             <div className="zenith-jcal__grid">
-                {days.map((date) => {
+                {days.map((date, index) => {
                     const entry = byDate.get(date);
                     const written = isJournalled(entry);
                     const outside = !sameMonth(date, monthAnchor);
@@ -165,36 +170,48 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
                         .filter(Boolean)
                         .join(' ');
 
+                    const week = weekOfRange(date).week;
                     return (
-                        <button
-                            key={date}
-                            className={classes}
-                            style={{ ['--jcal-ring' as string]: `${ring}%` }}
-                            onClick={() => onSelect(date)}
-                            onDoubleClick={() => onOpen(date)}
-                            aria-current={date === today ? 'date' : undefined}
-                            aria-pressed={date === selected}
-                            title={
-                                entry
-                                    ? `${date}` +
-                                      (wordsOn ? ` · ${t.plural('journal.words', entry.words)}` : '') +
-                                      (total > 0 ? ` · ${t('journal.keptOn', { kept, total })}` : '')
-                                    : date
-                            }
-                        >
-                            {score !== undefined && colorBy && (
-                                <span
-                                    className="zenith-jcal__fill"
-                                    style={{
-                                        background: `color-mix(in srgb, ${trackerColor(colorBy, score)} 26%, transparent)`,
-                                    }}
-                                />
+                        <React.Fragment key={date}>
+                            {onWeek && index % 7 === 0 && (
+                                <button
+                                    className="zenith-jcal__week"
+                                    onClick={() => onWeek(date)}
+                                    title={t('review.week.open', { week })}
+                                    aria-label={t('review.week.open', { week })}
+                                >
+                                    {week}
+                                </button>
                             )}
-                            {ring > 0 && <span className="zenith-jcal__ring" />}
-                            <span className="zenith-jcal__num">{Number(date.slice(8, 10))}</span>
-                            {written && score === undefined && <span className="zenith-jcal__dot" />}
-                            {taskDays.has(date) && <span className="zenith-jcal__task-dot" />}
-                        </button>
+                            <button
+                                className={classes}
+                                style={{ ['--jcal-ring' as string]: `${ring}%` }}
+                                onClick={() => onSelect(date)}
+                                onDoubleClick={() => onOpen(date)}
+                                aria-current={date === today ? 'date' : undefined}
+                                aria-pressed={date === selected}
+                                title={
+                                    entry
+                                        ? `${date}` +
+                                          (wordsOn ? ` · ${t.plural('journal.words', entry.words)}` : '') +
+                                          (total > 0 ? ` · ${t('journal.keptOn', { kept, total })}` : '')
+                                        : date
+                                }
+                            >
+                                {score !== undefined && colorBy && (
+                                    <span
+                                        className="zenith-jcal__fill"
+                                        style={{
+                                            background: `color-mix(in srgb, ${trackerColor(colorBy, score)} 26%, transparent)`,
+                                        }}
+                                    />
+                                )}
+                                {ring > 0 && <span className="zenith-jcal__ring" />}
+                                <span className="zenith-jcal__num">{Number(date.slice(8, 10))}</span>
+                                {written && score === undefined && <span className="zenith-jcal__dot" />}
+                                {taskDays.has(date) && <span className="zenith-jcal__task-dot" />}
+                            </button>
+                        </React.Fragment>
                     );
                 })}
             </div>

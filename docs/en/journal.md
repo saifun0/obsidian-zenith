@@ -199,3 +199,61 @@ reminder — which is **off** until you switch it on under *Settings → Journal
 Moving a task sets its ⏳ date **in its own line**: nothing is cut out of one note and pasted
 into another. Every step can be switched off in the same settings, and any step can simply
 be skipped. There are no streaks for rituals.
+
+## Reviews
+
+*Journal → Features → Reviews.* A week, a month, a quarter or a year gets a note of its own,
+next to the daily ones:
+
+- **Commands** — *Open this week's note*, *…month's*, *…quarter's*, *…year's* — and the
+  **week number** in front of each row of the journal's calendar. A review note is created when
+  you open it, never on its own.
+- **Where and what** — per period, in *Journal settings → Review notes*: a folder (empty: the
+  journal's), a name pattern (`GGGG-[W]WW`, `YYYY-MM`, `YYYY-[Q]Q`, `YYYY` by default — `GGGG` and
+  `WW` are the ISO week-year and week, `Q` the quarter; the daily tokens work too) and a template
+  note. The settings show the path this period's note would get.
+- **What is in it** — the note records what it is about in its properties, `review: week`,
+  `start:` and `end:`. Not `date:`: that is how the journal recognises a daily note, and a week's
+  note in the journal folder would be taken for the note of its first day. A template can use
+  `{{start}}`, `{{end}}`, `{{period}}`, `{{title}}` and `{{summary}}` (the block below).
+
+### The summary block
+
+````markdown
+```zenith-summary
+period: week
+date: 2026-09-21
+show: tasks, habits, words
+```
+````
+
+`period` is `week`, `month`, `quarter` or `year`; `date` is any day inside it. Both are optional:
+in a review note they come from its properties, in a daily note from its day, elsewhere it is
+this week. `show` picks from a fixed set — `tasks`, `habits`, `content`, `prayer`, `fasting`,
+`words` — and defaults to every section whose module is on. There is no query language, on
+purpose.
+
+The numbers are counted live, from the notes, every time the block is drawn: tasks done, given
+up and still due (and the tags of the ones done); each habit's kept days and best run; what was
+finished and started in the library; prayers on time; fasts; words written. Days after today are
+never counted — a week under way is reported as far as it has got.
+
+- **Freeze** writes the numbers into the note, under the block, as a Markdown callout — so the
+  week stays what it was even if its notes are edited later, and reads without the plugin.
+  Nothing already in the note is changed; freezing again adds another snapshot.
+- **Mark reviewed** (in a review note) sets `reviewed: true`; pressing it again removes the key.
+
+With **Periodic Notes** also on, the settings warn that its notes and Zenith's are two separate
+sets — as they already do for the core Daily notes plugin.
+
+## Year in review
+
+*Journal → Features → Year in review.* The command *Year in review* (or the button in a year's
+summary block) reads the year back from your notes: tasks done and their tags, the habits' best
+runs, the mood month by month, words written, what you finished (and the reading challenge),
+prayers on time, fasting. It opens from **1 December** for the year that is ending, and for any
+past year — the arrows step between years.
+
+**Save picture** draws a card with the figures you tick and saves it as a PNG attachment, in the
+theme's colours — made on the device, nothing is uploaded. Prayer, fasting and the habits are
+unticked by default: they are yours to add.

@@ -19,6 +19,7 @@ import { normalizePresets, type DashboardPreset } from '../modules/dashboard/das
 import { normalizeSession, type TimerSession } from '../modules/tasks/services/taskTimer';
 import type { ContentTypeConfig } from '../core/contentTypes';
 import type { WeatherPlace } from '../modules/weather/weatherTypes';
+import { DEFAULT_REVIEW_NOTES, type ReviewNotes } from '../modules/journal/services/reviewPeriods';
 import type { GeoPlace } from '../services/geocode';
 import {
     DEFAULT_METHOD_ID,
@@ -129,6 +130,8 @@ export interface ZenithSettings {
     ritualReminders: boolean;
     /** Ritual steps switched off, by id — see `RITUAL_STEPS`. */
     ritualSkip: string[];
+    /** Where each period's review note lives, what it is called, its template. */
+    journalReviewNotes: ReviewNotes;
     /** First column of the journal calendar. */
     journalWeekStart: JournalWeekStart;
     /**
@@ -737,6 +740,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     ritualEveningHour: 21,
     ritualReminders: false,
     ritualSkip: [],
+    journalReviewNotes: DEFAULT_REVIEW_NOTES,
     journalWeekStart: 'mon',
     journalTrackers: DEFAULT_TRACKERS.map((t) => ({ ...t })),
     journalCaptureTasks: true,

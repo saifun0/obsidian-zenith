@@ -2407,3 +2407,258 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     font-size: 0.85rem;
     color: var(--zenith-text-normal);
 }
+
+/* ── The week number before each row of the month ── */
+.zenith-jcal.has-weeks .zenith-jcal__weekdays,
+.zenith-jcal.has-weeks .zenith-jcal__grid {
+    grid-template-columns: 1.6rem repeat(7, 1fr);
+}
+
+.zenith-jcal .zenith-jcal__week {
+    align-self: center;
+    justify-content: center;
+    height: auto;
+    min-height: 0;
+    padding: 2px 0;
+    font-size: 0.66rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--zenith-text-faint);
+    background: none;
+    box-shadow: none;
+    border: none;
+    cursor: pointer;
+}
+
+.zenith-jcal .zenith-jcal__week:hover {
+    color: var(--zenith-accent);
+}
+
+/* ── zenith-summary: a period's numbers inside a note ── */
+.zenith-summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-sm);
+    padding: var(--zenith-space-sm) 0;
+    border-top: 1px solid var(--zenith-border);
+    border-bottom: 1px solid var(--zenith-border);
+}
+
+.zenith-summary__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.zenith-summary__title {
+    flex: 1;
+    min-width: 10rem;
+    font-weight: 600;
+}
+
+.zenith-summary .zenith-summary__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: auto;
+    padding: 3px 8px;
+    font-size: 0.78rem;
+    color: var(--zenith-text-muted);
+    background: none;
+    box-shadow: none;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+}
+
+.zenith-summary .zenith-summary__action.is-done {
+    color: var(--zenith-success);
+    border-color: var(--zenith-success);
+}
+
+.zenith-summary__section {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.zenith-summary__section p,
+.zenith-summary__empty {
+    margin: 0;
+    font-size: 0.88rem;
+}
+
+.zenith-summary__empty,
+.zenith-summary__off {
+    color: var(--zenith-text-faint);
+}
+
+.zenith-summary__label,
+.zenith-yreview__label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-summary__habit {
+    display: grid;
+    grid-template-columns: minmax(6rem, 10rem) 1fr auto;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.zenith-summary__habit-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zenith-summary__bar {
+    display: block;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--zenith-bg-secondary);
+    overflow: hidden;
+}
+
+.zenith-summary__bar > span {
+    display: block;
+    height: 100%;
+    background: var(--zenith-accent);
+}
+
+.zenith-summary__figure {
+    font-variant-numeric: tabular-nums;
+    color: var(--zenith-text-muted);
+}
+
+/* ── Year in review ── */
+.zenith-yreview {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-md);
+}
+
+.zenith-yreview__head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--zenith-space-md);
+}
+
+.zenith-yreview__year {
+    font-size: 1.6rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-yreview .zenith-yreview__step {
+    background: none;
+    box-shadow: none;
+}
+
+.zenith-yreview__figures {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: var(--zenith-space-md);
+}
+
+.zenith-yreview__figure {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.zenith-yreview__figure b {
+    font-size: 1.8rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-yreview__figure span,
+.zenith-yreview__line,
+.zenith-yreview__empty {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-yreview__months {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.zenith-yreview__month {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    border-radius: var(--zenith-radius-sm);
+    font-size: 0.7rem;
+    color: var(--zenith-text-muted);
+    background: var(--zenith-bg-secondary);
+}
+
+.zenith-yreview__picture {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-sm);
+    padding-top: var(--zenith-space-md);
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-yreview__choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+}
+
+.zenith-yreview__choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+}
+
+.zenith-yreview__picture > button {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ── Review notes in the journal's settings ── */
+.zenith-review-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.zenith-review-settings__row {
+    display: grid;
+    grid-template-columns: 5rem repeat(3, minmax(0, 1fr));
+    align-items: center;
+    gap: 6px;
+}
+
+.zenith-review-settings__period {
+    font-size: 0.85rem;
+}
+
+.zenith-review-settings__path {
+    grid-column: 2 / -1;
+    font-family: var(--zenith-font-mono);
+    font-size: 0.72rem;
+    color: var(--zenith-text-faint);
+}
+
+@media (max-width: 600px) {
+    .zenith-review-settings__row {
+        grid-template-columns: 1fr;
+    }
+
+    .zenith-review-settings__path {
+        grid-column: auto;
+    }
+}

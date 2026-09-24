@@ -14,6 +14,7 @@ import { entriesByDate } from '../services/journalStats';
 import { setTrackerValue, openDailyNote, createDailyNote } from '../services/journalActions';
 import { addDays } from '../services/journalDates';
 import { useFeature } from '../../../core/useFeature';
+import { openReviewNote } from '../services/reviewNotes';
 import { JournalCalendar } from './JournalCalendar';
 import { YearPixels } from './YearPixels';
 import { DayPanel } from './DayPanel';
@@ -46,6 +47,7 @@ export const JournalApp: FC = () => {
     const monthOn = useFeature('journal.habitMonth');
     const moodColorsOn = useFeature('journal.moodColors');
     const yearPixelsOn = useFeature('journal.yearPixels');
+    const reviewsOn = useFeature('journal.reviews');
     const [scale, setScale] = useState<'month' | 'year'>('month');
     const [pixelYear, setPixelYear] = useState(() => Number(today.slice(0, 4)));
     const [pixelTrackerId, setPixelTrackerId] = useState<string | null>(null);
@@ -203,6 +205,11 @@ export const JournalApp: FC = () => {
                         taskDays={taskDays}
                         onSelect={selectDate}
                         onOpen={(date) => void openDailyNote(app, settings, date)}
+                        onWeek={
+                            reviewsOn
+                                ? (date) => void openReviewNote(app, settings, 'week', date)
+                                : undefined
+                        }
                         onMonthChange={setMonthAnchor}
                         onYear={
                             yearPixelsOn

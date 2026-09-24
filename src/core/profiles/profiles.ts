@@ -63,6 +63,7 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     journalFolderPath: 'path',
     journalTemplatePath: 'path',
     journalPromptPath: 'path',
+    journalReviewNotes: 'path',
     ritualMorningHour: 'yes',
     ritualEveningHour: 'yes',
     ritualReminders: 'yes',
@@ -338,6 +339,15 @@ const SHAPES: Partial<Record<SettingsKey, (v: unknown) => boolean>> = {
                 Object.values(year).every((n) => typeof n === 'number' && Number.isFinite(n))
         ),
     folderIcons: (v) => isRecord(v) && Object.values(v).every((s) => typeof s === 'string'),
+    journalReviewNotes: (v) =>
+        isRecord(v) &&
+        Object.values(v).every(
+            (p) =>
+                isRecord(p) &&
+                typeof p.folder === 'string' &&
+                typeof p.format === 'string' &&
+                typeof p.template === 'string'
+        ),
     location: isPlaceOrNull,
     prayerPlace: isPlaceOrNull,
     weatherPlace: isPlaceOrNull,
