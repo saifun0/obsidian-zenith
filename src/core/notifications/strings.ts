@@ -34,6 +34,7 @@ export const NOTIFY_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'notify.clearRead': 'Clear read',
         'notify.source.prayer': 'Prayer reminders',
         'notify.source.tasks': 'Task reminders',
+        'notify.source.rituals': 'Morning and evening rituals',
         'notify.source.debug': 'Debug tests',
 
         'prayer.notice.at': '{prayer} — {time}',
@@ -110,6 +111,7 @@ export const NOTIFY_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'notify.clearRead': 'Убрать прочитанные',
         'notify.source.prayer': 'Напоминания о намазе',
         'notify.source.tasks': 'Напоминания о задачах',
+        'notify.source.rituals': 'Ритуалы утра и вечера',
         'notify.source.debug': 'Тесты отладки',
 
         'prayer.notice.at': '{prayer} — {time}',

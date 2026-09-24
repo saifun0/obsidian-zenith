@@ -6,6 +6,12 @@ import { JournalView } from './JournalView';
 import { JournalBlockRenderer } from './JournalCodeBlock';
 import { JournalCheckinWidget } from './components/JournalCheckinWidget';
 import { JournalStatsWidget } from './components/JournalStatsWidget';
+import { RitualWidget } from './components/RitualWidget';
+import { RitualModal } from './RitualModal';
+import { RitualReminderService } from './services/ritualReminders';
+import { featureEnabled } from '../../core/features';
+import { translate, resolveLocale } from '../../core/i18n';
+import { Notice } from 'obsidian';
 import { openDailyNote } from './services/journalActions';
 import { journalTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
@@ -25,6 +31,16 @@ export class JournalModule extends BaseModule {
     }
 
     private disposers: Array<() => void> = [];
+
+    /** Open a ritual — or say why not, while the feature is off. */
+    private openRitual(kind: 'morning' | 'evening'): void {
+        const { settings } = useZenithStore.getState();
+        if (!featureEnabled(settings, 'journal.rituals')) {
+            new Notice(translate(resolveLocale(settings.language), 'ritual.off'));
+            return;
+        }
+        new RitualModal(this.plugin.app, this.plugin, kind).open();
+    }
 
     async onload(): Promise<void> {
         this.registerView(VIEW_TYPE_JOURNAL, (leaf) => new JournalView(leaf, this.plugin));
@@ -49,6 +65,21 @@ export class JournalModule extends BaseModule {
                 void openDailyNote(this.plugin.app, settings, getTodayString());
             },
         });
+
+        this.addCommand({
+            id: 'ritual-morning',
+            name: 'Morning ritual',
+            callback: () => this.openRitual('morning'),
+        });
+        this.addCommand({
+            id: 'ritual-evening',
+            name: 'Evening review',
+            callback: () => this.openRitual('evening'),
+        });
+
+        const reminders = new RitualReminderService(this.plugin);
+        reminders.start();
+        this.disposers.push(() => reminders.stop());
 
         // Two cards, split by what they are for: one records the day, one
         // reports on it. Keeping them apart is why neither has to compromise —
@@ -78,6 +109,19 @@ export class JournalModule extends BaseModule {
                 defaultSize: 'md',
                 order: 41,
                 component: JournalStatsWidget,
+            }),
+            this.plugin.registerDashboardWidget({
+                id: 'journal.ritual',
+                feature: 'journal.rituals',
+                title: 'Ritual',
+                titleKey: 'widget.ritual',
+                description:
+                    'The morning plan or the evening review, whichever the hour calls for.',
+                icon: 'sunrise',
+                sizes: ['sm', 'md'],
+                defaultSize: 'sm',
+                order: 42,
+                component: RitualWidget,
             })
         );
 

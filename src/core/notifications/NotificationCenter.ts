@@ -177,6 +177,14 @@ export class NotificationCenter implements EventSource<SnoozeEvent> {
             await this.plugin.moduleManager.get(target.module)?.activateView();
             return;
         }
+        if ('command' in target) {
+            (
+                this.plugin.app as unknown as {
+                    commands: { executeCommandById(id: string): boolean };
+                }
+            ).commands.executeCommandById(target.command);
+            return;
+        }
         const { workspace } = this.plugin.app;
         const existing = workspace.getLeavesOfType(target.view);
         if (existing.length > 0) {

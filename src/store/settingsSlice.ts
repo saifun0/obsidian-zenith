@@ -122,6 +122,13 @@ export interface ZenithSettings {
     journalTemplatePath: string;
     /** A note of questions for the day, one a line. Empty: the built-in set. */
     journalPromptPath: string;
+    /** Hours of the morning and evening rituals; -1 leaves one out of the reminders. */
+    ritualMorningHour: number;
+    ritualEveningHour: number;
+    /** Remind at those hours. Off until asked for. */
+    ritualReminders: boolean;
+    /** Ritual steps switched off, by id — see `RITUAL_STEPS`. */
+    ritualSkip: string[];
     /** First column of the journal calendar. */
     journalWeekStart: JournalWeekStart;
     /**
@@ -710,6 +717,10 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     journalDateFormat: DEFAULT_JOURNAL_FORMAT,
     journalTemplatePath: '',
     journalPromptPath: '',
+    ritualMorningHour: 8,
+    ritualEveningHour: 21,
+    ritualReminders: false,
+    ritualSkip: [],
     journalWeekStart: 'mon',
     journalTrackers: DEFAULT_TRACKERS.map((t) => ({ ...t })),
     journalCaptureTasks: true,

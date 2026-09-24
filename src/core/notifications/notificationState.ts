@@ -12,7 +12,11 @@
  * Where "open" goes: a note (at a line), a view, or whatever a module opens
  * itself as — the prayer times are a dialog, not a view.
  */
-export type OpenTarget = { path: string; line?: number } | { view: string } | { module: string };
+export type OpenTarget =
+    | { path: string; line?: number }
+    | { view: string }
+    | { module: string }
+    | { command: string };
 
 export interface NotificationRecord {
     id: string;

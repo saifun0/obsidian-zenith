@@ -68,6 +68,10 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     journalDateFormat: { scope: 'shared' },
     journalTemplatePath: { scope: 'shared' },
     journalPromptPath: { scope: 'shared' },
+    ritualMorningHour: { scope: 'shared' },
+    ritualEveningHour: { scope: 'shared' },
+    ritualReminders: { scope: 'shared' },
+    ritualSkip: { scope: 'shared', merge: 'set' },
 
     // ── Journal ──
     journalWeekStart: { scope: 'shared' },

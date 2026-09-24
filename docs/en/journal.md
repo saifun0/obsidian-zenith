@@ -180,3 +180,22 @@ yesterday's unfinished work stays in yesterday's note, where it happened.
 > Settings → Journal says so: with both running you'd get two sets of daily notes and half
 > your entries would land in the one you aren't looking at. Zenith never writes to the core
 > plugin's settings, and never silently adopts them.
+
+## Morning and evening rituals
+
+*Journal → Features → Morning and evening rituals.* Two short looks at the day, opened
+with the commands **Morning ritual** and **Evening review**, from the **Ritual** card on the
+dashboard (it shows whichever fits the hour, and the day's main task once chosen), or from a
+reminder — which is **off** until you switch it on under *Settings → Journal → Rituals*
+(08:00 and 21:00 unless changed).
+
+- **Morning:** today's tasks — due or planned today, or written into today's note — each
+  with a tick and a star to mark **the main thing** (kept in the day's note as
+  `focus: …`), then what is left over from before.
+- **Evening:** what got done today; what did not — today's and earlier days' open tasks —
+  each **Today**, **Tomorrow** or **Drop**; and one line **for tomorrow**, written into
+  today's note.
+
+Moving a task sets its ⏳ date **in its own line**: nothing is cut out of one note and pasted
+into another. Every step can be switched off in the same settings, and any step can simply
+be skipped. There are no streaks for rituals.

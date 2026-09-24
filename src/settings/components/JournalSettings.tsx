@@ -19,6 +19,7 @@ import {
 } from '../../core/journalConfig';
 import { addDays } from '../../modules/journal/services/journalDates';
 import { useFeature } from '../../core/useFeature';
+import { RITUAL_STEPS } from '../../modules/journal/services/rituals';
 import { DEFAULT_JOURNAL_FOLDER } from '../../core/constants';
 import type { JournalWeekStart } from '../../store/settingsSlice';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
@@ -126,6 +127,17 @@ export const JournalSettings: React.FC = () => {
     const goalsOn = useFeature('journal.goals');
     const quitOn = useFeature('journal.quitHabits');
     const promptOn = useFeature('journal.dailyPrompt');
+    const ritualsOn = useFeature('journal.rituals');
+    const hours = Array.from({ length: 24 }, (_, h) => ({
+        value: String(h),
+        label: `${String(h).padStart(2, '0')}:00`,
+    }));
+    const toggleStep = (step: string) =>
+        updateSettings({
+            ritualSkip: settings.ritualSkip.includes(step)
+                ? settings.ritualSkip.filter((s) => s !== step)
+                : [...settings.ritualSkip, step],
+        });
     const remove = (index: number) => commit(trackers.filter((_, i) => i !== index));
 
     const add = (kind: TrackerKind) => {
@@ -496,6 +508,59 @@ export const JournalSettings: React.FC = () => {
                             placeholder={t('settings.journalPrompt.placeholder')}
                             onChange={(e) => updateSettings({ journalPromptPath: e.target.value })}
                         />
+                    </div>
+                </div>
+            )}
+
+            {/* ── Rituals ── */}
+            {ritualsOn && (
+                <div className="zenith-settings__item zenith-settings__item--stack">
+                    <div className="zenith-settings__item-info">
+                        <span className="zenith-settings__item-name">{t('settings.ritual')}</span>
+                        <span className="zenith-settings__item-desc">
+                            {t('settings.ritual.reminders.desc')}
+                        </span>
+                    </div>
+                    <div className="zenith-ritual-settings">
+                        <label className="zenith-ctype__field">
+                            <span>{t('settings.ritual.morning')}</span>
+                            <Dropdown
+                                size="sm"
+                                value={String(settings.ritualMorningHour)}
+                                options={hours}
+                                onChange={(h) => updateSettings({ ritualMorningHour: Number(h) })}
+                            />
+                        </label>
+                        <label className="zenith-ctype__field">
+                            <span>{t('settings.ritual.evening')}</span>
+                            <Dropdown
+                                size="sm"
+                                value={String(settings.ritualEveningHour)}
+                                options={hours}
+                                onChange={(h) => updateSettings({ ritualEveningHour: Number(h) })}
+                            />
+                        </label>
+                        <label className="zenith-ritual-settings__check">
+                            <input
+                                type="checkbox"
+                                checked={settings.ritualReminders}
+                                onChange={(e) => updateSettings({ ritualReminders: e.target.checked })}
+                            />
+                            {t('settings.ritual.reminders')}
+                        </label>
+                    </div>
+                    <span className="zenith-settings__item-name">{t('settings.ritual.steps')}</span>
+                    <div className="zenith-ritual-settings">
+                        {RITUAL_STEPS.map((step) => (
+                            <label key={step} className="zenith-ritual-settings__check">
+                                <input
+                                    type="checkbox"
+                                    checked={!settings.ritualSkip.includes(step)}
+                                    onChange={() => toggleStep(step)}
+                                />
+                                {t(`ritual.step.${step}`)}
+                            </label>
+                        ))}
                     </div>
                 </div>
             )}
