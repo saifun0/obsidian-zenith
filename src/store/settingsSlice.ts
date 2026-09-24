@@ -245,6 +245,13 @@ export interface ZenithSettings {
      * timetable; some keep a margin of ten minutes or so.
      */
     prayerImsakOffset: number;
+    /**
+     * For "Life in weeks" only, `YYYY-MM-DD`. Stays on this vault's devices:
+     * never in a profile.
+     */
+    dashboardBirthDate: string;
+    /** How many years the life-in-weeks grid spans. */
+    dashboardLifeYears: number;
     /** Notify when a prayer comes in (only while Obsidian is open). */
     prayerNotify: boolean;
     /** Minutes of warning before the time itself. */
@@ -776,6 +783,8 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     prayerExtras: ['witr'],
     prayerHijriOffset: 0,
     prayerImsakOffset: 0,
+    dashboardBirthDate: '',
+    dashboardLifeYears: 80,
     prayerNotify: false,
     prayerNotifyBefore: 10,
     taskRemindBefore: 0,

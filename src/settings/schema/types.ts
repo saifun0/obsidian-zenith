@@ -210,6 +210,11 @@ export interface CustomField {
     key: string;
     showIf?: Predicate;
     /**
+     * The feature whose switch this field draws, when it draws one in its own
+     * way — so the generated "Features" group does not draw it a second time.
+     */
+    featureId?: string;
+    /**
      * This one draws a single settings row, not a surface of its own.
      *
      * The escape hatch covers two unlike things. Some custom fields are whole

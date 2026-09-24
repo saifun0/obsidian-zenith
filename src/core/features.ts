@@ -50,6 +50,12 @@ export interface FeatureDefinition {
      * old name. The registry reads and writes them where they are.
      */
     settingKey?: BooleanSettingKey;
+    /**
+     * Switched on only by the user's own hand: no template turns it on — not
+     * even "Everything" — and applying one leaves it as it was. For features
+     * that ask something personal before they can show anything at all.
+     */
+    manual?: boolean;
 }
 
 /** The pseudo-module of what no module owns — always running. */
@@ -66,6 +72,7 @@ interface FeatureOptions {
     requires?: readonly string[];
     requiresModules?: readonly string[];
     settingKey?: BooleanSettingKey;
+    manual?: boolean;
 }
 
 /** One entry; the string keys follow from the id. */
@@ -83,6 +90,7 @@ function feature<const I extends string>(
         requires: options.requires,
         requiresModules: options.requiresModules,
         settingKey: options.settingKey,
+        manual: options.manual,
     };
 }
 
@@ -106,6 +114,10 @@ export const FEATURES = [
     feature('dashboard.date', 'dashboard', { settingKey: 'dashboardShowDate', default: false }),
     feature('dashboard.background', 'dashboard'),
     feature('dashboard.presets', 'dashboard'),
+    feature('dashboard.openOnStartup', 'dashboard'),
+    feature('dashboard.periodProgress', 'dashboard'),
+    feature('dashboard.countdowns', 'dashboard'),
+    feature('dashboard.lifeWeeks', 'dashboard', { default: false, manual: true }),
 
     // ── Tasks ──
     feature('tasks.captureDaily', 'tasks', {

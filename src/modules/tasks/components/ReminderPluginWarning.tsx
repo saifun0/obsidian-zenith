@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import type { App } from 'obsidian';
 import type { CustomFieldProps } from '../../../settings/schema/types';
 import { featureEnabled } from '../../../core/features';
+import { isPluginEnabled } from '../../../core/otherPlugins';
 import { useZenithStore } from '../../../store';
 
 /**
@@ -13,9 +14,7 @@ const REMINDER_PLUGIN_IDS = ['obsidian-reminder-plugin', 'obsidian-reminder'];
 
 /** Whether another plugin that reminds about task lines is switched on. */
 export function reminderPluginEnabled(app: App): boolean {
-    const enabled = (app as unknown as { plugins?: { enabledPlugins?: Set<string> } }).plugins
-        ?.enabledPlugins;
-    return !!enabled && REMINDER_PLUGIN_IDS.some((id) => enabled.has(id));
+    return isPluginEnabled(app, ...REMINDER_PLUGIN_IDS);
 }
 
 /**

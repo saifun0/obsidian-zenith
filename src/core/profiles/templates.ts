@@ -38,6 +38,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
         modules: ['dashboard', 'tasks', 'journal'],
         on: [
             ...BASICS,
+            'dashboard.openOnStartup',
             'tasks.captureDaily',
             'tasks.naturalInput',
             'tasks.subtasks',
@@ -72,7 +73,9 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
         modules: ['dashboard', 'navigator', 'journal', 'tasks'],
         on: [
             ...BASICS,
+            'dashboard.openOnStartup',
             'dashboard.date',
+            'dashboard.periodProgress',
             'journal.dailyBlock',
             'journal.moodColors',
             'journal.habitMonth',
@@ -96,8 +99,11 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
         modules: ['dashboard', 'navigator', 'tasks', 'tasks-calendar', 'projects', 'journal'],
         on: [
             ...BASICS,
+            'dashboard.openOnStartup',
             'dashboard.date',
             'dashboard.presets',
+            'dashboard.periodProgress',
+            'dashboard.countdowns',
             'tasks.captureDaily',
             'tasks.naturalInput',
             'tasks.subtasks',
@@ -130,6 +136,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
         modules: ['dashboard', 'navigator', 'prayer', 'journal'],
         on: [
             ...BASICS,
+            'dashboard.openOnStartup',
             'prayer.sunrise',
             'prayer.extras',
             'prayer.hijri',
@@ -140,6 +147,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
             'prayer.fastingHints',
             'prayer.iftarSuhoor',
             'prayer.widget',
+            'dashboard.countdowns',
             'journal.dailyBlock',
         ],
     },
@@ -149,6 +157,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
         modules: ['dashboard', 'navigator', 'content'],
         on: [
             ...BASICS,
+            'dashboard.openOnStartup',
             'content.resume',
             'content.quickIncrement',
             'content.multiSelect',
@@ -170,6 +179,9 @@ export function templateProfile(template: ProfileTemplate, name: string, today: 
     const on = template.on === 'all' ? null : new Set<string>(template.on);
     const features: Record<string, boolean> = {};
     for (const def of FEATURES) {
+        // A manual feature is the user's alone: left out, so applying a
+        // template neither turns it on nor takes it away.
+        if (def.manual) continue;
         if (scope.has(def.moduleId)) features[def.id] = on === null || on.has(def.id);
     }
     return {

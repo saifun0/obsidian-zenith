@@ -20,7 +20,8 @@ save, undo and hand to someone else. *Settings → Profiles.*
 A template speaks for its own modules and leaves everything else alone: the features of a
 module it switches off stay as they were, so switching that module back on later brings it
 back the way you had it. No template touches **sync** — choosing "Minimum" is not a request
-to stop your devices agreeing.
+to stop your devices agreeing. Nor does any template decide **Life in weeks**, which asks
+for a birth date: it is switched on only by hand, and a template leaves it as it is.
 
 A fresh install offers the templates once, on first start. Anyone upgrading never sees that
 dialog; their setup is saved as a profile called **Before profiles** instead.

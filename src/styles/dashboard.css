@@ -4103,4 +4103,196 @@ button.zenith-cw__cta {
     color: var(--text-normal);
 }
 
+/* ── Period progress: a label, a hairline bar and a figure per row ── */
+.zenith-periods {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 8px 10px;
+    padding: var(--zenith-space-sm) var(--zenith-space-md);
+}
 
+.zenith-periods__row {
+    display: contents;
+}
+
+.zenith-periods__label {
+    font-size: 0.82rem;
+    color: var(--zenith-text-muted);
+    white-space: nowrap;
+}
+
+.zenith-periods__bar,
+.zenith-life__bar {
+    display: block;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--zenith-bg-secondary);
+    overflow: hidden;
+}
+
+.zenith-periods__bar > span,
+.zenith-life__bar > span {
+    display: block;
+    height: 100%;
+    background: var(--zenith-accent);
+}
+
+.zenith-periods__value {
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    min-width: 3ch;
+}
+
+/* ── Countdowns: one line each, the days on the right ── */
+.zenith-countdowns {
+    list-style: none;
+    margin: 0;
+    padding: var(--zenith-space-xs) var(--zenith-space-sm);
+}
+
+.zenith-countdowns__row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+    padding: 5px var(--zenith-space-xs);
+    border-radius: var(--zenith-radius-sm);
+    font-size: 0.85rem;
+    text-align: left;
+    justify-content: flex-start;
+    border: none;
+    height: auto;
+    color: var(--zenith-text-normal);
+}
+
+/* Two classes: Obsidian's `button:not(.clickable-icon)` would paint a plate. */
+.zenith-countdowns .zenith-countdowns__row {
+    background: none;
+    box-shadow: none;
+}
+
+.zenith-countdowns__row.is-link {
+    cursor: pointer;
+}
+
+.zenith-countdowns__row.is-link:hover {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-countdowns__title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zenith-countdowns__date {
+    font-size: 0.75rem;
+    color: var(--zenith-text-faint);
+    white-space: nowrap;
+}
+
+.zenith-countdowns__days {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.zenith-countdowns__days.is-today {
+    color: var(--zenith-accent);
+}
+
+.zenith-countdowns__empty,
+.zenith-life__empty {
+    margin: 0;
+    padding: var(--zenith-space-md);
+    color: var(--zenith-text-faint);
+    font-size: 0.82rem;
+}
+
+.zenith-countdowns__tag {
+    width: 9rem;
+}
+
+.zenith-countdowns__events {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.zenith-countdowns__event {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.zenith-countdowns__event > input[type='text'] {
+    flex: 1 1 8rem;
+    min-width: 0;
+}
+
+.zenith-countdowns__yearly.is-active {
+    color: var(--zenith-accent);
+    border-color: var(--zenith-accent);
+}
+
+.zenith-countdowns__remove,
+.zenith-countdowns__add {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: auto;
+    min-height: 28px;
+}
+
+.zenith-countdowns__add {
+    align-self: flex-start;
+}
+
+/* ── Life in weeks ── */
+.zenith-life {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-sm);
+    height: 100%;
+    padding: var(--zenith-space-sm) var(--zenith-space-md);
+    box-sizing: border-box;
+}
+
+.zenith-life__figure {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-life__figure b {
+    font-size: 1.2rem;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-life__grid {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+.zenith-life__lived {
+    fill: var(--zenith-accent);
+    opacity: 0.75;
+}
+
+.zenith-life__now {
+    fill: var(--zenith-accent);
+}
+
+.zenith-life__left {
+    fill: var(--zenith-bg-tertiary);
+}

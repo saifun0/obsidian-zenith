@@ -296,7 +296,16 @@ describe('templates', () => {
     it('can switch everything on', () => {
         const all = templateProfile(TEMPLATES.find((t) => t.id === 'everything')!, 'A', TODAY);
         expect(Object.values(all.features).every(Boolean)).toBe(true);
-        expect(Object.keys(all.features)).toHaveLength(FEATURES.length);
+        expect(Object.keys(all.features)).toHaveLength(FEATURES.filter((f) => !f.manual).length);
+    });
+
+    it('never decide a feature that is only switched on by hand', () => {
+        // "Life in weeks" asks for a birth date: not something a template
+        // should turn on — nor, for someone who did, take away.
+        for (const template of TEMPLATES) {
+            const profile = templateProfile(template, 'T', TODAY);
+            expect(profile.features).not.toHaveProperty('dashboard.lifeWeeks');
+        }
     });
 
     it('leave sync alone', () => {

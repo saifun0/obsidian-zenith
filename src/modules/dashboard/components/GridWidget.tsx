@@ -5,6 +5,7 @@ import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
 import { widgetLabel } from '../widgets';
 import type { DashboardWidgetContext, DashboardWidgetDefinition } from '../widgets';
 import { useTranslation } from '../../../core/i18n';
+import { useWidgetBodiesReady } from '../startupGate';
 
 /** Travel that turns a tap into a drag. Below it, a press is a click. */
 const TAP_SLOP_PX = 6;
@@ -126,6 +127,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
     panelExtra,
 }) => {
     const t = useTranslation();
+    const ready = useWidgetBodiesReady();
     const Body = def.component;
     const Settings = def.settings;
     const title = widgetLabel(def, t);
@@ -273,7 +275,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
                             <span className="zenith-widget-card__title">{title}</span>
                         </div>
                         <div className="zenith-widget-card__body">
-                            {Body ? (
+                            {!ready ? null : Body ? (
                                 <Body size={size} instanceId={instanceId} />
                             ) : (
                                 <DomWidgetHost def={def} ctx={ctx} />

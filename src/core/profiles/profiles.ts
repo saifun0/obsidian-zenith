@@ -123,6 +123,7 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     prayerExtras: 'yes',
     prayerHijriOffset: 'yes',
     prayerImsakOffset: 'yes',
+    dashboardLifeYears: 'yes',
     prayerNotifyBefore: 'yes',
     taskRemindBefore: 'yes',
     taskDigestHour: 'yes',
@@ -157,6 +158,8 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     moduleSettings: 'no',
     allowThirdPartyModules: 'no',
     installedModules: 'no',
+    // Personal: a profile is shared, and a birth date is nobody else's.
+    dashboardBirthDate: 'no',
     // Live state, and the arrangement of this screen.
     activeTimer: 'no',
     widgetConfig: 'no',

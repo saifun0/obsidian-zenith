@@ -38,6 +38,7 @@ instantly — no Obsidian restart required.
 | [Features](docs/en/features.md) | Switching off what you don't use, module by module. |
 | [Profiles](docs/en/profiles.md) | Templates, saving and undoing a setup, export and import. |
 | [Notifications](docs/en/notifications.md) | Reminders, what happens to the ones you miss, quiet hours. |
+| [Dashboard](docs/en/dashboard.md) | Opening on startup, period progress, countdowns, life in weeks. |
 | [Vault helpers](docs/en/vault.md) | Folder and file icons, and the vault structure scaffold. |
 | [Tasks](docs/en/tasks.md) | The task format: priorities, dates, tags, projects, and how ordering is stored. |
 | [Journal](docs/en/journal.md) | Daily notes, habit / scale / number tracking, templates, and captured tasks. |

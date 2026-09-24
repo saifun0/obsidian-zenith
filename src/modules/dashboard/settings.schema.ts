@@ -2,6 +2,7 @@ import { coreSchema } from '../../settings/schema/types';
 import { whenFeature } from '../../settings/schema/featureGroup';
 import { DASHBOARD_BG_FITS, DASHBOARD_BG_SOURCES } from './dashboardBackground';
 import { vaultImageField } from '../../settings/controls/VaultImageField';
+import { StartupField } from './components/StartupField';
 
 export const dashboardSettingsSchema = coreSchema({
     moduleId: 'dashboard',
@@ -33,6 +34,46 @@ export const dashboardSettingsSchema = coreSchema({
                 // Beside the heading it sits under, rather than in the
                 // generated list with the rest.
                 { type: 'feature', key: 'dashboard.date' },
+                // The switch, or — with the Homepage plugin on — why there
+                // is none: two plugins each opening their page at startup
+                // is a race one of them loses at random.
+                {
+                    type: 'custom',
+                    key: 'dashboardOpenOnStartup',
+                    featureId: 'dashboard.openOnStartup',
+                    row: true,
+                    render: StartupField,
+                },
+            ],
+        },
+        {
+            id: 'lifeWeeks',
+            titleKey: 'feature.dashboard.lifeWeeks',
+            showIf: whenFeature('dashboard.lifeWeeks'),
+            fields: [
+                {
+                    type: 'text',
+                    key: 'dashboardBirthDate',
+                    labelKey: 'settings.dashBirthDate',
+                    descKey: 'settings.dashBirthDate.desc',
+                    default: '',
+                    placeholder: 'YYYY-MM-DD',
+                    validate: (value) =>
+                        typeof value === 'string' &&
+                        value.trim() !== '' &&
+                        !/^\d{4}-\d{2}-\d{2}$/.test(value.trim())
+                            ? 'settings.dashBirthDate.invalid'
+                            : null,
+                },
+                {
+                    type: 'number',
+                    key: 'dashboardLifeYears',
+                    labelKey: 'settings.dashLifeYears',
+                    default: 80,
+                    min: 30,
+                    max: 120,
+                    step: 1,
+                },
             ],
         },
         {

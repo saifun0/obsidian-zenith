@@ -22,7 +22,15 @@ export const FEATURES_GROUP_ID = 'features';
  */
 export function withFeatureGroup<S extends SettingsSchema>(schema: S): S {
     const placed = new Set(
-        schema.groups.flatMap((g) => g.fields.filter((f) => f.type === 'feature').map((f) => f.key))
+        schema.groups.flatMap((g) =>
+            g.fields.flatMap((f) =>
+                f.type === 'feature'
+                    ? [f.key]
+                    : f.type === 'custom' && f.featureId
+                      ? [f.featureId]
+                      : []
+            )
+        )
     );
     const fields: FeatureField[] = featuresOf(schema.moduleId)
         .filter((def) => !placed.has(def.id))
