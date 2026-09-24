@@ -16,3 +16,22 @@ body.is-phone .zenith-tcal {
     padding-right: 12px;
     padding-left: 12px;
 }
+
+/* Under Obsidian's floating header, as a note is.
+
+   With "Full screen" or floating navigation on, Obsidian fixes the header over
+   the pane and pushes every view but a note down by its height
+   (`--view-top-spacing`, as a margin): a band of bare pane under the header
+   that nothing ever scrolls into. A note gets that spacing zeroed instead, its
+   padding inside the scroll and a fade at the top. Zenith's views — every view
+   type is `zenith-…` — do the same: the space to open clear of the header is
+   measured and padded inside each view (core/mobileInsets.ts), and what
+   scrolls past goes on under the header, fading as a note's text does. */
+.is-phone .mod-root .workspace-leaf-content[data-type^='zenith-'] {
+    --view-top-spacing: 0;
+}
+
+.is-phone.auto-full-screen .mod-root .workspace-leaf-content[data-type^='zenith-'] .view-content,
+.is-phone.is-floating-nav .mod-root .workspace-leaf-content[data-type^='zenith-'] .view-content {
+    mask-image: var(--view-top-fade-mask);
+}

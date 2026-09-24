@@ -7,8 +7,8 @@
 A phone keeps the top of the screen for its camera and status bar. Obsidian keeps the bottom
 for its buttons. Zenith's views open clear of both: the first card starts below the camera and
 Obsidian's header, and the last one scrolls to above the buttons. The space is only for
-layout, not a band: whatever you scroll past goes on under the header and the buttons, seen
-around them, as in a note. On a phone the sides are narrower too, 12px.
+layout, not a band: whatever you scroll past goes on under the header and the buttons, as
+in a note — faded at the top and seen around the buttons when Obsidian's navigation floats. On a phone the sides are narrower too, 12px.
 
 ## Hiding on scroll
 
