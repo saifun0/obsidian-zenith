@@ -21,6 +21,7 @@ import type { ContentTypeConfig } from '../core/contentTypes';
 import type { WeatherPlace } from '../modules/weather/weatherTypes';
 import { DEFAULT_REVIEW_NOTES, type ReviewNotes } from '../modules/journal/services/reviewPeriods';
 import type { ModuleActivity } from '../core/moduleActivity';
+import type { StudySchedule } from '../modules/study/studyModel';
 import type { GeoPlace } from '../services/geocode';
 import {
     DEFAULT_METHOD_ID,
@@ -431,6 +432,23 @@ export interface ZenithSettings {
     moduleActivity: ModuleActivity[];
     /** The timetable provider when times come from a published table: '' for Aladhan, or a module's. */
     prayerProviderId: string;
+
+    // ── Study ──
+    /** Bells and lessons — see `modules/study/studyModel`. */
+    studySchedule: StudySchedule;
+    /** Lessons alternate between a first and a second week. */
+    studyTwoWeeks: boolean;
+    /** Monday of a week that is the cycle's first; empty: odd ISO weeks are. */
+    studyWeekAnchor: string;
+    /** What the two weeks are called. */
+    studyWeekNames: 'number' | 'numerator' | 'parity';
+    /** 0: every subgroup's lessons. */
+    studySubgroup: number;
+    /** `YYYY-MM-DD`, optional: outside the term the timetable shows holidays. */
+    studyTermStart: string;
+    studyTermEnd: string;
+    /** Minutes before a class that its reminder comes. */
+    studyRemindBefore: number;
     /**
      * What the installer put on disk, so Update / Reinstall / Uninstall know
      * where each module came from.
@@ -848,6 +866,14 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     safeMode: false,
     moduleActivity: [],
     prayerProviderId: '',
+    studySchedule: { bells: [], lessons: [] },
+    studyTwoWeeks: false,
+    studyWeekAnchor: '',
+    studyWeekNames: 'number',
+    studySubgroup: 0,
+    studyTermStart: '',
+    studyTermEnd: '',
+    studyRemindBefore: 10,
     installedModules: [],
     settingsVersion: CURRENT_SETTINGS_VERSION,
     weatherUnit: 'c',

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { readdirSync } from 'node:fs';
 import {
     FEATURES,
     featureBlock,
@@ -20,7 +21,12 @@ import {
 import { groupModes } from '../src/modules/tasks/components/TasksApp';
 import { calendarModes } from '../src/modules/tasks-calendar/components/TasksCalendarApp';
 
-const BUILT_IN_MODULES = new Set(DEFAULT_SETTINGS.activeModuleIds);
+// Every module that ships, on or off by default — Study is off until chosen.
+const BUILT_IN_MODULES = new Set(
+    readdirSync('src/modules', { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
+);
 
 const settingsWith = (patch: Partial<ZenithSettings> = {}): ZenithSettings => ({
     ...DEFAULT_SETTINGS,

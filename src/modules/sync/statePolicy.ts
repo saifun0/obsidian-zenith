@@ -222,6 +222,15 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // A module's provider exists only where the module is installed; the
     // module record syncs, so the choice can too.
     prayerProviderId: { scope: 'shared' },
+    // The timetable is the same on every device.
+    studySchedule: { scope: 'shared' },
+    studyTwoWeeks: { scope: 'shared' },
+    studyWeekAnchor: { scope: 'shared' },
+    studyWeekNames: { scope: 'shared' },
+    studySubgroup: { scope: 'shared' },
+    studyTermStart: { scope: 'shared' },
+    studyTermEnd: { scope: 'shared' },
+    studyRemindBefore: { scope: 'shared' },
 
     // ── Live state ──
     activeTimer: { scope: 'shared', merge: 'timer' },

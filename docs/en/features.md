@@ -45,6 +45,7 @@ off and says what it is waiting for.
 | Journal | Check-in block, calendar coloured by mood, habit month, weekly goals and limits, habits to quit, year in pixels, question of the day (off by default), morning and evening rituals, ritual card, reviews, year in review, word count, statistics, check-in widget |
 | Content | Continue shelf, re-reads, yearly challenge, “+1” button, select several, filter by genre, import, statistics, widget |
 | Prayer | Sunrise, voluntary prayers, Hijri date, week strip, statistics, reminders, fasting, voluntary fast days, iftar and suhoor, widget |
+| [Study](study.md) | Classes widget, tasks for the next class, class reminders (off by default) |
 | Weather | Hourly forecast, sunrise & sunset, air quality |
 
 Modules that do one thing — the navigator, the picture, the media banner — have no features

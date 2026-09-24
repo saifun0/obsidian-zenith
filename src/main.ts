@@ -17,6 +17,7 @@ import { ContentModule } from './modules/content/ContentModule';
 import { ProjectsModule } from './modules/projects/ProjectsModule';
 import { JournalModule } from './modules/journal/JournalModule';
 import { PrayerModule } from './modules/prayer/PrayerModule';
+import { StudyModule } from './modules/study/StudyModule';
 import { MediaModule } from './modules/media/MediaModule';
 import { SyncModule } from './modules/sync/SyncModule';
 import { useZenithStore, resetZenithStore } from './store';
@@ -194,6 +195,7 @@ export default class ZenithPlugin extends Plugin {
         this.moduleManager.register(new ProjectsModule(this));
         this.moduleManager.register(new JournalModule(this));
         this.moduleManager.register(new PrayerModule(this));
+        this.moduleManager.register(new StudyModule(this));
         this.moduleManager.register(new MediaModule(this));
         this.moduleManager.register(new SyncModule(this));
 

@@ -161,6 +161,16 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     safeMode: 'no',
     moduleActivity: 'no',
     prayerProviderId: 'no',
+    // A timetable, a subgroup and term dates are one person's; how the weeks
+    // are called and when to be reminded are a way of working.
+    studySchedule: 'no',
+    studyTwoWeeks: 'yes',
+    studyWeekAnchor: 'no',
+    studyWeekNames: 'yes',
+    studySubgroup: 'no',
+    studyTermStart: 'no',
+    studyTermEnd: 'no',
+    studyRemindBefore: 'yes',
     installedModules: 'no',
     // Personal: a profile is shared, and a birth date is nobody else's.
     dashboardBirthDate: 'no',

@@ -195,6 +195,11 @@ export const FEATURES = [
     feature('prayer.fasting', 'prayer'),
     feature('prayer.fastingHints', 'prayer', { requires: ['prayer.fasting'] }),
     feature('prayer.iftarSuhoor', 'prayer'),
+
+    // ── Study ──
+    feature('study.widget', 'study'),
+    feature('study.homework', 'study', { requiresModules: ['tasks'] }),
+    feature('study.reminders', 'study', { default: false }),
     feature('prayer.widget', 'prayer'),
 
     // ── Weather ──

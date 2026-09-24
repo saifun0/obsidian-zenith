@@ -22,6 +22,7 @@ export const VIEW_TYPE_PROJECTS = 'zenith-projects-view';
  * detach leaves left in workspace layouts saved while it was still a view.
  */
 export const VIEW_TYPE_PRAYER = 'zenith-prayer-view';
+export const VIEW_TYPE_STUDY = 'zenith-study-view';
 
 // ── Image file extensions (Media module) ─────────────
 export const IMAGE_EXTENSIONS = [

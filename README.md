@@ -43,6 +43,7 @@ instantly — no Obsidian restart required.
 | [Tasks](docs/en/tasks.md) | The task format: priorities, dates, tags, projects, and how ordering is stored. |
 | [Journal](docs/en/journal.md) | Daily notes, habit / scale / number tracking, templates, and captured tasks. |
 | [Prayer](docs/en/prayer.md) | Prayer times computed on the device, and what the daily note records. |
+| [Study](docs/en/study.md) | The class timetable: pasting it (an AI chat can make it from a photo), editing it, the card and reminders. |
 | [Content](docs/en/content.md) | The content format, the library, and importing from MyAnimeList, Goodreads and Letterboxd. |
 | [Language](docs/en/language.md) | How Zenith picks a language, and how a module brings its own strings. |
 | [Custom icons](docs/en/icons.md) | Icon packs, module artwork, and what an SVG has to survive to be accepted. |

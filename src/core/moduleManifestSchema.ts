@@ -68,6 +68,7 @@ const RESERVED_IDS: ReadonlySet<string> = new Set([
     'content',
     'journal',
     'media',
+    'study',
     'zenith',
     'settings',
     'core',
