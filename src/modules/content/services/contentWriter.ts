@@ -1,7 +1,8 @@
 import { App, TFile, TFolder, normalizePath } from 'obsidian';
 import type { ContentStatus } from '../../../core/constants';
 import { getTodayString } from '../../../core/dateUtils';
-import { datesForStatus, type ContentDates } from './contentDates';
+import type { ContentDates } from './contentDates';
+import { transitionFor, type Transition } from './readings';
 
 export interface NewContentInput {
     title: string;
@@ -47,9 +48,10 @@ export class ContentWriter {
     async setStatus(
         filePath: string,
         status: ContentStatus,
-        dates?: ContentDates
-    ): Promise<ContentDates | null> {
-        const patch = dates ? datesForStatus(status, dates, getTodayString()) : null;
+        dates?: ContentDates & { readings?: string[] },
+        withReadings = false
+    ): Promise<Transition | null> {
+        const patch = dates ? transitionFor(status, dates, getTodayString(), withReadings) : null;
         // `updateFields` deletes keys set to undefined, which is exactly the
         // "clear this date" half of the patch.
         await this.updateFields(filePath, { status, ...(patch ?? {}) });

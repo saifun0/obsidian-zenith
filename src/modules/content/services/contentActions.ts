@@ -3,7 +3,14 @@ import type { ContentStatus } from '../../../core/constants';
 import { getTodayString } from '../../../core/dateUtils';
 import type { ContentItem } from '../../../store/contentSlice';
 import { ContentWriter } from './contentWriter';
-import { datesForStatus } from './contentDates';
+import { transitionFor } from './readings';
+import { featureEnabled } from '../../../core/features';
+import { useZenithStore } from '../../../store';
+
+/** Whether re-reads are kept as a list — the `content.readings` feature. */
+function keepsReadings(): boolean {
+    return featureEnabled(useZenithStore.getState().settings, 'content.readings');
+}
 import { statusForProgress, type ProgressValue } from './progress';
 
 /**
@@ -28,10 +35,12 @@ export async function setItemStatus(
     item: ContentItem,
     next: ContentStatus
 ): Promise<ItemPatch> {
-    const dates = await new ContentWriter(app).setStatus(item.filePath, next, {
-        started: item.started,
-        finished: item.finished,
-    });
+    const dates = await new ContentWriter(app).setStatus(
+        item.filePath,
+        next,
+        { started: item.started, finished: item.finished, readings: item.readings },
+        keepsReadings()
+    );
     return { status: next, ...(dates ?? {}) };
 }
 
@@ -59,7 +68,12 @@ export async function bumpProgress(
     // re-parse in between would briefly show progress against the old status.
     const dates =
         status !== item.status
-            ? datesForStatus(status, { started: item.started, finished: item.finished }, getTodayString())
+            ? transitionFor(
+                  status,
+                  { started: item.started, finished: item.finished, readings: item.readings },
+                  getTodayString(),
+                  keepsReadings()
+              )
             : null;
 
     await new ContentWriter(app).patch(item.filePath, {

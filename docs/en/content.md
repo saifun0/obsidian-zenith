@@ -48,6 +48,21 @@ beginning something records `started` (a re-read keeps the original), finishing 
 *not* backfill a start date — guessing "today" would report an imported backlog as read in
 a single day.
 
+**Re-reads** (*Content → Features → Re-reads*). Starting a finished item again keeps the
+reading before it: the note gains a list of every reading, the last one open until you
+finish it —
+
+```yaml
+readings: ["2019-03-01/2019-03-20", "2026-08-02/"]
+```
+
+— written only once an item is read a second time; a book read once keeps just its two
+dates. `started` stays the first start and `finished` the last finish. Each reading counts
+for itself: the average reading time is taken over readings, so a book read again seven
+years later is two readings of a few weeks, not one of seven years (which is what it used to
+say). The item's card lists every reading, and the statistics count what was read more than
+once. Sending an item back to the backlog drops the reading that had begun, not the history.
+
 ## Working with the library
 
 Every poster is a control, not just a picture. **Right-click** any card for a menu: set

@@ -166,6 +166,7 @@ export const FEATURES = [
     feature('content.multiSelect', 'content'),
     feature('content.genreFilter', 'content'),
     feature('content.import', 'content'),
+    feature('content.readings', 'content'),
     feature('content.stats', 'content'),
     feature('content.widget', 'content'),
 

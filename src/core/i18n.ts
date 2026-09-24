@@ -7,6 +7,7 @@ import { PROFILE_STRINGS } from './profiles/strings';
 import { PRAYER_STRINGS } from '../modules/prayer/strings';
 import { TASK_STRINGS } from '../modules/tasks/strings';
 import { JOURNAL_STRINGS } from '../modules/journal/strings';
+import { CONTENT_STRINGS } from '../modules/content/strings';
 
 /**
  * Minimal i18n for Zenith's own UI.
@@ -3553,6 +3554,7 @@ export const DICTS: Record<Locale, Dict> = {
         ...PRAYER_STRINGS.en,
         ...TASK_STRINGS.en,
         ...JOURNAL_STRINGS.en,
+        ...CONTENT_STRINGS.en,
     },
     ru: {
         ...RU,
@@ -3562,6 +3564,7 @@ export const DICTS: Record<Locale, Dict> = {
         ...PRAYER_STRINGS.ru,
         ...TASK_STRINGS.ru,
         ...JOURNAL_STRINGS.ru,
+        ...CONTENT_STRINGS.ru,
     },
 };
 

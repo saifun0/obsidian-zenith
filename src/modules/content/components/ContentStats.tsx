@@ -109,6 +109,14 @@ export const ContentStats: React.FC<ContentStatsProps> = ({ items, onSelectGenre
                         </span>
                     </Card>
                 )}
+                {stats.reread > 0 && (
+                    <Card className="zenith-content-stats__metric" padding="md">
+                        <span className="zenith-content-stats__metric-value">{stats.reread}</span>
+                        <span className="zenith-content-stats__metric-label">
+                            {t('content.stats.reread')}
+                        </span>
+                    </Card>
+                )}
                 {stats.avgDaysToFinish != null && (
                     <Card className="zenith-content-stats__metric" padding="md">
                         <span className="zenith-content-stats__metric-value">

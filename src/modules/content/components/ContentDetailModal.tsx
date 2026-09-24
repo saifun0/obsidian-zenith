@@ -10,7 +10,8 @@ import { useZenithStore } from '../../../store';
 import { useApp } from '../../../context/AppContext';
 import { ContentWriter } from '../services/contentWriter';
 import { setItemStatus } from '../services/contentActions';
-import { datesForStatus, daysBetween, type ContentDates } from '../services/contentDates';
+import { daysBetween, type ContentDates } from '../services/contentDates';
+import { readingsOf, transitionFor } from '../services/readings';
 import { getTodayString } from '../../../core/dateUtils';
 import { useTranslation } from '../../../core/i18n';
 import { resolveCover } from '../services/coverUrl';
@@ -56,6 +57,7 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
     const { app } = useApp();
     const t = useTranslation();
     const genreFilterOn = useFeature('content.genreFilter');
+    const readingsOn = useFeature('content.readings');
     const updateItemRating = useZenithStore((s) => s.updateItemRating);
     const patchContentItem = useZenithStore((s) => s.patchContentItem);
     const setContentGenreFilter = useZenithStore((s) => s.setContentGenreFilter);
@@ -63,7 +65,11 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
     // Local mirror so the modal reflects edits without waiting for a re-parse.
     const [rating, setRating] = useState(item.rating);
     const [status, setStatus] = useState<ContentStatus>(item.status);
-    const [dates, setDates] = useState<ContentDates>({ started: item.started, finished: item.finished });
+    const [dates, setDates] = useState<ContentDates & { readings?: string[] }>({
+        started: item.started,
+        finished: item.finished,
+        readings: item.readings,
+    });
     const [progress, setProgress] = useState<ProgressValue>({
         current: item.progressCurrent ?? 0,
         total: item.progressTotal,
@@ -85,7 +91,7 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
         setShownId(item.id);
         setRating(item.rating);
         setStatus(item.status);
-        setDates({ started: item.started, finished: item.finished });
+        setDates({ started: item.started, finished: item.finished, readings: item.readings });
         setProgress({ current: item.progressCurrent ?? 0, total: item.progressTotal });
         setShowFullDesc(false);
     }
@@ -109,7 +115,7 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
         setStatus(value);
         // Mirror the date stamps locally too, so the "started / finished" row
         // updates with the dropdown rather than a re-parse later.
-        const patch = datesForStatus(value, pending.current.dates, getTodayString());
+        const patch = transitionFor(value, pending.current.dates, getTodayString(), readingsOn);
         if (patch) setDates((d) => ({ ...d, ...patch }));
         patchContentItem(item.id, { status: value, ...(patch ?? {}) });
         try {
@@ -145,7 +151,12 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
         let datePatch: ContentDates | null = null;
         if (nextStatus !== status) {
             setStatus(nextStatus);
-            const patch = datesForStatus(nextStatus, pending.current.dates, getTodayString());
+            const patch = transitionFor(
+                nextStatus,
+                pending.current.dates,
+                getTodayString(),
+                readingsOn
+            );
             if (patch) setDates((d) => ({ ...d, ...patch }));
             datePatch = patch;
         }
@@ -199,6 +210,7 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
         .join('  ·  ');
 
     const span = daysBetween(dates.started, dates.finished);
+    const readings = readingsOf(dates);
     const descTruncated = (item.description?.length ?? 0) > DESC_CLAMP;
 
     return (
@@ -312,12 +324,38 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
                                 {t('content.detail.finished', { date: dates.finished })}
                             </span>
                         )}
-                        {span != null && (
+                        {span != null && readings.length < 2 && (
                             <span className="zenith-content-modal__date zenith-text--muted">
                                 {t.plural('content.detail.tookDays', span)}
                             </span>
                         )}
                     </div>
+                )}
+
+                {/* Every reading, once there is more than one: the history the
+                    two dates above can only summarise. */}
+                {readings.length > 1 && (
+                    <ol className="zenith-content-modal__readings" aria-label={t('content.detail.readings')}>
+                        {readings.map((r, i) => {
+                            const days = daysBetween(r.start, r.end);
+                            return (
+                                <li key={i}>
+                                    {r.end
+                                        ? t('content.detail.readingSpan', {
+                                              from: r.start ?? '…',
+                                              to: r.end,
+                                          })
+                                        : t('content.detail.readingOpen', { date: r.start ?? '…' })}
+                                    {days != null && (
+                                        <span className="zenith-text--muted">
+                                            {' · '}
+                                            {t.plural('content.detail.tookDays', days)}
+                                        </span>
+                                    )}
+                                </li>
+                            );
+                        })}
+                    </ol>
                 )}
 
                 {shows('description') && item.description && (

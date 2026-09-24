@@ -3,6 +3,7 @@ import type { ContentItem } from '../../../store/contentSlice';
 import { CONTENT_STATUSES } from '../../../core/constants';
 import type { ContentStatus } from '../../../core/constants';
 import { parseProgress, statusForProgress } from './progress';
+import { parseReadingList } from './readings';
 
 /**
  * Build a normalized {@link ContentItem} from a file's frontmatter + body.
@@ -59,6 +60,7 @@ export function normalizeContentItem(
         progressTotal: progress?.total,
         started: toIsoDate(fm.started),
         finished: toIsoDate(fm.finished),
+        readings: parseReadingList(fm.readings),
         createdAt: stat?.ctime || undefined,
         updatedAt: stat?.mtime || undefined,
     };

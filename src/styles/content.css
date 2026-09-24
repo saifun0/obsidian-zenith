@@ -1592,3 +1592,12 @@ button.zenith-ctype__add {
     line-height: 1.45;
     color: var(--zenith-text-faint);
 }
+
+/* Each reading of an item read more than once. */
+.zenith-content-modal__readings {
+    margin: 0;
+    padding-left: 1.4em;
+    font-size: 0.82rem;
+    color: var(--zenith-text-normal);
+    font-variant-numeric: tabular-nums;
+}

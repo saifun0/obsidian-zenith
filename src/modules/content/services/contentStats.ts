@@ -1,6 +1,6 @@
 import type { ContentItem } from '../../../store/contentSlice';
 import { toLocalIsoDate } from '../../../core/dateUtils';
-import { daysBetween } from './contentDates';
+import { finishedReadings, readingDurations } from './readings';
 import { progressPercent } from './progress';
 
 /**
@@ -42,10 +42,14 @@ export interface ContentStatsResult {
     /** Mean completion of everything in progress that has a known total, 0–100. */
     averageProgress: number | null;
     /**
-     * Mean days from `started` to `finished`, over the items that record both.
-     * Null until at least one item has been tracked end to end.
+     * Mean days a finished reading took, over every reading that records both
+     * ends — each re-read on its own, so a book read again seven years later
+     * is two readings of a few weeks, not one of seven years. Null until at
+     * least one item has been tracked end to end.
      */
     avgDaysToFinish: number | null;
+    /** Items finished more than once. */
+    reread: number;
     topGenres: GenreCount[];
     /** Items added per month, oldest first — only months that have any. */
     addedByMonth: MonthCount[];
@@ -109,8 +113,7 @@ export function computeContentStats(
                 finishedRecently++;
             }
 
-            const span = daysBetween(item.started, item.finished);
-            if (span != null) durations.push(span);
+            durations.push(...readingDurations(item));
         }
 
         if (item.status === 'in-progress') {
@@ -122,6 +125,8 @@ export function computeContentStats(
             if (idleDays != null && idleDays > staleDays) stalled.push(item);
         }
     }
+
+    const reread = items.filter((item) => finishedReadings(item) > 1).length;
 
     stalled.sort((a, b) => (a.updatedAt ?? 0) - (b.updatedAt ?? 0));
 
@@ -140,6 +145,7 @@ export function computeContentStats(
                 : null,
         avgDaysToFinish:
             durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : null,
+        reread,
         topGenres: [...genres.entries()]
             .map(([genre, count]) => ({ genre, count }))
             .sort((a, b) => b.count - a.count || a.genre.localeCompare(b.genre))

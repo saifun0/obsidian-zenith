@@ -30,6 +30,11 @@ export interface ContentItem {
     started?: string;
     /** `YYYY-MM-DD` the item was finished. */
     finished?: string;
+    /**
+     * Every reading as `start/end` — written only once an item is read a second
+     * time. See `readings.ts`.
+     */
+    readings?: string[];
     /** File creation time (ms) — powers "recently added" sorting. */
     createdAt?: number;
     /** File modification time (ms) — powers "recently updated" sorting. */
