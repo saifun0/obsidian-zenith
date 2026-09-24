@@ -136,6 +136,8 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
             'prayer.weekStrip',
             'prayer.stats',
             'prayer.reminders',
+            'prayer.fasting',
+            'prayer.fastingHints',
             'prayer.widget',
             'journal.dailyBlock',
         ],

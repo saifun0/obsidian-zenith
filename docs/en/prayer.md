@@ -74,3 +74,22 @@ number of minutes before each prayer — only while Obsidian is running, and wit
 a plugin cannot wake a sleeping phone, and promising otherwise would be a promise that
 breaks on the morning it matters. Each reminder is also kept in the [notification center](notifications.md);
 one that came while Obsidian was closed waits there as missed instead of popping up late.
+
+## Fasting
+
+*Prayer → Features → Fasting.* The day's fast is one property of its note:
+
+```yaml
+fast: ramadan   # ramadan | qada | nafl | broken | excused
+```
+
+The prayer view offers what fits the day — in Ramadan **Fasted**, **Broken** or **Excused**;
+the rest of the year **Making up** or **Voluntary** — and a second tap clears it. In Ramadan a
+line says where you are: *Ramadan, day 12 of 30 · fasted 11*. A Ramadan day with nothing
+written is unrecorded, never counted as missed. All year, the view counts the fasts made up.
+`fast:` is read in either language (`каза`, `нафль`…) for notes written by hand.
+
+With **Voluntary fast days** on, the view says when a day is a recommended voluntary fast:
+Mondays and Thursdays, the white days (13–15), Ashura and the day of Arafah — and never on
+the two Eids or the days of Tashriq, which is why the 13th of Dhu al-Hijjah is not offered
+as a white day.

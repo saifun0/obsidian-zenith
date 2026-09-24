@@ -178,6 +178,8 @@ export const FEATURES = [
     feature('prayer.weekStrip', 'prayer'),
     feature('prayer.stats', 'prayer'),
     feature('prayer.reminders', 'prayer', { settingKey: 'prayerNotify', default: false }),
+    feature('prayer.fasting', 'prayer'),
+    feature('prayer.fastingHints', 'prayer', { requires: ['prayer.fasting'] }),
     feature('prayer.widget', 'prayer'),
 
     // ── Weather ──

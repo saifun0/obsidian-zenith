@@ -1620,3 +1620,20 @@
     border-radius: 50%;
     background: var(--zenith-accent);
 }
+
+/* ── The day's fast, under the prayers ── */
+.zenith-prayer__fast {
+    display: flex;
+    flex-direction: column;
+    gap: var(--zenith-space-xs);
+}
+
+.zenith-prayer__fast-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.zenith-prayer__note.is-hint {
+    color: var(--zenith-accent);
+}

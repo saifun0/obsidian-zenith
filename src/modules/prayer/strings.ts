@@ -68,6 +68,26 @@ export const PRAYER_STRINGS: { en: Record<string, string>; ru: Record<string, st
             'The year’s timetable has not loaded yet. It is kept on this device once it has.',
         'prayer.table.unavailableHint':
             'The timetable could not be loaded. Zenith keeps trying, and the times appear as soon as it arrives.',
+
+        'feature.prayer.fasting': 'Fasting',
+        'feature.prayer.fasting.desc':
+            'The day’s fast in its note (`fast: ramadan`), Ramadan’s progress, and how many fasts were made up.',
+        'feature.prayer.fastingHints': 'Voluntary fast days',
+        'feature.prayer.fastingHints.desc':
+            'Says when a day is a recommended voluntary fast: Mondays and Thursdays, the white days, Ashura, Arafah.',
+        'fast.title': 'Fast',
+        'fast.kind.ramadan': 'Fasted',
+        'fast.kind.broken': 'Broken',
+        'fast.kind.excused': 'Excused',
+        'fast.kind.qada': 'Making up',
+        'fast.kind.nafl': 'Voluntary',
+        'fast.ramadan': 'Ramadan, day {day} of {length} · fasted {fasted}',
+        'fast.qadaCount.one': '{count} fast made up',
+        'fast.qadaCount.other': '{count} fasts made up',
+        'fast.hint.monThu': 'Monday or Thursday — a sunnah fast.',
+        'fast.hint.whiteDays': 'One of the white days (13–15) — a sunnah fast.',
+        'fast.hint.ashura': 'Ashura — a sunnah fast.',
+        'fast.hint.arafah': 'The day of Arafah — a sunnah fast for those not on Hajj.',
     },
     ru: {
         'prayer.rounding.nearest': 'До ближайшей минуты',
@@ -133,5 +153,26 @@ export const PRAYER_STRINGS: { en: Record<string, string>; ru: Record<string, st
             'Таблица года ещё не загружена. Загруженная, она хранится на этом устройстве.',
         'prayer.table.unavailableHint':
             'Таблицу не удалось загрузить. Zenith продолжает пробовать — времена появятся, как только она придёт.',
+
+        'feature.prayer.fasting': 'Пост',
+        'feature.prayer.fasting.desc':
+            'Пост дня в его заметке (`fast: ramadan`), прогресс Рамадана и число восполненных постов.',
+        'feature.prayer.fastingHints': 'Дни добровольного поста',
+        'feature.prayer.fastingHints.desc':
+            'Подсказывает, когда день — желательный добровольный пост: понедельник и четверг, белые дни, Ашура, Арафа.',
+        'fast.title': 'Пост',
+        'fast.kind.ramadan': 'Постился',
+        'fast.kind.broken': 'Прерван',
+        'fast.kind.excused': 'По уважительной',
+        'fast.kind.qada': 'Восполнение',
+        'fast.kind.nafl': 'Добровольный',
+        'fast.ramadan': 'Рамадан, день {day} из {length} · постился {fasted}',
+        'fast.qadaCount.one': 'Восполнен {count} пост',
+        'fast.qadaCount.few': 'Восполнено {count} поста',
+        'fast.qadaCount.many': 'Восполнено {count} постов',
+        'fast.hint.monThu': 'Понедельник или четверг — желательный пост (сунна).',
+        'fast.hint.whiteDays': 'Один из белых дней (13–15) — желательный пост.',
+        'fast.hint.ashura': 'Ашура — желательный пост.',
+        'fast.hint.arafah': 'День Арафа — желательный пост для тех, кто не в хадже.',
     },
 };

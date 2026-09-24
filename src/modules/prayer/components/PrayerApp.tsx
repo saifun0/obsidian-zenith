@@ -23,6 +23,7 @@ import {
 } from '../usePrayer';
 import { PrayerNoPlace } from './PrayerNoPlace';
 import { PrayerMethodPrompt } from './PrayerMethodPrompt';
+import { FastingPanel } from './FastingPanel';
 import { PrayerDayHead } from './PrayerDayHead';
 import { PrayerStatsPanel } from './PrayerStatsPanel';
 import { PrayerRow, PrayerMarkerRow } from './PrayerRow';
@@ -61,6 +62,7 @@ export const PrayerApp: FC = () => {
     const nowMinutes = useNowMinutes();
     const hijriOn = useFeature('prayer.hijri');
     const statsOn = useFeature('prayer.stats');
+    const fastingOn = useFeature('prayer.fasting');
     const hijri = useHijri(selected);
 
     const stats = useMemo(
@@ -193,6 +195,8 @@ export const PrayerApp: FC = () => {
                     </p>
                 )}
             </section>
+
+            {fastingOn && <FastingPanel date={selected} locked={isFuture} />}
 
             {statsOn && (
                 <PrayerStatsPanel
