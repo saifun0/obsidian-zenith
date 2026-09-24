@@ -4,7 +4,9 @@
 
 /* ── Tasks Container ────────────────────────────── */
 .zenith-tasks {
-    padding: var(--zenith-space-md) var(--zenith-space-lg);
+    /* Plus what a phone's chrome covers (base.css): this list scrolls itself. */
+    padding: calc(var(--zenith-space-md) + var(--zenith-inset-top, 0px)) var(--zenith-space-lg)
+        calc(var(--zenith-space-md) + var(--zenith-inset-bottom, 0px));
     max-width: 900px;
     margin: 0 auto;
     animation: zenith-fade-in var(--zenith-transition-slow);
@@ -16,7 +18,7 @@
 /* ── Sticky Header & Tabs ───────────────────────── */
 .zenith-tasks-header-wrapper {
     position: sticky;
-    top: 0;
+    top: var(--zenith-sticky-top, 0px);
     z-index: 10;
     background: var(--background-primary);
     padding-top: var(--zenith-space-sm);

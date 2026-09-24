@@ -20,8 +20,16 @@ import type { ZenithSettings } from '../store/settingsSlice';
  * layout that already fits. Where the measurement is wrong for a phone, the
  * bands can be set by hand (Appearance → Phone), for portrait.
  *
- * Views get `--zenith-inset-top` / `--zenith-inset-bottom` and, when either is
- * above zero, the class `has-zenith-insets`, which pads them (`base.css`).
+ * Views get `--zenith-inset-top` / `--zenith-inset-bottom`, which each view's
+ * own root adds to its padding. Padding inside the scroll, not a frame round
+ * it: the view opens clear of the chrome, and what scrolls past goes on under
+ * it, seen round Obsidian's buttons rather than cut off at a band.
+ *
+ * Scrolling a view also hands its position to Obsidian's navbar, the way a
+ * note does, so on a phone the header and the buttons slide away while you
+ * scroll down and come back when you scroll up — or not, if Obsidian's own
+ * "Full screen" (`autoFullScreen`) is off. While they are away nothing is re-measured:
+ * their slid-away position is not where they cover.
  * The settings page gets `--zenith-inset-top` too: Obsidian floats its back
  * button, title and close button over the settings' scroll area, below the
  * status bar, so what covers its top is measured from those
@@ -62,6 +70,11 @@ export interface InsetReading {
 }
 
 const VIEW_SELECTOR = '.workspace-leaf-content > .view-content.zenith-root';
+
+/** Obsidian's navbar, as notes use it: `onScroll` hides or restores it. */
+interface MobileNavbar {
+    onScroll?: (el: HTMLElement, scrollTop: number) => void;
+}
 const SETTINGS_SELECTOR = '.zenith-custom-settings-container.is-mobile-settings';
 
 /** Portrait: the only orientation the hand-set bands are meant for. */
@@ -104,6 +117,7 @@ export class MobileInsets {
     private frame = 0;
     private observer: ResizeObserver | null = null;
     private observed = new Set<Element>();
+    private scrolling = new Map<HTMLElement, (e: Event) => void>();
     private disposers: Array<() => void> = [];
     private listeners = new Set<() => void>();
     reading: InsetReading = {
@@ -158,6 +172,10 @@ export class MobileInsets {
         this.observer?.disconnect();
         this.observer = null;
         this.observed.clear();
+        this.scrolling.forEach((listener, el) =>
+            el.removeEventListener('scroll', listener, { capture: true })
+        );
+        this.scrolling.clear();
         this.probe?.remove();
         this.probe = null;
         document.body.style.removeProperty('--zenith-safe-top');
@@ -165,7 +183,6 @@ export class MobileInsets {
         document.querySelectorAll<HTMLElement>(VIEW_SELECTOR).forEach((el) => {
             el.style.removeProperty('--zenith-inset-top');
             el.style.removeProperty('--zenith-inset-bottom');
-            el.removeClass('has-zenith-insets');
         });
         document.querySelectorAll<HTMLElement>(SETTINGS_SELECTOR).forEach((el) => {
             el.style.removeProperty('--zenith-inset-top');
@@ -189,9 +206,30 @@ export class MobileInsets {
         this.observer.observe(el);
     }
 
+    /**
+     * Pass a view's scrolling on to Obsidian's navbar. Caught on the way down
+     * (`capture`), so a view that scrolls an inner box — the task list, the
+     * calendar's hours — counts as well as one that scrolls as a whole.
+     */
+    private followScroll(el: HTMLElement): void {
+        if (this.scrolling.has(el)) return;
+        const listener = (e: Event) => {
+            const navbar = (this.plugin.app as unknown as { mobileNavbar?: MobileNavbar })
+                .mobileNavbar;
+            const target = e.target;
+            if (typeof navbar?.onScroll !== 'function' || !(target instanceof HTMLElement)) return;
+            navbar.onScroll(target, target.scrollTop);
+        };
+        el.addEventListener('scroll', listener, { capture: true, passive: true });
+        this.scrolling.set(el, listener);
+    }
+
     private measure(): void {
         const probe = this.probe;
         if (!probe) return;
+        // Header and navbar slid away while scrolling: measured now, they
+        // would cover nothing, and every view would jump up by their height.
+        if (document.body.hasClass('is-hidden-nav')) return;
         const settings: ZenithSettings = useZenithStore.getState().settings;
         const height = window.innerHeight;
 
@@ -223,6 +261,7 @@ export class MobileInsets {
         const applied: Bands = { top: 0, bottom: 0 };
         document.querySelectorAll<HTMLElement>(VIEW_SELECTOR).forEach((el) => {
             this.watch(el);
+            this.followScroll(el);
             if (!visible(el)) return;
             const box = el.getBoundingClientRect();
             // A header drawn over its own view's content covers it too.
@@ -235,7 +274,6 @@ export class MobileInsets {
             const inset = overlap(box, height, { top, bottom: screen.bottom });
             el.style.setProperty('--zenith-inset-top', `${inset.top}px`);
             el.style.setProperty('--zenith-inset-bottom', `${inset.bottom}px`);
-            el.toggleClass('has-zenith-insets', inset.top > 0 || inset.bottom > 0);
             applied.top = Math.max(applied.top, inset.top);
             applied.bottom = Math.max(applied.bottom, inset.bottom);
         });

@@ -25,3 +25,4 @@
 @import '../settings/components/SettingsApp.css';
 @import '../components/ui/CheckboxCard.css';
 @import '../settings/components/debug/Debug.css';
+@import './mobile.css';

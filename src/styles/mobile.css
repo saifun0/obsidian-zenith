@@ -1,0 +1,18 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — on a phone
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* A narrow gutter. The views keep a desktop's 16–24px at the sides, and on a
+   screen 390px wide that, with the chrome above and below, reads as looking
+   down a tube at the view. Top and bottom are each view's own, with the
+   phone's chrome added (base.css). Last in the cascade, so it wins over the
+   views' own rules at equal weight. */
+body.is-phone .zenith-tasks,
+body.is-phone .zenith-projects,
+body.is-phone .zenith-content,
+body.is-phone .zenith-study-view,
+body.is-phone .zenith-journal,
+body.is-phone .zenith-tcal {
+    padding-right: 12px;
+    padding-left: 12px;
+}

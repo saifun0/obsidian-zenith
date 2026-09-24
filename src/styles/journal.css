@@ -12,7 +12,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--zenith-space-md);
-    padding: var(--zenith-space-md);
+    padding: calc(var(--zenith-space-md) + var(--zenith-inset-top, 0px)) var(--zenith-space-md)
+        calc(var(--zenith-space-md) + var(--zenith-inset-bottom, 0px));
     max-width: 1100px;
     margin: 0 auto;
 }
@@ -27,7 +28,8 @@
 /* A phone has no pixels to spare on a frame around the cards. */
 body.is-phone .zenith-journal {
     gap: 12px;
-    padding: 12px 12px var(--zenith-space-xl);
+    padding: calc(12px + var(--zenith-inset-top, 0px)) 12px
+        calc(var(--zenith-space-xl) + var(--zenith-inset-bottom, 0px));
 }
 
 /* Every block on the page is the same surface, stated once. The habit grid

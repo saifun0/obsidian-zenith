@@ -15,16 +15,20 @@
 }
 
 /* ── A phone's own chrome ───────────────────────────
-   `core/mobileInsets.ts` measures how much of a view the camera and status bar
-   cover at the top and Obsidian's buttons at the bottom. A transparent border,
-   not padding: the scroll area itself stops short of the covered bands, so
-   nothing scrolls under them, and a stuck header sticks below the camera
-   rather than behind it. The border shows the view's own background. The
-   dashboard, whose wallpaper has to reach the edges, pads its board instead. */
-.view-content.zenith-root.has-zenith-insets:not(.zenith-dash-host) {
-    box-sizing: border-box;
-    border-top: var(--zenith-inset-top, 0px) solid transparent;
-    border-bottom: var(--zenith-inset-bottom, 0px) solid transparent;
+   `core/mobileInsets.ts` measures how much of a view the camera, the status
+   bar and Obsidian's header cover at the top, and its buttons at the bottom,
+   as `--zenith-inset-top` / `--zenith-inset-bottom`. Each view's root adds
+   them to its own padding, inside the scroll: it opens clear of the chrome,
+   and what scrolls past goes on under it.
+
+   A stuck header stops below Obsidian's header — or, while that has slid away
+   on a scroll (`is-hidden-nav`), below the status bar. */
+.view-content.zenith-root {
+    --zenith-sticky-top: var(--zenith-inset-top, 0px);
+}
+
+body.is-hidden-nav .view-content.zenith-root {
+    --zenith-sticky-top: min(var(--zenith-inset-top, 0px), var(--zenith-safe-top, 0px));
 }
 
 /* Reads the system's bands for `mobileInsets.ts`: Obsidian's own variables,

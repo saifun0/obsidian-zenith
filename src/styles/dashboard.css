@@ -295,8 +295,8 @@ body.is-phone .zenith-dashboard__bg::before {
 .zenith-dashboard__rail {
     position: sticky;
     /* The same air the board has above it, so a stuck rail does not end up
-       flush against the top of the pane — or under a phone's camera. */
-    top: var(--zenith-dash-pad-top);
+       flush against the top of the pane — or under a phone's chrome. */
+    top: calc(var(--zenith-dash-pad-y) + var(--zenith-sticky-top, 0px));
     display: flex;
     flex-direction: column;
     align-items: flex-end;

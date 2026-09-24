@@ -15,7 +15,8 @@
 }
 
 .zenith-projects {
-    padding: var(--zenith-space-lg);
+    padding: calc(var(--zenith-space-lg) + var(--zenith-inset-top, 0px)) var(--zenith-space-lg)
+        calc(var(--zenith-space-lg) + var(--zenith-inset-bottom, 0px));
     max-width: 1280px;
     margin: 0 auto;
     animation: zenith-fade-in var(--zenith-transition-slow);
@@ -493,7 +494,8 @@
    the line below. */
 @container zenith-projects (max-width: 560px) {
     .zenith-projects {
-        padding: var(--zenith-space-md);
+        padding: calc(var(--zenith-space-md) + var(--zenith-inset-top, 0px)) var(--zenith-space-md)
+            calc(var(--zenith-space-md) + var(--zenith-inset-bottom, 0px));
     }
 
     .zenith-projects .zenith-vhead__caption {

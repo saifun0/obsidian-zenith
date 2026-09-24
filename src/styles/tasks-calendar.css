@@ -42,9 +42,20 @@
     gap: var(--zenith-space-sm);
     height: 100%;
     min-height: 0;
-    padding: var(--zenith-space-md);
+    /* The top clear of a phone's chrome (base.css). The bottom is the
+       scrollers' below, so the month, the hours and the agenda run on under
+       Obsidian's buttons: with any bottom band measured, the `max()` takes
+       the calendar's own bottom padding to zero. */
+    padding: calc(var(--zenith-space-md) + var(--zenith-inset-top, 0px)) var(--zenith-space-md)
+        max(0px, calc(var(--zenith-space-md) - var(--zenith-inset-bottom, 0px) * 100));
     box-sizing: border-box;
     font-size: 0.85rem;
+}
+
+.zenith-tcal__run,
+.zenith-tcal__hours,
+.zenith-tcal__agenda {
+    padding-bottom: var(--zenith-inset-bottom, 0px);
 }
 
 .zenith-tcal.is-narrow {

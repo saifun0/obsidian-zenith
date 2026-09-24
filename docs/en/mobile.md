@@ -5,8 +5,17 @@
 ## Screen edges
 
 A phone keeps the top of the screen for its camera and status bar. Obsidian keeps the bottom
-for its buttons. Zenith's views stay clear of both: the first card starts below the camera,
-and the last one scrolls to above the buttons, not under them.
+for its buttons. Zenith's views open clear of both: the first card starts below the camera and
+Obsidian's header, and the last one scrolls to above the buttons. The space is only for
+layout, not a band: whatever you scroll past goes on under the header and the buttons, seen
+around them, as in a note. On a phone the sides are narrower too, 12px.
+
+## Hiding on scroll
+
+Zenith's views hand their scrolling to Obsidian the way a note does. Scroll down and the
+header and buttons slide away; scroll up, or tap, and they come back. This follows Obsidian's
+own setting for it, *Full screen* ("automatically hide interface elements while reading"),
+found in Obsidian's settings on a phone: with that off, they stay.
 
 **Automatic** (the default) measures what actually covers each view:
 - the safe-area insets that Obsidian and the phone report;

@@ -587,7 +587,8 @@
     gap: 18px;
     max-width: 1200px;
     margin: 0 auto;
-    padding: var(--zenith-space-lg);
+    padding: calc(var(--zenith-space-lg) + var(--zenith-inset-top, 0px)) var(--zenith-space-lg)
+        calc(var(--zenith-space-lg) + var(--zenith-inset-bottom, 0px));
 }
 
 /* In a narrow pane the caption takes the line under the title, as in the
@@ -1346,7 +1347,8 @@
 /* ── Phones ──────────────────────────────────────── */
 @media (max-width: 520px) {
     .zenith-study-view {
-        padding: var(--zenith-space-md);
+        padding: calc(var(--zenith-space-md) + var(--zenith-inset-top, 0px)) var(--zenith-space-md)
+            calc(var(--zenith-space-md) + var(--zenith-inset-bottom, 0px));
     }
 
     .zenith-study-now__title {

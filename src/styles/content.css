@@ -5,7 +5,8 @@
 
 /* ── Content Container ──────────────────────────── */
 .zenith-content {
-    padding: var(--zenith-space-lg);
+    padding: calc(var(--zenith-space-lg) + var(--zenith-inset-top, 0px)) var(--zenith-space-lg)
+        calc(var(--zenith-space-lg) + var(--zenith-inset-bottom, 0px));
     max-width: 1200px;
     margin: 0 auto;
     animation: zenith-fade-in var(--zenith-transition-slow);
