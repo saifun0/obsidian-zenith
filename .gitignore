@@ -34,6 +34,9 @@ pnpm-debug.log*
 .env.local
 .env.*.local
 
+# Extra vaults `npm run build` deploys to (scripts/deploy.mjs)
+deploy.local.json
+
 # Editors
 .idea/
 .vscode/

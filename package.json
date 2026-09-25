@@ -8,7 +8,8 @@
     "scripts": {
         "dev": "node esbuild.config.mjs",
         "typecheck": "tsc --noEmit",
-        "build": "tsc --noEmit && node esbuild.config.mjs production",
+        "build": "tsc --noEmit && node esbuild.config.mjs production && node scripts/deploy.mjs",
+        "deploy": "node scripts/deploy.mjs",
         "clean": "rimraf ../zenith/main.js ../zenith/styles.css",
         "test": "vitest run",
         "test:watch": "vitest",

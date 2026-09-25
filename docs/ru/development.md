@@ -5,7 +5,8 @@
 ```bash
 npm install        # установить зависимости
 npm run dev        # сборка в режиме watch → ../zenith/
-npm run build      # проверка типов + продакшен-сборка
+npm run build      # проверка типов + продакшен-сборка, затем деплой
+npm run deploy     # скопировать последнюю сборку в хранилища из deploy.local.json
 npm run typecheck  # tsc --noEmit
 npm test           # прогнать юнит-тесты vitest
 npm run lint       # eslint
@@ -14,6 +15,16 @@ npm run format     # prettier --write
 
 Сборка кладёт `main.js`, `styles.css`, `manifest.json` и `versions.json` в соседнюю папку
 `../zenith/` — это и есть плагин, который загружает Obsidian.
+
+Чтобы в других хранилищах была та же сборка, перечислите их в `deploy.local.json` (он не в git):
+
+```json
+{ "vaults": ["E:/Projects/Obsidian/main"] }
+```
+
+Тогда `npm run build` копирует эти четыре файла в `.obsidian/plugins/zenith/` каждого
+хранилища. У каждого остаются свои `data.json`, состояние синхронизации и установленные
+модули. `npm run dev` не деплоит — сборки в режиме watch остаются в `../zenith/`.
 
 ## Необязательно: линт-правила Obsidian API
 

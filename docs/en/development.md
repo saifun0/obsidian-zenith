@@ -5,7 +5,8 @@
 ```bash
 npm install        # install dependencies
 npm run dev        # watch build → ../zenith/
-npm run build      # typecheck + production build
+npm run build      # typecheck + production build, then deploy
+npm run deploy     # copy the last build into the vaults in deploy.local.json
 npm run typecheck  # tsc --noEmit
 npm test           # run the vitest unit suite
 npm run lint       # eslint
@@ -14,6 +15,16 @@ npm run format     # prettier --write
 
 The build emits `main.js`, `styles.css`, `manifest.json` and `versions.json` into the
 sibling `../zenith/` folder, which is the actual plugin Obsidian loads.
+
+To keep other vaults on the same build, list them in `deploy.local.json` (not in git):
+
+```json
+{ "vaults": ["E:/Projects/Obsidian/main"] }
+```
+
+`npm run build` then copies those four files into each vault's `.obsidian/plugins/zenith/`.
+Each vault keeps its own `data.json`, sync state and installed modules. `npm run dev` does
+not deploy — watch builds stay in `../zenith/`.
 
 ## Optional: Obsidian API lint rules
 
