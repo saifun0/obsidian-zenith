@@ -62,6 +62,14 @@ export class StudyModule extends BaseModule {
                 ),
         });
         this.addCommand({
+            id: 'study-edit-json',
+            name: 'Edit the timetable as JSON',
+            callback: () =>
+                openStudyDialog(this.plugin, (close) =>
+                    createElement(ImportDialog, { onClose: close, json: true })
+                ),
+        });
+        this.addCommand({
             id: 'study-copy-prompt',
             name: 'Copy the AI prompt for a timetable',
             callback: () =>

@@ -941,6 +941,11 @@
     padding: 10px 12px;
 }
 
+/* A whole timetable to read through, not an answer to paste over. */
+.zenith-study-import.is-json .zenith-study-import__text {
+    height: min(60vh, 520px);
+}
+
 .zenith-study-import__text {
     width: 100%;
     min-height: 140px;

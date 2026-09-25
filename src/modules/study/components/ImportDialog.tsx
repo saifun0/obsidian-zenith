@@ -22,17 +22,26 @@ function problemText(p: ImportProblem, t: ReturnType<typeof useTranslation>): st
  * as it is typed: how many bells and classes, per day, and each line it had
  * to skip and why. Nothing is saved until "Replace", and replacing a
  * timetable that exists is asked about first.
+ *
+ * With `json`, the same box edits the timetable in place: it opens holding
+ * the current one, saves without asking, and will not save while any line
+ * would be skipped — a paste may lose a line the AI got wrong, a hand edit
+ * must not lose a class to a typo.
  */
-export const ImportDialog: FC<{ onClose: () => void }> = ({ onClose }) => {
+export const ImportDialog: FC<{ onClose: () => void; json?: boolean }> = ({ onClose, json }) => {
     const t = useTranslation();
     const { app } = useApp();
     const current = useStudySchedule();
     const twoWeeks = useZenithStore((s) => s.settings.studyTwoWeeks);
     const updateSettings = useZenithStore((s) => s.updateSettings);
-    const [text, setText] = useState('');
+    const [initial] = useState(() => (json ? exportSchedule(current, twoWeeks) : ''));
+    const [text, setText] = useState(initial);
 
     const result = useMemo(() => (text.trim() ? importSchedule(text) : null), [text]);
-    const ok = !!result && result.schedule.lessons.length > 0;
+    const ok =
+        !!result &&
+        result.schedule.lessons.length > 0 &&
+        (!json || (result.problems.length === 0 && text !== initial));
     const fatal = result?.problems.find((p) => p.kind === 'not-json' || p.kind === 'no-lessons');
 
     const perDay = useMemo(() => {
@@ -44,7 +53,7 @@ export const ImportDialog: FC<{ onClose: () => void }> = ({ onClose }) => {
 
     const save = async () => {
         if (!result || !ok) return;
-        if (current.lessons.length) {
+        if (!json && current.lessons.length) {
             const yes = await new ConfirmModal(app, {
                 title: t('study.importReplace'),
                 body: t('study.importConfirm', { count: current.lessons.length }),
@@ -73,40 +82,44 @@ export const ImportDialog: FC<{ onClose: () => void }> = ({ onClose }) => {
                 onClick={() => void save()}
                 disabled={!ok}
             >
-                {t('study.importReplace')}
+                {t(json ? 'study.save' : 'study.importReplace')}
             </button>
         </>
     );
 
     return (
         <Modal
-            title={t('study.importTitle')}
+            title={t(json ? 'study.jsonTitle' : 'study.importTitle')}
             onClose={onClose}
             size="lg"
             footer={footer}
-            className="zenith-study-import"
+            className={`zenith-study-import${json ? ' is-json' : ''}`}
         >
-            <p className="zenith-study-import__help">{t('study.importHelp')}</p>
-            <div className="zenith-study-import__actions">
-                <button
-                    type="button"
-                    className="zenith-btn zenith-btn--primary"
-                    onClick={() => void copyPrompt(t)}
-                >
-                    <Sparkles size={14} />
-                    {t('study.copyPrompt')}
-                </button>
-                {current.lessons.length > 0 && (
-                    <button
-                        type="button"
-                        className="zenith-btn zenith-btn--ghost"
-                        onClick={() => void copyCurrent()}
-                    >
-                        <Copy size={14} />
-                        {t('study.exportCurrent')}
-                    </button>
-                )}
-            </div>
+            {!json && (
+                <>
+                    <p className="zenith-study-import__help">{t('study.importHelp')}</p>
+                    <div className="zenith-study-import__actions">
+                        <button
+                            type="button"
+                            className="zenith-btn zenith-btn--primary"
+                            onClick={() => void copyPrompt(t)}
+                        >
+                            <Sparkles size={14} />
+                            {t('study.copyPrompt')}
+                        </button>
+                        {current.lessons.length > 0 && (
+                            <button
+                                type="button"
+                                className="zenith-btn zenith-btn--ghost"
+                                onClick={() => void copyCurrent()}
+                            >
+                                <Copy size={14} />
+                                {t('study.exportCurrent')}
+                            </button>
+                        )}
+                    </div>
+                </>
+            )}
             <textarea
                 className="zenith-input zenith-study-import__text"
                 value={text}

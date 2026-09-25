@@ -92,6 +92,7 @@ export const STUDY_STRINGS: { en: Record<string, string>; ru: Record<string, str
         'study.lesson.edit': 'Edit',
 
         'study.importTitle': 'Paste a timetable',
+        'study.jsonTitle': 'Timetable as JSON',
         'study.importHelp':
             'Paste the timetable as JSON. To skip writing it yourself: copy the prompt, send it to any AI chat with a photo or the text of your classes and bell times, and paste its answer here.',
         'study.importPlaceholder': '{ "bells": […], "lessons": […] }',
@@ -158,6 +159,9 @@ export const STUDY_STRINGS: { en: Record<string, string>; ru: Record<string, str
         'settings.studyEdit': 'Edit by hand',
         'settings.studyEdit.desc': 'Classes, bells and weeks, one by one.',
         'settings.studyEdit.button': 'Edit',
+        'settings.studyJson': 'Edit as JSON',
+        'settings.studyJson.desc': 'The whole timetable as one text.',
+        'settings.studyJson.button': 'Open',
         'settings.studyPrompt': 'AI prompt',
         'settings.studyPrompt.desc':
             'Explains the format to an AI chat, so it can turn a photo of your timetable into it.',
@@ -303,6 +307,7 @@ export const STUDY_STRINGS: { en: Record<string, string>; ru: Record<string, str
         'study.lesson.edit': 'Изменить',
 
         'study.importTitle': 'Вставить расписание',
+        'study.jsonTitle': 'Расписание в JSON',
         'study.importHelp':
             'Вставьте расписание в формате JSON. Чтобы не писать его самому: скопируйте промпт, отправьте его в любую нейросеть вместе с фото или текстом пар и звонков и вставьте её ответ сюда.',
         'study.importPlaceholder': '{ "bells": […], "lessons": […] }',
@@ -371,6 +376,9 @@ export const STUDY_STRINGS: { en: Record<string, string>; ru: Record<string, str
         'settings.studyEdit': 'Изменить вручную',
         'settings.studyEdit.desc': 'Пары, звонки и недели — по одной.',
         'settings.studyEdit.button': 'Изменить',
+        'settings.studyJson': 'Изменить в JSON',
+        'settings.studyJson.desc': 'Всё расписание одним текстом.',
+        'settings.studyJson.button': 'Открыть',
         'settings.studyPrompt': 'Промпт для нейросети',
         'settings.studyPrompt.desc':
             'Объясняет нейросети формат, чтобы она превратила фото расписания в него.',

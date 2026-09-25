@@ -80,6 +80,17 @@ export const studySettingsSchema = coreSchema({
                 },
                 {
                     type: 'action',
+                    key: 'studyJson',
+                    labelKey: 'settings.studyJson',
+                    descKey: 'settings.studyJson.desc',
+                    buttonKey: 'settings.studyJson.button',
+                    run: ({ plugin }) =>
+                        openStudyDialog(plugin, (close) =>
+                            createElement(ImportDialog, { onClose: close, json: true })
+                        ),
+                },
+                {
+                    type: 'action',
                     key: 'studyPrompt',
                     labelKey: 'settings.studyPrompt',
                     descKey: 'settings.studyPrompt.desc',

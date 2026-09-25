@@ -29,8 +29,10 @@ There are three ways, from the quickest:
    class. Everything is edited on a copy — Cancel really cancels. Before saving, the
    editor counts two classes in one slot and classes with no time.
 
-**Copy the current one** in the paste box gives the timetable back in the same format, to
-keep, share or edit elsewhere.
+**Edit as JSON** (in settings or as a command) opens the same box already holding the
+current timetable, to change it as text. It saves without asking, but not while any line
+would be skipped — a typo must not quietly drop a class. **Copy the current one** in the
+paste box gives the timetable back in the same format, to keep, share or edit elsewhere.
 
 ### The format
 
