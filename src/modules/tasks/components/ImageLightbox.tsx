@@ -48,10 +48,10 @@ export const ImageLightbox: FC<ImageLightboxProps> = ({ attachment, src, onClose
         };
         win.addEventListener('keydown', onKey);
         const previous = host.body.style.overflow;
-        host.body.style.overflow = 'hidden';
+        host.body.setCssStyles({ overflow: 'hidden' });
         return () => {
             win.removeEventListener('keydown', onKey);
-            host.body.style.overflow = previous;
+            host.body.setCssStyles({ overflow: previous });
         };
     }, [onClose, inline, host]);
 

@@ -5,10 +5,8 @@
  * loading packs (before anything is rendered), and it has to be unit-testable
  * under vitest's node environment, where there is no `DOMParser`.
  *
- * On the threat model — a third-party *module* is already evaluated with
- * `new Function` and has the whole app, so this is not a boundary against a
- * hostile module author. What it does buy is everything else: an icon pack is
- * just a folder of files a user copied in from the internet, and inlining a
+ * On the threat model: an icon pack is just a folder of files a user copied
+ * in from the internet, and inlining a
  * stranger's `<svg>` verbatim would hand it script execution, network beacons
  * via `<image href>`, and CSS injection via `<style>`. Failing closed on those
  * costs an author nothing — every one of them is avoidable in a logo.

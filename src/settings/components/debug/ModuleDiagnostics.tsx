@@ -73,13 +73,6 @@ export const ModuleDiagnostics: React.FC = () => {
                                 <code className="zenith-debug__row-id">{manifest.id}</code>
                             </div>
                             <div className="zenith-debug__row-tags">
-                                <Badge
-                                    text={
-                                        manifest.isBuiltIn
-                                            ? t('debug.modules.builtIn')
-                                            : t('debug.modules.thirdParty')
-                                    }
-                                />
                                 {active.has(manifest.id) && (
                                     <Badge text={t('debug.modules.active')} variant="info" />
                                 )}
@@ -97,18 +90,6 @@ export const ModuleDiagnostics: React.FC = () => {
                             {problem && (
                                 <div className="zenith-debug__row-problem">
                                     {t(problem.reason.key, problem.reason.params)}
-                                </div>
-                            )}
-                            {!manifest.isBuiltIn && (
-                                <div className="zenith-debug__row-actions">
-                                    <ActionButton
-                                        label={t('debug.modules.reload')}
-                                        onClick={() =>
-                                            void manager
-                                                .refreshModule(manifest.id)
-                                                .then(() => repaint((n) => n + 1))
-                                        }
-                                    />
                                 </div>
                             )}
                         </div>
@@ -159,10 +140,6 @@ export const ModuleDiagnostics: React.FC = () => {
                                   .map((source) => `${source.id} (${source.icons.length})`)
                                   .join(', ')
                     }
-                />
-                <Row
-                    label={t('debug.modules.thirdPartyLoaded')}
-                    value={manager.getThirdPartyModuleIds().join(', ') || '—'}
                 />
             </div>
         </div>

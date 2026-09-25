@@ -277,7 +277,7 @@ async function searchIn(name: string, lang: string): Promise<GeocodeHit[] | null
                 `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}` +
                 `&count=${SEARCH_FETCH}&language=${encodeURIComponent(lang)}&format=json`,
         });
-        return res.json?.results ?? [];
+        return (res.json as { results?: GeocodeHit[] } | undefined)?.results ?? [];
     } catch {
         return null;
     }
@@ -338,8 +338,13 @@ export async function reverseGeocode(
                 `https://api.bigdatacloud.net/data/reverse-geocode-client` +
                 `?latitude=${lat}&longitude=${lon}&localityLanguage=${encodeURIComponent(lang)}`,
         });
-        const j = res.json ?? {};
-        const name: string | undefined = j.city || j.locality || j.principalSubdivision;
+        const j = (res.json ?? {}) as {
+            city?: string;
+            locality?: string;
+            principalSubdivision?: string;
+            countryCode?: string;
+        };
+        const name = j.city || j.locality || j.principalSubdivision;
         return {
             name: name || undefined,
             admin1: j.principalSubdivision || undefined,
@@ -373,7 +378,16 @@ export function devicePosition(): Promise<{ lat: number; lon: number } | null> {
 export async function ipPlace(): Promise<GeoPlace | null> {
     try {
         const res = await requestUrl({ url: 'https://ipapi.co/json/' });
-        const j = res.json;
+        const j = res.json as
+            | {
+                  latitude?: unknown;
+                  longitude?: unknown;
+                  city?: string;
+                  region?: string;
+                  country_code?: string;
+                  timezone?: string;
+              }
+            | undefined;
         if (typeof j?.latitude !== 'number' || typeof j?.longitude !== 'number') return null;
         return {
             lat: j.latitude,

@@ -214,22 +214,8 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // ── Media: the collection travels, the current pick does not ──
     mediaSaved: { scope: 'shared', merge: 'set' },
 
-    // ── Third-party modules ──
-    // `installedModules` syncing is what makes "installed on the desktop,
-    // appears on the phone" work — see the note on the field itself.
-    installedModules: { scope: 'shared', merge: 'byId' },
-    moduleSettings: { scope: 'shared', merge: 'record' },
-    // Consent to run third-party code is deliberately shared: the user made a
-    // considered decision once and should not have to repeat it per device.
-    allowThirdPartyModules: { scope: 'shared' },
-    // Troubleshooting this device, and what happened on it.
-    safeMode: { scope: 'device' },
-    moduleActivity: { scope: 'device' },
     // A phone and a desktop are reached for different things.
     searchRecents: { scope: 'device' },
-    // A module's provider exists only where the module is installed; the
-    // module record syncs, so the choice can too.
-    prayerProviderId: { scope: 'shared' },
     // The timetable is the same on every device.
     studySchedule: { scope: 'shared' },
     studyTwoWeeks: { scope: 'shared' },
@@ -366,7 +352,7 @@ export function partition(settings: ZenithSettings): {
         else if (STATE_POLICY[key].scope === 'device') device[key] = value;
     }
     return {
-        shared: shared as Partial<ZenithSettings>,
-        device: device as Partial<ZenithSettings>,
+        shared: shared,
+        device: device,
     };
 }

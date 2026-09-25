@@ -236,7 +236,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
             </button>
             <button
                 className="zenith-btn zenith-btn--primary"
-                onClick={handleSubmit}
+                onClick={() => void handleSubmit()}
                 disabled={!title.trim() || submitting}
             >
                 {submitting

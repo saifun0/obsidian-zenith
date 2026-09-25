@@ -59,7 +59,7 @@ export type TokenResult = { ok: true; tokens: TokenSet } | { ok: false; error: O
  */
 export function generateVerifier(): string {
     const bytes = new Uint8Array(32);
-    const c = globalThis.crypto;
+    const c = crypto;
     if (c && typeof c.getRandomValues === 'function') {
         c.getRandomValues(bytes);
     } else {
@@ -73,7 +73,7 @@ export function generateVerifier(): string {
 
 /** The S256 challenge for a verifier. */
 export async function challengeFor(verifier: string): Promise<string> {
-    const subtle = globalThis.crypto?.subtle;
+    const subtle = crypto?.subtle;
     if (!subtle) throw new Error('This device has no Web Crypto, so PKCE cannot be used.');
     const digest = await subtle.digest('SHA-256', new TextEncoder().encode(verifier));
     return base64Url(new Uint8Array(digest));

@@ -4,7 +4,6 @@ import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
 import { StudyClockDebug } from '../../../modules/study/components/StudyClockDebug';
-import { ZENITH_MODULE_API_VERSION } from '../../../core/moduleApi';
 import { Segmented } from '../../controls';
 import { ComponentGallery } from './ComponentGallery';
 import { InputGallery } from './InputGallery';
@@ -43,7 +42,6 @@ export const DebugPanel: React.FC = () => {
         `Obsidian ${apiVersion}`,
         `Zenith ${plugin.manifest.version}`,
         Platform.isMobile ? 'mobile' : 'desktop',
-        `module api ${ZENITH_MODULE_API_VERSION}`,
         t.locale,
     ];
 

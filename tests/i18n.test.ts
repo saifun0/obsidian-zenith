@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { DICTS, pluralForm, translate, translatePlural, resolveLocale } from '../src/core/i18n';
+import { mockLanguage } from './mocks/obsidian';
 
 describe('dictionary parity', () => {
     // Counted nouns are stored one key per plural form, and the two languages
@@ -121,5 +122,16 @@ describe('resolveLocale', () => {
     it('honours an explicit choice', () => {
         expect(resolveLocale('ru')).toBe('ru');
         expect(resolveLocale('en')).toBe('en');
+    });
+
+    it("follows Obsidian's language on auto, and English for anything else", () => {
+        try {
+            mockLanguage.value = 'ru';
+            expect(resolveLocale('auto')).toBe('ru');
+            mockLanguage.value = 'de';
+            expect(resolveLocale('auto')).toBe('en');
+        } finally {
+            mockLanguage.value = 'en';
+        }
     });
 });

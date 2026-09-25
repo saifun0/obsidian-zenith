@@ -8,9 +8,8 @@ import reactHooks from 'eslint-plugin-react-hooks';
  * Uses the (non type-aware) typescript-eslint recommended rules so the lint run
  * is fast and needs no tsconfig project wiring. `eslint-plugin-obsidianmd`
  * (which flags deprecated Obsidian APIs) is installed but not enabled by
- * default: it reads a root `manifest.json` at import time — this repo keeps its
- * manifest as `manifest.source.json` — and its recommended set pulls in
- * type-aware rules. See README for how to opt in.
+ * default: its recommended set pulls in type-aware rules, which this fast run
+ * avoids. See docs/en/development.md for how to run it.
  */
 export default tseslint.config(
     {
@@ -18,7 +17,6 @@ export default tseslint.config(
             'node_modules',
             'dist',
             'tests/mocks/**',
-            'modules_def/**',
             'esbuild.config.mjs',
             'eslint.config.mjs',
             'vitest.config.ts',

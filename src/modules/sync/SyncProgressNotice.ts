@@ -111,7 +111,7 @@ export class SyncProgressNotice {
         const p = this.last;
         this.parts.title.setText(t('sync.progress.done'));
         this.parts.count.setText(p ? countLine(p) : '');
-        this.parts.fill.style.width = '100%';
+        this.parts.fill.setCssStyles({ width: '100%' });
         this.parts.rate.setText(p ? doneLine(p, Date.now(), t) : '');
         this.parts.file.setText('');
         this.close(LINGER_MS);
@@ -145,7 +145,7 @@ export class SyncProgressNotice {
         // fact: a notice constructed from a string keeps that string as a text
         // node, and appending to it leaves the raw message sitting above the
         // bar.
-        const fragment = document.createDocumentFragment();
+        const fragment = createFragment();
         const root = fragment.createDiv({ cls: 'zenith-syncnotice' });
 
         const head = root.createDiv({ cls: 'zenith-syncnotice__head' });

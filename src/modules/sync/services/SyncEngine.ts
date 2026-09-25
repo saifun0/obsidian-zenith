@@ -9,7 +9,7 @@ import {
     type SyncPlanItem,
 } from '../fileSyncTypes';
 import { buildForcedPlan, buildSyncPlan, toPrevRecord } from './syncPlan';
-import { mergeMarkdown, type MergeNote } from './conflictResolve';
+import { mergeMarkdown, type MergeNote, type MergeOptions } from './conflictResolve';
 import { mergeCanvas } from './canvasMerge';
 import { PrevSyncStore } from './prevSyncStore';
 import type { SyncRemote } from './remotes/types';
@@ -27,8 +27,10 @@ import type { SyncRemote } from './remotes/types';
 export interface EngineOptions {
     /** Vault-relative folder to sync. Empty means the whole vault. */
     localRoot: string;
-    /** Include `.obsidian` — themes, other plugins' settings, workspace layout. */
+    /** Include the config folder — themes, other plugins' settings, workspace layout. */
     includeConfigDir: boolean;
+    /** The vault's config folder, `.obsidian` unless the user renamed it (`Vault#configDir`). */
+    configDir: string;
     /** Extra vault-relative prefixes the user excluded. */
     userExcludes: string[];
     /** Where this plugin lives, so the engine can refuse to sync its own state. */
@@ -313,10 +315,10 @@ export class SyncEngine {
             return keepBoth('not decodable as text');
         }
 
-        const options = {
+        const options: MergeOptions = {
             // The same rule the other conflict actions use, so switching to
             // `smart` does not silently change who wins a tie.
-            prefer: (pickNewer(item) === 'remote' ? 'remote' : 'local') as 'local' | 'remote',
+            prefer: pickNewer(item) === 'remote' ? 'remote' : 'local',
         };
         // A canvas is JSON, and the line-oriented merger sees JSON as prose: it
         // would refuse the moment both sides were touched, however unrelated
@@ -451,6 +453,7 @@ export class SyncEngine {
     private excluder(): (key: string) => boolean {
         return buildExcluder({
             includeConfigDir: this.opts.includeConfigDir,
+            configDir: this.opts.configDir,
             userExcludes: this.opts.userExcludes,
             pluginDir: this.opts.pluginDir,
             localRoot: this.opts.localRoot,
@@ -485,6 +488,8 @@ export class SyncEngine {
 
 export interface ExcluderOptions {
     includeConfigDir: boolean;
+    /** The vault's config folder, `.obsidian` unless the user renamed it. */
+    configDir: string;
     userExcludes: string[];
     /** Vault path of this plugin, e.g. `.obsidian/plugins/zenith`. */
     pluginDir: string;
@@ -521,7 +526,7 @@ export function buildExcluder(opts: ExcluderOptions): (key: string) => boolean {
             : [`${pluginRel}/sync`, `${pluginRel}/data.json`, `${pluginRel}/cache`];
     const userPrefixes = opts.userExcludes.map(trimSlashes).filter(Boolean);
 
-    const configRel = relativeToRoot('.obsidian');
+    const configRel = relativeToRoot(opts.configDir);
 
     return (key: string): boolean => {
         if (!key) return true;

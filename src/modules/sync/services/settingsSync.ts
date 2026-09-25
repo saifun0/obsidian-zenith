@@ -1,6 +1,5 @@
 import { debounce } from 'obsidian';
 import { useZenithStore } from '../../../store';
-import type { ZenithSettings } from '../../../store/settingsSlice';
 import { vaultModuleFs } from '../../../core/moduleFs';
 import { encode, next as nextStamp, parse, receive, zero, compare, type Hlc } from '../hlc';
 import { DEVICE_KEYS, SHARED_KEYS, type SettingsKey } from '../statePolicy';
@@ -240,7 +239,7 @@ export class SettingsSyncService {
 
         const state: SharedState = {
             version: DEVICE_DOC_VERSION,
-            values: values as SharedState['values'],
+            values: values,
             stamps,
         };
         const doc: DeviceDoc = { ...state, device: this.registry.record(now) };
@@ -313,7 +312,7 @@ export class SettingsSyncService {
         }
         if (Object.keys(patch).length === 0) return false;
 
-        useZenithStore.getState().updateSettings(patch as Partial<ZenithSettings>);
+        useZenithStore.getState().updateSettings(patch);
 
         const now = Date.now();
         this.clock = nextStamp(this.clock, now, this.registry.id);
@@ -362,7 +361,7 @@ export class SettingsSyncService {
 
         this.applyingRemote = true;
         try {
-            useZenithStore.getState().updateSettings(patch as Partial<ZenithSettings>);
+            useZenithStore.getState().updateSettings(patch);
         } finally {
             this.applyingRemote = false;
         }
@@ -480,7 +479,7 @@ export class SettingsSyncService {
 
         this.applyingRemote = true;
         try {
-            useZenithStore.getState().updateSettings(patch as Partial<ZenithSettings>);
+            useZenithStore.getState().updateSettings(patch);
         } finally {
             this.applyingRemote = false;
         }

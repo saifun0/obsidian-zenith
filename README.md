@@ -4,8 +4,8 @@
 
 An all-in-one life organizer for [Obsidian](https://obsidian.md): a **Dashboard**, a
 **Tasks** manager, a **Journal** of daily notes, and a **Content** tracker (books, movies,
-shows, games…), built on a modular architecture so features can be toggled on and off — and
-extended by third-party modules — without leaving your vault.
+shows, games…), built on a modular architecture so features can be toggled on and off without leaving your
+vault.
 
 Your data stays as plain Markdown in your vault. Zenith reads and writes ordinary `.md`
 files; there is no hidden database.
@@ -30,6 +30,25 @@ instantly — no Obsidian restart required.
 
 ---
 
+## Network use
+
+Zenith has no account, no telemetry and no server of its own. It goes online only for these,
+and only while the feature is on:
+
+- **Weather** — forecasts from `api.open-meteo.com`, and air quality from
+  `air-quality-api.open-meteo.com` when that row is shown. Only the coordinates are sent.
+- **Finding a place** — a city typed in settings is looked up at `geocoding-api.open-meteo.com`.
+  Asked to use the device's own location, Zenith names it at `api.bigdatacloud.net`. A guess
+  from your IP address, at `ipapi.co`, happens only if you switch it on.
+- **Prayer times** — in calendar mode, a year of published times from `api.aladhan.com`, with
+  the location rounded to about a kilometre. Calculated mode makes no requests.
+- **Sync of note files** — only to the service you connect: Dropbox, OneDrive, an S3 bucket or
+  a WebDAV server, and it can be end-to-end encrypted. Settings sync makes no requests of its
+  own: it travels with the vault, however you already sync it.
+- **Covers** given as a link load from that address, like any image in a note.
+
+More in [Privacy](docs/en/privacy.md).
+
 ## Documentation
 
 ### Using Zenith
@@ -50,7 +69,7 @@ instantly — no Obsidian restart required.
 | [Study](docs/en/study.md) | The class timetable: pasting it (an AI chat can make it from a photo), editing it, the card and reminders. |
 | [Content](docs/en/content.md) | The content format, the library, and importing from MyAnimeList, Goodreads and Letterboxd. |
 | [Language](docs/en/language.md) | How Zenith picks a language, and how a module brings its own strings. |
-| [Custom icons](docs/en/icons.md) | Icon packs, module artwork, and what an SVG has to survive to be accepted. |
+| [Custom icons](docs/en/icons.md) | Icon packs, and what an SVG has to survive to be accepted. |
 
 ### Sync and privacy
 
@@ -60,11 +79,11 @@ instantly — no Obsidian restart required.
 | [Setting up Dropbox](docs/en/dropbox.md) | Connecting Dropbox, and registering your own app if you would rather. |
 | [Encrypted sync](docs/en/encryption.md) | The format, the key derivation, and what the server still learns. |
 
-### Building on Zenith
+### Working on Zenith
 
 | Page | What is in it |
 | --- | --- |
-| [Module API](docs/en/module-api.md) | Writing a module: the interface, dashboard widgets, launcher buttons, third-party modules. |
+| [Module API](docs/en/module-api.md) | Writing a module: the interface, dashboard widgets, launcher buttons and search. |
 | [Development](docs/en/development.md) | Building, testing, linting and versioning this repository. |
 
 ---

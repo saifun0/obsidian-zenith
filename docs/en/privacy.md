@@ -2,11 +2,11 @@
 
 [← Documentation](../../README.md) · **English** · [Русский](../ru/privacy.md)
 
-The Dashboard weather widget resolves your location either from an explicit **city**
-(Settings → Weather) via Open-Meteo geocoding, or — when no city is set — from your
-approximate location via a request to `ipapi.co`, falling back to the browser's geolocation
-prompt. Weather data comes from Open-Meteo. No API keys are required and results are cached
-locally.
+The weather widget finds your place from a **city** you type (looked up with Open-Meteo's
+geocoding), or from the device's own location, which `api.bigdatacloud.net` then names. A
+guess from your IP address, sent to `ipapi.co`, happens only if you switch it on. Forecasts,
+and air quality when it is shown, come from Open-Meteo, which receives the coordinates. No API
+keys are required and results are cached locally.
 
 Prayer times, in calendar mode, come from `api.aladhan.com`: it receives the location
 rounded to about a kilometre, the calculation settings and the device's time zone — once a

@@ -1,11 +1,9 @@
 import { Plugin, Notice, Platform, debounce } from 'obsidian';
 import { ModuleManager } from './core/ModuleManager';
-import { ModuleInstaller } from './core/moduleInstaller';
-import { MobileCheckModal } from './core/MobileCheckModal';
 import { MobileInsets } from './core/mobileInsets';
 import { DataService } from './core/DataService';
 import { FolderIconService } from './core/FolderIconService';
-import { iconPackPaths } from './core/modulePaths';
+import { iconPackPaths } from './core/pluginPaths';
 import { vaultModuleFs } from './core/moduleFs';
 import { iconRegistry, loadIconPacks, type IconPackReport } from './core/icons';
 import { DashboardModule } from './modules/dashboard/DashboardModule';
@@ -23,7 +21,6 @@ import { MediaModule } from './modules/media/MediaModule';
 import { SyncModule } from './modules/sync/SyncModule';
 import { SearchModule } from './modules/search/SearchModule';
 import { useZenithStore, resetZenithStore } from './store';
-import type { ZenithSettings } from './store';
 import type { SettingsSyncService } from './modules/sync/services/settingsSync';
 import type { FileSyncService } from './modules/sync/services/fileSync';
 import type { FileSyncAuto } from './modules/sync/services/fileSyncAuto';
@@ -40,7 +37,6 @@ import { Scheduler } from './core/scheduler';
 import { NotificationCenter } from './core/notifications/NotificationCenter';
 import { NotificationCenterModal } from './core/notifications/NotificationCenterModal';
 import { FirstRunModal } from './core/profiles/FirstRunModal';
-import { startExtensionHost } from './core/extensions/extensionHost';
 
 /**
  * ZenithPlugin — Main entry point.
@@ -60,9 +56,6 @@ export default class ZenithPlugin extends Plugin {
     scheduler!: Scheduler;
     /** Where reminders are recorded and shown — see `core/notifications`. */
     notifications!: NotificationCenter;
-
-    /** Installs, updates and removes third-party modules. Created on load. */
-    moduleInstaller!: ModuleInstaller;
 
     /** What each icon pack contributed, and what it couldn't. For settings. */
     iconPackReports: IconPackReport[] = [];
@@ -123,18 +116,16 @@ export default class ZenithPlugin extends Plugin {
         true
     );
 
-    /** Injected <style> that carries the user's custom accent color. */
-    private accentStyleEl: HTMLStyleElement | null = null;
     /** What covers each view on a phone; `null` on desktop. */
     mobileInsets: MobileInsets | null = null;
 
-    /** Apply (or clear) the custom accent color across Zenith views. */
+    /**
+     * Apply (or clear) the custom accent color across Zenith views: a custom
+     * property on `<body>` that `variables.css` reads. An empty value removes
+     * it, and the theme's accent shows again.
+     */
     private applyAccent(color: string): void {
-        if (!this.accentStyleEl) return;
-        const c = color.trim();
-        this.accentStyleEl.textContent = c
-            ? `.zenith-root { --zenith-accent: ${c}; --zenith-accent-hover: ${c}; }`
-            : '';
+        document.body.setCssProps({ '--zenith-accent-user': color.trim() });
     }
 
     /**
@@ -163,11 +154,9 @@ export default class ZenithPlugin extends Plugin {
         resetZenithStore();
 
         // ── Restore persisted settings ───────────────
-        this.pluginData = (await this.loadData()) ?? {};
+        this.pluginData = ((await this.loadData()) as Record<string, unknown> | null) ?? {};
         if (this.pluginData.settings) {
-            useZenithStore
-                .getState()
-                .loadSettings(this.pluginData.settings as Partial<ZenithSettings>);
+            useZenithStore.getState().loadSettings(this.pluginData.settings);
         }
         // Beside the settings, not inside them: a notification happened on
         // this device, and is nobody's setting.
@@ -189,7 +178,6 @@ export default class ZenithPlugin extends Plugin {
         this.disposers.push(() => this.scheduler.stop());
 
         // ── Register built-in modules ───────────────
-        this.moduleManager.init(this);
         this.moduleManager.register(new DashboardModule(this));
         this.moduleManager.register(new NavigatorModule(this));
         this.moduleManager.register(new PictureModule(this));
@@ -205,25 +193,8 @@ export default class ZenithPlugin extends Plugin {
         this.moduleManager.register(new SyncModule(this));
         this.moduleManager.register(new SearchModule(this));
 
-        // Only run code the user has already approved, and decide that without
-        // asking anything: this runs during `onload`, where a dialog would
-        // stall Obsidian's whole startup. An unapproved module is recorded as
-        // needing consent and left alone; the settings page offers the button.
-        this.moduleInstaller = new ModuleInstaller(this);
-        this.moduleManager.setConsentGate((id, code, permissions) =>
-            this.moduleInstaller.isApproved(id, code, permissions)
-        );
-        // Events for modules, and switching off one that keeps failing.
-        this.disposers.push(startExtensionHost(this));
-
         // ── Icon packs ────────────────────────────────
-        // Before module discovery, which registers each module's own artwork
-        // into the same registry and needs the packs already present to resolve
-        // a manifest that points at one.
         await this.loadIconPacks();
-
-        // ── Discover third-party modules ──────────────
-        await this.moduleManager.discoverModules();
 
         // Sync available modules with the store so UI can render them
         useZenithStore.getState().setAvailableModules(this.moduleManager.getAvailableManifests());
@@ -254,26 +225,10 @@ export default class ZenithPlugin extends Plugin {
 
         // ── Global commands (available regardless of active view) ──
         registerQuickAddTaskCommand(this);
-        // Safe mode: every third-party module stops, stays installed, and
-        // comes back when this is run again — without restarting Obsidian.
-        this.addCommand({
-            id: 'toggle-safe-mode',
-            name: 'Toggle safe mode (third-party modules)',
-            callback: () => void this.setSafeMode(!useZenithStore.getState().settings.safeMode),
-        });
         this.addCommand({
             id: 'open-notifications',
             name: 'Open notifications',
             callback: () => new NotificationCenterModal(this).open(),
-        });
-
-        // Temporary: answers whether this device allows the runtime evaluation
-        // third-party modules need. iOS has no console to check that from.
-        // Remove once the mobile module loader has shipped and been verified.
-        this.addCommand({
-            id: 'zenith-device-check',
-            name: 'Check device capabilities (modules)',
-            callback: () => new MobileCheckModal(this.app, this).open(),
         });
 
         // ── Reactive vault ↔ store sync ──────────────
@@ -285,10 +240,8 @@ export default class ZenithPlugin extends Plugin {
         this.folderIconService.start();
 
         // ── Custom accent color ──────────────────────
-        this.accentStyleEl = document.createElement('style');
-        document.head.appendChild(this.accentStyleEl);
-        this.register(() => this.accentStyleEl?.remove());
         this.applyAccent(useZenithStore.getState().settings.accentColor);
+        this.register(() => this.applyAccent(''));
         this.disposers.push(
             useZenithStore.subscribe(
                 (state) => state.settings.accentColor,
@@ -358,30 +311,6 @@ export default class ZenithPlugin extends Plugin {
             )
         );
 
-        // Flipping the third-party master switch has to act immediately:
-        // turning it on should start the modules that were listed but blocked,
-        // and turning it off should stop them — not wait for a restart.
-        this.disposers.push(
-            useZenithStore.subscribe(
-                (state) => state.settings.allowThirdPartyModules,
-                (allowed) => {
-                    const state = useZenithStore.getState();
-                    if (allowed) {
-                        void this.syncActiveModules(state.settings.activeModuleIds);
-                        return;
-                    }
-                    // Stop every third-party module, leaving the built-ins and
-                    // the user's `activeModuleIds` choices untouched.
-                    const builtIn = new Set(
-                        state.availableModules.filter((m) => m.isBuiltIn).map((m) => m.id)
-                    );
-                    void this.syncActiveModules(
-                        state.settings.activeModuleIds.filter((id) => builtIn.has(id))
-                    );
-                }
-            )
-        );
-
         // ── Re-parse when the watched folder paths change ──
         this.disposers.push(
             useZenithStore.subscribe(
@@ -418,14 +347,10 @@ export default class ZenithPlugin extends Plugin {
         // Every module used to announce itself, which on a full vault buried
         // the warnings underneath — and the warnings are the only part of a
         // successful load worth reading. What is actually useful about a load
-        // is that it finished, how long it took, and whether anything Zenith
-        // did not write is in the mix; all three fit on one line.
+        // is that it finished and how long it took; both fit on one line.
         const modules = this.moduleManager.getLoadedModuleIds().length;
-        const outside = this.moduleManager.getThirdPartyModuleIds();
-        const from =
-            outside.length > 0 ? `, ${outside.length} third-party: ${outside.join(', ')}` : '';
-        console.log(
-            `Zenith ${this.manifest.version}: ready in ${Date.now() - startedAt} ms (${modules} modules${from})`
+        console.debug(
+            `Zenith ${this.manifest.version}: ready in ${Date.now() - startedAt} ms (${modules} modules)`
         );
     }
 
@@ -495,23 +420,6 @@ export default class ZenithPlugin extends Plugin {
     }
 
     /**
-     * Load/unload modules to match `activeIds` (called when settings change).
-     * Keeps the store's `loadedModuleIds` in sync with reality.
-     */
-    /**
-     * Re-read the modules folder and publish what changed to the store.
-     *
-     * `setAvailableModules` used to be called once during `onload`, which was
-     * fine when the only way to add a module was to restart Obsidian. Now that
-     * modules can be installed, updated and removed from settings, anything
-     * that changes the set has to push it again or the list silently lies.
-     */
-    async refreshAvailableModules(): Promise<void> {
-        await this.moduleManager.discoverModules();
-        useZenithStore.getState().setAvailableModules(this.moduleManager.getAvailableManifests());
-    }
-
-    /**
      * Read `<plugin>/icons/*` into the icon registry.
      *
      * Failures are per-file and reported on the settings page rather than
@@ -533,6 +441,10 @@ export default class ZenithPlugin extends Plugin {
         }
     }
 
+    /**
+     * Load/unload modules to match `activeIds` (called when settings change).
+     * Keeps the store's `loadedModuleIds` in sync with reality.
+     */
     private async syncActiveModules(activeIds: string[]): Promise<void> {
         await this.moduleManager.syncActive(activeIds);
         useZenithStore.getState().setLoadedModules(this.moduleManager.getLoadedModuleIds());
@@ -545,17 +457,9 @@ export default class ZenithPlugin extends Plugin {
     }
 
     /**
-     * Register a widget on the dashboard. Any module (built-in or third-party)
-     * can call this from its `onload()`. Returns a disposer that should be
-     * called from the module's `onunload()`.
+     * Register a widget on the dashboard. A module calls this from its
+     * `onload()`, and calls the disposer it returns from its `onunload()`.
      */
-    /** Turn safe mode on or off, and restart the third-party modules to match. */
-    async setSafeMode(on: boolean): Promise<void> {
-        useZenithStore.getState().updateSettings({ safeMode: on });
-        await this.moduleManager.restartThirdParty();
-        new Notice(translateNow(on ? 'modules.safeMode.on' : 'modules.safeMode.off'));
-    }
-
     registerDashboardWidget(def: DashboardWidgetDefinition): () => void {
         return dashboardWidgets.register(def);
     }

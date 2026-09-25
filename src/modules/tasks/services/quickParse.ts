@@ -52,8 +52,12 @@ export interface QuickParse {
     pieces: QuickPiece[];
 }
 
-/** Starts a piece: the start of the text, whitespace or an opening bracket. */
-const B = '(?<=^|[\\s(])';
+/**
+ * What a piece may follow: the start of the text, whitespace or an opening
+ * bracket. Checked by hand rather than as a lookbehind in the pattern, which
+ * iOS before 16.4 cannot compile.
+ */
+const STARTS_PIECE = /[\s(]/u;
 /** Ends one: the end, whitespace, a closing bracket or punctuation. */
 const E = '(?=$|[\\s),.;:!?])';
 
@@ -74,7 +78,7 @@ type Rule = {
 
 const rule = (kind: QuickPieceKind, body: string, apply: Rule['apply']): Rule => ({
     kind,
-    re: new RegExp(`${B}(?:${body})${E}`, 'giu'),
+    re: new RegExp(`(?:${body})${E}`, 'giu'),
     apply,
 });
 
@@ -285,6 +289,11 @@ export function quickParse(
         let m: RegExpExecArray | null;
         while ((m = r.re.exec(text))) {
             const match = m;
+            if (match.index > 0 && !STARTS_PIECE.test(text[match.index - 1])) {
+                // Inside a word: look again from the next character.
+                r.re.lastIndex = match.index + 1;
+                continue;
+            }
             candidates.push({
                 kind: r.kind,
                 start: match.index,

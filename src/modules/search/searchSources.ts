@@ -6,7 +6,7 @@ import { useSyncExternalStore } from 'react';
  * What the Search panel can find, contributed by the modules that own it: the
  * tasks module brings tasks and the "+ Task" row, the journal brings day notes,
  * and so on. The panel knows none of them. Switch a module off and its source
- * leaves with it; a third-party module adds its own the same way.
+ * leaves with it.
  *
  * Register from a module's `onload()`, dispose on `onunload()`:
  * ```ts

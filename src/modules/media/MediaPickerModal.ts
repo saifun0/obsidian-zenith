@@ -30,20 +30,20 @@ export class MediaPickerModal extends Modal {
 
     onOpen(): void {
         const { contentEl, titleEl } = this;
-        titleEl.setText('GIF / Image Picker');
+        titleEl.setText('GIF / image picker');
         contentEl.addClass('zenith-media-picker');
         this.modalEl.addClass('zenith-media-picker-modal');
 
         // ── Currently selected ──
         const cur = contentEl.createDiv('zenith-media-picker__current');
-        cur.createEl('div', { cls: 'zenith-media-picker__eyebrow', text: 'Currently selected' });
-        this.currentValueEl = cur.createEl('div', { cls: 'zenith-media-picker__current-value' });
+        cur.createDiv({ cls: 'zenith-media-picker__eyebrow', text: 'Currently selected' });
+        this.currentValueEl = cur.createDiv({ cls: 'zenith-media-picker__current-value' });
         this.renderCurrent();
 
         // ── Quick add ──
         const quick = contentEl.createDiv('zenith-media-picker__quick');
-        quick.createEl('div', { cls: 'zenith-media-picker__section-label', text: 'Quick add' });
-        quick.createEl('div', {
+        quick.createDiv({ cls: 'zenith-media-picker__section-label', text: 'Quick add' });
+        quick.createDiv({
             cls: 'zenith-media-picker__hint',
             text: 'Image/GIF URL, or a path inside the vault.',
         });
@@ -117,10 +117,10 @@ export class MediaPickerModal extends Modal {
     }
 
     private renderSection(label: string, refs: string[], saved: boolean): void {
-        this.gridsEl.createEl('div', { cls: 'zenith-media-picker__section-label', text: label });
+        this.gridsEl.createDiv({ cls: 'zenith-media-picker__section-label', text: label });
         const grid = this.gridsEl.createDiv('zenith-media-picker__grid');
         if (refs.length === 0) {
-            grid.createEl('div', { cls: 'zenith-media-picker__empty', text: 'No images found.' });
+            grid.createDiv({ cls: 'zenith-media-picker__empty', text: 'No images found.' });
             return;
         }
         for (const ref of refs) this.renderCard(grid, ref, saved);
@@ -146,8 +146,8 @@ export class MediaPickerModal extends Modal {
             thumb.addClass('is-broken');
         }
 
-        card.createEl('div', { cls: 'zenith-media-card__name', text: mediaLabel(ref), attr: { title: ref } });
-        card.createEl('div', { cls: 'zenith-media-card__path', text: ref, attr: { title: ref } });
+        card.createDiv({ cls: 'zenith-media-card__name', text: mediaLabel(ref), attr: { title: ref } });
+        card.createDiv({ cls: 'zenith-media-card__path', text: ref, attr: { title: ref } });
 
         const actions = card.createDiv('zenith-media-card__actions');
         const selectBtn = actions.createEl('button', {

@@ -3,9 +3,8 @@ import type { TranslationTable } from '../../core/i18n';
 /**
  * Content — the strings the module brings with it.
  *
- * Its name and description live here rather than in Zenith's own dictionary
- * because this is the door a third-party module has to use, and a door only
- * built-in modules can open is one that quietly stops working.
+ * Its name and description live here rather than in Zenith's own dictionary,
+ * so a module's strings are registered with the module and go with it.
  *
  * `module.<id>.name` and `module.<id>.desc` are the two keys every list of
  * modules looks for.

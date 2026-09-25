@@ -54,7 +54,7 @@ export class PromptModal extends Modal {
         if (this.opts.placeholder) input.placeholder = this.opts.placeholder;
         if (this.opts.maxLength) input.maxLength = this.opts.maxLength;
 
-        const actions = contentEl.createEl('div', { cls: 'zenith-prompt__actions' });
+        const actions = contentEl.createDiv({ cls: 'zenith-prompt__actions' });
         const cancel = actions.createEl('button', { text: this.opts.cancelText });
         const confirm = actions.createEl('button', {
             text: this.opts.confirmText,

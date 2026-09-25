@@ -61,7 +61,7 @@ export async function fetchAirQuality(lat: number, lon: number): Promise<AirQual
                 `https://air-quality-api.open-meteo.com/v1/air-quality` +
                 `?latitude=${lat}&longitude=${lon}&current=${CURRENT_VARS}&timezone=auto`,
         });
-        const c = res.json?.current as Record<string, unknown> | undefined;
+        const c = (res.json as { current?: Record<string, unknown> } | undefined)?.current;
         if (!c) return null;
 
         return {

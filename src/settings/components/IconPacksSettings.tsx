@@ -71,9 +71,7 @@ export const IconPacksSettings: React.FC = () => {
                                 <div className="zenith-iconpack__head">
                                     <span className="zenith-iconpack__name">{source.label}</span>
                                     <span className="zenith-iconpack__meta">
-                                        {source.kind === 'module'
-                                            ? t('settings.iconPacks.fromModule')
-                                            : (source.author ?? source.id)}
+                                        {source.author ?? source.id}
                                     </span>
                                     <span className="zenith-iconpack__count">
                                         {t.plural('settings.iconPacks.icons', source.icons.length)}

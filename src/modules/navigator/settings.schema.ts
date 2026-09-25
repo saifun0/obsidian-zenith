@@ -7,11 +7,10 @@ import { openNavPanel } from './openNavPanel';
  * Navigation settings.
  *
  * The hide list is built from the registry at render time rather than from a
- * fixed list of views: a button contributed by a third-party module has to be
- * hideable too, and nothing here can know about it in advance. Hiding rather
- * than picking what to show is deliberate — the same choice the dashboard makes
- * with `hiddenWidgetIds` — so a button that arrives with a new module appears
- * instead of waiting to be discovered in settings.
+ * fixed list of views, so it always matches what is loaded. Hiding rather than
+ * picking what to show is deliberate — the same choice the dashboard makes with
+ * `hiddenWidgetIds` — so a button that arrives with a module switched on later
+ * appears instead of waiting to be discovered in settings.
  */
 export const navigatorSettingsSchema = coreSchema({
     moduleId: 'navigator',

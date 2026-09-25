@@ -4,6 +4,7 @@ import { CONTENT_STATUSES } from '../../../core/constants';
 import type { ContentStatus } from '../../../core/constants';
 import { parseProgress, statusForProgress } from './progress';
 import { parseReadingList } from './readings';
+import { scalarText } from '../../../core/scalarText';
 
 /**
  * Build a normalized {@link ContentItem} from a file's frontmatter + body.
@@ -55,7 +56,7 @@ export function normalizeContentItem(
         year: Number.isFinite(year) && year > 0 ? year : undefined,
         creator: (fm.creator as string)?.trim() || undefined,
         genres: genres.length > 0 ? genres : undefined,
-        progress: fm.progress != null ? String(fm.progress).trim() || undefined : undefined,
+        progress: scalarText(fm.progress).trim() || undefined,
         progressCurrent: progress?.current,
         progressTotal: progress?.total,
         started: toIsoDate(fm.started),

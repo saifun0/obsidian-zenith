@@ -3,47 +3,12 @@ import { RotateCcw, SlidersHorizontal, X } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
 import { widgetLabel } from '../widgets';
-import type { DashboardWidgetContext, DashboardWidgetDefinition } from '../widgets';
+import type { DashboardWidgetDefinition } from '../widgets';
 import { useTranslation } from '../../../core/i18n';
 import { useWidgetBodiesReady } from '../startupGate';
 
 /** Travel that turns a tap into a drag. Below it, a press is a click. */
 const TAP_SLOP_PX = 6;
-
-/**
- * Host for framework-agnostic (DOM) widgets contributed by third-party modules.
- * Gives the module a plain element to render into and cleans up on unmount.
- *
- * Exported because bundles render members themselves and would otherwise drop
- * every third-party widget the moment it was put in one.
- */
-export const DomWidgetHost: FC<{ def: DashboardWidgetDefinition; ctx: DashboardWidgetContext }> = ({
-    def,
-    ctx,
-}) => {
-    const ref = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const el = ref.current;
-        if (!el || !def.mount) return;
-        let cleanup: void | (() => void);
-        try {
-            cleanup = def.mount(el, ctx);
-        } catch (err) {
-            console.error(`Zenith: widget "${def.id}" failed to mount`, err);
-        }
-        return () => {
-            try {
-                if (typeof cleanup === 'function') cleanup();
-            } catch (err) {
-                console.error(`Zenith: widget "${def.id}" cleanup failed`, err);
-            }
-            el.innerHTML = '';
-        };
-    }, [def, ctx]);
-
-    return <div ref={ref} className="zenith-widget__dom" />;
-};
 
 interface GridWidgetProps {
     def: DashboardWidgetDefinition;
@@ -53,7 +18,6 @@ interface GridWidgetProps {
      * settings are stored under, so it goes to both faces of the card.
      */
     instanceId: string;
-    ctx: DashboardWidgetContext;
     /** Absolute placement (grid mode) or plain height (stacked mode). */
     style: CSSProperties;
     editing?: boolean;
@@ -105,7 +69,6 @@ interface GridWidgetProps {
 export const GridWidget: FC<GridWidgetProps> = ({
     def,
     instanceId,
-    ctx,
     style,
     editing = false,
     dragging = false,
@@ -275,11 +238,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
                             <span className="zenith-widget-card__title">{title}</span>
                         </div>
                         <div className="zenith-widget-card__body">
-                            {!ready ? null : Body ? (
-                                <Body size={size} instanceId={instanceId} />
-                            ) : (
-                                <DomWidgetHost def={def} ctx={ctx} />
-                            )}
+                            {ready && Body && <Body size={size} instanceId={instanceId} />}
                         </div>
                     </div>
                 )}

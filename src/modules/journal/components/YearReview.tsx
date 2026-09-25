@@ -31,7 +31,7 @@ async function svgToPng(svg: string): Promise<ArrayBuffer> {
             img.onerror = () => reject(new Error('Zenith: the year card could not be drawn'));
             img.src = url;
         });
-        const canvas = document.createElement('canvas');
+        const canvas = createEl('canvas');
         canvas.width = width;
         canvas.height = height;
         canvas.getContext('2d')?.drawImage(img, 0, 0);

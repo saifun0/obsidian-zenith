@@ -1,12 +1,4 @@
-import React, {
-    useCallback,
-    useEffect,
-    useLayoutEffect,
-    useMemo,
-    useRef,
-    useState,
-    type CSSProperties,
-} from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Notice } from 'obsidian';
 import { ArrowRight, Library, Moon, Star } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
@@ -381,13 +373,11 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
                         <span
                             key={s.key}
                             className="zenith-cw__bar-seg"
-                            style={
-                                {
-                                    width: `${(counts.byStatus[s.key] / counts.total) * 100}%`,
-                                    background: s.color,
-                                    ['--cw-at' as string]: i,
-                                } as CSSProperties
-                            }
+                            style={{
+                                width: `${(counts.byStatus[s.key] / counts.total) * 100}%`,
+                                background: s.color,
+                                ['--cw-at' as string]: i,
+                            }}
                             title={`${counts.byStatus[s.key]} ${t(s.i18n)}`}
                         />
                     ))}
@@ -562,7 +552,7 @@ const Spotlight: React.FC<RowProps> = ({ item, facts, cheering, onOpen, onBump }
     return (
         <article
             className="zenith-cw__spot"
-            style={{ ['--cw-color' as string]: facts.type.color } as CSSProperties}
+            style={{ ['--cw-color' as string]: facts.type.color }}
             onContextMenu={menu}
         >
             <button
@@ -648,7 +638,7 @@ const Row = React.forwardRef<HTMLLIElement, RowProps & { at: number }>(function 
         <li
             ref={ref}
             className={`zenith-cw__item ${cheering ? 'is-cheering' : ''}`}
-            style={{ ['--cw-at' as string]: at } as CSSProperties}
+            style={{ ['--cw-at' as string]: at }}
             role="button"
             tabIndex={0}
             title={item.title}

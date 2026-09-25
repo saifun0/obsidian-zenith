@@ -187,7 +187,7 @@ export const ProgressPopover: FC<ProgressPopoverProps> = ({
                             <button
                                 type="button"
                                 className="zenith-cwp__finish"
-                                onClick={() => step((total as number) - current)}
+                                onClick={() => step((total) - current)}
                             >
                                 <Check size={13} />
                                 {t('content.progress.finished')}

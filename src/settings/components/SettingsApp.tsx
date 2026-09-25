@@ -26,14 +26,10 @@ import { IconPickerModal } from '../../core/IconPickerModal';
 import { JournalSettings } from './JournalSettings';
 import { ProfilesSettings } from './ProfilesSettings';
 import { IconPacksSettings } from './IconPacksSettings';
-import { ModuleInstallerPanel } from './ModuleInstaller';
 import { DebugPanel } from './debug/DebugPanel';
-import { Toggle } from '../controls';
 import { configurableModules } from '../moduleMenu';
 import { CoreSettingsForm } from '../schema/CoreSettingsForm';
 import { appearanceSchema, generalSchema, notificationsSchema } from '../schema/coreSchemas';
-import { ModuleSettingsForm } from '../schema/ModuleSettingsForm';
-import { ExtensionSections, ModuleDetails } from './ModuleExtras';
 import { featureOnlySchema } from '../schema/featureGroup';
 import { CORE_MODULE, featureEnabled } from '../../core/features';
 
@@ -71,9 +67,6 @@ export const SettingsApp: React.FC = () => {
 
     const [activeCategory, setActiveCategory] = useState<Category | null>(null);
     const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
-    // Module problems live on the manager, not in the store, so approving one
-    // has to force the repaint that clears its warning.
-    const [, forceRefresh] = useState(0);
     const toggleModule = (moduleId: string, checked: boolean) => {
         const active = settings.activeModuleIds;
         const newIds = checked
@@ -99,16 +92,12 @@ export const SettingsApp: React.FC = () => {
         icon: React.ReactNode,
         title: string,
         desc: string,
-        onClick: () => void,
-        badge?: string
+        onClick: () => void
     ) => (
         <div key={key} className="zenith-settings__menu-item" onClick={onClick}>
             <div className="zenith-settings__menu-icon">{icon}</div>
             <div className="zenith-settings__menu-text">
-                <div className="zenith-settings__menu-title">
-                    {title}
-                    {badge && <span className="zenith-settings__menu-badge">{badge}</span>}
-                </div>
+                <div className="zenith-settings__menu-title">{title}</div>
                 <div className="zenith-settings__menu-desc">{desc}</div>
             </div>
             <ChevronRight size={18} className="zenith-settings__menu-chevron" />
@@ -167,8 +156,7 @@ export const SettingsApp: React.FC = () => {
                                     <DynamicIcon name={m.icon ?? ''} fallback={LayoutGrid} size={18} />,
                                     m.name,
                                     m.description,
-                                    () => setActiveModuleId(m.id),
-                                    m.isBuiltIn ? undefined : t('settings.thirdPartyBadge')
+                                    () => setActiveModuleId(m.id)
                                 )
                             )}
                         </div>
@@ -279,31 +267,16 @@ export const SettingsApp: React.FC = () => {
         // Daily notes conflict check) rather than a handful of fields.
         if (id === 'journal') {
             return (
-                <>
-                    <JournalSettings />
-                    <ExtensionSections moduleId="journal" />
-                </>
+                <JournalSettings />
             );
         }
 
-        // A module that describes its settings renders itself. The switch below
-        // is what is left of the old hardcoded table, and shrinks as modules are
-        // converted; a third-party module can only ever take this path, since
-        // there was never anywhere for it in the switch.
+        // A module that describes its settings renders itself.
         const schema = plugin.moduleManager.get(id)?.getSettingsSchema?.();
         if (schema) {
-            // Built-ins write into flat `ZenithSettings` keys; third-party
-            // modules into their own bucket, which is the only place they are
-            // allowed to store anything.
-            const isBuiltIn = availableModules.find((m) => m.id === id)?.isBuiltIn ?? false;
             return (
                 <div className="zenith-settings__content">
-                    {isBuiltIn ? (
-                        <CoreSettingsForm schema={schema} />
-                    ) : (
-                        <ModuleSettingsForm schema={schema} />
-                    )}
-                    {isBuiltIn && <ExtensionSections moduleId={id} />}
+                    <CoreSettingsForm schema={schema} />
                 </div>
             );
         }
@@ -321,142 +294,20 @@ export const SettingsApp: React.FC = () => {
     // ── Modules ─────────────────────────────────────────────────────────────
 
     const renderModules = () => {
-        const builtIn = availableModules.filter((m) => m.isBuiltIn);
-        const thirdParty = availableModules.filter((m) => !m.isBuiltIn);
-
-        const renderGroup = (list: typeof availableModules) =>
-            list.map((module) => (
-                <CheckboxCard
-                    key={module.id}
-                    title={module.name}
-                    description={module.description}
-                    iconName={module.icon}
-                    checked={settings.activeModuleIds.includes(module.id)}
-                    onChange={(checked) => toggleModule(module.id, checked)}
-                    onSettings={() => setActiveModuleId(module.id)}
-                />
-            ));
-
         return (
             <div className="zenith-settings__content">
-                {builtIn.length > 0 && (
-                    <div className="zenith-settings__module-group">
-                        <h3 className="zenith-settings__group-title">{t('settings.builtInModules')}</h3>
-                        <div className="zenith-settings__module-grid">{renderGroup(builtIn)}</div>
-                    </div>
-                )}
-
-                <div className="zenith-settings__module-group">
-                    <h3 className="zenith-settings__group-title">{t('settings.thirdPartyModules')}</h3>
-
-                    {/* The risk is stated permanently, not just at install
-                        time — a module is plain JavaScript with the same reach
-                        as Obsidian itself, and the UI must never imply Zenith
-                        sandboxes it. What that costs the page is one line; the
-                        paragraph spelling it out is a click away rather than a
-                        banner to scroll past on every visit. */}
-                    <div className="zenith-settings__item">
-                        <div className="zenith-settings__item-info">
-                            <span className="zenith-settings__item-name">
-                                {t('settings.allowThirdParty')}
-                            </span>
-                            <span className="zenith-settings__item-desc">
-                                {t('settings.thirdPartyWarning.short')}
-                            </span>
-                            <details className="zenith-settings__disclosure">
-                                <summary>{t('settings.thirdPartyWarning.more')}</summary>
-                                <p>{t('settings.thirdPartyWarning')}</p>
-                            </details>
-                        </div>
-                        <div className="zenith-settings__item-control">
-                            <Toggle
-                                checked={settings.allowThirdPartyModules}
-                                onChange={(v) => updateSettings({ allowThirdPartyModules: v })}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Safe mode: the way out when a module is the reason
-                        something is broken — also a command, for when this
-                        page is what does not open. */}
-                    <div className="zenith-settings__item">
-                        <div className="zenith-settings__item-info">
-                            <span className="zenith-settings__item-name">{t('settings.safeMode')}</span>
-                            <span className="zenith-settings__item-desc">
-                                {t('settings.safeMode.desc')}
-                            </span>
-                        </div>
-                        <div className="zenith-settings__item-control">
-                            <Toggle
-                                checked={settings.safeMode}
-                                onChange={(v) =>
-                                    void plugin.setSafeMode(v).then(() => forceRefresh((n) => n + 1))
-                                }
-                            />
-                        </div>
-                    </div>
-
-                    {thirdParty.length > 0 ? (
-                        <>
-                            {!settings.allowThirdPartyModules && (
-                                <div className="zenith-settings__hint">
-                                    {t('settings.thirdPartyBlocked')}
-                                </div>
-                            )}
-                            <div className="zenith-settings__module-grid">
-                            {thirdParty.map((module) => {
-                                const problem = plugin.moduleManager.getProblem(module.id);
-                                return (
-                                    // The tile and its warning share one grid
-                                    // cell, so a module that cannot run stays
-                                    // visually attached to the reason.
-                                    <div className="zenith-settings__module-cell" key={module.id}>
-                                        <CheckboxCard
-                                            title={module.name}
-                                            description={module.description}
-                                            iconName={module.icon}
-                                            checked={settings.activeModuleIds.includes(module.id)}
-                                            onChange={(checked) => toggleModule(module.id, checked)}
-                                            onSettings={() => setActiveModuleId(module.id)}
-                                        />
-                                        <ModuleDetails
-                                            moduleId={module.id}
-                                            permissions={module.permissions ?? []}
-                                        />
-                                        {/* A folder the user can see doing
-                                            nothing is a mystery; say why. */}
-                                        {problem && (
-                                            <div className="zenith-settings__hint zenith-settings__hint--warn">
-                                                <span>
-                                                    {t(problem.reason.key, problem.reason.params)}
-                                                </span>
-                                                {/* Consent is asked HERE, on a
-                                                    deliberate click, and never
-                                                    during plugin startup. */}
-                                                {problem.kind === 'needs-consent' && (
-                                                    <button
-                                                        className="zenith-settings__inline-btn"
-                                                        onClick={() =>
-                                                            void plugin.moduleInstaller
-                                                                .approve(module.id)
-                                                                .then(() => forceRefresh((n) => n + 1))
-                                                        }
-                                                    >
-                                                        {t('modules.approve')}
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                            </div>
-                        </>
-                    ) : (
-                        <div className="zenith-settings__empty-note">{t('settings.noThirdParty')}</div>
-                    )}
-
-                    <ModuleInstallerPanel />
+                <div className="zenith-settings__module-grid">
+                    {availableModules.map((module) => (
+                        <CheckboxCard
+                            key={module.id}
+                            title={module.name}
+                            description={module.description}
+                            iconName={module.icon}
+                            checked={settings.activeModuleIds.includes(module.id)}
+                            onChange={(checked) => toggleModule(module.id, checked)}
+                            onSettings={() => setActiveModuleId(module.id)}
+                        />
+                    ))}
                 </div>
             </div>
         );
@@ -466,7 +317,7 @@ export const SettingsApp: React.FC = () => {
 
     const renderAbout = () => {
         const m = plugin.manifest;
-        const builtIn = availableModules.filter((mod) => mod.isBuiltIn).map((mod) => mod.name);
+        const names = availableModules.map((mod) => mod.name);
         return (
             <div className="zenith-settings__content zenith-about">
                 <div className="zenith-about__hero">
@@ -497,7 +348,7 @@ export const SettingsApp: React.FC = () => {
                     <div className="zenith-about__fact">
                         <span className="zenith-about__fact-key">{t('settings.about.modules')}</span>
                         <span className="zenith-about__fact-val">
-                            {builtIn.length ? builtIn.join(', ') : '—'}
+                            {names.length ? names.join(', ') : '—'}
                         </span>
                     </div>
                 </div>

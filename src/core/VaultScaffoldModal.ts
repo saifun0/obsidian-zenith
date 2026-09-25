@@ -27,25 +27,25 @@ export class VaultScaffoldModal extends Modal {
         contentEl.createEl('p', {
             text: t('scaffold.intro'),
         });
-        const list = contentEl.createEl('div', { cls: 'zenith-scaffold__folders' });
+        const list = contentEl.createDiv({ cls: 'zenith-scaffold__folders' });
         for (const { name, icon } of VAULT_STRUCTURE) {
-            const row = list.createEl('span', { cls: 'zenith-scaffold__folder' });
+            const row = list.createSpan({ cls: 'zenith-scaffold__folder' });
             // Shows what you're about to get, rather than describing it.
             applyIcon(row.createSpan({ cls: 'zenith-scaffold__folder-icon' }), icon, 14);
             row.createSpan({ text: name });
         }
 
         if (items.length > 0) {
-            const warn = contentEl.createEl('div', { cls: 'zenith-scaffold__warn' });
+            const warn = contentEl.createDiv({ cls: 'zenith-scaffold__warn' });
             warn.createEl('strong', {
                 text: tp('scaffold.willArchive', items.length),
             });
-            warn.createEl('div', {
+            warn.createDiv({
                 cls: 'zenith-scaffold__warn-desc',
                 text: t('scaffold.willArchive.desc'),
             });
             const preview = items.slice(0, 12).join(', ') + (items.length > 12 ? '…' : '');
-            warn.createEl('div', { cls: 'zenith-scaffold__preview', text: preview });
+            warn.createDiv({ cls: 'zenith-scaffold__preview', text: preview });
         } else {
             contentEl.createEl('p', {
                 cls: 'zenith-scaffold__note',
@@ -53,7 +53,7 @@ export class VaultScaffoldModal extends Modal {
             });
         }
 
-        const actions = contentEl.createEl('div', { cls: 'zenith-scaffold__actions' });
+        const actions = contentEl.createDiv({ cls: 'zenith-scaffold__actions' });
         const cancel = actions.createEl('button', { text: t('scaffold.cancel') });
         cancel.addEventListener('click', () => this.close());
 

@@ -100,7 +100,7 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
             </button>
             <button
                 className="zenith-btn zenith-btn--primary"
-                onClick={submit}
+                onClick={() => void submit()}
                 disabled={!title.trim() || submitting}
             >
                 {submitting ? t('tasks.editor.saving') : t('common.save')}

@@ -115,7 +115,7 @@ export const Modal: React.FC<ModalProps> = ({
         // capture phase the dialog would always win and close out from under it.
         win.addEventListener('keydown', onKey);
         const prevOverflow = host.body.style.overflow;
-        host.body.style.overflow = 'hidden';
+        host.body.setCssStyles({ overflow: 'hidden' });
 
         // Focus the first meaningful control, skipping the close button.
         const timer = win.setTimeout(() => {
@@ -127,7 +127,7 @@ export const Modal: React.FC<ModalProps> = ({
 
         return () => {
             win.removeEventListener('keydown', onKey);
-            host.body.style.overflow = prevOverflow;
+            host.body.setCssStyles({ overflow: prevOverflow });
             win.clearTimeout(timer);
         };
     }, [onClose, inline, host]);

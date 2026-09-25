@@ -19,11 +19,10 @@ export function flattenFields(schema: SettingsSchema): SettingField[] {
 /**
  * The schema's defaults as a plain bag.
  *
- * This is what a third-party module's settings start as, and what a reset goes
- * back to. For built-in modules `DEFAULT_SETTINGS` remains the source of truth
- * and `tests/settingsSchema.test.ts` asserts the two agree — two places
- * defining one default is the risk this design introduces, so it is tested
- * rather than hoped for.
+ * `DEFAULT_SETTINGS` remains the source of truth, and
+ * `tests/settingsSchema.test.ts` asserts the two agree — two places defining
+ * one default is the risk this design introduces, so it is tested rather than
+ * hoped for.
  */
 export function defaultsFromSchema(schema: SettingsSchema): SettingsBag {
     const out: SettingsBag = {};

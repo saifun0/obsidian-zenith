@@ -242,12 +242,12 @@ export function useSortableRows({
             el.scrollTop = Math.max(0, Math.min(before + speed, el.scrollHeight - el.clientHeight));
             if (el.scrollTop !== before) applyDropTarget(resolveTarget(d.lastY));
         }
-        d.raf = requestAnimationFrame(step);
+        d.raf = window.requestAnimationFrame(step);
     }, [resolveTarget, applyDropTarget]);
 
     const endDrag = useCallback(() => {
         const d = drag.current;
-        if (d.raf) cancelAnimationFrame(d.raf);
+        if (d.raf) window.cancelAnimationFrame(d.raf);
         d.raf = 0;
         d.key = null;
         d.pointerId = -1;
@@ -261,7 +261,7 @@ export function useSortableRows({
 
     useEffect(
         () => () => {
-            if (drag.current.raf) cancelAnimationFrame(drag.current.raf);
+            if (drag.current.raf) window.cancelAnimationFrame(drag.current.raf);
             document.body.classList.remove('zenith-is-dragging');
         },
         []
@@ -299,8 +299,8 @@ export function useSortableRows({
                     setDragKey(key);
                     // Suppresses text selection and the I-beam cursor everywhere.
                     document.body.classList.add('zenith-is-dragging');
-                    if (d.raf) cancelAnimationFrame(d.raf);
-                    d.raf = requestAnimationFrame(step);
+                    if (d.raf) window.cancelAnimationFrame(d.raf);
+                    d.raf = window.requestAnimationFrame(step);
                 }
 
                 applyDropTarget(resolveTarget(e.clientY));

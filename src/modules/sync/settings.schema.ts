@@ -1,6 +1,7 @@
 import { coreSchema } from '../../settings/schema/types';
 import { SyncSettingsPanel } from './components/SyncSettingsPanel';
 import { HAS_SHIPPED_DROPBOX, HAS_SHIPPED_ONEDRIVE } from './services/remotes/appIds';
+import { scalarText } from '../../core/scalarText';
 
 /**
  * Sync settings, as data.
@@ -288,7 +289,7 @@ export const syncSettingsSchema = coreSchema({
             // advanced preference any more — it is the reason sync is refusing
             // to run, and it is on a page the user has no reason to open.
             alertIf: (v) =>
-                v.syncEncryptionEnabled === true && !String(v.syncEncryptionPassword ?? '').trim(),
+                v.syncEncryptionEnabled === true && !scalarText(v.syncEncryptionPassword).trim(),
             fields: [
                 {
                     type: 'toggle',
@@ -309,7 +310,7 @@ export const syncSettingsSchema = coreSchema({
                     labelKey: 'sync.settings.encryptPassword',
                     descKey: 'sync.settings.encryptPassword.desc',
                     validate: (value, v) =>
-                        v.syncEncryptionEnabled === true && !String(value ?? '').trim()
+                        v.syncEncryptionEnabled === true && !scalarText(value).trim()
                             ? 'sync.settings.encryptPassword.required'
                             : null,
                     // Two warnings in one note, both worth the space: it lives in

@@ -67,7 +67,7 @@ export const TaskTimerButton: FC<TaskTimerButtonProps> = ({
             <button
                 type="button"
                 className={`zenith-timer is-running ${over ? 'is-over' : ''}`}
-                onClick={toggle}
+                onClick={(e) => void toggle(e)}
                 title={t('tasks.timer.stop')}
                 aria-label={t('tasks.timer.stop')}
             >
@@ -81,7 +81,7 @@ export const TaskTimerButton: FC<TaskTimerButtonProps> = ({
         <button
             type="button"
             className="zenith-timer"
-            onClick={toggle}
+            onClick={(e) => void toggle(e)}
             title={t('tasks.timer.start')}
             aria-label={t('tasks.timer.start')}
         >

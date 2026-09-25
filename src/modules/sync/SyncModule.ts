@@ -23,7 +23,7 @@ import { translateNow } from '../../core/i18n';
  * The problem it exists for: settings are persisted as one blob and read once
  * at load, so two devices open at the same time each hold a full copy and
  * whichever saves last overwrites every setting the other changed — dashboard
- * presets, installed modules, folder icons, trackers, all of it. Merging per
+ * presets, folder icons, trackers, all of it. Merging per
  * field turns "two devices changed two different settings" back into what it
  * looks like to the person using them, which is nothing at all.
  *
@@ -266,7 +266,7 @@ export class SyncModule extends BaseModule {
             // we never made. Both are the same instruction to the user, and
             // saying which would tell whoever sent it how close they got.
             new Notice(
-                'Zenith: that Dropbox link does not match an authorization started here. Press Connect again.'
+                'Zenith: that Dropbox link does not match an authorization started here. Press connect again.'
             );
             return;
         }

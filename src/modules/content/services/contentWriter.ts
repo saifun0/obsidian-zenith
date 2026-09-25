@@ -181,7 +181,7 @@ export class ContentWriter {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;
 
-        await this.app.fileManager.processFrontMatter(file, (fm) => {
+        await this.app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
             for (const [key, value] of Object.entries(fields)) {
                 if (value === undefined) delete fm[key];
                 else fm[key] = value;

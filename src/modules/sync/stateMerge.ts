@@ -7,7 +7,7 @@ import { SHARED_KEYS, mergeStrategyOf, type SettingsKey } from './statePolicy';
  *
  * The bug this exists to kill: `main.ts` persists settings as one blob, so two
  * open devices each hold a full copy and whoever saves last overwrites all ~60
- * keys — dashboard presets, installed modules, folder icons, trackers, the lot.
+ * keys — dashboard presets, folder icons, trackers, the lot.
  * Merging per key means two devices editing two different settings is not a
  * conflict at all, which is what it looks like to the person using them.
  *
@@ -377,7 +377,7 @@ export function mergeSharedState(
         }
     }
 
-    merged.values = values as Partial<ZenithSettings>;
+    merged.values = values;
     return { state: merged, changedKeys, conflicts };
 }
 

@@ -93,7 +93,7 @@ export const DEFAULT_RETRY: RetryOptions = {
     attempts: 5,
     baseDelayMs: 500,
     maxDelayMs: 30_000,
-    sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    sleep: (ms) => new Promise((resolve) => window.setTimeout(resolve, ms)),
     random: Math.random,
 };
 
@@ -138,7 +138,8 @@ export function withRetry(http: Http, options: Partial<RetryOptions> = {}): Http
             }
 
             if (attempt >= opts.attempts) {
-                if (thrown) throw thrown;
+                if (thrown instanceof Error) throw thrown;
+                if (thrown) throw new Error(typeof thrown === 'string' ? thrown : 'Request failed');
                 return res as HttpResponse;
             }
 

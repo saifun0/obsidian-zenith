@@ -586,10 +586,6 @@ body.is-phone .zenith-dashboard__bg::before {
     min-width: 0;
 }
 
-.zenith-widget__dom {
-    min-height: 40px;
-}
-
 /* ── Clock Widget ────────────────────────────────── */
 /* Centred in its cell: the card is sized by the grid, so the stack sits in the
    middle rather than hugging the top with dead space beneath it. */
@@ -901,7 +897,6 @@ body.is-phone .zenith-dashboard__bg::before {
     overflow: hidden;
     font-variant-numeric: tabular-nums;
 }
-
 
 .zenith-cal__head {
     display: grid;
@@ -3374,7 +3369,6 @@ button.zenith-cw__cta {
     }
 }
 
-
 /* What a row says when it has no meter to draw: its length, or its year and
    maker. Set to the same width the meter takes so both kinds of row put the
    rating and the control in the same column. */
@@ -4010,25 +4004,6 @@ button.zenith-cw__cta {
     color: var(--zenith-text-muted);
     text-align: center;
     font-size: 0.9rem;
-}
-
-/* ── Third-party widget demo ─────────────────────── */
-.zenith-thirdparty-demo {
-    display: flex;
-    flex-direction: column;
-    gap: var(--zenith-space-xs);
-    padding: var(--zenith-space-sm) 0;
-}
-
-.zenith-thirdparty-demo__title {
-    font-size: 0.9rem;
-    color: var(--zenith-text-normal);
-}
-
-.zenith-thirdparty-demo__counter {
-    font-size: 0.78rem;
-    color: var(--zenith-text-muted);
-    font-variant-numeric: tabular-nums;
 }
 
 /* ── Quick Add widget ───────────────────────────── */

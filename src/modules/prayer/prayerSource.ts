@@ -1,6 +1,6 @@
 import type { ZenithSettings } from '../../store/settingsSlice';
 import { prayerCalcOptions } from './prayerOptions';
-import type { ApiMidnight, PrayerApiOptions } from './prayerProvider';
+import type { PrayerApiOptions } from './prayerProvider';
 import { ensureTable, refreshTable, tableDay, tableState } from './prayerTable';
 import {
     prayerTimes,
@@ -69,7 +69,7 @@ export function prayerApiOptionsOf(settings: PrayerSourceSettings): PrayerApiOpt
         ishaAngle: settings.prayerIshaAngle,
         hanafi: settings.prayerAsrMadhab === 'hanafi',
         highLatRule: settings.prayerHighLatRule,
-        midnight: settings.prayerApiMidnight as ApiMidnight,
+        midnight: settings.prayerApiMidnight,
     };
 }
 

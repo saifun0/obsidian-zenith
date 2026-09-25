@@ -145,7 +145,7 @@ export function amzDay(now: Date): string {
 // ── Primitives ───────────────────────────────────────
 
 function subtle(): SubtleCrypto {
-    const c = globalThis.crypto;
+    const c = crypto;
     if (!c?.subtle) {
         // Only reachable in an environment without Web Crypto. Saying so plainly
         // beats a TypeError from inside the signing chain.

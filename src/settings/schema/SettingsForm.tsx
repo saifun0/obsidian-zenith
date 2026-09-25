@@ -57,10 +57,8 @@ const COMPACT: ReadonlySet<SettingField['type']> = new Set(['toggle', 'number', 
 /**
  * Renders a settings schema.
  *
- * Driven by `values`/`onChange` rather than reaching into the store. That one
- * decision is what lets the same component serve core settings (bound to
- * `settings`) and a third-party module's settings (bound to its own bucket),
- * and lets it be tested without a zustand mock.
+ * Driven by `values`/`onChange` rather than reaching into the store, which is
+ * what lets it be tested without a zustand mock.
  *
  * Every group a schema declares is drawn, open, in one column. This page has
  * now tried both alternatives and neither survived contact with the sync

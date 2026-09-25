@@ -17,13 +17,12 @@ export const PROFILES_FOLDER = 'Zenith/profiles';
 
 /**
  * The modules a profile speaks for. A template leaves sync alone; a profile
- * someone saved or exported speaks for every built-in module, since it was
- * taken from a whole state.
+ * someone saved or exported speaks for every module, since it was taken from
+ * a whole state.
  */
 export function moduleContext(template: boolean): ModuleContext {
     const available = useZenithStore.getState().availableModules;
     const builtIn = available
-        .filter((m) => m.isBuiltIn)
         .map((m) => m.id)
         .filter((id) => !template || !TEMPLATE_UNTOUCHED.includes(id));
     return { builtIn, available: available.map((m) => m.id) };

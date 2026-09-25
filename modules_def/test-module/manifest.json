@@ -1,8 +1,0 @@
-{
-    "id": "test-module",
-    "name": "Test Module",
-    "description": "Это сторонний модуль для тестирования интеграции. Он был загружен из папки modules.",
-    "icon": "icon.svg",
-    "author": "Antigravity",
-    "version": "1.0.0"
-}

@@ -333,20 +333,6 @@ export const ComponentGallery: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="zenith-settings__menu-item">
-                            <div className="zenith-settings__menu-icon">
-                                <Sparkles size={18} />
-                            </div>
-                            <div className="zenith-settings__menu-text">
-                                <div className="zenith-settings__menu-title">
-                                    A badged row
-                                    <span className="zenith-settings__menu-badge">third-party</span>
-                                </div>
-                                <div className="zenith-settings__menu-desc">
-                                    And its description.
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </Demo>
             </Section>

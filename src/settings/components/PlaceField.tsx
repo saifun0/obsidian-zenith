@@ -60,7 +60,7 @@ export interface PlaceFieldConfig {
 export function createPlaceField(config: PlaceFieldConfig): React.FC {
     const PlaceField: React.FC = () => {
         const t = useTranslation();
-        const place = useZenithStore((s) => s.settings[config.settingsKey]) as GeoPlace | null;
+        const place = useZenithStore((s) => s.settings[config.settingsKey]);
         const global = useZenithStore((s) => s.settings.location);
         const language = useZenithStore((s) => s.settings.language);
         const updateSettings = useZenithStore((s) => s.updateSettings);
@@ -129,7 +129,7 @@ export function createPlaceField(config: PlaceFieldConfig): React.FC {
             : 'settings.place.clear';
 
         const choose = (next: GeoPlace | null) => {
-            updateSettings({ [config.settingsKey]: next, ...config.extraPatch } as Partial<ZenithSettings>);
+            updateSettings({ [config.settingsKey]: next, ...config.extraPatch });
             setQuery('');
             setHits([]);
             setStatus('idle');

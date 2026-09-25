@@ -168,28 +168,23 @@ describe('loadIconPacks', () => {
 });
 
 describe('loadIconsFromFolder', () => {
-    it('registers a module folder under the module id', async () => {
-        const fs = fakeFs({ 'modules/my-mod/icons/logo.svg': LOGO });
+    it('registers a folder under the given source id', async () => {
+        const fs = fakeFs({ 'icons/my-pack/logo.svg': LOGO });
         const registry = new IconRegistry();
 
-        const report = await loadIconsFromFolder(
-            fs,
-            'modules/my-mod/icons',
-            registry,
-            'my-mod',
-            'module',
-            { label: 'My Module' }
-        );
+        const report = await loadIconsFromFolder(fs, 'icons/my-pack', registry, 'my-pack', 'pack', {
+            label: 'My Pack',
+        });
 
         expect(report.loaded).toBe(1);
-        expect(registry.has('zi:my-mod/logo')).toBe(true);
-        expect(registry.listSources()[0].kind).toBe('module');
-        expect(registry.listSources()[0].label).toBe('My Module');
+        expect(registry.has('zi:my-pack/logo')).toBe(true);
+        expect(registry.listSources()[0].kind).toBe('pack');
+        expect(registry.listSources()[0].label).toBe('My Pack');
     });
 
     it('records the source even when the folder has no icons', async () => {
         const registry = new IconRegistry();
-        const report = await loadIconsFromFolder(fakeFs({}), 'nope', registry, 'empty', 'module');
+        const report = await loadIconsFromFolder(fakeFs({}), 'nope', registry, 'empty', 'pack');
         expect(report.loaded).toBe(0);
         expect(registry.listSources()).toHaveLength(1);
     });

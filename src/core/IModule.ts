@@ -8,13 +8,6 @@ export interface ModuleManifest {
     name: string;
     description: string;
     icon?: string;
-    author?: string;
-    version?: string;
-    isBuiltIn: boolean;
-    /** A third-party module's declared permissions. */
-    permissions?: string[];
-    /** The module API it is written against — see `moduleApi`. */
-    apiVersion?: number;
 }
 
 /**
@@ -60,10 +53,8 @@ export interface IModule {
      * Declarative settings, rendered by `<SettingsForm>`. Optional — a module
      * with nothing to configure simply omits it.
      *
-     * This is what lets a third-party module have a settings page at all: the
-     * old design chose the page from a hardcoded `switch` in `SettingsApp`, so
-     * there was nowhere for one to appear. Declaring it here rather than in a
-     * central registry also means the schema is deleted along with the module.
+     * Declaring it here rather than in a central registry means the schema is
+     * deleted along with the module.
      *
      * Called lazily, when the user opens this module's settings — which means a
      * module can be CONSTRUCTED without ever being loaded. Constructors must
@@ -75,14 +66,11 @@ export interface IModule {
      * Strings this module contributes to the dictionary, keyed by locale.
      *
      * Declared here rather than added to Zenith's own dictionary so that a
-     * module's translations are deleted along with the module, and so that a
-     * third-party one can be translated at all — there is no file in this repo
-     * for its strings to live in.
+     * module's translations are deleted along with the module.
      *
      * Keys must sit under the module's own namespace: `<id>.…` or
-     * `module.<id>.…`. Anything else is dropped, because a module that could
-     * redefine `settings.title` could also redefine the sentence warning the
-     * user about third-party modules.
+     * `module.<id>.…`. Anything else is dropped, so a module cannot redefine
+     * `settings.title` or another module's strings.
      *
      * Two keys are looked up by convention wherever a module is listed:
      * `module.<id>.name` and `module.<id>.desc`. Without them the list falls
@@ -110,9 +98,7 @@ export abstract class BaseModule implements IModule {
      * skipped on subsequent loads, which is what makes toggling a module safe.
      *
      * The bookkeeping lives in the manager's ledger, keyed by module ID, rather
-     * than on the instance: re-evaluating a third-party module's source creates
-     * a NEW instance, and per-instance state would forget everything and throw
-     * on the second registration.
+     * than on the instance, so it outlives any one instance of the module.
      */
     private get ledger() {
         return this.plugin.moduleManager.getLedger();
@@ -124,7 +110,6 @@ export abstract class BaseModule implements IModule {
             name: this.name,
             description: this.description,
             icon: this.icon,
-            isBuiltIn: true
         };
     }
 

@@ -373,40 +373,6 @@ input.zenith-input.zenith-icon-picker__search {
     margin-top: 16px;
 }
 
-/* ── Device capability check ─────────────────────────
-   One row per check: a pass/fail mark, the check's name, and what happened
-   underneath, indented to sit under the name rather than under the mark. */
-.zenith-devcheck__row {
-    padding: 8px 0;
-    border-bottom: 1px solid var(--background-modifier-border);
-}
-.zenith-devcheck__head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.zenith-devcheck__mark {
-    display: inline-flex;
-    flex-shrink: 0;
-}
-.zenith-devcheck__mark svg {
-    width: 18px;
-    height: 18px;
-}
-.zenith-devcheck__mark.is-ok {
-    color: var(--color-green);
-}
-.zenith-devcheck__mark.is-fail {
-    color: var(--color-red);
-}
-.zenith-devcheck__detail {
-    padding-left: 26px;
-    word-break: break-word;
-}
-.zenith-devcheck__verdict {
-    margin-top: 14px;
-}
-
 /* ── While a drag is in progress ─────────────────────
    Set on <body> for the duration of a pointer drag: without it the pointer
    sweeps a text selection across every row it crosses, and the caret cursor
@@ -415,9 +381,4 @@ body.zenith-is-dragging {
     cursor: grabbing;
     user-select: none;
     -webkit-user-select: none;
-}
-
-/* A module's piece inside a built-in view: inline, and nothing more. */
-.zenith-ext:empty {
-    display: none;
 }

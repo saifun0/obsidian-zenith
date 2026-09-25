@@ -21,7 +21,6 @@ import { Popover, usePopover } from '../../../components/shared';
 import { SearchField } from '../../../components/ui/fields';
 import { TaskList } from './TaskList';
 import { TaskFilters } from './TaskFilters';
-import { extensions, useExtensions } from '../../../core/extensions/registry';
 import { TaskStats } from './TaskStats';
 import { TaskEditorModal } from './TaskEditorModal';
 
@@ -110,11 +109,6 @@ export const TasksApp: FC = () => {
         TASK_TABS.some((t) => t.id === saved.tab) ? saved.tab : 'all'
     );
     const [filters, setFilters] = useState<TaskFilterState>(() => restoreFilters(saved));
-    // A module's filter, by `<module>:<id>`. Not saved with the view: the
-    // module may not be there next time.
-    const moduleFilters = useExtensions(extensions.taskFilters);
-    const [moduleFilter, setModuleFilter] = useState('');
-    const activeModuleFilter = moduleFilters.find((f) => `${f.moduleId}:${f.id}` === moduleFilter);
 
     useEffect(() => {
         updateSettings({ taskView: { tab: activeTab, ...filters } });
@@ -133,18 +127,19 @@ export const TasksApp: FC = () => {
 
     // ── Filter + sort tasks ──────────────────────────
 
-    const filteredTasks = useMemo(() => {
-        const found = queryTasks(tasks, {
-            tab: activeTab,
-            priority: filters.priority,
-            tag: filters.tag,
-            search,
-            sort: filters.sort,
-            due: filters.due,
-            today: getTodayString(),
-        });
-        return activeModuleFilter ? found.filter((task) => activeModuleFilter.test(task)) : found;
-    }, [tasks, activeTab, filters, search, activeModuleFilter]);
+    const filteredTasks = useMemo(
+        () =>
+            queryTasks(tasks, {
+                tab: activeTab,
+                priority: filters.priority,
+                tag: filters.tag,
+                search,
+                sort: filters.sort,
+                due: filters.due,
+                today: getTodayString(),
+            }),
+        [tasks, activeTab, filters, search]
+    );
 
     // ── Tabs with counts ─────────────────────────────
 
@@ -222,7 +217,6 @@ export const TasksApp: FC = () => {
                                 variant={
                                     filterPop.open ||
                                     filters.tag ||
-                                    activeModuleFilter ||
                                     filters.priority !== 'all' ||
                                     filters.due !== 'all'
                                         ? 'default'
@@ -250,12 +244,6 @@ export const TasksApp: FC = () => {
                                 onFilterChange={setFilters}
                                 allTags={allTags}
                                 groups={groups}
-                                moduleFilters={moduleFilters.map((f) => ({
-                                    value: `${f.moduleId}:${f.id}`,
-                                    label: f.label,
-                                }))}
-                                moduleFilter={activeModuleFilter ? moduleFilter : ''}
-                                onModuleFilter={setModuleFilter}
                             />
                         </Popover>
                         <IconButton
@@ -268,7 +256,7 @@ export const TasksApp: FC = () => {
                         <IconButton
                             icon={RotateCw}
                             tooltip={t('common.refresh')}
-                            onClick={loadTasks}
+                            onClick={() => void loadTasks()}
                             disabled={tasksLoading}
                             variant="ghost"
                             size="md"

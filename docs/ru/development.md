@@ -3,35 +3,47 @@
 [← Документация](../../README.ru.md) · [English](../en/development.md) · **Русский**
 
 ```bash
-npm install        # установить зависимости
-npm run dev        # сборка в режиме watch → ../zenith/
-npm run build      # проверка типов + продакшен-сборка, затем деплой
-npm run deploy     # скопировать последнюю сборку в хранилища из deploy.local.json
-npm run typecheck  # tsc --noEmit
-npm test           # прогнать юнит-тесты vitest
-npm run lint       # eslint
-npm run format     # prettier --write
+npm install            # установить зависимости
+npm run dev            # сборка в режиме watch в хранилище для разработки (см. ниже)
+npm run build          # проверка типов + продакшен-сборка, затем деплой
+npm run deploy         # скопировать последнюю сборку в остальные хранилища
+npm run clean          # удалить собранные main.js и styles.css
+npm run typecheck      # tsc --noEmit
+npm test               # прогнать юнит-тесты vitest
+npm run lint           # eslint
+npm run lint:obsidian  # правила самого Obsidian (с типами, медленно)
+npm run format         # prettier --write
 ```
 
-Сборка кладёт `main.js`, `styles.css`, `manifest.json` и `versions.json` в соседнюю папку
-`../zenith/` — это и есть плагин, который загружает Obsidian.
+## Куда идёт сборка
 
-Чтобы в других хранилищах была та же сборка, перечислите их в `deploy.local.json` (он не в git):
+Репозиторий лежит вне хранилищ. В его корне есть `manifest.json` — файл, который читает
+каталог плагинов, и внутри `.obsidian/plugins/` Obsidian принял бы эту папку за второй Zenith.
+
+Куда класть сборку, задаётся в `deploy.local.json` (он не в git):
 
 ```json
-{ "vaults": ["E:/Projects/Obsidian/main"] }
+{
+    "devVault": "E:/Projects/Obsidian/zenith-vault-testing-area",
+    "vaults": ["E:/Projects/Obsidian/main"]
+}
 ```
 
-Тогда `npm run build` копирует эти четыре файла в `.obsidian/plugins/zenith/` каждого
-хранилища. У каждого остаются свои `data.json`, состояние синхронизации и установленные
-модули. `npm run dev` не деплоит — сборки в режиме watch остаются в `../zenith/`.
+- **`devVault`.** esbuild пишет `main.js`, `styles.css`, `manifest.json` и `versions.json` прямо
+  в его `.obsidian/plugins/zenith/`, так что `npm run dev` попадает туда, где сборку подхватывают
+  Obsidian и Hot Reload.
+- **`vaults`.** После этого `npm run build` копирует те же четыре файла и в каждое из этих
+  хранилищ. У каждого остаются свои `data.json`, состояние синхронизации и паки
+  иконок. `npm run dev` не деплоит.
 
-## Необязательно: линт-правила Obsidian API
+Без `deploy.local.json` сборка идёт в `dist/`.
 
-`eslint-plugin-obsidianmd` (помечает устаревшие API Obsidian) установлен, но по умолчанию
-выключен: он ожидает `manifest.json` в корне проекта и тянет за собой правила, которым
-нужны типы. Чтобы включить, скопируйте `manifest.source.json` в `manifest.json` и добавьте
-его рекомендованный конфиг в `eslint.config.mjs`.
+## Линт-правила Obsidian
+
+`npm run lint:obsidian` прогоняет рекомендованный набор `eslint-plugin-obsidianmd`: устаревшие
+и неподдерживаемые API, названия команд, заголовки настроек и правила typescript-eslint с
+проверкой типов, которые он включает. На нём построена проверка в каталоге плагинов. Он
+проверяет типы всего проекта, поэтому идёт около полуминуты, и в `npm run build` не входит.
 
 ## Версионирование
 

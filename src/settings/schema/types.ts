@@ -8,10 +8,8 @@ import type ZenithPlugin from '../../main';
  * Declarative settings.
  *
  * `SettingsApp.renderModuleSettings` used to be a hardcoded `switch` naming
- * every module, with each page hand-assembling raw `<input>`s. That meant two
- * things: adding a setting was a UI edit rather than a data edit, and a
- * third-party module could not have a settings page at all — there was nowhere
- * for it to appear in the switch.
+ * every module, with each page hand-assembling raw `<input>`s, so adding a
+ * setting was a UI edit rather than a data edit.
  *
  * So a module describes its settings as data and one renderer draws them. The
  * escape hatch (`custom`) exists because a few pages — the tracker editor, the
@@ -62,7 +60,7 @@ export interface Option {
     icon?: string;
 }
 
-/** Options can depend on the vault (folder lists, installed modules). */
+/** Options can depend on the vault (folder lists, the modules there are). */
 export type Options = Option[] | ((ctx: FieldContext) => Option[]);
 
 export interface ToggleField<K extends string> extends FieldBase<K> {
@@ -272,14 +270,11 @@ export interface SettingsSchema<K extends string = string> {
 }
 
 /**
- * A schema for a built-in module: `key` must name a real `ZenithSettings`
+ * A schema for a module: `key` must name a real `ZenithSettings`
  * field, so a typo is a build error rather than a setting that silently never
  * persists.
  */
 export type CoreSettingsSchema = SettingsSchema<Extract<keyof ZenithSettings, string>>;
-
-/** A third-party schema: free-form keys, stored in that module's bucket. */
-export type ModuleSettingsSchema = SettingsSchema<string>;
 
 /** Identity helper that forces the key check at the definition site. */
 export const coreSchema = (schema: CoreSettingsSchema): CoreSettingsSchema => schema;

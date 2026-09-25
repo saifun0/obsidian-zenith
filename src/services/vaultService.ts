@@ -1,4 +1,5 @@
 import { App, TFile, TFolder, parseYaml, type CachedMetadata } from 'obsidian';
+import { scalarText } from '../core/scalarText';
 
 /**
  * Matches a Markdown task checkbox line: `- [ ] ...` or `* [x] ...`.
@@ -33,8 +34,9 @@ export function toStringArray(value: unknown): string[] {
             .map((v) => v.trim())
             .filter((v) => v.length > 0);
     }
-    // number / boolean / other scalar
-    return [String(value)];
+    // number / boolean
+    const text = scalarText(value);
+    return text ? [text] : [];
 }
 
 /**

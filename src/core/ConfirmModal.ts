@@ -1,4 +1,5 @@
 import { Modal, type App } from 'obsidian';
+import { translatorNow } from './i18n';
 
 /**
  * Ask a yes-or-no question.
@@ -39,7 +40,7 @@ export class ConfirmModal extends Modal {
         contentEl.addClass('zenith-prompt');
         if (this.opts.body) contentEl.createEl('p', { text: this.opts.body });
 
-        const actions = contentEl.createEl('div', { cls: 'zenith-prompt__actions' });
+        const actions = contentEl.createDiv({ cls: 'zenith-prompt__actions' });
         const cancel = actions.createEl('button', { text: this.opts.cancelText });
         const confirm = actions.createEl('button', { text: this.opts.confirmText, cls: 'mod-cta' });
         confirm.addEventListener('click', () => {
@@ -55,4 +56,15 @@ export class ConfirmModal extends Modal {
         this.settle?.(this.accepted);
         this.settle = null;
     }
+}
+
+/** Ask before deleting: the question as the dialog's text, with Delete and Cancel. */
+export function confirmDelete(app: App, question: string): Promise<boolean> {
+    const t = translatorNow();
+    return new ConfirmModal(app, {
+        title: t('common.delete'),
+        body: question,
+        confirmText: t('common.delete'),
+        cancelText: t('common.cancel'),
+    }).ask();
 }

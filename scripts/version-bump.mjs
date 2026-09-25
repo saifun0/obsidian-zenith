@@ -1,5 +1,5 @@
 /**
- * version-bump — keep manifest.source.json, package.json and versions.json in sync.
+ * version-bump — keep manifest.json, package.json and versions.json in sync.
  *
  * Usage:
  *   node scripts/version-bump.mjs <version> [minAppVersion]
@@ -10,7 +10,7 @@
  *   node scripts/version-bump.mjs minor
  *   node scripts/version-bump.mjs 0.2.0 1.4.0
  *
- * Writes the resolved version into manifest.source.json and package.json, and
+ * Writes the resolved version into manifest.json and package.json, and
  * records `{ [version]: minAppVersion }` in versions.json (used by Obsidian to
  * offer the right plugin build per app version).
  */
@@ -22,7 +22,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => JSON.parse(readFileSync(resolve(root, p), 'utf-8'));
 const write = (p, obj) => writeFileSync(resolve(root, p), JSON.stringify(obj, null, 4) + '\n');
 
-const manifest = read('manifest.source.json');
+const manifest = read('manifest.json');
 const pkg = read('package.json');
 const versions = read('versions.json');
 
@@ -54,7 +54,7 @@ manifest.minAppVersion = minAppVersion;
 pkg.version = newVersion;
 versions[newVersion] = minAppVersion;
 
-write('manifest.source.json', manifest);
+write('manifest.json', manifest);
 write('package.json', pkg);
 write('versions.json', versions);
 

@@ -1,3 +1,5 @@
+import { scalarText } from '../../core/scalarText';
+
 /**
  * Prayer tracker — what a day records, and how it is written down.
  *
@@ -117,7 +119,7 @@ export function parsePrayerStatus(raw: unknown): PrayerStatus | undefined {
     if (raw === null || raw === undefined || raw === '') return undefined;
     if (typeof raw === 'boolean') return raw ? 'ontime' : undefined;
 
-    const text = String(raw).trim().toLowerCase();
+    const text = scalarText(raw).trim().toLowerCase();
     if (!text) return undefined;
     for (const status of PRAYER_STATUSES) {
         if (STATUS_ALIASES[status].includes(text)) return status;

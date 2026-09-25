@@ -92,7 +92,7 @@ export class PendingAuthStore {
  */
 export function randomState(): string {
     const bytes = new Uint8Array(16);
-    const api = globalThis.crypto;
+    const api = crypto;
     if (api?.getRandomValues) {
         api.getRandomValues(bytes);
     } else {

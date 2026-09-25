@@ -5,7 +5,6 @@ const mod = (id: string, over: Partial<ModuleMenuEntry> = {}): ModuleMenuEntry =
     id,
     name: id,
     description: `${id} does things`,
-    isBuiltIn: true,
     ...over,
 });
 
@@ -13,9 +12,8 @@ const ALL = [
     mod('weather'),
     mod('dashboard'),
     mod('tasks'),
-    mod('quiet', { isBuiltIn: true }),
-    mod('acme-notes', { name: 'Acme Notes', isBuiltIn: false }),
-    mod('zzz-plugin', { name: 'Zzz', isBuiltIn: false }),
+    mod('quiet'),
+    mod('prayer', { name: 'Prayer' }),
 ];
 
 /** Everything but `quiet` has a settings page. */
@@ -40,16 +38,13 @@ describe('which modules get a row in the settings front door', () => {
         expect(ids).toEqual(['weather']);
     });
 
-    it('puts the built-ins first, then sorts by name', () => {
-        // Stable regardless of what order the registry hands them back, and
-        // built-ins first because that is what someone new is looking for.
-        const ids = configurableModules(
-            ALL,
-            ['zzz-plugin', 'weather', 'acme-notes', 'dashboard'],
-            hasSettings
-        ).map((m) => m.id);
+    it('sorts by name', () => {
+        // Stable regardless of what order the registry hands them back.
+        const ids = configurableModules(ALL, ['weather', 'prayer', 'dashboard'], hasSettings).map(
+            (m) => m.id
+        );
 
-        expect(ids).toEqual(['dashboard', 'weather', 'acme-notes', 'zzz-plugin']);
+        expect(ids).toEqual(['dashboard', 'prayer', 'weather']);
     });
 
     it('is empty when nothing is active', () => {
@@ -57,8 +52,8 @@ describe('which modules get a row in the settings front door', () => {
     });
 
     it('ignores an active id that names no module at all', () => {
-        // A module uninstalled by deleting its folder leaves its id behind in
-        // the settings, and the list is built from what is there now.
+        // A module an older Zenith had leaves its id behind in the settings,
+        // and the list is built from what is there now.
         expect(configurableModules(ALL, ['long-gone'], hasSettings)).toEqual([]);
     });
 });

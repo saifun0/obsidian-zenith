@@ -93,6 +93,12 @@ export const Platform = { isMobile: false, isMobileApp: false, isIosApp: false, 
 
 export function setIcon(): void {}
 
+/** Obsidian's interface language. English unless a test sets `mockLanguage.value`. */
+export const mockLanguage = { value: 'en' };
+export function getLanguage(): string {
+    return mockLanguage.value;
+}
+
 export function debounce<T extends (...args: never[]) => unknown>(fn: T): T {
     return fn;
 }

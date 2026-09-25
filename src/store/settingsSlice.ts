@@ -20,7 +20,6 @@ import { normalizeSession, type TimerSession } from '../modules/tasks/services/t
 import type { ContentTypeConfig } from '../core/contentTypes';
 import type { WeatherPlace } from '../modules/weather/weatherTypes';
 import { DEFAULT_REVIEW_NOTES, type ReviewNotes } from '../modules/journal/services/reviewPeriods';
-import type { ModuleActivity } from '../core/moduleActivity';
 import type { Recents } from '../modules/search/recents';
 import type { StudySchedule } from '../modules/study/studyModel';
 import type { GeoPlace } from '../services/geocode';
@@ -34,7 +33,6 @@ import {
 } from '../modules/prayer/prayerConfig';
 import type { ApiMidnight } from '../modules/prayer/prayerProvider';
 import type { DashboardBgFit, DashboardBgSource } from '../modules/dashboard/dashboardBackground';
-import type { ModuleSource } from '../core/moduleSources';
 import { pinnedFeatures } from '../core/features';
 import {
     DEFAULT_PANEL_BUTTONS,
@@ -76,28 +74,6 @@ export type UiDensity = 'compact' | 'comfortable' | 'spacious';
 
 /** How the navigation launcher lays its buttons out. */
 export type NavigatorLayout = 'grid' | 'list';
-
-/** A module the installer put on disk, and where it came from. */
-export interface InstalledModuleRecord {
-    id: string;
-    name: string;
-    version: string;
-    source: ModuleSource;
-    installedAt: number;
-    updatedAt?: number;
-    /** Hash of the main.js we wrote — detects hand edits and sync changes. */
-    codeHash: string;
-    /** When the user accepted running this module, and the origin they saw. */
-    consentedAt: number;
-    consentedOrigin: string;
-    /**
-     * The permissions the user agreed to. A module asking for a different
-     * list — more, or other — is asked about again.
-     */
-    consentedPermissions?: string[];
-    /** Cleared on a successful load. */
-    lastError?: string;
-}
 
 /** An OAuth token pair as persisted. `expiresAt` is absolute epoch ms. */
 /** See `ZenithSettings.profileUndo`. */
@@ -320,8 +296,7 @@ export interface ZenithSettings {
     /**
      * Settings that belong to one copy of a widget, keyed by its layout id.
      *
-     * Opaque here on purpose: the shape is the widget's business, and a widget
-     * that arrives with a third-party module has a shape this file cannot know.
+     * Opaque here on purpose: the shape is the widget's business.
      * Each widget normalises its own bucket on read — see `widgetConfig.ts`.
      *
      * Keyed by layout id rather than by widget id because that is the only
@@ -336,8 +311,8 @@ export interface ZenithSettings {
     navigatorShowLabels: boolean;
     /**
      * Nav action ids the user has switched off. A hide list rather than a show
-     * list, so a button contributed by a newly installed module appears instead
-     * of waiting to be found in settings.
+     * list, so a button contributed by a module switched on later appears
+     * instead of waiting to be found in settings.
      */
     navigatorHiddenActions: string[];
     /**
@@ -434,35 +409,8 @@ export interface ZenithSettings {
     weatherAllowIpLookup: boolean;
     /** Fetch pollutants and pollen alongside the forecast (a second request). */
     weatherShowAir: boolean;
-    /**
-     * Settings owned by third-party modules, bucketed by module id.
-     *
-     * They cannot add keys to `ZenithSettings`, and namespacing everything else
-     * would mean migrating ~100 existing keys for tidiness alone — so this is
-     * the one namespaced corner. A module owns its bucket outright: it is
-     * replaced wholesale on load rather than deep-merged.
-     */
-    moduleSettings: Record<string, Record<string, unknown>>;
-    /**
-     * Master switch for running third-party module code. Off by default.
-     *
-     * A module is plain JavaScript with the same reach as Obsidian itself, and
-     * Zenith cannot sandbox it. Discovery still lists what is installed when
-     * this is off — seeing what is there is safe; running it is the part that
-     * needs a deliberate yes.
-     */
-    allowThirdPartyModules: boolean;
-    /**
-     * Start with no third-party module running, on this device — for when one
-     * of them keeps Obsidian from working. Modules stay installed and enabled.
-     */
-    safeMode: boolean;
-    /** What modules wrote through Zenith's API — see `moduleActivity`. */
-    moduleActivity: ModuleActivity[];
     /** What was picked in Search, how often and when — see `search/recents.ts`. */
     searchRecents: Recents;
-    /** The timetable provider when times come from a published table: '' for Aladhan, or a module's. */
-    prayerProviderId: string;
 
     // ── Study ──
     /** Bells and lessons — see `modules/study/studyModel`. */
@@ -480,17 +428,6 @@ export interface ZenithSettings {
     studyTermEnd: string;
     /** Minutes before a class that its reminder comes. */
     studyRemindBefore: number;
-    /**
-     * What the installer put on disk, so Update / Reinstall / Uninstall know
-     * where each module came from.
-     *
-     * Kept in settings rather than in a sidecar file beside the modules: it
-     * rides the existing debounced `data.json` write with no new plumbing, and
-     * it syncs across devices — which is what makes "installed on the desktop,
-     * appears on the phone" work. Module CODE never goes in here; that lives on
-     * disk like any other file.
-     */
-    installedModules: InstalledModuleRecord[];
     /**
      * Schema version of this settings object, for ordered migrations.
      *
@@ -743,12 +680,6 @@ export interface SettingsSlice {
     loadSettings: (saved: Partial<ZenithSettings>) => void;
     setAvailableModules: (modules: ModuleManifest[]) => void;
     setLoadedModules: (moduleIds: string[]) => void;
-    /** Merge a patch into one third-party module's settings bucket. */
-    updateModuleSettings: (moduleId: string, patch: Record<string, unknown>) => void;
-    /** Empty a module's bucket, so schema defaults apply again. */
-    resetModuleSettings: (moduleId: string) => void;
-    /** Drop a module's bucket entirely (uninstall with "forget settings"). */
-    forgetModuleSettings: (moduleId: string) => void;
 }
 
 /**
@@ -766,11 +697,25 @@ export const CURRENT_SETTINGS_VERSION = 13;
  * Listed rather than detected, because ARRAY-valued settings must NOT be merged
  * — `journalTrackers: []` means "no trackers", not "use the defaults".
  */
+/**
+ * Keys an older Zenith kept that nothing reads any more, dropped on load so a
+ * config does not carry them forever. Third-party modules left Zenith in
+ * 0.2.5, and with them their settings, installs, activity log, safe mode and
+ * the prayer timetables they could offer.
+ */
+const RETIRED_KEYS = [
+    'moduleSettings',
+    'allowThirdPartyModules',
+    'safeMode',
+    'moduleActivity',
+    'installedModules',
+    'prayerProviderId',
+] as const;
+
 const NESTED_KEYS = [
     'contentView',
     'taskView',
     'calendarView',
-    'moduleSettings',
     'widgetConfig',
     'features',
 ] as const;
@@ -899,12 +844,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     weatherPlace: null,
     weatherAllowIpLookup: false,
     weatherShowAir: true,
-    moduleSettings: {},
-    allowThirdPartyModules: false,
-    safeMode: false,
-    moduleActivity: [],
     searchRecents: {},
-    prayerProviderId: '',
     studySchedule: { bells: [], lessons: [] },
     studyTwoWeeks: false,
     studyWeekAnchor: '',
@@ -913,7 +853,6 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     studyTermStart: '',
     studyTermEnd: '',
     studyRemindBefore: 10,
-    installedModules: [],
     settingsVersion: CURRENT_SETTINGS_VERSION,
     weatherUnit: 'c',
     weatherShowHourly: true,
@@ -987,6 +926,8 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
         set(() => {
             const saved = stripUndefined(rawSaved);
             const merged: ZenithSettings = { ...DEFAULT_SETTINGS, ...saved };
+            for (const key of RETIRED_KEYS)
+                delete (merged as unknown as Record<string, unknown>)[key];
 
             // Nested objects need their own merge: a config written before a
             // field existed would otherwise replace the whole default with a
@@ -1072,7 +1013,7 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             // ── v7 → v8 ──
             // The canvas module is gone, and its id has to leave the active
             // list rather than sit there inertly: `canvas` was never a reserved
-            // id, so a third-party module that later takes it would start up on
+            // id, so a module that later took it would start up on
             // its own, never having been switched on. Its three settings are
             // left where they are, like any other key we no longer read — see
             // the merge above: forgetting them would cost the user their layout
@@ -1148,36 +1089,6 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
     setAvailableModules: (modules) => set(() => ({ availableModules: modules })),
 
     setLoadedModules: (moduleIds) => set(() => ({ loadedModuleIds: moduleIds })),
-
-    // All three write THROUGH `settings`, so the existing subscription in
-    // main.ts persists them with no extra plumbing — a module's settings ride
-    // the same debounced `data.json` write as everything else, and sync to the
-    // user's other devices for free.
-    updateModuleSettings: (moduleId, patch) =>
-        set((state) => ({
-            settings: {
-                ...state.settings,
-                moduleSettings: {
-                    ...state.settings.moduleSettings,
-                    [moduleId]: { ...(state.settings.moduleSettings[moduleId] ?? {}), ...patch },
-                },
-            },
-        })),
-
-    resetModuleSettings: (moduleId) =>
-        set((state) => ({
-            settings: {
-                ...state.settings,
-                moduleSettings: { ...state.settings.moduleSettings, [moduleId]: {} },
-            },
-        })),
-
-    forgetModuleSettings: (moduleId) =>
-        set((state) => {
-            const next = { ...state.settings.moduleSettings };
-            delete next[moduleId];
-            return { settings: { ...state.settings, moduleSettings: next } };
-        }),
 });
 
 /**

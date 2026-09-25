@@ -39,8 +39,7 @@ off, and how many settings change. Two modes:
 After applying, **Put it back** at the top of the page restores exactly what that apply
 changed. It is kept per device, like the change it undoes.
 
-A module the profile names that isn't installed is left out and listed. A third-party module
-the profile doesn't mention is never switched off.
+A module the profile names that this Zenith doesn't have is left out and listed.
 
 ## Your own profiles
 
@@ -58,8 +57,7 @@ move one to a phone. Two switches, both off by default:
 - **Include location** — where you are, for weather and prayer times.
 
 **Never exported, whatever you choose:** passwords, tokens, server and sync settings, the
-encryption password, third-party modules and their settings, and the arrangement of your
-dashboard.
+encryption password, and the arrangement of your dashboard.
 
 **Import** reads a `.json` file from the vault or pasted text. Every setting is checked
 against this version of Zenith; anything it doesn't know, or that has the wrong type, is

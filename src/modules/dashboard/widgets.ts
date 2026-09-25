@@ -1,37 +1,26 @@
 import { useSyncExternalStore } from 'react';
 import type { ComponentType } from 'react';
-import type { App } from 'obsidian';
-import type ZenithPlugin from '../../main';
 import type { Translator } from '../../core/i18n';
 import type { WidgetSize } from './grid/gridTypes';
 
 /**
  * Zenith Dashboard Widget System
  * ──────────────────────────────
- * Any module — built-in or third-party — can contribute a widget to the
- * dashboard by registering a `DashboardWidgetDefinition`. The dashboard renders
- * all registered widgets in a responsive grid, sorted by `order`.
- *
- * Two rendering paths are supported:
- *  • `component` — a React component (used by the bundled modules).
- *  • `mount`     — a framework-agnostic DOM callback, ideal for third-party
- *                  modules that ship as plain `.js` and don't share our React.
+ * Every module can contribute a widget to the dashboard by registering a
+ * `DashboardWidgetDefinition`, a React component with its sizes and title. The
+ * dashboard renders all registered widgets in a responsive grid, sorted by
+ * `order`.
  *
  * Register from a module's `onload()` and dispose on `onunload()`:
  * ```ts
- *   this.register(this.plugin.registerDashboardWidget({
+ *   this.disposers.push(this.plugin.registerDashboardWidget({
  *     id: 'my-module.hello',
- *     title: 'Hello',
+ *     titleKey: 'widget.hello',
  *     icon: 'sparkles',
- *     mount: (el) => { el.setText('Hi from my module'); },
+ *     component: HelloWidget,
  *   }));
  * ```
  */
-
-export interface DashboardWidgetContext {
-    app: App;
-    plugin: ZenithPlugin;
-}
 
 /**
  * Props every React widget receives. Widgets may ignore them — a plain
@@ -82,10 +71,8 @@ export interface DashboardWidgetDefinition {
      * Translation key for the header title, winning over `title` when the
      * dictionary has it.
      *
-     * Both, rather than one: a third-party widget cannot add keys to Zenith's
-     * dictionary and must be able to pass a literal, while everything built in
-     * has to follow the user's language. `title` stays as the fallback for the
-     * locale that has no translation.
+     * Both, rather than one: `title` stays as the fallback for the locale that
+     * has no translation.
      */
     titleKey?: string;
     /**
@@ -102,11 +89,6 @@ export interface DashboardWidgetDefinition {
     sizes?: readonly WidgetSize[];
     /** Preset used when the widget is first placed. Defaults to `sizes[0]`. */
     defaultSize?: WidgetSize;
-    /**
-     * @deprecated Superseded by `sizes`/`defaultSize`. Still honoured as a
-     * fallback so third-party widgets written against the old API keep working.
-     */
-    span?: 1 | 2 | 'full';
     /** Sort order (ascending). Defaults to 100. */
     order?: number;
     /**
@@ -134,28 +116,16 @@ export interface DashboardWidgetDefinition {
      * times. See `widgetConfig.ts` for where the values are kept.
      */
     settings?: ComponentType<WidgetSettingsProps>;
-    /** React render path (bundled widgets). */
+    /** What the widget draws. Absent only for a bundle's own card, which draws its members. */
     component?: ComponentType<DashboardWidgetProps>;
-    /**
-     * DOM render path (third-party widgets). Receives a host element and the
-     * dashboard context. May return a cleanup function.
-     */
-    mount?: (el: HTMLElement, ctx: DashboardWidgetContext) => void | (() => void);
 }
 
-/**
- * Resolve the size presets for a widget.
- *
- * Widgets that predate the grid (or third-party ones) only declare `span`, so
- * derive presets from it: a full-width widget starts at `md`, a half-width one
- * at `sm`. Both can still be grown, which is what the old layout allowed anyway.
- */
+/** Resolve the size presets for a widget: its own, or small and medium. */
 export function widgetSizes(def: DashboardWidgetDefinition): {
     sizes: readonly WidgetSize[];
     defaultSize: WidgetSize;
 } {
-    const wide = def.span === 'full' || def.span === 2;
-    const sizes = def.sizes?.length ? def.sizes : wide ? (['md', 'lg'] as const) : (['sm', 'md'] as const);
+    const sizes = def.sizes?.length ? def.sizes : (['sm', 'md'] as const);
     const defaultSize = def.defaultSize && sizes.includes(def.defaultSize) ? def.defaultSize : sizes[0];
     return { sizes, defaultSize };
 }

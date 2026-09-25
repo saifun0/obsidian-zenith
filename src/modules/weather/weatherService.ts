@@ -1,7 +1,14 @@
 import { requestUrl } from 'obsidian';
 import { fetchAirQuality } from './airQuality';
 import { placeKey, placeLabel, resolvePlace } from '../../services/geocode';
-import { FORECAST_HOURS, num as n, parseDaily, parseHourly } from './weatherParse';
+import {
+    FORECAST_HOURS,
+    num as n,
+    parseDaily,
+    parseHourly,
+    type DailyRaw,
+    type HourlyRaw,
+} from './weatherParse';
 import type { WeatherData, WeatherPlace } from './weatherTypes';
 
 /**
@@ -144,6 +151,14 @@ const DAILY_VARS = [
     'wind_direction_10m_dominant',
 ].join(',');
 
+/** The parts of Open-Meteo's forecast answer read here. None of them is trusted to be there. */
+interface ForecastResponse {
+    current?: Record<string, unknown>;
+    daily?: DailyRaw;
+    hourly?: HourlyRaw;
+    timezone?: string;
+}
+
 async function fetchForecast(place: WeatherPlace): Promise<WeatherData | null> {
     const url =
         `https://api.open-meteo.com/v1/forecast?latitude=${place.lat}&longitude=${place.lon}` +
@@ -151,15 +166,16 @@ async function fetchForecast(place: WeatherPlace): Promise<WeatherData | null> {
         `&forecast_days=${FORECAST_DAYS}&forecast_hours=${FORECAST_HOURS}&timezone=auto`;
 
     const res = await requestUrl({ url });
-    const c = res.json?.current;
+    const json = res.json as ForecastResponse | undefined;
+    const c = json?.current;
     if (!c) return null;
 
-    const daily = parseDaily(res.json?.daily);
-    const hourly = parseHourly(res.json?.hourly, c.time ?? '');
+    const daily = parseDaily(json?.daily);
+    const hourly = parseHourly(json?.hourly, typeof c.time === 'string' ? c.time : '');
     // Dew point, visibility and UV have no `current` equivalent, so the current
     // hour of the series stands in for them.
     const nowHour = hourly[0];
-    const resolved: WeatherPlace = { ...place, timezone: res.json?.timezone ?? place.timezone };
+    const resolved: WeatherPlace = { ...place, timezone: json?.timezone ?? place.timezone };
 
     return {
         tempC: n(c.temperature_2m),
@@ -179,7 +195,7 @@ async function fetchForecast(place: WeatherPlace): Promise<WeatherData | null> {
 
         place: resolved,
         location: placeLabel(resolved),
-        timezone: res.json?.timezone ?? '',
+        timezone: json?.timezone ?? '',
         fetchedAt: Date.now(),
 
         sunrise: daily[0]?.sunrise ?? '',

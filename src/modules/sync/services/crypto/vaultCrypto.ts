@@ -115,7 +115,7 @@ export interface CryptoMarker {
 type Bytes = Uint8Array<ArrayBuffer>;
 
 function subtle(): SubtleCrypto {
-    const api = globalThis.crypto?.subtle;
+    const api = crypto?.subtle;
     if (!api) {
         throw new Error('This device has no Web Crypto, so encrypted sync cannot run here.');
     }
@@ -124,7 +124,7 @@ function subtle(): SubtleCrypto {
 
 export function randomBytes(length: number): Bytes {
     const out = new Uint8Array(length);
-    const api = globalThis.crypto;
+    const api = crypto;
     if (!api?.getRandomValues) {
         // Refused rather than filled with `Math.random`. A weak nonce here is
         // not a degraded feature, it is a broken one, and quietly producing
@@ -380,7 +380,7 @@ export function serializeMarker(marker: CryptoMarker): ArrayBuffer {
         _: 'Zenith encrypted sync. The notes here are encrypted; this file is not, and holds no secret — only the salt and a check value. Deleting it makes the folder unreadable.',
         ...marker,
     };
-    return utf8(JSON.stringify(body, null, 2)).buffer as ArrayBuffer;
+    return utf8(JSON.stringify(body, null, 2)).buffer;
 }
 
 export function parseMarker(data: ArrayBuffer): CryptoMarker | null {
@@ -436,7 +436,7 @@ export async function keysForMarker(password: string, marker: CryptoMarker): Pro
 // ── Encoding helpers ─────────────────────────────────
 
 function utf8(text: string): Bytes {
-    return new TextEncoder().encode(text) as Bytes;
+    return new TextEncoder().encode(text);
 }
 
 export function toBase64(bytes: Uint8Array): string {

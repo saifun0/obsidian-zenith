@@ -21,7 +21,7 @@ const Dump: React.FC<{ title: string; value: unknown; empty: string }> = ({
     const t = useTranslation();
     const [copied, setCopied] = useState(false);
     const text = JSON.stringify(value, null, 2);
-    const isEmpty = !value || Object.keys(value as object).length === 0;
+    const isEmpty = !value || Object.keys(value).length === 0;
 
     const copy = () => {
         void navigator.clipboard.writeText(text).then(() => {
@@ -53,15 +53,9 @@ export const StateInspector: React.FC = () => {
     const [reveal, setReveal] = useState(false);
     const [query, setQuery] = useState('');
 
-    const { moduleSettings, ...core } = settings;
-
-    const shownCore = useMemo(
-        () => narrowEntries(maskSecrets(core, '', reveal) as Record<string, unknown>, query),
-        [core, reveal, query]
-    );
-    const shownModules = useMemo(
-        () => narrowEntries(maskSecrets(moduleSettings, '', reveal) as Record<string, unknown>, query),
-        [moduleSettings, reveal, query]
+    const shownSettings = useMemo(
+        () => narrowEntries(maskSecrets(settings, '', reveal) as Record<string, unknown>, query),
+        [settings, reveal, query]
     );
 
     return (
@@ -76,12 +70,7 @@ export const StateInspector: React.FC = () => {
 
             {!reveal && <div className="zenith-debug__note">{t('debug.state.masked')}</div>}
 
-            <Dump title={t('debug.state.settings')} value={shownCore} empty={t('debug.empty')} />
-            <Dump
-                title={t('debug.state.moduleBuckets')}
-                value={shownModules}
-                empty={t('debug.state.noBuckets')}
-            />
+            <Dump title={t('debug.state.settings')} value={shownSettings} empty={t('debug.empty')} />
             <Dump
                 title={t('debug.state.discovered')}
                 value={availableModules}

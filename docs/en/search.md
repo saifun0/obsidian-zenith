@@ -24,7 +24,7 @@ sits where the palette does, with the line at the bottom by the keyboard.
 
 | Group | What | Enter |
 | --- | --- | --- |
-| Views | Every Zenith view, including those of third-party modules. | Opens it. |
+| Views | Every Zenith view. | Opens it. |
 | Actions | Zenith's commands, named in Zenith's language, with their hotkeys. | Runs it. |
 | Tasks | Tasks still to do: not the done or cancelled ones. | Opens the task editor. |
 | Projects | Active, in-progress and paused projects. | Opens the project's note. |

@@ -20,8 +20,7 @@ module.<id>.desc
 ```
 
 Built-in modules declare theirs in `src/modules/<id>/i18n.ts` and return it from
-`getTranslations()`. A third-party module does exactly the same — the mechanism is one
-mechanism, so it cannot rot on the path only outsiders take:
+`getTranslations()`:
 
 ```ts
 getTranslations() {

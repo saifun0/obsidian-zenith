@@ -110,6 +110,7 @@ const paths: SyncPaths = {
 const ENGINE_OPTS = {
     localRoot: '',
     includeConfigDir: false,
+    configDir: '.obsidian',
     userExcludes: [],
     pluginDir: '.obsidian/plugins/zenith',
     conflictAction: 'keep_newer' as const,
@@ -138,6 +139,7 @@ function makeEngine(
 describe('buildExcluder', () => {
     const base = {
         includeConfigDir: false,
+        configDir: '.obsidian',
         userExcludes: [],
         pluginDir: '.obsidian/plugins/zenith',
         localRoot: '',
@@ -160,6 +162,12 @@ describe('buildExcluder', () => {
         const ex = buildExcluder(base);
         expect(ex('.obsidian/workspace.json')).toBe(true);
         expect(ex('.obsidian/themes/x.css')).toBe(true);
+    });
+
+    it('knows the config folder by the name the vault gives it', () => {
+        const ex = buildExcluder({ ...base, configDir: '.config', pluginDir: '.config/plugins/zenith' });
+        expect(ex('.config/workspace.json')).toBe(true);
+        expect(ex('.obsidian/workspace.json')).toBe(false);
     });
 
     it('lets the config folder through when asked, minus our own files', () => {

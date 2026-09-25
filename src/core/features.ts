@@ -216,36 +216,13 @@ export type FeatureId = (typeof FEATURES)[number]['id'];
 
 const BY_ID = new Map<string, FeatureDefinition>(FEATURES.map((def) => [def.id, def]));
 
-/**
- * Features third-party modules registered (with the `features` permission):
- * switched, gated, saved into profiles and applied from them exactly like
- * Zenith's own. Kept apart so the built-in list stays a constant.
- */
-const EXTERNAL = new Map<string, FeatureDefinition>();
-
-/**
- * Add a module's feature. Its id must sit under the module — `<module>.<name>`
- * — and may not take one that exists. Returns the way to take it back.
- */
-export function registerExternalFeature(def: FeatureDefinition): () => void {
-    if (!def.id.startsWith(`${def.moduleId}.`) || BY_ID.has(def.id) || EXTERNAL.has(def.id)) {
-        throw new Error(
-            `Zenith: a feature called "${def.id}" cannot be registered by "${def.moduleId}".`
-        );
-    }
-    EXTERNAL.set(def.id, def);
-    return () => {
-        if (EXTERNAL.get(def.id) === def) EXTERNAL.delete(def.id);
-    };
-}
-
-/** Zenith's features and every module's, in that order. */
+/** Every feature Zenith has. */
 export function allFeatures(): FeatureDefinition[] {
-    return [...FEATURES, ...EXTERNAL.values()];
+    return [...FEATURES];
 }
 
 export function getFeature(id: string): FeatureDefinition | undefined {
-    return BY_ID.get(id) ?? EXTERNAL.get(id);
+    return BY_ID.get(id);
 }
 
 /** A module's features, in registry order. */

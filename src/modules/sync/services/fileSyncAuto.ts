@@ -226,7 +226,7 @@ export class FileSyncAuto {
         if (this.announced === signature) return;
         this.announced = signature;
 
-        const fragment = document.createDocumentFragment();
+        const fragment = createFragment();
         const root = fragment.createDiv({ cls: 'zenith-syncnotice' });
         root.createDiv({
             cls: 'zenith-syncnotice__title',

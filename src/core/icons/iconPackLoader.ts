@@ -1,5 +1,5 @@
 import type { ModuleFs } from '../moduleFs';
-import { isSafeModuleId } from '../modulePaths';
+import { isSafeId } from '../pluginPaths';
 import { describeSvgProblem } from './iconSvg';
 import { isSafeIconName, type IconRegistry, type IconSourceKind } from './iconRegistry';
 
@@ -136,7 +136,7 @@ export async function loadIconPacks(
     for (const id of await fs.listFolders(root)) {
         // The folder name becomes the icon id's source segment, so it is
         // validated with the same rule that keeps a module id from escaping.
-        if (!isSafeModuleId(id)) continue;
+        if (!isSafeId(id)) continue;
 
         const folder = `${root}/${id}`;
         let manifest: PackManifest = {};

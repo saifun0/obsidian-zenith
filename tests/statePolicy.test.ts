@@ -78,10 +78,6 @@ describe('scope decisions', () => {
         }
     });
 
-    it('shares installedModules, which is what makes install-on-desktop reach the phone', () => {
-        expect(scopeOf('installedModules')).toBe('shared');
-    });
-
     it('never syncs the settings schema version', () => {
         // Each device runs its own migrations against its own stored config.
         expect(scopeOf('settingsVersion')).toBe('never');
@@ -96,14 +92,14 @@ describe('merge strategies', () => {
             'journalTrackers',
             'contentTypes',
             'dashboardPresets',
-            'installedModules',
+            'profiles',
         ] as SettingsKey[]) {
             expect(mergeStrategyOf(key)).toBe('byId');
         }
     });
 
     it('merges keyed records key-by-key', () => {
-        for (const key of ['folderIcons', 'moduleSettings', 'prayerAdjustments'] as SettingsKey[]) {
+        for (const key of ['folderIcons', 'prayerAdjustments'] as SettingsKey[]) {
             expect(mergeStrategyOf(key)).toBe('record');
         }
     });

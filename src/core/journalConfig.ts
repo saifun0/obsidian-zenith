@@ -1,3 +1,5 @@
+import { scalarText } from './scalarText';
+
 /**
  * Journal tracker configuration.
  *
@@ -288,12 +290,13 @@ export function coerceTrackerValue(
 
     if (kind === 'check') {
         if (typeof raw === 'boolean') return raw || undefined;
-        const text = String(raw).trim().toLowerCase();
+        const text = scalarText(raw).trim().toLowerCase();
         if (['true', 'yes', 'y', '1', 'done', 'x'].includes(text)) return true;
         return undefined;
     }
 
-    const n = typeof raw === 'number' ? raw : Number(String(raw).trim());
+    const text = scalarText(raw).trim();
+    const n = typeof raw === 'number' ? raw : text ? Number(text) : NaN;
     if (!Number.isFinite(n)) return undefined;
 
     if (kind === 'scale') {

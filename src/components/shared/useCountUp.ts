@@ -42,13 +42,13 @@ export function useCountUp(target: number, enabled: boolean, duration = 650): nu
             const next = from + (target - from) * eased;
             setValue(next);
             fromRef.current = next;
-            if (progress < 1) frameRef.current = requestAnimationFrame(step);
+            if (progress < 1) frameRef.current = window.requestAnimationFrame(step);
             else fromRef.current = target;
         };
 
-        frameRef.current = requestAnimationFrame(step);
+        frameRef.current = window.requestAnimationFrame(step);
         return () => {
-            if (frameRef.current !== undefined) cancelAnimationFrame(frameRef.current);
+            if (frameRef.current !== undefined) window.cancelAnimationFrame(frameRef.current);
         };
     }, [target, enabled, duration]);
 

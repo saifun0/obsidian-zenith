@@ -102,7 +102,7 @@ export const ContentApp: React.FC = () => {
                     <IconButton
                         icon={RotateCw}
                         tooltip={t('common.refresh')}
-                        onClick={loadContent}
+                        onClick={() => void loadContent()}
                         variant="ghost"
                         disabled={contentLoading}
                     />

@@ -5,6 +5,7 @@ import type { ContentTypeConfig } from '../../../core/contentTypes';
 import { CONTENT_STATUSES } from '../../../core/constants';
 import type { ContentStatus } from '../../../core/constants';
 import { useApp } from '../../../context/AppContext';
+import { confirmDelete } from '../../../core/ConfirmModal';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { openFileAtLine } from '../../../core/openInVault';
@@ -124,8 +125,8 @@ export function useContentMenu(
                 .setIcon('trash-2')
                 .onClick(() =>
                     void run(async () => {
-                        if (!window.confirm(t('content.detail.deleteConfirm', { title: item.title })))
-                            return;
+                        const question = t('content.detail.deleteConfirm', { title: item.title });
+                        if (!(await confirmDelete(app, question))) return;
                         if (!(await deleteItems(app, [item]))) new Notice(t('content.error.delete'));
                     }, 'content.error.delete')
                 )

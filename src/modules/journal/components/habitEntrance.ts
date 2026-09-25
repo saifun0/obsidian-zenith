@@ -143,9 +143,8 @@ export function playHabitEntrance(root: HTMLElement): Animation[] {
 
     root.querySelectorAll('.zenith-hmon__run').forEach((bar) => {
         const element = bar as HTMLElement;
-        // Each bar grows from the day it starts on, so a streak is drawn in
-        // the direction it was lived.
-        element.style.transformOrigin = 'left center';
+        // Each bar grows from the day it starts on (`transform-origin` in
+        // journal.css), so a streak is drawn in the direction it was lived.
         scheduled.push(
             run(
                 element,

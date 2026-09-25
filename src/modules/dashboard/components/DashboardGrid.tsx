@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FC } from 'react';
 import { AlertTriangle, Layers } from 'lucide-react';
-import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import {
@@ -8,7 +7,6 @@ import {
     widgetLabel,
     useDashboardWidgets,
     widgetSizes,
-    type DashboardWidgetContext,
 } from '../widgets';
 import {
     addItem,
@@ -130,8 +128,6 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
        competing for the same attention, and the whole point of putting them
        on the card is that there is only ever one. */
     const [flippedId, setFlippedId] = useState<string | null>(null);
-    const { app, plugin } = useApp();
-    const ctx = useMemo<DashboardWidgetContext>(() => ({ app, plugin }), [app, plugin]);
 
     const t = useTranslation();
     const allRegistered = useDashboardWidgets();
@@ -666,7 +662,6 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                         icon: 'layers',
                                     }}
                                     instanceId={bundle.id}
-                                    ctx={ctx}
                                     style={isDragging ? dragStyle(item) : cellStyle(item)}
                                     editing={editing}
                                     dragging={isDragging}
@@ -732,7 +727,6 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                     <BundleCard
                                         bundle={bundle}
                                         defsById={defsById}
-                                        ctx={ctx}
                                         size={item.size}
                                         unsupported={
                                             new Set(
@@ -757,7 +751,6 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                 key={item.id}
                                 def={def}
                                 instanceId={item.id}
-                                ctx={ctx}
                                 style={isDragging ? dragStyle(item) : cellStyle(item)}
                                 editing={editing}
                                 dragging={isDragging}

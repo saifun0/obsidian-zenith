@@ -38,7 +38,6 @@ export default tseslint.config(
             'node_modules',
             'dist',
             'tests/**',
-            'modules_def/**',
             '*.mjs',
             'vitest.config.ts',
         ],

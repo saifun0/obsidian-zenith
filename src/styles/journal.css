@@ -1206,6 +1206,8 @@ body.is-phone .zenith-jstats {
 .zenith-hmon__run {
     position: absolute;
     top: 50%;
+    /* The entrance grows each bar from the day its streak starts. */
+    transform-origin: left center;
     /* Narrower than a mark, which is what gives the chain its waist: equal
        heights would fuse into a plain rounded bar with no articulation. */
     height: 8px;

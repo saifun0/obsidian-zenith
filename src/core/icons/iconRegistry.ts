@@ -19,15 +19,18 @@ import { sanitizeIconSvg, type SvgProblem } from './iconSvg';
 /** Marks an id as ours. Lucide ids never contain a colon. */
 export const ICON_PREFIX = 'zi:';
 
-/** Where an icon came from, so it can be reclaimed as a unit. */
-export type IconSourceKind = 'pack' | 'module';
+/**
+ * Where an icon came from, so it can be reclaimed as a unit. Only packs now:
+ * modules that brought their own artwork left with third-party modules.
+ */
+export type IconSourceKind = 'pack';
 
 export interface RegisteredIcon {
     /** Full id, e.g. `zi:acme/logo`. */
     id: string;
     /** Name within its source, e.g. `logo`. */
     name: string;
-    /** Pack or module id. */
+    /** Pack id. */
     source: string;
     sourceKind: IconSourceKind;
     /** Sanitized, ready to inline. */

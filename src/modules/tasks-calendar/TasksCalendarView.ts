@@ -24,7 +24,7 @@ export class TasksCalendarView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Tasks Calendar';
+        return 'Tasks calendar';
     }
 
     getIcon(): string {

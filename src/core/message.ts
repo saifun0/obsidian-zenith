@@ -4,9 +4,8 @@ import { translate, type TParams } from './i18n';
  * A sentence a subsystem wants to show, written down before anyone knows what
  * language it will be read in.
  *
- * The loader, the manifest reader and the installer all produce text for the
- * settings page, and all of them run far from React — some of them before the
- * workspace exists. Handing back a translated string means picking a language
+ * The module loader produces text for the settings page far from React —
+ * before the workspace exists, even. Handing back a translated string means picking a language
  * at the wrong moment; handing back English means the settings page renders
  * English inside a Russian interface, which is exactly the bug this replaces.
  * So they hand back a key and its parameters, and the component translates.

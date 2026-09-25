@@ -93,7 +93,7 @@ export class IconPickerModal extends Modal {
             shown += matches.length;
             this.renderSection(
                 source.label,
-                source.kind === 'module' ? 'from a module' : source.author,
+                source.author,
                 matches.map((i) => i.id)
             );
         }

@@ -224,7 +224,7 @@ function toSharedState(raw: Record<string, unknown>): SharedState | null {
 
     const state = emptyState();
     state.version = typeof raw.version === 'number' ? raw.version : DEVICE_DOC_VERSION;
-    state.values = values as SharedState['values'];
+    state.values = values;
     // Drop non-string stamps rather than the whole document: an unstamped key
     // reads as "never set here" and simply loses, which is recoverable.
     state.stamps = Object.fromEntries(

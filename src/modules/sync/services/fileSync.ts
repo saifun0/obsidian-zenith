@@ -324,6 +324,7 @@ export class FileSyncService {
         return new SyncEngine(fs, remote, new PrevSyncStore(fs, paths), this.deviceId, {
             localRoot: s.syncLocalRoot.trim(),
             includeConfigDir: s.syncIncludeConfigDir,
+            configDir: this.plugin.app.vault.configDir,
             userExcludes: s.syncExcludes,
             pluginDir: this.plugin.manifest.dir ?? '',
             conflictAction: s.syncConflictAction,

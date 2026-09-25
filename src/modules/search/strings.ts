@@ -4,7 +4,7 @@
  *
  * `command.<id>` names Zenith's commands in Zenith's language. Obsidian shows
  * them in English only, in its own palette; Search shows them translated and
- * finds them by either name. A third-party module names its own as
+ * finds them by either name. A module can also name its own in its chunk, as
  * `module.<its id>.command.<command id>`.
  */
 export const SEARCH_STRINGS: { en: Record<string, string>; ru: Record<string, string> } = {
@@ -38,9 +38,7 @@ export const SEARCH_STRINGS: { en: Record<string, string>; ru: Record<string, st
             'On a phone: the magnifier in Obsidian’s menu, or pin “Zenith: Search” to the toolbar.',
 
         'command.quick-add-task': 'Quick add task',
-        'command.toggle-safe-mode': 'Toggle safe mode (third-party modules)',
         'command.open-notifications': 'Open notifications',
-        'command.zenith-device-check': 'Check device capabilities (modules)',
         'command.open-week-note': 'Open this week’s note',
         'command.open-month-note': 'Open this month’s note',
         'command.open-quarter-note': 'Open this quarter’s note',
@@ -88,9 +86,7 @@ export const SEARCH_STRINGS: { en: Record<string, string>; ru: Record<string, st
             'На телефоне — лупа в меню Obsidian, или закрепите «Zenith: Search» в панели инструментов.',
 
         'command.quick-add-task': 'Быстро добавить задачу',
-        'command.toggle-safe-mode': 'Безопасный режим (сторонние модули)',
         'command.open-notifications': 'Открыть уведомления',
-        'command.zenith-device-check': 'Проверить возможности устройства (модули)',
         'command.open-week-note': 'Заметка этой недели',
         'command.open-month-note': 'Заметка этого месяца',
         'command.open-quarter-note': 'Заметка этого квартала',

@@ -9,9 +9,8 @@ import { useZenithStore } from '../../store';
  * back of the card and stored under the copy's layout id.
  *
  * The bucket is `Record<string, unknown>` in the store because a widget's shape
- * is the widget's business — a third-party one has a shape the store cannot
- * know — so every caller passes a `normalize` that turns whatever came back
- * from `data.json` into its own type. Keep that function at module scope: it is
+ * is the widget's business, so every caller passes a `normalize` that turns
+ * whatever came back from `data.json` into its own type. Keep that function at module scope: it is
  * a dependency of the memo, and a fresh one each render defeats it.
  */
 export function useWidgetConfig<T extends Record<string, unknown>>(

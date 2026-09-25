@@ -1,16 +1,11 @@
 # Dependencies
 node_modules/
 
-# Build output (esbuild writes to ../zenith/, these are only safety nets)
+# Build output (esbuild writes to the dev vault or dist/, these are only safety nets)
 /main.js
 /main.js.map
 /styles.css
-/manifest.json
 /data.json
-
-# Third-party / external modules
-/modules/
-modules_def/focus-timer/
 
 # Scratch / reference material
 temp/
@@ -34,8 +29,11 @@ pnpm-debug.log*
 .env.local
 .env.*.local
 
-# Extra vaults `npm run build` deploys to (scripts/deploy.mjs)
+# Where `npm run build` writes and deploys to (scripts/paths.mjs)
 deploy.local.json
+
+# The build, when deploy.local.json names no dev vault
+dist/
 
 # Editors
 .idea/

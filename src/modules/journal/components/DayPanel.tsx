@@ -23,7 +23,6 @@ import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { keptOn } from '../services/habitMonth';
 import { notesSection } from '../services/journalParser';
 import { TrackerControl } from './TrackerControl';
-import { ExtensionSlot } from '../../../core/extensions/ExtensionSlot';
 import { dayLabel } from '../services/journalDates';
 
 interface DayPanelProps {
@@ -186,8 +185,6 @@ export const DayPanel: FC<DayPanelProps> = ({
                 )}
             </div>
 
-            <ExtensionSlot id="journal.day.afterTrackers" props={{ date, entry }} />
-
             <div className="zenith-jday__section">
                 <span className="zenith-jday__section-title">
                     <ListChecks size={13} />
@@ -202,7 +199,7 @@ export const DayPanel: FC<DayPanelProps> = ({
                             <li key={task.id} className="zenith-jday__task">
                                 <TaskStatusControl
                                     status={task.status}
-                                    onChange={(status) => changeStatus(task, status)}
+                                    onChange={(status) => void changeStatus(task, status)}
                                     size={15}
                                 />
                                 <span

@@ -165,7 +165,7 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
             autoFocus={autoFocus}
             placeholder={t('tasks.subtask.placeholder')}
             onChange={(e) => setAddText(e.target.value)}
-            onBlur={submitAdd}
+            onBlur={() => void submitAdd()}
             onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -209,7 +209,7 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
                         >
                             <TaskStatusControl
                                 status={sub.status}
-                                onChange={(s) => setStatus(sub, s)}
+                                onChange={(s) => void setStatus(sub, s)}
                                 size={14}
                             />
                             {isEditing ? (
@@ -218,7 +218,7 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
                                     value={editText}
                                     autoFocus
                                     onChange={(e) => setEditText(e.target.value)}
-                                    onBlur={() => saveEdit(sub)}
+                                    onBlur={() => void saveEdit(sub)}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             e.preventDefault();
@@ -299,7 +299,7 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
                                     </button>
                                     <button
                                         className="zenith-subtask__action zenith-subtask__action--danger"
-                                        onClick={() => remove(sub)}
+                                        onClick={() => void remove(sub)}
                                         aria-label={t('common.delete')}
                                         title={t('common.delete')}
                                     >

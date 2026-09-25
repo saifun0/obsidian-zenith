@@ -10,10 +10,8 @@ import { getTodayString, toLocalIsoDate } from '../../../core/dateUtils';
 import { IMAGE_EXTENSIONS } from '../../../core/imageSource';
 import { preferredPlace } from '../../../services/geocode';
 import { IconPickerModal } from '../../../core/IconPickerModal';
-import { MobileCheckModal } from '../../../core/MobileCheckModal';
 import { PromptModal } from '../../../core/PromptModal';
 import { VaultScaffoldModal } from '../../../core/VaultScaffoldModal';
-import { ThirdPartyConsentModal, type ConsentRequest } from '../../../core/ThirdPartyConsentModal';
 import { ImagePickerModal } from '../../../components/shared/ImagePickerModal';
 import { QuickAddTaskModal } from '../../../modules/tasks/QuickAddTaskModal';
 import { TaskEditorModal } from '../../../modules/tasks/components/TaskEditorModal';
@@ -39,8 +37,7 @@ import type {
  * Every dialog Zenith can put on screen, and how to build each one cold.
  *
  * Most of them are only reachable from one place, and some of those places need
- * a module switched on, a note with subtasks in it, a third-party install in
- * progress or a cached forecast. So each entry says how to make its dialog
+ * a module switched on, a note with subtasks in it or a cached forecast. So each entry says how to make its dialog
  * without any of that: from the real data when there is some — a dialog showing
  * your own library is the better test — and from a made-up specimen when there
  * is none, flagged as such so a strange title is not mistaken for a bug.
@@ -94,20 +91,6 @@ export type ModalEntry = NativeModalEntry | ReactModalEntry;
 const SAMPLE_PATH = 'Zenith debug sample.md';
 
 // ── Specimens ────────────────────────────────────────
-
-const SAMPLE_CONSENT: ConsentRequest = {
-    manifest: {
-        id: 'debug-sample',
-        name: 'Sample module',
-        description: 'A module that does not exist, so that this dialog can be looked at.',
-        version: '1.0.0',
-        author: 'Zenith debug tools',
-        permissions: ['tasks:read', 'ui:slots', 'network:api.example.com'],
-    },
-    origin: 'https://github.com/example/zenith-sample-module',
-    code: 'module.exports = class SampleModule {\n    onload() {}\n    onunload() {}\n};\n',
-    reason: 'first-install',
-};
 
 /** Asked the way the dashboard asks for a layout preset's name. */
 function presetPrompt(app: App): PromptModal {
@@ -347,28 +330,12 @@ export const MODAL_CATALOG: readonly ModalEntry[] = [
             new ImagePickerModal(app, t('settings.vaultImage.search'), report),
     },
     {
-        id: 'consent',
-        name: 'ThirdPartyConsentModal',
-        owner: 'core',
-        kind: 'obsidian',
-        sample: () => true,
-        create: ({ app, report }) => new ThirdPartyConsentModal(app, SAMPLE_CONSENT, report),
-    },
-    {
         id: 'scaffold',
         name: 'VaultScaffoldModal',
         owner: 'core',
         kind: 'obsidian',
         writes: true,
         create: ({ app, report }) => new VaultScaffoldModal(app, () => report('done')),
-    },
-    {
-        id: 'mobileCheck',
-        name: 'MobileCheckModal',
-        owner: 'core',
-        kind: 'obsidian',
-        writes: true,
-        create: ({ app, plugin }) => new MobileCheckModal(app, plugin),
     },
     {
         id: 'quickAddTask',

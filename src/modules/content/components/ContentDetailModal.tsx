@@ -8,6 +8,7 @@ import { CONTENT_STATUSES } from '../../../core/constants';
 import type { ContentStatus } from '../../../core/constants';
 import { useZenithStore } from '../../../store';
 import { useApp } from '../../../context/AppContext';
+import { confirmDelete } from '../../../core/ConfirmModal';
 import { ContentWriter } from '../services/contentWriter';
 import { setItemStatus } from '../services/contentActions';
 import { daysBetween, type ContentDates } from '../services/contentDates';
@@ -192,7 +193,7 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
         if (busy) return;
         // The note goes to the vault's trash, so this is a reassurance rather
         // than a last warning.
-        if (!window.confirm(t('content.detail.deleteConfirm', { title: item.title }))) return;
+        if (!(await confirmDelete(app, t('content.detail.deleteConfirm', { title: item.title })))) return;
         setBusy(true);
         try {
             if (await writer.current.deleteItem(item.filePath)) onClose();

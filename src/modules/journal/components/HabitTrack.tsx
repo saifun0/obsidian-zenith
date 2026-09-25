@@ -98,18 +98,16 @@ export const HabitTrack: FC<HabitTrackProps> = ({ row, index, t, pulse, onPick }
                             data-at={run.from}
                             data-to={run.to}
                             data-row={index}
-                            style={
-                                {
-                                    left: `${centre(from)}%`,
-                                    width: `${centre(to) - centre(from)}%`,
-                                    // Its own slice of the row's gradient, so
-                                    // the bar and the discs on it agree at
-                                    // every column instead of stepping.
-                                    background: `linear-gradient(90deg, ${shade(run.from)}, ${shade(
-                                        run.to
-                                    )})`,
-                                } as CSSProperties
-                            }
+                            style={{
+                                left: `${centre(from)}%`,
+                                width: `${centre(to) - centre(from)}%`,
+                                // Its own slice of the row's gradient, so
+                                // the bar and the discs on it agree at
+                                // every column instead of stepping.
+                                background: `linear-gradient(90deg, ${shade(run.from)}, ${shade(
+                                    run.to
+                                )})`,
+                            }}
                         />
                     );
                 })}
@@ -123,12 +121,10 @@ export const HabitTrack: FC<HabitTrackProps> = ({ row, index, t, pulse, onPick }
                             data-at={cell.day - 1}
                             data-row={index}
                             data-marked="1"
-                            style={
-                                {
-                                    left: `${centre(cell.day)}%`,
-                                    background: shade(cell.day - 1),
-                                } as CSSProperties
-                            }
+                            style={{
+                                left: `${centre(cell.day)}%`,
+                                background: shade(cell.day - 1),
+                            }}
                         />
                     ))}
             </span>

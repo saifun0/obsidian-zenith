@@ -127,13 +127,13 @@ export function parseCanvas(raw: string): CanvasData {
     }
     if (!isRecord(parsed)) throw new CanvasParseError('expected a JSON object at the top level');
 
-    const rawNodes = Array.isArray(parsed.nodes) ? parsed.nodes : [];
+    const rawNodes: unknown[] = Array.isArray(parsed.nodes) ? parsed.nodes : [];
     const rawEdges = Array.isArray(parsed.edges) ? parsed.edges : [];
 
     const nodes: CanvasNode[] = [];
     const heldNodes: PreservedEntry[] = [];
     rawNodes.forEach((candidate, at) => {
-        if (isKnownNode(candidate)) nodes.push(candidate as unknown as CanvasNode);
+        if (isKnownNode(candidate)) nodes.push(candidate);
         else heldNodes.push({ at, value: candidate });
     });
 
@@ -174,7 +174,7 @@ export function parseCanvas(raw: string): CanvasData {
 }
 
 /** Everything the merge knows how to match up and write back. */
-function isKnownNode(candidate: unknown): boolean {
+function isKnownNode(candidate: unknown): candidate is CanvasNode {
     if (!isRecord(candidate)) return false;
     const { id, type, x, y, width, height } = candidate;
     if (typeof id !== 'string' || typeof type !== 'string') return false;

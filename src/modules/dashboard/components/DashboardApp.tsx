@@ -301,7 +301,7 @@ export const DashboardApp: React.FC = () => {
                     )}
                     <button
                         className="zenith-dashboard__action zenith-dashboard__action--lone"
-                        onClick={loadData}
+                        onClick={() => void loadData()}
                         disabled={refreshing}
                         aria-label={t('common.refresh')}
                         title={t('common.refresh')}

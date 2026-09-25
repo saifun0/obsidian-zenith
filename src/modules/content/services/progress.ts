@@ -1,4 +1,5 @@
 import type { ContentStatus } from '../../../core/constants';
+import { scalarText } from '../../../core/scalarText';
 
 /**
  * Structured progress ("88 of 100 pages", "Ep 5/12").
@@ -26,7 +27,7 @@ function toPositiveInt(value: unknown): number | undefined {
     }
     // Blank strings must read as "absent", not 0 — otherwise an empty
     // `progressTotal` would pass as a real total of zero.
-    const text = String(value).replace(/[\s,]/g, '');
+    const text = scalarText(value).replace(/[\s,]/g, '');
     if (!text) return undefined;
     const n = Number(text);
     return Number.isFinite(n) && n >= 0 ? Math.round(n) : undefined;
@@ -51,7 +52,7 @@ export function parseProgress(raw: unknown, totalRaw?: unknown): ProgressValue |
         return current == null ? undefined : { current, total: explicitTotal };
     }
 
-    const text = String(raw).trim();
+    const text = scalarText(raw).trim();
     if (!text) return explicitTotal ? { current: 0, total: explicitTotal } : undefined;
 
     // "45%" — represent as a 0–100 scale so it still renders a bar.

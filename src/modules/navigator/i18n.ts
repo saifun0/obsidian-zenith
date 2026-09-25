@@ -3,9 +3,8 @@ import type { TranslationTable } from '../../core/i18n';
 /**
  * Navigation — the strings the module brings with it.
  *
- * Its name and description live here rather than in Zenith's own dictionary
- * because this is the door a third-party module has to use, and a door only
- * built-in modules can open is one that quietly stops working.
+ * Its name and description live here rather than in Zenith's own dictionary,
+ * so a module's strings are registered with the module and go with it.
  *
  * `module.<id>.name` and `module.<id>.desc` are the two keys every list of
  * modules looks for.
@@ -56,7 +55,6 @@ export const navigatorTranslations: TranslationTable = {
         'navigator.short.open-quarter-note': 'This quarter',
         'navigator.short.open-year-note': 'This year',
         'navigator.short.open-today-note': 'Today',
-        'navigator.short.toggle-safe-mode': 'Safe mode',
         'navigator.short.open-dashboard': 'Dashboard',
         'navigator.short.open-tasks': 'Tasks',
         'navigator.short.open-tasks-calendar': 'Calendar',
@@ -111,7 +109,6 @@ export const navigatorTranslations: TranslationTable = {
         'navigator.short.open-quarter-note': 'Квартал',
         'navigator.short.open-year-note': 'Год',
         'navigator.short.open-today-note': 'Сегодня',
-        'navigator.short.toggle-safe-mode': 'Безопасный режим',
         'navigator.short.open-dashboard': 'Дашборд',
         'navigator.short.open-tasks': 'Задачи',
         'navigator.short.open-tasks-calendar': 'Календарь',

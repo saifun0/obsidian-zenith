@@ -9,7 +9,6 @@ import {
     type TranslationTable,
 } from '../src/core/i18n';
 import { localizeModule, moduleDescriptionKey, moduleNameKey } from '../src/core/moduleLabels';
-import { validateManifest } from '../src/core/moduleManifestSchema';
 
 import { contentTranslations } from '../src/modules/content/i18n';
 import { dashboardTranslations } from '../src/modules/dashboard/i18n';
@@ -155,41 +154,6 @@ describe('localizeModule', () => {
         });
         expect(shown.name).toBe('Демо');
         expect(shown.description).toBe('Does things.');
-    });
-});
-
-describe('manifest translations', () => {
-    const check = (raw: unknown) => validateManifest(raw, { pluginVersion: '1.0.0' });
-
-    const base = { id: 'demo', name: 'Demo' };
-
-    it('reads a translations block', () => {
-        const result = check({
-            ...base,
-            translations: { ru: { 'module.demo.name': 'Демо' } },
-        });
-        expect(result.ok).toBe(true);
-        if (result.ok) expect(result.manifest.translations).toEqual({ ru: { 'module.demo.name': 'Демо' } });
-    });
-
-    it('ignores locales Zenith does not ship and values that are not strings', () => {
-        const result = check({
-            ...base,
-            translations: {
-                ru: { 'module.demo.name': 'Демо', 'module.demo.desc': 42 },
-                fr: { 'module.demo.name': 'Démo' },
-            },
-        });
-        expect(result.ok).toBe(true);
-        if (result.ok) expect(result.manifest.translations).toEqual({ ru: { 'module.demo.name': 'Демо' } });
-    });
-
-    it('leaves it undefined when there is nothing usable', () => {
-        for (const translations of [undefined, null, 'ru', {}, { ru: {} }, { ru: 'нет' }]) {
-            const result = check({ ...base, translations });
-            expect(result.ok).toBe(true);
-            if (result.ok) expect(result.manifest.translations).toBeUndefined();
-        }
     });
 });
 

@@ -166,7 +166,7 @@ export class MobileInsets {
     }
 
     stop(): void {
-        cancelAnimationFrame(this.frame);
+        window.cancelAnimationFrame(this.frame);
         this.disposers.forEach((d) => d());
         this.disposers = [];
         this.observer?.disconnect();
@@ -191,8 +191,8 @@ export class MobileInsets {
 
     /** Re-read on every change, once a frame at most. */
     schedule(): void {
-        cancelAnimationFrame(this.frame);
-        this.frame = requestAnimationFrame(() => this.measure());
+        window.cancelAnimationFrame(this.frame);
+        this.frame = window.requestAnimationFrame(() => this.measure());
     }
 
     subscribe(listener: () => void): () => void {

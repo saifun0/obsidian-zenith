@@ -15,8 +15,6 @@ import {
 } from './prayerConfig';
 import { prayerPlaceOf } from './prayerOptions';
 import { refreshPrayerTimes } from './prayerSource';
-import { extensions } from '../../core/extensions/registry';
-import { providerKey } from './moduleProviders';
 
 /**
  * Prayer settings.
@@ -65,22 +63,6 @@ export const prayerSettingsSchema = coreSchema({
                         value: id,
                         labelKey: `prayer.source.${id}`,
                     })),
-                },
-                // Only once a module offers a timetable of its own.
-                {
-                    type: 'select',
-                    key: 'prayerProviderId',
-                    labelKey: 'settings.prayerProvider',
-                    descKey: 'settings.prayerProvider.desc',
-                    default: '',
-                    showIf: (v) =>
-                        v.prayerSource === 'api' && extensions.prayerProviders.list().length > 0,
-                    options: () => [
-                        { value: '', label: 'Aladhan' },
-                        ...extensions.prayerProviders
-                            .list()
-                            .map((p) => ({ value: providerKey(p), label: p.label })),
-                    ],
                 },
                 {
                     type: 'segmented',

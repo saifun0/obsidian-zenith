@@ -45,9 +45,9 @@ function useOpenViewTypes(): Set<string> {
 /**
  * Dashboard launcher: one button per registered nav action.
  *
- * The buttons come from the registry rather than from a list of Zenith's own
- * views, so a third-party module's view is a first-class entry here — same
- * shape, same ordering, same hide switch in settings.
+ * The buttons come from the registry rather than from a fixed list of views, so
+ * the launcher shows exactly what is loaded, in one order, with one hide switch
+ * in settings.
  */
 export const NavWidget: React.FC = () => {
     const t = useTranslation();

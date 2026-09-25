@@ -1,7 +1,3 @@
-import { extensions } from '../../core/extensions/registry';
-import { resolveTableProvider } from './moduleProviders';
-import { ALADHAN } from './prayerProvider';
-import { setTableProvider } from './prayerTable';
 import { Notice, normalizePath } from 'obsidian';
 import { BaseModule } from '../../core/IModule';
 import { PRAYER_BLOCK_LANG, VIEW_TYPE_PRAYER } from '../../core/constants';
@@ -65,17 +61,6 @@ export class PrayerModule extends BaseModule {
         this.plugin.app.workspace.onLayoutReady(() => {
             this.plugin.app.workspace.detachLeavesOfType(VIEW_TYPE_PRAYER);
         });
-
-        // Published tables from Aladhan, or from a module's provider when the
-        // setting names one and that module is running.
-        const applyProvider = () =>
-            setTableProvider(resolveTableProvider(useZenithStore.getState().settings.prayerProviderId));
-        applyProvider();
-        this.disposers.push(
-            extensions.prayerProviders.subscribe(applyProvider),
-            useZenithStore.subscribe((s) => s.settings.prayerProviderId, applyProvider),
-            () => setTableProvider(ALADHAN)
-        );
 
         this.registerCodeBlock(PRAYER_BLOCK_LANG, (_source, el, ctx) => {
             ctx.addChild(new PrayerBlockRenderer(el, this.plugin, ctx.sourcePath));

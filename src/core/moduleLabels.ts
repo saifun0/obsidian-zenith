@@ -3,15 +3,9 @@ import { currentLocale, hasTranslation, translateNow, type Translator } from './
 /**
  * A module's name and description in the reader's language.
  *
- * Both arrive as plain English text on the manifest, written by whoever wrote
- * the module — Zenith for a built-in, a stranger for anything else. So they
- * cannot live in the plugin dictionary: there is no file in this repository for
- * a third-party module's strings.
- *
- * Instead the manifest text is a FALLBACK, and these two keys are looked for
- * first. A module fills them from `getTranslations()`, or from a `translations`
- * block in its `manifest.json` — the second of which is read at discovery, and
- * is therefore the only one that can name a module the user has not enabled.
+ * Both arrive as plain English text on the manifest. That text is a FALLBACK:
+ * these two keys are looked for first, and a module fills them from
+ * `getTranslations()`.
  */
 export const moduleNameKey = (id: string): string => `module.${id}.name`;
 export const moduleDescriptionKey = (id: string): string => `module.${id}.desc`;

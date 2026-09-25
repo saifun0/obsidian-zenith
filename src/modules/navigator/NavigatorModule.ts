@@ -15,9 +15,8 @@ import type { TranslationTable } from '../../core/i18n';
  * Zenith view, in both.
  *
  * Owns the widget and the panel, not the buttons. Each module registers its
- * own nav action (see `navigation.ts`), so both list what is actually loaded —
- * including views that arrived with a third-party module — and never have to
- * be edited when a module is added or removed.
+ * own nav action (see `navigation.ts`), so both list what is actually loaded
+ * and never have to be edited when a module is added or removed.
  *
  * The panel lives in the sidebar, not the main area, so "activate" still opens
  * the dashboard, where the widget is.

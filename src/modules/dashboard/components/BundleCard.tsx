@@ -3,9 +3,8 @@ import { Folder } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { useTranslation } from '../../../core/i18n';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
-import type { DashboardWidgetContext, DashboardWidgetDefinition } from '../widgets';
+import type { DashboardWidgetDefinition } from '../widgets';
 import { prettifyWidgetId, widgetLabel } from '../widgets';
-import { DomWidgetHost } from './GridWidget';
 import { BUNDLE_MAX_PIPS, type WidgetBundle } from '../grid/bundleTypes';
 import { useCrossFade } from '../../../components/shared/useCrossFade';
 
@@ -16,7 +15,6 @@ interface MemberViewProps {
     def: DashboardWidgetDefinition;
     /** The member's layout id — the same string its own settings live under. */
     instanceId: string;
-    ctx: DashboardWidgetContext;
     size: WidgetSize;
     /** Reserve space in the header so the title can't run under the rail. */
     railReserve?: number;
@@ -31,7 +29,7 @@ interface MemberViewProps {
  * that's how you get a clock rendered as a billboard. It gets a compact strip
  * instead: header, one line saying why, and nothing pretending to be data.
  */
-const MemberView: FC<MemberViewProps> = ({ def, instanceId, ctx, size, railReserve, compact }) => {
+const MemberView: FC<MemberViewProps> = ({ def, instanceId, size, railReserve, compact }) => {
     const t = useTranslation();
     const Body = def.component;
     const label = widgetLabel(def, t);
@@ -56,9 +54,7 @@ const MemberView: FC<MemberViewProps> = ({ def, instanceId, ctx, size, railReser
                     </div>
                 ) : Body ? (
                     <Body size={size} instanceId={instanceId} />
-                ) : (
-                    <DomWidgetHost def={def} ctx={ctx} />
-                )}
+                ) : null}
             </div>
         </div>
     );
@@ -68,7 +64,6 @@ interface BundleCardProps {
     bundle: WidgetBundle;
     /** Definitions for the members, in rail order. Missing ones are skipped. */
     defsById: Map<string, DashboardWidgetDefinition>;
-    ctx: DashboardWidgetContext;
     size: WidgetSize;
     /** Members that can't render at `size` and fall back to the compact strip. */
     unsupported: Set<string>;
@@ -94,7 +89,6 @@ interface BundleCardProps {
 export const BundleCard: FC<BundleCardProps> = ({
     bundle,
     defsById,
-    ctx,
     size,
     unsupported,
     editing,
@@ -165,14 +159,13 @@ export const BundleCard: FC<BundleCardProps> = ({
                 <MemberView
                     def={def}
                     instanceId={id}
-                    ctx={ctx}
                     size={size}
                     railReserve={railReserve}
                     compact={unsupported.has(id)}
                 />
             );
         },
-        [ctx, defsById, size, unsupported]
+        [defsById, size, unsupported]
     );
 
     // Six pips, then a "+N" — past that the rail costs more header than the

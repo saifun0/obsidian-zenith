@@ -162,14 +162,7 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     profileUndo: 'no',
     profilesOnboarded: 'no',
     settingsVersion: 'no',
-    // Code the user approved to run, and its private settings — a profile is
-    // not a way to install or configure a stranger's module.
-    moduleSettings: 'no',
-    allowThirdPartyModules: 'no',
-    safeMode: 'no',
-    moduleActivity: 'no',
     searchRecents: 'no',
-    prayerProviderId: 'no',
     // A timetable, a subgroup and term dates are one person's; how the weeks
     // are called and when to be reminded are a way of working.
     studySchedule: 'no',
@@ -180,7 +173,6 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     studyTermStart: 'no',
     studyTermEnd: 'no',
     studyRemindBefore: 'yes',
-    installedModules: 'no',
     // Personal: a profile is shared, and a birth date is nobody else's.
     dashboardBirthDate: 'no',
     // Live state, and the arrangement of this screen.
@@ -475,19 +467,17 @@ export function parseProfile(text: string, defaults: ZenithSettings): ParseResul
 export type ApplyMode = 'replace' | 'add';
 
 export interface ModuleContext {
-    /** Ids of the modules that ship with Zenith. */
+    /** Ids of the modules the profile speaks for — all of them, but sync for a template. */
     builtIn: readonly string[];
-    /** Ids of every module present — built in or installed. */
+    /** Ids of every module present. */
     available: readonly string[];
 }
 
 /**
  * The settings change a profile makes. Pure: apply it with `updateSettings`.
  *
- * Modules: a built-in module is on exactly when the profile says so. A
- * third-party module the profile lists is switched on if it is installed; one
- * it does not list is left alone — a profile never switches off a module it
- * knows nothing about, which a template never does.
+ * Modules: a module the profile speaks for is on exactly when the profile
+ * says so. The rest — sync, for a template — are left as they are.
  *
  * Features: the ones the profile names. A feature newer than the profile is
  * left as it is.

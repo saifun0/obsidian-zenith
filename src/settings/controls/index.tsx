@@ -12,9 +12,7 @@ import { ColorField, Dropdown } from '../../components/ui/fields';
  * instead of the `--zenith-*` tokens — the settings tab renders outside
  * `.zenith-root`, where those tokens are not declared.
  *
- * All of them are presentational: value in, change out, no store access. That
- * is what lets the same components drive both core settings and a third-party
- * module's own bucket.
+ * All of them are presentational: value in, change out, no store access.
  *
  * ── How a control learns its own name ──
  *

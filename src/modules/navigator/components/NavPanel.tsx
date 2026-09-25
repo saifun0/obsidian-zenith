@@ -102,8 +102,7 @@ function useResolvedButtons(buttons: PanelButton[]): ResolvedButton[] {
                 hotkey: command ? commandHotkey(plugin, command.id) : undefined,
             };
         });
-        // `loaded` is read through `isZenithCommandLive`, not directly.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- `loaded` is read through `isZenithCommandLive`, not directly
     }, [plugin, t, buttons, loaded]);
 }
 

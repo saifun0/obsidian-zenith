@@ -1,4 +1,4 @@
-import React, { useId, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { FileUp, Layers, Minus, Plus, X } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
@@ -876,13 +876,11 @@ const InlineFields: React.FC = () => {
 
 const ObsidianDialogFields: React.FC = () => {
     const t = useTranslation();
-    const consentId = useId();
 
     const prompt = useText(t('dashboard.presets.defaultName'));
     const iconSearch = useText();
     const mediaRef = useText();
     const mediaSearch = useText();
-    const [understood, setUnderstood] = useState(false);
 
     return (
         <Section title={t('debug.inputs.obsidian')}>
@@ -901,17 +899,6 @@ const ObsidianDialogFields: React.FC = () => {
                     placeholder="Search icons…"
                     {...iconSearch}
                 />
-            </Demo>
-            <Demo label="zenith-consent__confirm" source="ThirdPartyConsentModal">
-                <div className="zenith-consent__confirm">
-                    <input
-                        id={consentId}
-                        type="checkbox"
-                        checked={understood}
-                        onChange={(e) => setUnderstood(e.target.checked)}
-                    />
-                    <label htmlFor={consentId}>{t('consent.understood')}</label>
-                </div>
             </Demo>
             <Demo label="zenith-media-picker__input" source="MediaPickerModal" wide>
                 <div className="zenith-media-picker__quick-row">

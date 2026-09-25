@@ -4,6 +4,7 @@ import { Image, ImageOff } from 'lucide-react';
 import { pickVaultImage } from '../../components/shared/ImagePickerModal';
 import { isImagePath } from '../../core/imageSource';
 import type { CustomFieldProps } from '../schema/types';
+import { scalarText } from '../../core/scalarText';
 
 /**
  * A settings row that names a picture in the vault: a path, a button that opens
@@ -24,7 +25,7 @@ export function vaultImageField(
     descKey: string
 ): React.FC<CustomFieldProps> {
     const VaultImageField: React.FC<CustomFieldProps> = ({ app, t, values, set }) => {
-        const path = String(values[key] ?? '');
+        const path = scalarText(values[key]);
         // Vault lookups are not reactive, so a file appearing has to be repainted.
         const [, repaint] = useState(0);
 

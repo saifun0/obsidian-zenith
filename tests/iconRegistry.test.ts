@@ -115,7 +115,7 @@ describe('sources', () => {
         const registry = new IconRegistry();
         registry.add('acme', 'pack', 'logo', LOGO);
         registry.add('acme', 'pack', 'mark', LOGO);
-        registry.add('other', 'module', 'glyph', LOGO);
+        registry.add('other', 'pack', 'glyph', LOGO);
 
         registry.removeSource('acme');
 

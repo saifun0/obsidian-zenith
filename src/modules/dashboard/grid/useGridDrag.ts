@@ -276,7 +276,7 @@ export function useGridDrag(opts: DragOptions): GridDragApi {
             el.scrollTop = Math.max(0, Math.min(before + speed, el.scrollHeight - el.clientHeight));
             if (el.scrollTop !== before) update();
         }
-        d.raf = requestAnimationFrame(step);
+        d.raf = window.requestAnimationFrame(step);
     }, [update]);
 
     /** Detach whatever this drag put on `window`. Safe to call twice. */
@@ -288,7 +288,7 @@ export function useGridDrag(opts: DragOptions): GridDragApi {
 
     const endDrag = useCallback(() => {
         const d = drag.current;
-        if (d.raf) cancelAnimationFrame(d.raf);
+        if (d.raf) window.cancelAnimationFrame(d.raf);
         d.raf = 0;
         d.id = null;
         d.pointerId = -1;
@@ -381,7 +381,7 @@ export function useGridDrag(opts: DragOptions): GridDragApi {
     // rather than on doing what its own first line claims.
     useEffect(
         () => () => {
-            if (drag.current.raf) cancelAnimationFrame(drag.current.raf);
+            if (drag.current.raf) window.cancelAnimationFrame(drag.current.raf);
             if (drag.current.dwellTimer) window.clearTimeout(drag.current.dwellTimer);
             if (drag.current.longPressTimer) window.clearTimeout(drag.current.longPressTimer);
             drag.current.teardown?.();
@@ -442,8 +442,8 @@ export function useGridDrag(opts: DragOptions): GridDragApi {
                 setDragId(id);
                 setOffset({ dx: 0, dy: 0 });
                 attach();
-                if (d.raf) cancelAnimationFrame(d.raf);
-                d.raf = requestAnimationFrame(step);
+                if (d.raf) window.cancelAnimationFrame(d.raf);
+                d.raf = window.requestAnimationFrame(step);
             },
 
             // Movement and release during a drag are handled on `window`; what

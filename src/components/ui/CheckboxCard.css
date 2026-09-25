@@ -12,18 +12,6 @@
 
 /* A tile plus whatever has to be said about it (a module that cannot run, and
    why). Stacked in one cell so the warning stays attached to its module. */
-.zenith-settings__module-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.zenith-settings__module-cell .zenith-settings__hint {
-    margin-bottom: 0;
-    flex-wrap: wrap;
-    gap: 6px;
-    font-size: 0.76rem;
-}
 
 .zenith-checkbox-card {
     display: flex;

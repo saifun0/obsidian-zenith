@@ -131,7 +131,7 @@ export function syncPaths(plugin: ZenithPlugin): SyncPaths | null {
  * The id becomes a filename, so it is validated wherever one arrives from
  * outside — a peer document is a file that syncs in from another machine, and an
  * id like `../../data` would otherwise escape the sync folder. Same reasoning
- * and same shape as `SAFE_MODULE_ID` in `core/modulePaths.ts`.
+ * and same shape as `SAFE_ID` in `core/pluginPaths.ts`.
  */
 export const SAFE_DEVICE_ID = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/;
 

@@ -223,7 +223,7 @@ export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) =
                     {failed ? t('weather.unavailable') : t('weather.loading')}
                 </span>
                 {failed && (
-                    <button className="zenith-weather__retry" onClick={() => load(true)}>
+                    <button className="zenith-weather__retry" onClick={() => void load(true)}>
                         {t('weather.retry')}
                     </button>
                 )}
@@ -280,7 +280,7 @@ export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) =
                             location={data.location}
                             loading={loading}
                             label={t('weather.refresh')}
-                            onRefresh={() => load(true)}
+                            onRefresh={() => void load(true)}
                         />
                     </div>
                 </div>
@@ -320,7 +320,7 @@ export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) =
                     loading={loading}
                     now={now}
                     t={t}
-                    onRefresh={() => load(true)}
+                    onRefresh={() => void load(true)}
                     onClose={() => setExpanded(false)}
                 />
             )}

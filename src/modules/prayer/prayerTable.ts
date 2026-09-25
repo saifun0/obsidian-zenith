@@ -487,24 +487,6 @@ export function vaultTableStore(adapter: DataAdapter, folder: string): TableStor
     };
 }
 
-/**
- * Where published tables come from: Aladhan, or a provider a module
- * registered. The cache is keyed by provider, so switching never serves one
- * provider's times as another's; on-screen times follow at once.
- */
-export function setTableProvider(next: PrayerProvider): void {
-    if (provider.id === next.id) {
-        provider = next;
-        return;
-    }
-    provider = next;
-    bump();
-}
-
-export function tableProviderId(): string {
-    return provider.id;
-}
-
 export const __testing = {
     setProvider(next: PrayerProvider): void {
         provider = next;

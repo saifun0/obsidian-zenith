@@ -45,9 +45,6 @@ describe('what a profile may carry', () => {
             'syncDropboxClientId',
             'syncOnedriveClientId',
             'syncEncryptionPassword',
-            'installedModules',
-            'moduleSettings',
-            'allowThirdPartyModules',
         ] as const) {
             expect(PROFILE_POLICY[key], key).toBe('no');
         }

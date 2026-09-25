@@ -12,7 +12,6 @@ export interface ModuleMenuEntry {
     name: string;
     description: string;
     icon?: string;
-    isBuiltIn: boolean;
 }
 
 export function configurableModules<T extends ModuleMenuEntry>(
@@ -27,10 +26,7 @@ export function configurableModules<T extends ModuleMenuEntry>(
         // them leads nowhere.
         .filter((module) => active.has(module.id))
         .filter((module) => hasSettings(module.id))
-        // Built-ins first — they are what a new user is looking for — then by
-        // name, so the order does not shift with whatever the registry happens
-        // to hand back.
-        .sort(
-            (a, b) => Number(b.isBuiltIn) - Number(a.isBuiltIn) || a.name.localeCompare(b.name)
-        );
+        // By name, so the order does not shift with whatever the registry
+        // happens to hand back.
+        .sort((a, b) => a.name.localeCompare(b.name));
 }

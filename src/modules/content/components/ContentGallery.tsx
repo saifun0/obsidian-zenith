@@ -15,6 +15,7 @@ import type { ContentItem } from '../../../store/contentSlice';
 import { CONTENT_STATUSES } from '../../../core/constants';
 import type { ContentStatus } from '../../../core/constants';
 import { useApp } from '../../../context/AppContext';
+import { confirmDelete } from '../../../core/ConfirmModal';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { effectiveContentTypes, resolveContentType } from '../../../core/contentTypes';
@@ -320,7 +321,7 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
 
     const bulkDelete = async () => {
         if (bulkBusy || pickedItems.length === 0) return;
-        if (!window.confirm(t.plural('content.bulk.deleteConfirm', pickedItems.length))) return;
+        if (!(await confirmDelete(app, t.plural('content.bulk.deleteConfirm', pickedItems.length)))) return;
         setBulkBusy(true);
         try {
             const removed = await deleteItems(app, pickedItems);

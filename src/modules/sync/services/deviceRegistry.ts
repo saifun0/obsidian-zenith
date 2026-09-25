@@ -54,7 +54,7 @@ function defaultName(platform: DevicePlatform): string {
  */
 function generateId(): string {
     const bytes = new Uint8Array(8);
-    const c = globalThis.crypto;
+    const c = crypto;
     if (c && typeof c.getRandomValues === 'function') {
         c.getRandomValues(bytes);
     } else {
@@ -79,7 +79,7 @@ export class DeviceRegistry {
     get id(): string {
         if (this.cachedId) return this.cachedId;
 
-        const stored = this.plugin.app.loadLocalStorage(ID_KEY);
+        const stored: unknown = this.plugin.app.loadLocalStorage(ID_KEY);
         if (isSafeDeviceId(stored)) {
             this.cachedId = stored;
             return stored;
@@ -92,7 +92,7 @@ export class DeviceRegistry {
     }
 
     get name(): string {
-        const stored = this.plugin.app.loadLocalStorage(NAME_KEY);
+        const stored: unknown = this.plugin.app.loadLocalStorage(NAME_KEY);
         if (typeof stored === 'string' && stored.trim()) return stored.trim();
         return defaultName(detectPlatform());
     }

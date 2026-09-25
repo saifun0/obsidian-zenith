@@ -1,3 +1,4 @@
+import { getLanguage } from 'obsidian';
 import { useMemo, useSyncExternalStore } from 'react';
 import { useZenithStore } from '../store';
 import type { ZenithLanguage } from '../store/settingsSlice';
@@ -9,7 +10,6 @@ import { TASK_STRINGS } from '../modules/tasks/strings';
 import { JOURNAL_STRINGS } from '../modules/journal/strings';
 import { CONTENT_STRINGS } from '../modules/content/strings';
 import { DASHBOARD_STRINGS } from '../modules/dashboard/strings';
-import { MODULE_STRINGS } from './moduleStrings';
 import { STUDY_STRINGS } from '../modules/study/strings';
 import { SEARCH_STRINGS } from '../modules/search/strings';
 
@@ -37,7 +37,6 @@ const EN: Dict = {
     'settings.storage.desc': 'Locations for your tasks and content',
     'settings.pluginSettings': 'Plugin settings',
     'settings.moduleSettings': 'Module settings',
-    'settings.thirdPartyBadge': 'third-party',
     'settings.modules': 'Active Modules',
     'settings.modules.desc': 'Enable or disable specific plugin features',
     'settings.appearance': 'Appearance',
@@ -254,7 +253,7 @@ const EN: Dict = {
     'settings.navLabels': 'Button labels',
     'settings.navButtons': 'Buttons',
     'settings.navButtons.desc':
-        'Every active module contributes its own, including third-party ones. Pick the ones to leave out.',
+        'Every active module contributes its own. Pick the ones to leave out.',
     'settings.navHidden': 'Hidden buttons',
 
     // Tasks calendar
@@ -284,125 +283,12 @@ const EN: Dict = {
         'Forecasts come from Open-Meteo, which needs no account and receives only ' +
         'the coordinates. IP lookup, when you switch it on, sends your address to ipapi.co.',
 
-    // Settings — modules
-    'settings.builtInModules': 'Built-in Modules',
-    'settings.thirdPartyModules': 'Third-party Modules',
-    'settings.allowThirdParty': 'Run third-party modules',
-    'settings.thirdPartyWarning.short':
-        'They run with Obsidian’s own access — your whole vault, and the internet.',
-    'settings.thirdPartyWarning.more': 'What that means',
-    'settings.thirdPartyWarning':
-        'A module is JavaScript with the same permissions as Obsidian itself. It can read, ' +
-        'change and delete any file in your vault, and send data anywhere on the internet. ' +
-        'Zenith cannot sandbox modules and does not review them.',
-    'settings.thirdPartyBlocked':
-        'These modules are installed but not running, because the switch above is off.',
-
-    // ── Module installer ────────────────────────────
-    'modules.install': 'Install a module',
-    'modules.installed': 'Installed',
-    'modules.installButton': 'Install',
-    'modules.working': 'Fetching…',
-    'modules.failed': 'Install failed.',
-    'modules.update': 'Update',
-    'modules.update.paste': 'Pasted modules have no source to update from — paste a new version.',
-    'modules.uninstall': 'Uninstall',
-    'modules.confirmUninstall': 'Remove "{name}"? Its files will be deleted.',
-    'modules.notSandboxed': 'Not sandboxed',
-    'modules.origin.vault': 'vault: {path}',
-    'modules.origin.paste': 'pasted by you',
+    // ── Modules ─────────────────────────────────────
     'modules.startFailed': 'Zenith: module "{id}" failed to start. See its settings row.',
 
-    // Why a module Zenith found is not running. Shown on its settings row.
-    'modules.problem.badJson': 'manifest.json is not valid JSON ({error}).',
-    'modules.problem.idMismatch':
-        'The manifest calls this module "{claimed}", but it is in a folder called "{folder}".',
-    'modules.problem.badIcon': 'icon.svg was not usable: {reason}',
-    'modules.problem.badIconNamed': 'icons/{file} was not usable: {reason}',
-    'modules.problem.blocked': 'Third-party modules are switched off in settings.',
-    'modules.problem.noMain': 'main.js is missing.',
-    'modules.problem.tooBig': 'main.js is {kb} KB — refusing to run it.',
-    'modules.problem.noClass': 'main.js does not export a module class.',
-    'modules.problem.classIdMismatch':
-        'The module class calls itself "{claimed}", but it is in a folder called "{folder}".',
-    'modules.problem.evalError': 'The module could not be started: {error}',
+    // Why a module is not running. Shown on its settings row.
     'modules.problem.onloadError': 'The module failed while starting: {error}',
-
-    // A manifest Zenith cannot accept.
-    'modules.manifest.badId': 'Invalid module id {id} — use letters, digits, "-" and "_".',
-    'modules.manifest.reservedId': '"{id}" is reserved by Zenith and cannot be used by a module.',
-    'modules.manifest.missingName': 'The manifest has no "name".',
-    'modules.manifest.incompatible': 'Needs Zenith {required} or newer; this is {actual}.',
-
-    // Fetching a module from wherever the user keeps it.
-    'modules.error.raw': '{error}',
-    'modules.error.githubRef':
-        'Expected "owner/repo", optionally "owner/repo@tag" or "@branch:subdir".',
-    'modules.error.githubMissing': 'Could not find manifest.json and main.js in {repo}.',
-    'modules.error.githubCheckedRef': 'Checked the "{ref}" ref.',
-    'modules.error.githubCheckedDefault':
-        'Checked the latest release, then the "main" and "master" branches. ' +
-        'GitHub also rate-limits anonymous requests to 60 per hour.',
-    'modules.error.httpsOnly': 'Only https:// URLs are supported.',
-    'modules.error.noManifestAt': 'No manifest.json at {url}',
-    'modules.error.noMainAt': 'No main.js at {url}',
-    'modules.error.notJs': 'Pick a .js file. Zip archives are not supported.',
-    'modules.error.noSuchFile': 'No such file: {path}',
-    'modules.error.siblingNotJson': '{path} is not valid JSON.',
-    'modules.error.noManifest': 'No manifest found.',
-    'modules.error.noManifestHow':
-        'Put a manifest.json next to the file, or start the file with a ' +
-        '/* zenith-module { … } */ header.',
-    'modules.error.nothingPasted': 'Nothing pasted.',
-    'modules.error.pasteBadManifest': 'The manifest is not valid JSON.',
-    'modules.error.pasteNoCode': 'The code box is empty.',
-    'modules.error.noRecord': 'Zenith has no record of where this module came from.',
-    'modules.error.pasteNoSource':
-        'This module was pasted in, so there is nothing to update from. Paste a new version instead.',
-    'modules.error.noPluginFolder': 'The plugin folder is unknown.',
-    'modules.needsConsent':
-        'This module has not been approved on this device, so it is not running. ' +
-        'That is also the case when its file changed after you approved it.',
-    'modules.approve': 'Review and approve',
-    'modules.source.github': 'GitHub',
-    'modules.source.url': 'URL',
-    'modules.source.vault': 'Vault file',
-    'modules.source.paste': 'Paste',
-    'modules.placeholder.github': 'owner/repo',
-    'modules.placeholder.url': 'https://example.com/my-module/manifest.json',
-    'modules.placeholder.vault': 'Downloads/my-module.js',
-    'modules.placeholder.paste': '',
-    'modules.hint.github': 'Latest release, or the default branch. Add @tag or @branch:subdir.',
-    'modules.hint.url': 'https only. main.js is read from the same folder.',
-    'modules.hint.vault':
-        'A .js file already in your vault. Needs a manifest.json beside it, or a ' +
-        '/* zenith-module { … } */ header. No zip archives.',
-    'modules.hint.paste': 'The manifest JSON, then the module code.',
-    'settings.noThirdParty': 'Nothing installed yet.',
     'settings.moduleNoSettings': 'This module has no configurable settings.',
-
-    // ── Running someone else's code ─────────────────
-    'consent.title': 'Run third-party module: {name}',
-    'consent.warning':
-        'Zenith modules are JavaScript that runs with the same permissions as Obsidian itself. ' +
-        'This module can read, change and delete any file in your vault, and can send data ' +
-        'anywhere on the internet. Zenith cannot sandbox it and does not review it.',
-    'consent.codeChanged':
-        'The code on disk no longer matches what Zenith installed. It may have been edited, or ' +
-        'changed by sync from another device.',
-    'consent.sourceChanged': 'The source changed: {from} → {to}',
-    'consent.fact.source': 'Source',
-    'consent.fact.size': 'Size',
-    'consent.size': '{kb} KB',
-    'consent.claimed': 'Claimed by the module, not verified by Zenith:',
-    'consent.fact.author': 'Author',
-    'consent.fact.version': 'Version',
-    'consent.fact.description': 'Description',
-    'consent.fact.notes': 'Notes',
-    'consent.viewCode': 'View code',
-    'consent.understood': 'I understand this code is not sandboxed.',
-    'consent.cancel': 'Cancel',
-    'consent.accept': 'Install and run',
 
     // ── Vault structure ─────────────────────────────
     'scaffold.title': 'Set up vault structure',
@@ -472,27 +358,21 @@ const EN: Dict = {
     'debug.gallery.icons': 'Icons',
 
     'debug.state.settings': 'Settings',
-    'debug.state.moduleBuckets': 'Module settings',
     'debug.state.discovered': 'Discovered modules',
     'debug.state.showSecrets': 'Show secrets',
     'debug.state.masked':
         'Tokens and passwords are masked. Anything copied from here while they are shown carries them with it.',
-    'debug.state.noBuckets': 'No module has stored anything yet.',
 
     'debug.modules.registry': 'Registry',
     'debug.modules.problems': 'Problems',
     'debug.modules.noProblems': 'No problems reported.',
     'debug.modules.contributed': 'Contributed by modules',
-    'debug.modules.builtIn': 'built-in',
-    'debug.modules.thirdParty': 'third-party',
     'debug.modules.active': 'switched on',
     'debug.modules.loaded': 'loaded',
     'debug.modules.notLoaded': 'not loaded',
-    'debug.modules.reload': 'Re-read from disk',
     'debug.modules.widgets': 'Dashboard widgets',
     'debug.modules.navActions': 'Launcher buttons',
     'debug.modules.iconSources': 'Icon sources',
-    'debug.modules.thirdPartyLoaded': 'Third-party code running',
 
     'debug.strings.lookup': 'Look up a key',
     'debug.strings.notFound': 'Nothing defines that key.',
@@ -524,12 +404,8 @@ const EN: Dict = {
         'Every icon Zenith can draw. Opened from folder icons, projects, content types and journal trackers.',
     'debug.modals.desc.imagePicker':
         'Pictures in the vault, newest first. Opened from picture settings and image fields.',
-    'debug.modals.desc.consent':
-        'Asked before a third-party module runs for the first time. Shown here for a module that does not exist.',
     'debug.modals.desc.scaffold':
         'Creates the vault folder structure and moves everything at the top level into the archive.',
-    'debug.modals.desc.mobileCheck':
-        'Checks whether modules can load on this device. Writes and removes a probe file in the plugin folder as it runs — the preview too.',
     'debug.modals.desc.quickAddTask':
         'Captures a task from the command palette without opening the tasks view.',
     'debug.modals.desc.taskEditor': 'The full task editor, as the tasks view opens it for a new task.',
@@ -613,7 +489,6 @@ const EN: Dict = {
     'settings.iconPacks.desc':
         'Drop a folder of .svg files into the plugin’s "icons" folder and they appear in every icon picker. Add a pack.json with a "name" to label it. Modules can bring their own icons too.',
     'settings.iconPacks.empty': 'No icon packs installed.',
-    'settings.iconPacks.fromModule': 'from a module',
     'settings.iconPacks.reload': 'Re-read icon packs',
     'settings.iconPacks.reload.desc': 'Pick up icons you added since Obsidian started.',
     'settings.iconPacks.icons.one': '{count} icon',
@@ -1801,7 +1676,7 @@ const EN: Dict = {
     'sync.settings.whatSyncs': 'What travels',
     'sync.settings.open': 'Open sync',
     'sync.settings.whatSyncs.desc':
-        'Folders, trackers, content types, which features are on, location, prayer and weather preferences, installed modules and the running timer. Layout, density, active modules and where you left off stay on each device.',
+        'Folders, trackers, content types, which features are on, location, prayer and weather preferences and the running timer. Layout, density, active modules and where you left off stay on each device.',
 };
 
 const RU: Dict = {
@@ -1812,7 +1687,6 @@ const RU: Dict = {
     'settings.storage.desc': 'Расположение задач и контента',
     'settings.pluginSettings': 'Настройки плагина',
     'settings.moduleSettings': 'Настройки модулей',
-    'settings.thirdPartyBadge': 'сторонний',
     'settings.modules': 'Активные модули',
     'settings.modules.desc': 'Включение и отключение возможностей плагина',
     'settings.appearance': 'Оформление',
@@ -2023,7 +1897,7 @@ const RU: Dict = {
     'settings.navLabels': 'Подписи кнопок',
     'settings.navButtons': 'Кнопки',
     'settings.navButtons.desc':
-        'Каждый активный модуль добавляет свою, включая сторонние. Отметьте те, которые не нужны.',
+        'Каждый активный модуль добавляет свою. Отметьте те, которые не нужны.',
     'settings.navHidden': 'Скрытые кнопки',
 
     // Календарь задач
@@ -2053,127 +1927,14 @@ const RU: Dict = {
         'Прогноз берётся с Open-Meteo: аккаунт не нужен, передаются только координаты. ' +
         'Определение по IP, если его включить, отправляет ваш адрес на ipapi.co.',
 
-    'settings.builtInModules': 'Встроенные модули',
-    'settings.thirdPartyModules': 'Сторонние модули',
-    'settings.allowThirdParty': 'Запускать сторонние модули',
-    'settings.thirdPartyWarning.short':
-        'Работают с правами самого Obsidian — всё хранилище и интернет.',
-    'settings.thirdPartyWarning.more': 'Что это значит',
-    'settings.thirdPartyWarning':
-        'Модуль — это JavaScript с теми же правами, что и сам Obsidian. Он может читать, ' +
-        'изменять и удалять любой файл хранилища и отправлять данные куда угодно в интернет. ' +
-        'Zenith не изолирует модули и не проверяет их.',
-    'settings.thirdPartyBlocked':
-        'Эти модули установлены, но не запущены — переключатель выше выключен.',
 
-    // ── Установщик модулей ──────────────────────────
-    'modules.install': 'Установить модуль',
-    'modules.installed': 'Установленные',
-    'modules.installButton': 'Установить',
-    'modules.working': 'Загружаем…',
-    'modules.failed': 'Не удалось установить.',
-    'modules.update': 'Обновить',
-    'modules.update.paste':
-        'У вставленного модуля нет источника для обновления — вставьте новую версию.',
-    'modules.uninstall': 'Удалить',
-    'modules.confirmUninstall': 'Удалить «{name}»? Файлы модуля будут стёрты.',
-    'modules.notSandboxed': 'Без изоляции',
-    'modules.origin.vault': 'хранилище: {path}',
-    'modules.origin.paste': 'вставлено вами',
+    // ── Модули ──────────────────────────────────────
     'modules.startFailed':
         'Zenith: модуль «{id}» не запустился. Подробности — в его строке настроек.',
 
-    // Почему найденный модуль не работает. Показывается в его строке настроек.
-    'modules.problem.badJson': 'manifest.json — не валидный JSON ({error}).',
-    'modules.problem.idMismatch':
-        'В манифесте модуль называется «{claimed}», а лежит в папке «{folder}».',
-    'modules.problem.badIcon': 'Не удалось использовать icon.svg: {reason}',
-    'modules.problem.badIconNamed': 'Не удалось использовать icons/{file}: {reason}',
-    'modules.problem.blocked': 'Сторонние модули выключены в настройках.',
-    'modules.problem.noMain': 'Файл main.js отсутствует.',
-    'modules.problem.tooBig': 'main.js весит {kb} КБ — запускать не будем.',
-    'modules.problem.noClass': 'main.js не экспортирует класс модуля.',
-    'modules.problem.classIdMismatch':
-        'Класс модуля называет себя «{claimed}», а лежит в папке «{folder}».',
-    'modules.problem.evalError': 'Не удалось запустить модуль: {error}',
+    // Почему модуль не работает. Показывается в его строке настроек.
     'modules.problem.onloadError': 'Модуль упал при запуске: {error}',
-
-    // Манифест, который Zenith не может принять.
-    'modules.manifest.badId':
-        'Некорректный идентификатор модуля {id} — допустимы буквы, цифры, «-» и «_».',
-    'modules.manifest.reservedId': '«{id}» занято самим Zenith и не может использоваться модулем.',
-    'modules.manifest.missingName': 'В манифесте нет поля «name».',
-    'modules.manifest.incompatible': 'Нужен Zenith {required} или новее, а установлен {actual}.',
-
-    // Загрузка модуля оттуда, где он лежит у пользователя.
-    'modules.error.raw': '{error}',
-    'modules.error.githubRef':
-        'Ожидается «owner/repo», можно «owner/repo@tag» или «@branch:subdir».',
-    'modules.error.githubMissing': 'В {repo} не нашлись manifest.json и main.js.',
-    'modules.error.githubCheckedRef': 'Проверена ссылка «{ref}».',
-    'modules.error.githubCheckedDefault':
-        'Проверены последний релиз, затем ветки «main» и «master». ' +
-        'GitHub к тому же ограничивает анонимные запросы: 60 в час.',
-    'modules.error.httpsOnly': 'Поддерживаются только адреса https://.',
-    'modules.error.noManifestAt': 'По адресу {url} нет manifest.json',
-    'modules.error.noMainAt': 'По адресу {url} нет main.js',
-    'modules.error.notJs': 'Выберите файл .js. Zip-архивы не поддерживаются.',
-    'modules.error.noSuchFile': 'Файл не найден: {path}',
-    'modules.error.siblingNotJson': '{path} — не валидный JSON.',
-    'modules.error.noManifest': 'Манифест не найден.',
-    'modules.error.noManifestHow':
-        'Положите manifest.json рядом с файлом или начните файл заголовком ' +
-        '/* zenith-module { … } */.',
-    'modules.error.nothingPasted': 'Ничего не вставлено.',
-    'modules.error.pasteBadManifest': 'Манифест — не валидный JSON.',
-    'modules.error.pasteNoCode': 'Поле с кодом пустое.',
-    'modules.error.noRecord': 'Zenith не помнит, откуда взялся этот модуль.',
-    'modules.error.pasteNoSource':
-        'Этот модуль был вставлен вручную, обновлять его неоткуда — вставьте новую версию.',
-    'modules.error.noPluginFolder': 'Папка плагина неизвестна.',
-    'modules.needsConsent':
-        'Модуль не одобрен на этом устройстве и поэтому не запущен. ' +
-        'То же самое происходит, если его файл изменился после одобрения.',
-    'modules.approve': 'Посмотреть и одобрить',
-    'modules.source.github': 'GitHub',
-    'modules.source.url': 'Ссылка',
-    'modules.source.vault': 'Файл в хранилище',
-    'modules.source.paste': 'Вставка',
-    'modules.placeholder.github': 'owner/repo',
-    'modules.placeholder.url': 'https://example.com/my-module/manifest.json',
-    'modules.placeholder.vault': 'Downloads/my-module.js',
-    'modules.placeholder.paste': '',
-    'modules.hint.github': 'Последний релиз или ветка по умолчанию. Можно @tag или @branch:subdir.',
-    'modules.hint.url': 'Только https. main.js берётся из той же папки.',
-    'modules.hint.vault':
-        'Файл .js, уже лежащий в хранилище. Рядом нужен manifest.json либо заголовок ' +
-        '/* zenith-module { … } */. Zip-архивы не поддерживаются.',
-    'modules.hint.paste': 'Сначала JSON манифеста, затем код модуля.',
-    'settings.noThirdParty': 'Пока ничего не установлено.',
     'settings.moduleNoSettings': 'У этого модуля нет настраиваемых параметров.',
-
-    // ── Запуск чужого кода ──────────────────────────
-    'consent.title': 'Запустить сторонний модуль: {name}',
-    'consent.warning':
-        'Модули Zenith — это JavaScript, работающий с теми же правами, что и сам Obsidian. ' +
-        'Этот модуль может читать, изменять и удалять любой файл вашего хранилища и отправлять ' +
-        'данные куда угодно в интернет. Zenith не изолирует его и не проверяет.',
-    'consent.codeChanged':
-        'Код на диске больше не совпадает с тем, что установил Zenith. Возможно, файл правили ' +
-        'вручную или его изменила синхронизация с другого устройства.',
-    'consent.sourceChanged': 'Источник изменился: {from} → {to}',
-    'consent.fact.source': 'Источник',
-    'consent.fact.size': 'Размер',
-    'consent.size': '{kb} КБ',
-    'consent.claimed': 'Заявлено самим модулем, Zenith это не проверял:',
-    'consent.fact.author': 'Автор',
-    'consent.fact.version': 'Версия',
-    'consent.fact.description': 'Описание',
-    'consent.fact.notes': 'Примечания',
-    'consent.viewCode': 'Посмотреть код',
-    'consent.understood': 'Я понимаю, что этот код работает без изоляции.',
-    'consent.cancel': 'Отмена',
-    'consent.accept': 'Установить и запустить',
 
     // ── Структура хранилища ─────────────────────────
     'scaffold.title': 'Создать структуру хранилища',
@@ -2248,27 +2009,21 @@ const RU: Dict = {
     'debug.gallery.icons': 'Иконки',
 
     'debug.state.settings': 'Настройки',
-    'debug.state.moduleBuckets': 'Настройки модулей',
     'debug.state.discovered': 'Найденные модули',
     'debug.state.showSecrets': 'Показывать секреты',
     'debug.state.masked':
         'Токены и пароли скрыты. Всё, что скопировано отсюда при показанных секретах, унесёт их с собой.',
-    'debug.state.noBuckets': 'Ни один модуль пока ничего не сохранил.',
 
     'debug.modules.registry': 'Реестр',
     'debug.modules.problems': 'Проблемы',
     'debug.modules.noProblems': 'Проблем нет.',
     'debug.modules.contributed': 'Добавлено модулями',
-    'debug.modules.builtIn': 'встроенный',
-    'debug.modules.thirdParty': 'сторонний',
     'debug.modules.active': 'включён',
     'debug.modules.loaded': 'загружен',
     'debug.modules.notLoaded': 'не загружен',
-    'debug.modules.reload': 'Перечитать с диска',
     'debug.modules.widgets': 'Виджеты дашборда',
     'debug.modules.navActions': 'Кнопки навигации',
     'debug.modules.iconSources': 'Источники иконок',
-    'debug.modules.thirdPartyLoaded': 'Работает чужой код',
 
     'debug.strings.lookup': 'Найти ключ',
     'debug.strings.notFound': 'Такой ключ никто не определяет.',
@@ -2301,12 +2056,8 @@ const RU: Dict = {
         'Все иконки, которые умеет рисовать Zenith. Открывается из иконок папок, проектов, типов контента и трекеров журнала.',
     'debug.modals.desc.imagePicker':
         'Картинки из хранилища, свежие сверху. Открывается из настроек картинки и полей с изображением.',
-    'debug.modals.desc.consent':
-        'Спрашивает перед первым запуском стороннего модуля. Здесь — для модуля, которого не существует.',
     'debug.modals.desc.scaffold':
         'Создаёт структуру папок хранилища и переносит всё, что лежит в корне, в архив.',
-    'debug.modals.desc.mobileCheck':
-        'Проверяет, загружаются ли модули на этом устройстве. По ходу пишет и удаляет пробный файл в папке плагина — и в превью тоже.',
     'debug.modals.desc.quickAddTask':
         'Быстро записывает задачу из палитры команд, не открывая вид задач.',
     'debug.modals.desc.taskEditor':
@@ -2393,7 +2144,6 @@ const RU: Dict = {
     'settings.iconPacks.desc':
         'Положите папку с .svg в папку «icons» внутри плагина — иконки появятся во всех выборах иконки. Добавьте pack.json с полем «name», чтобы дать паку название. Модули тоже могут привозить свои иконки.',
     'settings.iconPacks.empty': 'Паки иконок не установлены.',
-    'settings.iconPacks.fromModule': 'из модуля',
     'settings.iconPacks.reload': 'Перечитать паки иконок',
     'settings.iconPacks.reload.desc': 'Подхватить иконки, добавленные после запуска Obsidian.',
     'settings.iconPacks.icons.one': '{count} иконка',
@@ -3587,7 +3337,7 @@ const RU: Dict = {
     'sync.settings.whatSyncs': 'Что уезжает',
     'sync.settings.open': 'Открыть синхронизацию',
     'sync.settings.whatSyncs.desc':
-        'Папки, трекеры, типы контента, включённые функции, локация, настройки намаза и погоды, установленные модули и запущенный таймер. Раскладка, плотность, активные модули и место, где вы остановились, остаются на каждом устройстве своими.',
+        'Папки, трекеры, типы контента, включённые функции, локация, настройки намаза и погоды и запущенный таймер. Раскладка, плотность, активные модули и место, где вы остановились, остаются на каждом устройстве своими.',
 };
 
 /**
@@ -3606,7 +3356,6 @@ export const DICTS: Record<Locale, Dict> = {
         ...JOURNAL_STRINGS.en,
         ...CONTENT_STRINGS.en,
         ...DASHBOARD_STRINGS.en,
-        ...MODULE_STRINGS.en,
         ...STUDY_STRINGS.en,
         ...SEARCH_STRINGS.en,
     },
@@ -3620,7 +3369,6 @@ export const DICTS: Record<Locale, Dict> = {
         ...JOURNAL_STRINGS.ru,
         ...CONTENT_STRINGS.ru,
         ...DASHBOARD_STRINGS.ru,
-        ...MODULE_STRINGS.ru,
         ...STUDY_STRINGS.ru,
         ...SEARCH_STRINGS.ru,
     },
@@ -3665,9 +3413,8 @@ export function translationsRevision(): number {
 /**
  * Whether `key` is one `moduleId` is allowed to define.
  *
- * A module may only speak for itself. Without this a third-party module could
- * quietly redefine `settings.title`, or `modules.needsConsent` — which is the
- * sentence warning the user about that very module.
+ * A module may only speak for itself: one that could define any key could
+ * quietly redefine `settings.title`, or another module's strings.
  */
 export function ownsTranslationKey(moduleId: string, key: string): boolean {
     return key.startsWith(`${moduleId}.`) || key.startsWith(`module.${moduleId}.`);
@@ -3769,9 +3516,8 @@ export function hasTranslation(locale: Locale, key: string): boolean {
 /** Resolve the effective locale from an explicit language + Obsidian's setting. */
 export function resolveLocale(language: ZenithLanguage): Locale {
     if (language === 'en' || language === 'ru') return language;
-    // 'auto' → follow Obsidian. It stores the UI language under localStorage.
-    const obsidian = window.localStorage.getItem('language') ?? 'en';
-    return obsidian.startsWith('ru') ? 'ru' : 'en';
+    // 'auto' → follow Obsidian's own language.
+    return getLanguage().startsWith('ru') ? 'ru' : 'en';
 }
 
 /** Values substituted into `{placeholders}` in a string. */

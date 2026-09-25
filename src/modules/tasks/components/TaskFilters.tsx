@@ -16,23 +16,11 @@ interface TaskFiltersProps {
     allTags: string[];
     /** The groupings on offer; see `groupModes`. */
     groups: readonly TaskFilterState['group'][];
-    /** Filters third-party modules registered; none, and the row is not drawn. */
-    moduleFilters?: Array<{ value: string; label: string }>;
-    moduleFilter?: string;
-    onModuleFilter?: (value: string) => void;
 }
 
 // ── Component ────────────────────────────────────────
 
-export const TaskFilters: FC<TaskFiltersProps> = ({
-    filters,
-    onFilterChange,
-    allTags,
-    groups,
-    moduleFilters = [],
-    moduleFilter = '',
-    onModuleFilter,
-}) => {
+export const TaskFilters: FC<TaskFiltersProps> = ({ filters, onFilterChange, allTags, groups }) => {
     const t = useTranslation();
     const [tagInput, setTagInput] = useState(filters.tag);
     // The suggestion list was a div positioned inside the field's own box, with
@@ -79,15 +67,6 @@ export const TaskFilters: FC<TaskFiltersProps> = ({
                     onFilterChange({ ...filters, priority: v as TaskFilterState['priority'] })
                 }
             />
-
-            {moduleFilters.length > 0 && onModuleFilter && (
-                <Dropdown
-                    className="zenith-task-filters__select"
-                    value={moduleFilter}
-                    options={[{ value: '', label: t('tasks.filter.moduleAll') }, ...moduleFilters]}
-                    onChange={onModuleFilter}
-                />
-            )}
 
             {/* Due-date filter — "no date" is the one that can't be reached any
                 other way, and it's where forgotten tasks pile up. */}

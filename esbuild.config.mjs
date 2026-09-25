@@ -1,13 +1,13 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
-import { copyFileSync, mkdirSync, existsSync, cpSync } from "fs";
+import { copyFileSync, mkdirSync, existsSync } from "fs";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
+import { outputDir } from "./scripts/paths.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const prod = process.argv[2] === "production";
-const outputDir = resolve(__dirname, "../zenith");
 
 // Ensure output directory exists
 if (!existsSync(outputDir)) {
@@ -15,24 +15,11 @@ if (!existsSync(outputDir)) {
 }
 
 // Copy manifest.json
-copyFileSync(resolve(__dirname, "manifest.source.json"), resolve(outputDir, "manifest.json"));
+copyFileSync(resolve(__dirname, "manifest.json"), resolve(outputDir, "manifest.json"));
 
 // Copy versions.json (maps plugin version → minAppVersion for Obsidian)
 if (existsSync(resolve(__dirname, "versions.json"))) {
     copyFileSync(resolve(__dirname, "versions.json"), resolve(outputDir, "versions.json"));
-}
-
-// Sample third-party modules (source in modules_def/) → the built modules/ folder.
-//
-// `../zenith` is the LIVE plugin folder, and modules/ is now where the in-app
-// installer writes what the user installs. Copying on every build would wipe
-// that on the next `npm run dev`, so the sample is only seeded when the folder
-// does not exist yet — or on an explicit `--with-sample`.
-const modulesDir = resolve(__dirname, "modules_def");
-const outModulesDir = resolve(outputDir, "modules");
-const seedSample = process.argv.includes("--with-sample") || !existsSync(outModulesDir);
-if (existsSync(modulesDir) && seedSample) {
-    cpSync(modulesDir, outModulesDir, { recursive: true, force: true });
 }
 
 const banner = `/* 
@@ -87,7 +74,7 @@ if (prod) {
     console.log("\n🔨 Zenith: Production build...\n");
     await jsContext.rebuild();
     await cssContext.rebuild();
-    console.log("\n✅ Zenith: Build complete → ../zenith/\n");
+    console.log(`\n✅ Zenith: Build complete → ${outputDir}\n`);
     process.exit(0);
 } else {
     console.log("\n👁️  Zenith: Watch mode started...\n");

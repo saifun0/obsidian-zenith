@@ -19,7 +19,7 @@ describe('loadSettings — new keys', () => {
     it('fills in settings that did not exist when the config was written', () => {
         const s = load({ tasksFolderPath: 'Notes/Tasks' });
         expect(s.tasksFolderPath).toBe('Notes/Tasks');
-        expect(s.moduleSettings).toEqual({});
+        expect(s.navigatorOrder).toEqual([]);
         expect(s.weatherAllowIpLookup).toBe(false);
         expect(s.weatherShowAir).toBe(true);
     });
@@ -50,11 +50,6 @@ describe('loadSettings — nested objects', () => {
         // `journalTrackers: []` means "no trackers", not "use the defaults".
         const s = load({ journalTrackers: [], settingsVersion: CURRENT_SETTINGS_VERSION });
         expect(s.journalTrackers).toEqual([]);
-    });
-
-    it('keeps each module bucket separate', () => {
-        const s = load({ moduleSettings: { 'my-module': { colour: 'red' } } });
-        expect(s.moduleSettings['my-module']).toEqual({ colour: 'red' });
     });
 });
 
@@ -180,35 +175,26 @@ describe('loadSettings — versioning', () => {
     });
 });
 
-describe('module settings bucket', () => {
-    it('merges a patch and leaves other modules untouched', () => {
-        load({ moduleSettings: { a: { x: 1 }, b: { y: 2 } } });
-        useZenithStore.getState().updateModuleSettings('a', { z: 3 });
-
-        const { moduleSettings } = useZenithStore.getState().settings;
-        expect(moduleSettings.a).toEqual({ x: 1, z: 3 });
-        expect(moduleSettings.b).toEqual({ y: 2 });
-    });
-
-    it('creates the bucket on first write', () => {
-        load({});
-        useZenithStore.getState().updateModuleSettings('fresh', { on: true });
-        expect(useZenithStore.getState().settings.moduleSettings.fresh).toEqual({ on: true });
-    });
-
-    it('empties a bucket on reset but keeps it on the record', () => {
-        load({ moduleSettings: { a: { x: 1 } } });
-        useZenithStore.getState().resetModuleSettings('a');
-        expect(useZenithStore.getState().settings.moduleSettings.a).toEqual({});
-    });
-
-    it('removes the bucket entirely on forget', () => {
-        load({ moduleSettings: { a: { x: 1 }, b: { y: 2 } } });
-        useZenithStore.getState().forgetModuleSettings('a');
-
-        const { moduleSettings } = useZenithStore.getState().settings;
-        expect(moduleSettings).not.toHaveProperty('a');
-        expect(moduleSettings.b).toEqual({ y: 2 });
+describe('loadSettings — retired keys', () => {
+    it('drops what third-party modules kept, now that there are none', () => {
+        const s = load({
+            moduleSettings: { a: { x: 1 } },
+            allowThirdPartyModules: true,
+            safeMode: true,
+            moduleActivity: [{ at: 1 }],
+            installedModules: [{ id: 'a' }],
+            prayerProviderId: 'a:table',
+        });
+        for (const key of [
+            'moduleSettings',
+            'allowThirdPartyModules',
+            'safeMode',
+            'moduleActivity',
+            'installedModules',
+            'prayerProviderId',
+        ]) {
+            expect(s, key).not.toHaveProperty(key);
+        }
     });
 });
 

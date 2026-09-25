@@ -74,7 +74,7 @@ export const PROFILE_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'profiles.export.place': 'Include location',
         'profiles.export.place.desc': 'Where you are, for weather and prayer times.',
         'profiles.export.never':
-            'Passwords, tokens, server settings and third-party modules are never exported.',
+            'Passwords, tokens and server settings are never exported.',
         'profiles.export.copy': 'Copy',
         'profiles.export.copied': 'Copied.',
         'profiles.export.copyFailed': 'Could not copy — export to a file instead.',
@@ -162,7 +162,7 @@ export const PROFILE_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'profiles.export.place': 'Включить местоположение',
         'profiles.export.place.desc': 'Где вы находитесь — для погоды и времени намаза.',
         'profiles.export.never':
-            'Пароли, токены, настройки сервера и сторонние модули не экспортируются никогда.',
+            'Пароли, токены и настройки сервера не экспортируются никогда.',
         'profiles.export.copy': 'Копировать',
         'profiles.export.copied': 'Скопировано.',
         'profiles.export.copyFailed': 'Не удалось скопировать — сохраните в файл.',

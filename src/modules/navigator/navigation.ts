@@ -8,10 +8,9 @@ import type ZenithPlugin from '../../main';
  * Zenith Navigation Registry
  * ──────────────────────────
  * The dashboard's launcher widget draws one button per registered
- * `NavActionDefinition`. Every module — built-in or third-party — contributes
- * its own, so the launcher lists exactly the views that are actually there:
- * disable a module and its button leaves with it, install one and its button
- * appears without the navigator knowing anything about it.
+ * `NavActionDefinition`. Every module contributes its own, so the launcher
+ * lists exactly the views that are actually there: disable a module and its
+ * button leaves with it, without the navigator knowing anything about it.
  *
  * Two ways to say what a button does:
  *  • `viewType` — an Obsidian view type. Reveals an existing leaf, or opens a
@@ -38,10 +37,7 @@ export interface NavActionContext {
 export interface NavActionDefinition {
     /** Unique id, e.g. "tasks.view". Namespaced by module by convention. */
     id: string;
-    /**
-     * Button text. Third-party modules use this; it is shown as written, since
-     * a module's own strings are the only ones that can be right for it.
-     */
+    /** Button text, shown as written. `labelKey` wins where it resolves. */
     label?: string;
     /**
      * Translation key for the label, preferred by the built-in modules so the
