@@ -1,7 +1,7 @@
 {
     "id": "zenith",
     "name": "Zenith",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "minAppVersion": "1.2.0",
     "description": "All-in-one life organizer: dashboard, tasks, content tracker with modular architecture.",
     "author": "Saifun",
