@@ -237,6 +237,17 @@ const EN: Dict = {
     'settings.secondsUnit': 's',
 
     // Navigation launcher
+    'settings.navPanel': 'Side panel',
+    'settings.navPanel.desc':
+        "A tab in the right sidebar: command buttons, and Zenith's views under them. The pencil at its top arranges both.",
+    'settings.navPanelOpen': 'Open the panel',
+    'settings.navPanelOpen.desc': 'Brings it back if its tab was closed.',
+    'settings.navPanelOpen.button': 'Open',
+    'settings.navPanelReset': 'Default buttons',
+    'settings.navPanelReset.desc':
+        "Replaces the panel's buttons with the ones it started with.",
+    'settings.navPanelReset.button': 'Reset',
+    'settings.navWidget': 'Dashboard card',
     'settings.navLayout': 'Layout',
     'settings.navLayout.grid': 'Grid',
     'settings.navLayout.list': 'List',
@@ -1995,6 +2006,17 @@ const RU: Dict = {
     'settings.secondsUnit': 'с',
 
     // Навигация
+    'settings.navPanel': 'Боковая панель',
+    'settings.navPanel.desc':
+        'Вкладка в правой панели: кнопки команд, под ними разделы Zenith. Карандаш наверху настраивает и то, и другое.',
+    'settings.navPanelOpen': 'Открыть панель',
+    'settings.navPanelOpen.desc': 'Вернёт её, если вкладку закрыли.',
+    'settings.navPanelOpen.button': 'Открыть',
+    'settings.navPanelReset': 'Кнопки по умолчанию',
+    'settings.navPanelReset.desc':
+        'Заменяет кнопки панели теми, с которых она начиналась.',
+    'settings.navPanelReset.button': 'Сбросить',
+    'settings.navWidget': 'Карточка на дашборде',
     'settings.navLayout': 'Раскладка',
     'settings.navLayout.grid': 'Сетка',
     'settings.navLayout.list': 'Список',

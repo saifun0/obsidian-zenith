@@ -95,6 +95,10 @@ middle-click) forces a new tab. **Settings → Navigation** switches between the
 layouts, turns labels off for an icons-only launcher, and hides individual buttons; the hide
 list is built from the registry, so third-party buttons are hideable too.
 
+The same buttons are listed in the [side panel](side-panel.md). Once the user drags them into an
+order of their own, that order wins over `order` in both places; a button registered later
+comes after the ones they arranged.
+
 Registering is independent of the launcher being switched on, so a module never has to check
 whether the Navigation module is active before offering a way into its view.
 

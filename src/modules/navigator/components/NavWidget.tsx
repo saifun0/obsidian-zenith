@@ -11,6 +11,7 @@ import {
     useNavActions,
     type NavActionDefinition,
 } from '../navigation';
+import { applyOrder } from '../panel';
 
 /**
  * View types with at least one open leaf.
@@ -57,10 +58,12 @@ export const NavWidget: React.FC = () => {
     const layout = useZenithStore((s) => s.settings.navigatorLayout);
     const showLabels = useZenithStore((s) => s.settings.navigatorShowLabels);
     const hidden = useZenithStore((s) => s.settings.navigatorHiddenActions);
+    // Arranged in the side panel: one list, shown in both places.
+    const order = useZenithStore((s) => s.settings.navigatorOrder);
 
     const visible = useMemo(
-        () => actions.filter((a) => !hidden.includes(a.id)),
-        [actions, hidden]
+        () => applyOrder(actions, order).filter((a) => !hidden.includes(a.id)),
+        [actions, order, hidden]
     );
 
     // Labels are the only thing to read in the list layout, so the compact

@@ -178,6 +178,12 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // A hide-list, merged as LWW rather than as a set: union would make hiding
     // a button anywhere hide it everywhere with no way to bring it back.
     navigatorHiddenActions: { scope: 'shared' },
+    // Both LWW for the same reason: a list someone arranged is one decision,
+    // and merging two arrangements item by item gives an order nobody chose.
+    navigatorOrder: { scope: 'shared' },
+    navigatorPanelButtons: { scope: 'shared' },
+    // Where the sidebar has room is a fact about this screen.
+    navigatorPanelPlaced: { scope: 'device' },
 
     // ── Which features are on ──
     // Shared, because a feature is part of how the person uses the plugin, not

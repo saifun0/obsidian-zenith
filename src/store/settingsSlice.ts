@@ -37,6 +37,11 @@ import type { DashboardBgFit, DashboardBgSource } from '../modules/dashboard/das
 import type { ModuleSource } from '../core/moduleSources';
 import { pinnedFeatures } from '../core/features';
 import {
+    DEFAULT_PANEL_BUTTONS,
+    normalizePanelButtons,
+    type PanelButton,
+} from '../modules/navigator/panel';
+import {
     BEFORE_PROFILES_ID,
     beforeProfilesSnapshot,
     normalizeStoredProfiles,
@@ -335,6 +340,20 @@ export interface ZenithSettings {
      * of waiting to be found in settings.
      */
     navigatorHiddenActions: string[];
+    /**
+     * Nav action ids in the order the user dragged them into, shared by the
+     * dashboard launcher and the side panel. Ones it doesn't name follow in
+     * their own order — see `applyOrder`.
+     */
+    navigatorOrder: string[];
+    /** The side panel's command buttons, top to bottom. */
+    navigatorPanelButtons: PanelButton[];
+    /**
+     * The side panel was put in the right sidebar once. After that, where it
+     * is — or that it was closed — is the user's call, and Zenith doesn't put
+     * it back on every start.
+     */
+    navigatorPanelPlaced: boolean;
 
     /** How much breathing room the interface uses. */
     uiDensity: UiDensity;
@@ -845,6 +864,9 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     navigatorLayout: 'grid',
     navigatorShowLabels: true,
     navigatorHiddenActions: [],
+    navigatorOrder: [],
+    navigatorPanelButtons: DEFAULT_PANEL_BUTTONS.map((b) => ({ ...b })),
+    navigatorPanelPlaced: false,
     uiDensity: 'comfortable',
     uiAnimations: true,
     mobileInsets: 'auto',
@@ -977,6 +999,10 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             merged.dashboardPresets = normalizePresets(saved.dashboardPresets);
             merged.activeTimer = normalizeSession(saved.activeTimer);
             merged.profiles = normalizeStoredProfiles(saved.profiles);
+            merged.navigatorPanelButtons = normalizePanelButtons(saved.navigatorPanelButtons);
+            merged.navigatorOrder = Array.isArray(saved.navigatorOrder)
+                ? saved.navigatorOrder.filter((id): id is string => typeof id === 'string')
+                : [];
             if (!merged.dashboardPresets.some((p) => p.id === merged.dashboardPresetId)) {
                 merged.dashboardPresetId = '';
             }

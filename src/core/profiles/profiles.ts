@@ -135,6 +135,10 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     navigatorLayout: 'yes',
     navigatorShowLabels: 'yes',
     navigatorHiddenActions: 'yes',
+    navigatorOrder: 'yes',
+    navigatorPanelButtons: 'yes',
+    // Bookkeeping about this device's sidebar, not a preference.
+    navigatorPanelPlaced: 'no',
     uiDensity: 'yes',
     // A measurement of one phone, not a preference.
     mobileInsets: 'no',
@@ -365,6 +369,15 @@ const SHAPES: Partial<Record<SettingsKey, (v: unknown) => boolean>> = {
                 typeof p.folder === 'string' &&
                 typeof p.format === 'string' &&
                 typeof p.template === 'string'
+        ),
+    navigatorPanelButtons: (v) =>
+        Array.isArray(v) &&
+        v.every(
+            (b) =>
+                isRecord(b) &&
+                typeof b.command === 'string' &&
+                (b.label === undefined || typeof b.label === 'string') &&
+                (b.icon === undefined || typeof b.icon === 'string')
         ),
     location: isPlaceOrNull,
     prayerPlace: isPlaceOrNull,

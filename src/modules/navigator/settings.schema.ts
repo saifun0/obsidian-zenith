@@ -1,5 +1,7 @@
 import { coreSchema } from '../../settings/schema/types';
 import { navActionLabel, navActions } from './navigation';
+import { DEFAULT_PANEL_BUTTONS } from './panel';
+import { openNavPanel } from './openNavPanel';
 
 /**
  * Navigation settings.
@@ -15,7 +17,34 @@ export const navigatorSettingsSchema = coreSchema({
     moduleId: 'navigator',
     groups: [
         {
+            id: 'panel',
+            titleKey: 'settings.navPanel',
+            descKey: 'settings.navPanel.desc',
+            fields: [
+                {
+                    type: 'action',
+                    key: 'navigatorPanelOpen',
+                    labelKey: 'settings.navPanelOpen',
+                    descKey: 'settings.navPanelOpen.desc',
+                    buttonKey: 'settings.navPanelOpen.button',
+                    run: ({ plugin }) => openNavPanel(plugin),
+                },
+                {
+                    type: 'action',
+                    key: 'navigatorPanelReset',
+                    labelKey: 'settings.navPanelReset',
+                    descKey: 'settings.navPanelReset.desc',
+                    buttonKey: 'settings.navPanelReset.button',
+                    run: ({ set }) =>
+                        set({
+                            navigatorPanelButtons: DEFAULT_PANEL_BUTTONS.map((b) => ({ ...b })),
+                        }),
+                },
+            ],
+        },
+        {
             id: 'appearance',
+            titleKey: 'settings.navWidget',
             fields: [
                 {
                     type: 'segmented',

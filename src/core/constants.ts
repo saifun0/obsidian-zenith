@@ -23,6 +23,8 @@ export const VIEW_TYPE_PROJECTS = 'zenith-projects-view';
  */
 export const VIEW_TYPE_PRAYER = 'zenith-prayer-view';
 export const VIEW_TYPE_STUDY = 'zenith-study-view';
+/** The side panel: navigation and command buttons, in the right sidebar. */
+export const VIEW_TYPE_NAV_PANEL = 'zenith-nav-panel-view';
 
 // ── Image file extensions (Media module) ─────────────
 export const IMAGE_EXTENSIONS = [

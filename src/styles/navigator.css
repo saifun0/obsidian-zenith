@@ -190,3 +190,288 @@
     font-size: 0.75rem;
     color: var(--zenith-text-faint);
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Side panel (NavPanel) — a tab in the right sidebar
+
+   Drawn as the sidebar's own: rows take Obsidian's `--nav-item-*` tokens, the
+   ones the file explorer uses, so the panel follows the theme the way its
+   neighbours do. Zenith's tokens are only the fallback.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* The sidebar's background, not the main area's. */
+.zenith-panel-root.zenith-root {
+    background: transparent;
+}
+
+.zenith-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px 16px;
+}
+
+.zenith-panel__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 28px;
+    padding: 0 0 4px 6px;
+}
+
+.zenith-panel__title {
+    font-size: var(--font-ui-small);
+    font-weight: var(--font-semibold);
+    color: var(--zenith-text-muted);
+}
+
+.zenith-panel__toggle.is-active {
+    color: var(--zenith-accent);
+}
+
+/* ── Command buttons ─────────────────────────────── */
+.zenith-panel__buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+/* Icon above the label, as on the dashboard launcher: the label gets the
+   tile's whole width, which two Russian words need at a sidebar's width. */
+.zenith-root button.zenith-panel__tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    height: auto;
+    padding: 8px 6px;
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-bg-primary);
+    color: var(--zenith-text-normal);
+    font-size: var(--font-ui-smaller);
+    text-align: center;
+    box-shadow: none;
+    cursor: pointer;
+    transition: background var(--zenith-transition-fast);
+}
+
+.zenith-root button.zenith-panel__tile:hover {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-panel__tile .zenith-obsidian-icon {
+    flex: none;
+    color: var(--zenith-text-muted);
+}
+
+/* Two lines rather than one: at a sidebar's usual width two tiles share a
+   row, and "Отметить текущий намаз" cut to "Отметить те…" says nothing. */
+.zenith-panel__tile-label {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.zenith-panel__row-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Views ───────────────────────────────────────── */
+.zenith-panel__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.zenith-root button.zenith-panel__row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    width: 100%;
+    height: auto;
+    /* Not `--nav-item-padding`: it keeps 24px on the left for the file tree's
+       fold arrow, which these rows don't have. */
+    padding: 4px 8px;
+    border: none;
+    border-radius: var(--radius-s, 4px);
+    background: transparent;
+    color: var(--nav-item-color, var(--zenith-text-muted));
+    font-size: var(--nav-item-size, var(--font-ui-small));
+    text-align: left;
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-panel__row:hover {
+    background: var(--nav-item-background-hover, var(--zenith-bg-hover));
+    color: var(--nav-item-color-hover, var(--zenith-text-normal));
+}
+
+.zenith-root button.zenith-panel__row.is-current {
+    background: var(--nav-item-background-active, var(--zenith-bg-hover));
+    color: var(--nav-item-color-active, var(--zenith-text-normal));
+    font-weight: var(--nav-item-weight-active, var(--font-medium));
+}
+
+.zenith-panel__row svg {
+    flex: none;
+}
+
+/* ── Arranging ───────────────────────────────────── */
+.zenith-panel__section {
+    margin: 10px 6px 4px;
+    font-size: var(--font-ui-smaller);
+    font-weight: var(--font-semibold);
+    color: var(--zenith-text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.zenith-panel__list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.zenith-panel__edit-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px;
+    border-radius: var(--radius-s, 4px);
+}
+
+.zenith-panel__edit-row:hover,
+.zenith-panel__edit-row.is-dragging {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-panel__edit-row.is-dragging {
+    box-shadow: var(--zenith-shadow-sm);
+}
+
+.zenith-panel__edit-row.is-hidden .zenith-panel__icon-static,
+.zenith-panel__edit-row.is-hidden .zenith-panel__row-label,
+.zenith-panel__edit-row.is-unavailable .zenith-panel__icon-btn,
+.zenith-panel__edit-row.is-unavailable .zenith-panel__label-input {
+    opacity: 0.45;
+}
+
+/* `touch-action: none` lets a finger drag the row instead of scrolling the
+   panel; only the handle takes it, so the rest of the row still scrolls. */
+.zenith-panel__grip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 18px;
+    height: 26px;
+    border-radius: var(--radius-s, 4px);
+    color: var(--zenith-text-faint);
+    cursor: grab;
+    touch-action: none;
+}
+
+.zenith-panel__grip:active {
+    cursor: grabbing;
+}
+
+.zenith-panel__grip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--zenith-accent);
+}
+
+.zenith-panel__icon-static {
+    display: flex;
+    flex: none;
+    padding: 0 6px;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-panel__edit-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    font-size: var(--font-ui-small);
+}
+
+.zenith-root input.zenith-panel__label-input {
+    width: 100%;
+    height: 26px;
+    padding: 2px 6px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-s, 4px);
+    background: transparent;
+    font-size: var(--font-ui-small);
+    box-shadow: none;
+}
+
+.zenith-root input.zenith-panel__label-input:hover {
+    border-color: var(--zenith-border);
+}
+
+.zenith-root input.zenith-panel__label-input:focus {
+    border-color: var(--zenith-accent);
+}
+
+.zenith-panel__note {
+    padding: 0 6px 2px;
+    font-size: var(--font-ui-smaller);
+    color: var(--zenith-text-faint);
+}
+
+.zenith-root button.zenith-panel__add {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    width: 100%;
+    height: auto;
+    margin-top: 4px;
+    padding: 5px 8px;
+    border: 1px dashed var(--zenith-border);
+    border-radius: var(--radius-s, 4px);
+    background: transparent;
+    color: var(--zenith-text-muted);
+    font-size: var(--font-ui-small);
+    box-shadow: none;
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-panel__add:hover {
+    color: var(--zenith-text-normal);
+    border-color: var(--zenith-text-faint);
+}
+
+.zenith-panel__hint,
+.zenith-panel__empty {
+    margin: 10px 6px 0;
+    font-size: var(--font-ui-smaller);
+    line-height: 1.4;
+    color: var(--zenith-text-faint);
+}
+
+/* A finger needs more room than a pointer. */
+.is-mobile .zenith-root button.zenith-panel__row {
+    padding: 8px 10px;
+}
+
+.is-mobile .zenith-root button.zenith-panel__tile {
+    padding: 10px 8px;
+}
+
+.is-mobile .zenith-panel__grip {
+    width: 28px;
+    height: 36px;
+}
