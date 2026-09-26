@@ -3,7 +3,6 @@ import type { GeoPoint } from './prayerTimes';
 import {
     ALADHAN,
     roundedPlace,
-    type ApiMidnight,
     type DayMinutes,
     type PrayerApiOptions,
     type PrayerProvider,
@@ -332,92 +331,6 @@ export async function refreshTable(
 
 // ── Lifecycle ────────────────────────────────────────
 
-/** Old cache keys: `zenith:prayerapi:v1:<lat>,<lon>|YYYY-MM|<method>|<angles>|<h/s>|<rule>|<midnight>|<zone>`. */
-const LEGACY_PREFIX = 'zenith:prayerapi:v1:';
-
-interface LegacyMonth {
-    times?: unknown;
-    fetchedAt?: unknown;
-}
-
-/**
- * Move the months the old cache held into year files, once.
- *
- * Each becomes a partial year — served straight away, so an offline device
- * keeps the times it had, and fetched whole as soon as it can be. The old
- * entries are removed either way: they are only ever read here.
- */
-export async function migrateLegacyCache(): Promise<number> {
-    if (!store) return 0;
-    let storage: Storage;
-    const legacy: string[] = [];
-    try {
-        storage = window.localStorage;
-        for (let i = 0; i < storage.length; i++) {
-            const key = storage.key(i);
-            if (key?.startsWith(LEGACY_PREFIX)) legacy.push(key);
-        }
-    } catch {
-        return 0;
-    }
-    if (!legacy.length) return 0;
-
-    const years = new Map<string, StoredYear>();
-    for (const full of legacy) {
-        const parts = full.slice(LEGACY_PREFIX.length).split('|');
-        let cached: LegacyMonth | null = null;
-        try {
-            cached = JSON.parse(storage.getItem(full) ?? 'null') as LegacyMonth | null;
-        } catch {
-            cached = null;
-        }
-        if (parts.length !== 8 || !cached?.times || typeof cached.fetchedAt !== 'number') continue;
-
-        const [at, month, method, angles, school, highLatRule, midnight, timezone] = parts;
-        const [lat, lon] = at.split(',').map(Number);
-        const year = Number(month.slice(0, 4));
-        if (!Number.isFinite(lat) || !Number.isFinite(lon) || !Number.isFinite(year)) continue;
-        const [fajr, isha] = angles.split('/');
-        const opts: PrayerApiOptions = {
-            method,
-            fajrAngle: fajr ? Number(fajr) : undefined,
-            ishaAngle: isha ? Number(isha) : undefined,
-            hanafi: school === 'h',
-            highLatRule,
-            midnight: midnight as ApiMidnight,
-            timezone,
-        };
-        const key = tableKey({ lat, lon }, year, opts, ALADHAN);
-        const entry: StoredYear = years.get(key) ?? {
-            v: 1,
-            provider: ALADHAN.id,
-            year,
-            fetchedAt: cached.fetchedAt,
-            partial: true,
-            days: {},
-        };
-        Object.assign(entry.days, reviveDays(cached.times));
-        entry.fetchedAt = Math.min(entry.fetchedAt, cached.fetchedAt);
-        years.set(key, entry);
-    }
-
-    for (const [key, year] of years) {
-        // A whole year already on disk beats the pieces.
-        if (parseStored(await store.read(fileOf(key)))) continue;
-        memory.set(key, year);
-        await writeYear(key, year);
-    }
-    for (const key of legacy) {
-        try {
-            storage.removeItem(key);
-        } catch {
-            /* nothing to clear */
-        }
-    }
-    bump();
-    return years.size;
-}
-
 /** Drop tables for years nobody will browse offline any more. */
 async function pruneOld(now = new Date()): Promise<void> {
     if (!store) return;
@@ -440,7 +353,7 @@ export function setTableStore(next: TableStore | null): Promise<void> {
     states.clear();
     bump();
     // Housekeeping, in the background: nothing waits on it but the tests.
-    return next ? migrateLegacyCache().then(() => pruneOld()) : Promise.resolve();
+    return next ? pruneOld() : Promise.resolve();
 }
 
 /** Tables in a folder of the vault, through the adapter — which works the same on a phone. */

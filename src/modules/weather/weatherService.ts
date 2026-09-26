@@ -1,4 +1,4 @@
-import { requestUrl } from 'obsidian';
+import { requestUrl, type App } from 'obsidian';
 import { fetchAirQuality } from './airQuality';
 import { placeKey, placeLabel, resolvePlace } from '../../services/geocode';
 import {
@@ -19,7 +19,7 @@ import type { WeatherData, WeatherPlace } from './weatherTypes';
  * `airQuality.ts` adds pollutants and pollen from its sibling endpoint. Location
  * resolution lives in `geocode.ts`.
  *
- * Results are cached in memory and in localStorage so the widget paints
+ * Results are cached in memory and in Obsidian's local storage so the widget paints
  * instantly on reopen and degrades to stale-but-real data offline. All network
  * access is best-effort — every failure path resolves to `null` or to whatever
  * was cached, never to a thrown error.
@@ -62,10 +62,24 @@ function cacheKey(key: string): string {
     return `${CACHE_PREFIX}:${key}`;
 }
 
+/**
+ * Where the last forecast for each place is kept between sessions: Obsidian's
+ * local storage, which is this device's and this vault's. Set by the weather
+ * module while it runs; without it the cache lives in memory only.
+ */
+let persisted: App | null = null;
+
+export function setWeatherPersistence(app: App | null): void {
+    persisted = app;
+}
+
 function readPersisted(key: string): WeatherData | null {
     try {
-        const raw = window.localStorage.getItem(cacheKey(key));
-        return raw ? (JSON.parse(raw) as WeatherData) : null;
+        const raw: unknown = persisted?.loadLocalStorage(cacheKey(key));
+        // Read back as written, but not trusted to be: a forecast has a fetch time.
+        return raw && typeof raw === 'object' && typeof (raw as WeatherData).fetchedAt === 'number'
+            ? (raw as WeatherData)
+            : null;
     } catch {
         return null;
     }
@@ -73,7 +87,7 @@ function readPersisted(key: string): WeatherData | null {
 
 function writePersisted(key: string, data: WeatherData): void {
     try {
-        window.localStorage.setItem(cacheKey(key), JSON.stringify(data));
+        persisted?.saveLocalStorage(cacheKey(key), data);
     } catch {
         /* ignore quota / unavailability */
     }

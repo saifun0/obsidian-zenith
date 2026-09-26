@@ -83,31 +83,13 @@ function memoryStore() {
     return { store, files };
 }
 
-function fakeLocalStorage(entries: Record<string, string>) {
-    const map = new Map(Object.entries(entries));
-    return {
-        get length() {
-            return map.size;
-        },
-        key: (i: number) => [...map.keys()][i] ?? null,
-        getItem: (k: string) => map.get(k) ?? null,
-        setItem: (k: string, v: string) => void map.set(k, v),
-        removeItem: (k: string) => void map.delete(k),
-        map,
-    };
-}
-
-let storage = fakeLocalStorage({});
-
 beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 8, 23, 12, 0));
-    storage = fakeLocalStorage({});
     // Tests run in node: `window` is whatever we say it is.
     vi.stubGlobal('window', {
         setTimeout: (fn: () => void, ms: number) => setTimeout(fn, ms),
         clearTimeout: (id: number) => clearTimeout(id),
-        localStorage: storage,
     });
 });
 
@@ -264,30 +246,6 @@ describe('when the service does not answer', () => {
         up = true;
         expect(await refreshTable(PLACE, SEPT, OPTS)).toBe(true);
         expect(tableDay(PLACE, SEPT, OPTS)?.fajr).toBe(226);
-    });
-});
-
-describe('moving the old cache', () => {
-    it('turns the months kept in localStorage into a year it serves at once', async () => {
-        const month = {
-            fetchedAt: Date.now() - 1000,
-            times: { '2026-09-23': { ...dayOf(2026), lastThird: null } },
-        };
-        storage.map.set(
-            'zenith:prayerapi:v1:45.043,41.973|2026-09|russia||h|angleBased|toFajr|Europe/Moscow',
-            JSON.stringify(month)
-        );
-        storage.map.set('unrelated', 'kept');
-        // The real provider: the test harness has no network, so it fails.
-        const { store, files } = memoryStore();
-        await setTableStore(store);
-
-        const day = tableDay(PLACE, SEPT, OPTS);
-        expect(day?.fajr).toBe(226);
-        // JSON has no NaN; a time that did not exist stays one that does not.
-        expect(day?.lastThird).toBeNaN();
-        expect(files.size).toBe(1);
-        expect([...storage.map.keys()]).toEqual(['unrelated']);
     });
 });
 

@@ -6,6 +6,7 @@ import type { SettingsSchema } from '../../settings/schema/types';
 import type ZenithPlugin from '../../main';
 import { weatherTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
+import { setWeatherPersistence } from './weatherService';
 
 /**
  * WeatherModule — contributes the weather widget to the dashboard.
@@ -31,6 +32,10 @@ export class WeatherModule extends BaseModule {
     }
 
     async onload(): Promise<void> {
+        // The last forecast per place, kept in Obsidian's local storage.
+        setWeatherPersistence(this.plugin.app);
+        this.disposers.push(() => setWeatherPersistence(null));
+
         this.disposers.push(
             this.plugin.registerDashboardWidget({
                 id: 'weather.forecast',
