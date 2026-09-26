@@ -19,6 +19,7 @@ import { pictureTranslations } from '../src/modules/picture/i18n';
 import { prayerTranslations } from '../src/modules/prayer/i18n';
 import { projectsTranslations } from '../src/modules/projects/i18n';
 import { searchTranslations } from '../src/modules/search/i18n';
+import { editorTranslations } from '../src/modules/editor/i18n';
 import { studyTranslations } from '../src/modules/study/i18n';
 import { syncTranslations } from '../src/modules/sync/i18n';
 import { tasksTranslations } from '../src/modules/tasks/i18n';
@@ -35,6 +36,7 @@ const BUILT_IN: Array<[string, TranslationTable]> = [
     ['prayer', prayerTranslations],
     ['projects', projectsTranslations],
     ['search', searchTranslations],
+    ['editor', editorTranslations],
     ['study', studyTranslations],
     ['sync', syncTranslations],
     ['tasks', tasksTranslations],

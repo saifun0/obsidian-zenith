@@ -11,6 +11,7 @@ import { mediaSettingsSchema } from '../src/modules/media/settings.schema';
 import { projectsSettingsSchema } from '../src/modules/projects/settings.schema';
 import { syncSettingsSchema } from '../src/modules/sync/settings.schema';
 import { searchSettingsSchema } from '../src/modules/search/settings.schema';
+import { editorSettingsSchema } from '../src/modules/editor/settings.schema';
 import {
     appearanceSchema,
     generalSchema,
@@ -45,6 +46,7 @@ const CORE_SCHEMAS: CoreSettingsSchema[] = [
     projectsSettingsSchema,
     syncSettingsSchema,
     searchSettingsSchema,
+    editorSettingsSchema(true),
 ];
 
 /**

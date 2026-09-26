@@ -20,6 +20,7 @@ import { StudyModule } from './modules/study/StudyModule';
 import { MediaModule } from './modules/media/MediaModule';
 import { SyncModule } from './modules/sync/SyncModule';
 import { SearchModule } from './modules/search/SearchModule';
+import { EditorModule } from './modules/editor/EditorModule';
 import { useZenithStore, resetZenithStore } from './store';
 import type { SettingsSyncService } from './modules/sync/services/settingsSync';
 import type { FileSyncService } from './modules/sync/services/fileSync';
@@ -192,6 +193,7 @@ export default class ZenithPlugin extends Plugin {
         this.moduleManager.register(new MediaModule(this));
         this.moduleManager.register(new SyncModule(this));
         this.moduleManager.register(new SearchModule(this));
+        this.moduleManager.register(new EditorModule(this));
 
         // ── Icon packs ────────────────────────────────
         await this.loadIconPacks();

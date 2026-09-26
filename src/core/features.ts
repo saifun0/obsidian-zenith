@@ -210,6 +210,10 @@ export const FEATURES = [
     feature('weather.hourly', 'weather', { settingKey: 'weatherShowHourly' }),
     feature('weather.sun', 'weather', { settingKey: 'weatherShowSun' }),
     feature('weather.air', 'weather', { settingKey: 'weatherShowAir' }),
+
+    // ── Editor ──
+    feature('editor.codeBlocks', 'editor'),
+    feature('editor.codeLineNumbers', 'editor', { requires: ['editor.codeBlocks'] }),
 ] as const;
 
 export type FeatureId = (typeof FEATURES)[number]['id'];

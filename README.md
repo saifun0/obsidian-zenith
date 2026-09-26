@@ -19,6 +19,7 @@ files; there is no hidden database.
 | **Dashboard** | Greeting, clock, weather, quick-add, and per-module summary widgets. |
 | **Navigation** | A launcher widget and a side panel with a button for every Zenith view — extendable by any module — and buttons for the commands you run often. |
 | **Search** | One line to find any view, action, task, project, library item or day's note, and to add a task. |
+| **Editor** | Code blocks with the language's icon and name, a stripe in its colour, line numbers and a copy button. |
 | **Tasks** | Parse, filter, search, group, create, edit, complete and delete tasks. |
 | **Journal** | Daily notes on a calendar, with configurable habit / scale / number tracking and the day's tasks. |
 | **Content** | Gallery + stats for tracked media: half-star ratings, statuses, progress, covers from the vault or a link, and import from MyAnimeList / Goodreads / Letterboxd. Works offline. |
@@ -64,6 +65,7 @@ More in [Privacy](docs/en/privacy.md).
 | [Journal](docs/en/journal.md) | Daily notes, habit / scale / number tracking, templates, and captured tasks. |
 | [Prayer](docs/en/prayer.md) | Prayer times computed on the device, and what the daily note records. |
 | [Search](docs/en/search.md) | Finding anything in Zenith from one line, adding from it, and the keys. |
+| [Editor](docs/en/editor.md) | Code blocks: languages, line numbers, copying, and Code Styler. |
 | [Side panel](docs/en/side-panel.md) | Zenith's views and your command buttons in the right sidebar, and arranging them. |
 | [On a phone](docs/en/mobile.md) | Keeping views clear of the camera and of Obsidian's buttons: measured, or set by hand. |
 | [Study](docs/en/study.md) | The class timetable: pasting it (an AI chat can make it from a photo), editing it, the card and reminders. |

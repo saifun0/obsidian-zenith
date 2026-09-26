@@ -24,9 +24,10 @@ export interface ProfileTemplate {
 
 /**
  * Modules no template decides about. Sync is how the user's devices agree,
- * and choosing "Minimum" is not a request to stop that.
+ * and choosing "Minimum" is not a request to stop that. The editor is how
+ * notes look, whatever else Zenith is used for.
  */
-export const TEMPLATE_UNTOUCHED: readonly string[] = ['sync'];
+export const TEMPLATE_UNTOUCHED: readonly string[] = ['sync', 'editor'];
 
 /** What every template keeps from outside its modules. */
 const BASICS: FeatureId[] = ['core.vaultScaffold', 'notify.center'];
@@ -66,6 +67,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
             'media',
             'sync',
             'search',
+            'editor',
         ],
         on: 'all',
     },

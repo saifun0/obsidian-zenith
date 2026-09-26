@@ -1,0 +1,200 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — Editor: code blocks
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   The same block twice, built differently (`modules/editor/code`):
+
+   · reading view — `pre.zenith-code`, holding a header and a body, the body
+     holding a gutter of numbers beside Obsidian's own `code`;
+   · Live Preview — a header widget above the block's lines, each marked
+     `zenith-code`, the numbers drawn from `data-zenith-ln`.
+
+   Everything is Obsidian's code colours and radius, so a theme's code blocks
+   stay its own; only the stripe is the language's. Highlighting is Obsidian's
+   too — nothing here recolours a token. */
+
+.zenith-code,
+.zenith-code__head {
+    --zenith-code-stripe: 4px;
+    --zenith-code-edge: var(--zenith-code-accent, var(--background-modifier-border-hover));
+}
+
+/* ── The header ─────────────────────────────────── */
+.zenith-code__head {
+    display: flex;
+    align-items: center;
+    gap: var(--size-4-2);
+    min-height: 34px;
+    padding: 0 var(--size-4-1) 0 var(--size-4-3);
+    border-bottom: 1px solid var(--background-modifier-border);
+    font-family: var(--font-interface);
+    line-height: normal;
+    white-space: normal;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.zenith-code__icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+.zenith-code__icon.is-generic {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.zenith-code__icon.is-generic svg {
+    width: 16px;
+    height: 16px;
+}
+
+.zenith-code__lang {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--font-ui-small);
+    font-weight: var(--font-semibold);
+    color: var(--text-muted);
+}
+
+.zenith-code__copy.clickable-icon {
+    flex: none;
+    color: var(--text-faint);
+}
+
+.zenith-code__copy.clickable-icon:hover {
+    color: var(--text-normal);
+}
+
+.zenith-code__copy.clickable-icon.is-copied {
+    color: var(--text-success);
+}
+
+.is-mobile .zenith-code__copy.clickable-icon {
+    padding: var(--size-4-2);
+}
+
+/* ── Reading view ───────────────────────────────── */
+/* The stripe is a border rather than a shadow: the gutter has a background
+   of its own, to stay put while the code scrolls sideways, and would cover a
+   shadow painted inside the block. */
+.markdown-rendered pre.zenith-code {
+    padding: 0;
+    overflow: hidden;
+    white-space: normal;
+    border-left: var(--zenith-code-stripe) solid var(--zenith-code-edge);
+}
+
+/* Obsidian's own button, which the header's replaces. */
+.markdown-rendered pre.zenith-code .copy-code-button {
+    display: none;
+}
+
+/* Lines are not wrapped: each number has to stay level with its line, and
+   the numbers are a column beside the code rather than part of it. */
+.markdown-rendered .zenith-code__body {
+    display: flex;
+    overflow-x: auto;
+    padding: var(--size-4-2) 0 var(--size-4-3);
+    line-height: var(--line-height-normal);
+}
+
+.markdown-rendered pre.zenith-code .zenith-code__body > code {
+    display: block;
+    flex: 1 0 auto;
+    padding: 0 var(--size-4-4);
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    white-space: pre;
+}
+
+.markdown-rendered pre.zenith-code.has-line-numbers .zenith-code__body > code {
+    padding-inline-start: var(--size-4-3);
+}
+
+.zenith-code__gutter {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    flex: none;
+    padding: 0 0 0 var(--size-4-3);
+    background-color: var(--code-background);
+    font-family: var(--font-monospace);
+    font-size: var(--code-size);
+    color: var(--text-faint);
+    text-align: right;
+    white-space: pre;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* ── Live Preview ───────────────────────────────── */
+/* `display` again: the editor makes every child of its content a block. */
+.markdown-source-view.mod-cm6 .cm-content > .zenith-code__head.is-live {
+    display: flex;
+    padding-inline-start: calc(var(--zenith-code-stripe) + var(--size-4-3));
+    border-radius: var(--code-radius) var(--code-radius) 0 0;
+    background-color: var(--code-background);
+    box-shadow: inset var(--zenith-code-stripe) 0 0 var(--zenith-code-edge);
+}
+
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-codeblock.zenith-code {
+    box-shadow: inset var(--zenith-code-stripe) 0 0 var(--zenith-code-edge);
+}
+
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-codeblock.zenith-code:not(.HyperMD-list-line) {
+    padding-inline-start: calc(var(--zenith-code-stripe) + var(--size-4-4));
+}
+
+/* Room for the numbers: as many digits as the block's last line has. */
+.markdown-source-view.mod-cm6
+    .cm-line.HyperMD-codeblock.zenith-code.has-numbers:not(.HyperMD-list-line) {
+    --zenith-code-gutter: calc(var(--zenith-code-digits, 1) * 1ch + var(--size-4-3) * 2);
+    position: relative;
+    padding-inline-start: calc(var(--zenith-code-stripe) + var(--zenith-code-gutter));
+}
+
+.markdown-source-view.mod-cm6 .cm-line.zenith-code-line[data-zenith-ln]::before {
+    content: attr(data-zenith-ln);
+    position: absolute;
+    inset-inline-start: var(--zenith-code-stripe);
+    width: calc(var(--zenith-code-gutter) - var(--size-4-3));
+    color: var(--text-faint);
+    text-align: end;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* The header is the block's top edge now, so the opening fence is not. */
+.markdown-source-view.mod-cm6 .cm-line.zenith-code-open {
+    border-radius: 0;
+}
+
+/* Obsidian's label on the opening fence, which the header replaces. */
+.markdown-source-view.mod-cm6 .cm-line.zenith-code .code-block-flair {
+    display: none;
+}
+
+/* Not being edited: Obsidian has emptied both fence lines. The top one goes,
+   the header standing in for it; the bottom one stays as the block's lower
+   edge. Being edited, they come back as ordinary lines. */
+.markdown-source-view.mod-cm6 .cm-line.zenith-code-open.zenith-code-folded {
+    height: 0;
+    padding-block: 0;
+    overflow: hidden;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.zenith-code-close.zenith-code-folded {
+    height: var(--size-4-2);
+    padding-block: 0;
+    overflow: hidden;
+}

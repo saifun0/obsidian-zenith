@@ -686,7 +686,7 @@ export interface SettingsSlice {
  * Bump when a migration is added, and gate that migration on the value below.
  * Version 1 is "everything written before versioning existed".
  */
-export const CURRENT_SETTINGS_VERSION = 13;
+export const CURRENT_SETTINGS_VERSION = 14;
 
 /**
  * Object-valued settings that must be merged field-by-field rather than
@@ -831,6 +831,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
         'sync',
         'picture',
         'search',
+        'editor',
     ],
     features: {},
     profiles: [],
@@ -1081,6 +1082,14 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             // nobody switches on — and it changes nothing until it is opened.
             if (from < 13 && !merged.activeModuleIds.includes('search')) {
                 merged.activeModuleIds = [...merged.activeModuleIds, 'search'];
+            }
+
+            // ── v13 → v14 ──
+            // The editor arrived, with styled code blocks. On for existing
+            // configs as well: it is what the update brings, and it steps
+            // aside by itself where Code Styler already does the job.
+            if (from < 14 && !merged.activeModuleIds.includes('editor')) {
+                merged.activeModuleIds = [...merged.activeModuleIds, 'editor'];
             }
 
             return { settings: merged };

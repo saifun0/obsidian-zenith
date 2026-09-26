@@ -82,7 +82,7 @@ describe('loadSettings — versioning', () => {
     });
 
     it('runs every ordered step a config has not seen yet', () => {
-        // v2 → v3 → v4 → v5 → v7 → v13. The ordered migrations must run for a config
+        // v2 → v3 → v4 → v5 → v7 → v13 → v14. The ordered migrations must run for a config
         // that is past the sentinel-based ones, which used to return early —
         // and a config several versions behind has to collect all of them, in
         // order.
@@ -95,6 +95,7 @@ describe('loadSettings — versioning', () => {
             'sync',
             'picture',
             'search',
+            'editor',
         ]);
     });
 
@@ -110,6 +111,7 @@ describe('loadSettings — versioning', () => {
             'sync',
             'picture',
             'search',
+            'editor',
         ]);
     });
 
@@ -119,6 +121,14 @@ describe('loadSettings — versioning', () => {
 
         const already = load({ settingsVersion: 13, activeModuleIds: ['dashboard'] });
         expect(already.activeModuleIds).not.toContain('search');
+    });
+
+    it('switches the editor on for an existing config', () => {
+        const fresh = load({ settingsVersion: 13, activeModuleIds: ['dashboard'] });
+        expect(fresh.activeModuleIds).toContain('editor');
+
+        const already = load({ settingsVersion: 14, activeModuleIds: ['dashboard'] });
+        expect(already.activeModuleIds).not.toContain('editor');
     });
 
     it('switches the picture widget on for an existing config', () => {
@@ -150,7 +160,7 @@ describe('loadSettings — versioning', () => {
             settingsVersion: 7,
             activeModuleIds: ['dashboard', 'canvas', 'tasks'],
         });
-        expect(s.activeModuleIds).toEqual(['dashboard', 'tasks', 'search']);
+        expect(s.activeModuleIds).toEqual(['dashboard', 'tasks', 'search', 'editor']);
     });
 
     it('never adds a module the user already has', () => {

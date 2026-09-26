@@ -105,6 +105,11 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'feature.weather.air.desc':
             'Pollutants, AQI and (in Europe) pollen. Costs one extra request per refresh.',
 
+        'feature.editor.codeBlocks': 'Styled code blocks',
+        'feature.editor.codeBlocks.desc':
+            'A header with the language’s icon and name, a stripe in its colour, and a copy button.',
+        'feature.editor.codeLineNumbers': 'Line numbers',
+
         'journal.block.off': 'The check-in block is switched off in Zenith’s journal settings.',
         'journal.widget.written': 'Written',
     },
@@ -205,6 +210,11 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'feature.weather.air': 'Качество воздуха',
         'feature.weather.air.desc':
             'Загрязнители, AQI и (в Европе) пыльца. Один дополнительный запрос при обновлении.',
+
+        'feature.editor.codeBlocks': 'Оформление блоков кода',
+        'feature.editor.codeBlocks.desc':
+            'Шапка с иконкой и названием языка, полоса его цвета и кнопка копирования.',
+        'feature.editor.codeLineNumbers': 'Номера строк',
 
         'journal.block.off': 'Блок отметок выключен в настройках дневника Zenith.',
         'journal.widget.written': 'Записано',
