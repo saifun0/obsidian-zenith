@@ -163,6 +163,8 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     profilesOnboarded: 'no',
     settingsVersion: 'no',
     searchRecents: 'no',
+    editorCodeFold: 'yes',
+    editorCodeFoldLines: 'yes',
     // A timetable, a subgroup and term dates are one person's; how the weeks
     // are called and when to be reminded are a way of working.
     studySchedule: 'no',

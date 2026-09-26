@@ -112,6 +112,12 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'feature.editor.codeBlocks.desc':
             'A header with the language’s icon and name, a stripe in its colour, and a copy button.',
         'feature.editor.codeLineNumbers': 'Line numbers',
+        'feature.editor.codeFold': 'Folding',
+        'feature.editor.codeFold.desc':
+            'An arrow in the header folds a block to it. After the language, `-` starts a block folded and `+` open.',
+        'feature.editor.codeIcons': 'Language icons',
+        'feature.editor.codeStripe': 'Colour stripe',
+        'feature.editor.codeStripe.desc': 'A stripe down the block’s left side in its language’s colour.',
 
         'journal.block.off': 'The check-in block is switched off in Zenith’s journal settings.',
         'journal.widget.written': 'Written',
@@ -221,6 +227,12 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'feature.editor.codeBlocks.desc':
             'Шапка с иконкой и названием языка, полоса его цвета и кнопка копирования.',
         'feature.editor.codeLineNumbers': 'Номера строк',
+        'feature.editor.codeFold': 'Сворачивание',
+        'feature.editor.codeFold.desc':
+            'Стрелка в шапке сворачивает блок до неё. После языка `-` начинает блок свёрнутым, а `+` — развёрнутым.',
+        'feature.editor.codeIcons': 'Иконки языков',
+        'feature.editor.codeStripe': 'Цветная полоса',
+        'feature.editor.codeStripe.desc': 'Полоса слева цвета языка блока.',
 
         'journal.block.off': 'Блок отметок выключен в настройках дневника Zenith.',
         'journal.widget.written': 'Записано',

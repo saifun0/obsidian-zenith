@@ -47,7 +47,7 @@ off and says what it is waiting for.
 | Prayer | Sunrise, voluntary prayers, Hijri date, week strip, statistics, reminders, fasting, voluntary fast days, iftar and suhoor, widget |
 | [Study](study.md) | Classes widget, tasks for the next class, class reminders (off by default) |
 | Weather | Hourly forecast, sunrise & sunset, air quality |
-| [Editor](editor.md) | Styled code blocks, line numbers |
+| [Editor](editor.md) | Styled code blocks, line numbers, folding, language icons, colour stripe |
 
 Modules that do one thing — the navigator, the picture, the media banner — have no features
 of their own: their module switch is the feature.

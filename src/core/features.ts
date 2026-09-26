@@ -215,6 +215,9 @@ export const FEATURES = [
     // ── Editor ──
     feature('editor.codeBlocks', 'editor'),
     feature('editor.codeLineNumbers', 'editor', { requires: ['editor.codeBlocks'] }),
+    feature('editor.codeFold', 'editor', { requires: ['editor.codeBlocks'] }),
+    feature('editor.codeIcons', 'editor', { requires: ['editor.codeBlocks'] }),
+    feature('editor.codeStripe', 'editor', { requires: ['editor.codeBlocks'] }),
 ] as const;
 
 export type FeatureId = (typeof FEATURES)[number]['id'];

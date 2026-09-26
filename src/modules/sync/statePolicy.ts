@@ -216,6 +216,9 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
 
     // A phone and a desktop are reached for different things.
     searchRecents: { scope: 'device' },
+    // How code blocks start is how the notes read, on any screen.
+    editorCodeFold: { scope: 'shared' },
+    editorCodeFoldLines: { scope: 'shared' },
     // The timetable is the same on every device.
     studySchedule: { scope: 'shared' },
     studyTwoWeeks: { scope: 'shared' },

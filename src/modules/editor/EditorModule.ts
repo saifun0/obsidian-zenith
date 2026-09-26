@@ -1,12 +1,15 @@
 import { MarkdownView, type App } from 'obsidian';
 import type { Extension } from '@codemirror/state';
 import { BaseModule } from '../../core/IModule';
-import { isFeatureOn, watchFeature } from '../../core/useFeature';
+import { isFeatureOn } from '../../core/useFeature';
+import { useZenithStore } from '../../store';
 import type { TranslationTable } from '../../core/i18n';
 import type { SettingsSchema } from '../../settings/schema/types';
 import type ZenithPlugin from '../../main';
 import { codeBlockExtension } from './code/livePreview';
-import { decorateCodeBlocks, type CodeBlockOptions } from './code/readingView';
+import { currentCodeOptions } from './code/currentOptions';
+import { DEFAULT_CODE_OPTIONS, sameOptions, type CodeBlockOptions } from './code/options';
+import { decorateCodeBlocks } from './code/readingView';
 import { editorSettingsSchema } from './settings.schema';
 import { editorTranslations } from './i18n';
 
@@ -18,16 +21,18 @@ import { editorTranslations } from './i18n';
  *
  * Obsidian keeps a post-processor and an editor extension until the plugin
  * unloads; neither can be taken back by one module. So both are registered
- * once per plugin and switched from here: the post-processor reads `live`,
- * and the extension list is emptied or filled and handed back to Obsidian.
+ * once per plugin and switched from here: the post-processor reads the hooks'
+ * options, and the extension list is emptied or filled and handed back to
+ * Obsidian.
  *
  * Code Styler does the same job, and two plugins drawing one block draw it
  * twice. While it is on, this module stands aside and says so in settings.
  */
 
 interface Hooks {
-    /** What the post-processor and the extension currently do. */
-    live: CodeBlockOptions & { enabled: boolean };
+    /** Whether blocks are drawn at all, and how. */
+    enabled: boolean;
+    options: CodeBlockOptions;
     /** The list registered with Obsidian; refilled to change the editors. */
     extensions: Extension[];
 }
@@ -53,10 +58,21 @@ export class EditorModule extends BaseModule {
 
     onload(): Promise<void> {
         const own = this.hooks();
-        const apply = () => this.apply(own);
+        const apply = () =>
+            this.set(own, {
+                enabled: isFeatureOn('editor.codeBlocks') && !codeStylerOn(this.plugin.app),
+                options: currentCodeOptions(),
+            });
 
-        this.disposers.push(watchFeature('editor.codeBlocks', apply));
-        this.disposers.push(watchFeature('editor.codeLineNumbers', apply));
+        // Every feature and setting the blocks read, as one key: a change to
+        // any of them redraws, and a write to anything else does not.
+        this.disposers.push(
+            useZenithStore.subscribe(
+                () => JSON.stringify([isFeatureOn('editor.codeBlocks'), currentCodeOptions()]),
+                apply
+            )
+        );
+        apply();
 
         // Obsidian says nothing when another plugin is switched on or off, so
         // Code Styler is looked for again whenever the workspace moves.
@@ -70,7 +86,7 @@ export class EditorModule extends BaseModule {
         this.disposers.forEach((d) => d());
         this.disposers = [];
         const own = hooks.get(this.plugin);
-        if (own) this.set(own, { enabled: false, lineNumbers: own.live.lineNumbers });
+        if (own) this.set(own, { enabled: false, options: own.options });
         return Promise.resolve();
     }
 
@@ -87,9 +103,9 @@ export class EditorModule extends BaseModule {
         let own = hooks.get(this.plugin);
         if (own) return own;
 
-        const created: Hooks = { live: { enabled: false, lineNumbers: true }, extensions: [] };
-        this.plugin.registerMarkdownPostProcessor((el) => {
-            if (created.live.enabled) decorateCodeBlocks(el, created.live);
+        const created: Hooks = { enabled: false, options: DEFAULT_CODE_OPTIONS, extensions: [] };
+        this.plugin.registerMarkdownPostProcessor((el, ctx) => {
+            if (created.enabled) decorateCodeBlocks(el, created.options, ctx);
         });
         this.plugin.registerEditorExtension(created.extensions);
         hooks.set(this.plugin, created);
@@ -97,22 +113,14 @@ export class EditorModule extends BaseModule {
         return own;
     }
 
-    private apply(own: Hooks): void {
-        this.set(own, {
-            enabled: isFeatureOn('editor.codeBlocks') && !codeStylerOn(this.plugin.app),
-            lineNumbers: isFeatureOn('editor.codeLineNumbers'),
-        });
-    }
-
-    /** Switch both modes to `next`, and redraw what is open — only if something changed. */
-    private set(own: Hooks, next: CodeBlockOptions & { enabled: boolean }): void {
-        const { live } = own;
-        if (live.enabled === next.enabled && live.lineNumbers === next.lineNumbers) return;
-        own.live = next;
+    /** Switch both modes over, and redraw what is open — only if something changed. */
+    private set(own: Hooks, next: { enabled: boolean; options: CodeBlockOptions }): void {
+        if (own.enabled === next.enabled && sameOptions(own.options, next.options)) return;
+        own.enabled = next.enabled;
+        own.options = next.options;
 
         own.extensions.length = 0;
-        if (next.enabled)
-            own.extensions.push(codeBlockExtension({ lineNumbers: next.lineNumbers }));
+        if (next.enabled) own.extensions.push(codeBlockExtension(next.options));
         this.plugin.app.workspace.updateOptions();
 
         // Reading view draws once and keeps what it drew.

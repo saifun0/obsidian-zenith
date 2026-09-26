@@ -32,6 +32,7 @@ import {
     type PrayerSource,
 } from '../modules/prayer/prayerConfig';
 import type { ApiMidnight } from '../modules/prayer/prayerProvider';
+import type { CodeFoldDefault } from '../modules/editor/code/options';
 import type { DashboardBgFit, DashboardBgSource } from '../modules/dashboard/dashboardBackground';
 import { pinnedFeatures } from '../core/features';
 import {
@@ -411,6 +412,12 @@ export interface ZenithSettings {
     weatherShowAir: boolean;
     /** What was picked in Search, how often and when — see `search/recents.ts`. */
     searchRecents: Recents;
+
+    // ── Editor ──
+    /** How a code block with no `+` / `-` of its own starts: open, folded, or folded when long. */
+    editorCodeFold: CodeFoldDefault;
+    /** With `long`: folded when it holds more lines than this. */
+    editorCodeFoldLines: number;
 
     // ── Study ──
     /** Bells and lessons — see `modules/study/studyModel`. */
@@ -846,6 +853,8 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     weatherAllowIpLookup: false,
     weatherShowAir: true,
     searchRecents: {},
+    editorCodeFold: 'open',
+    editorCodeFoldLines: 30,
     studySchedule: { bells: [], lessons: [] },
     studyTwoWeeks: false,
     studyWeekAnchor: '',
