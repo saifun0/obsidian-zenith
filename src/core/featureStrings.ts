@@ -17,6 +17,9 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
             'Icons beside folders and notes in the file explorer, set from their menu.',
         'feature.core.vaultScaffold': 'Vault structure',
         'feature.core.vaultScaffold.desc': 'A button that creates Zenith’s folders in one go.',
+        'feature.core.updateCheck': 'Check for updates',
+        'feature.core.updateCheck.desc':
+            'When Obsidian starts, ask GitHub for Zenith’s latest version, and offer it when it is newer.',
 
         'feature.notify.center': 'Notification center',
         'feature.notify.center.desc':
@@ -123,6 +126,9 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
             'Значки у папок и заметок в проводнике — ставятся из их меню.',
         'feature.core.vaultScaffold': 'Заготовка хранилища',
         'feature.core.vaultScaffold.desc': 'Кнопка, которая одним нажатием создаёт папки Zenith.',
+        'feature.core.updateCheck': 'Проверять обновления',
+        'feature.core.updateCheck.desc':
+            'При запуске Obsidian узнавать на GitHub последнюю версию Zenith и предлагать её, если она новее.',
 
         'feature.notify.center': 'Центр уведомлений',
         'feature.notify.center.desc':

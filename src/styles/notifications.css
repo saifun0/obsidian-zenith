@@ -132,3 +132,26 @@
     margin-left: 10px;
     padding: 2px 10px;
 }
+
+/* ── A newer Zenith ─────────────────────────────────
+   The notice `core/updateCheck.ts` raises. Obsidian's notices sit outside
+   `.zenith-root`, so the theme's own variables, as in the sync notice. */
+.zenith-update-notice {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.zenith-update-notice__title {
+    font-weight: 600;
+}
+
+.zenith-update-notice__link {
+    color: var(--text-accent, var(--interactive-accent));
+    font-size: 0.85em;
+    cursor: pointer;
+}
+
+.zenith-update-notice__link:hover {
+    text-decoration: underline;
+}

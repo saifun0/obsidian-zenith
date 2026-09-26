@@ -36,7 +36,7 @@ off and says what it is waiting for.
 
 | Module | Features |
 | --- | --- |
-| — | Folder icons, vault structure button |
+| — | Folder icons, vault structure button, update check |
 | [Notifications](notifications.md) | Notification center |
 | [Dashboard](dashboard.md) | Today's date, wallpaper, saved layouts, open on startup, period progress, countdowns, life in weeks (off; only by hand) |
 | Tasks | Capture into the daily note, natural input, capture from links (off by default), reminders (off by default), subtasks, attachments, timer, drag and drop, group by date, group by note, statistics, activity heatmap, widget |

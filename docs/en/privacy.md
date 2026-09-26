@@ -14,3 +14,7 @@ year per place and method. In calculated mode prayer times make no requests.
 
 The content library makes no requests of its own. A cover given as a link is loaded from
 that address whenever it is shown, like any image in a note.
+
+When Obsidian starts, Zenith reads its own `manifest.json` from `raw.githubusercontent.com`,
+the file Obsidian's plugin directory reads, to see whether a newer version is out. The request
+carries nothing about you or your vault. *Check for updates* switches it off.

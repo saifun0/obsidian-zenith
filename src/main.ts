@@ -28,6 +28,7 @@ import type { FileSyncAuto } from './modules/sync/services/fileSyncAuto';
 import { PendingAuthStore } from './modules/sync/services/remotes/oauthPending';
 import { ZenithSettingTab } from './settings/ZenithSettingTab';
 import { registerUriCapture } from './core/uri/uriCapture';
+import { scheduleUpdateCheck } from './core/updateCheck';
 import { registerQuickAddTaskCommand } from './modules/tasks/commands';
 import { dashboardWidgets, type DashboardWidgetDefinition } from './modules/dashboard/widgets';
 import { navActions, type NavActionDefinition } from './modules/navigator/navigation';
@@ -217,6 +218,8 @@ export default class ZenithPlugin extends Plugin {
             if (!useZenithStore.getState().settings.profilesOnboarded) {
                 new FirstRunModal(this.app).open();
             }
+            // A newer Zenith, when there is one — see `core/updateCheck.ts`.
+            this.disposers.push(scheduleUpdateCheck(this.manifest.id, this.manifest.version));
         });
 
         // ── Settings Tab ─────────────────────────────

@@ -108,6 +108,7 @@ export const FEATURES = [
     // ── Outside any module ──
     feature('core.folderIcons', CORE_MODULE),
     feature('core.vaultScaffold', CORE_MODULE),
+    feature('core.updateCheck', CORE_MODULE),
     feature('notify.center', NOTIFICATIONS_MODULE),
 
     // ── Dashboard ──

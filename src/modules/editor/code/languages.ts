@@ -75,6 +75,39 @@ export function resolveLanguage(raw: string): CodeLanguage {
     };
 }
 
+export interface LanguageEntry {
+    language: CodeLanguage;
+    /** The words after a fence that lead to it, sorted. */
+    words: string[];
+}
+
+/**
+ * Every language Zenith can name, split by whether it has an icon — for the
+ * debug gallery, where the whole table is checked at a glance.
+ */
+export function languageTable(): { styled: LanguageEntry[]; plain: LanguageEntry[] } {
+    const words = new Map<string, string[]>();
+    for (const [word, name] of Object.entries({ ...LANGUAGE_NAMES, ...EXTRA_NAMES })) {
+        words.set(name, [...(words.get(name) ?? []), word]);
+    }
+    const names = new Set([...words.keys(), ...Object.keys(LANGUAGE_STYLES)]);
+
+    const styled: LanguageEntry[] = [];
+    const plain: LanguageEntry[] = [];
+    for (const name of [...names].sort((a, b) => a.localeCompare(b))) {
+        const list = (words.get(name) ?? []).sort();
+        const style = LANGUAGE_STYLES[name] ?? LANGUAGE_STYLES[BORROWED_STYLE[name] ?? ''];
+        const language: CodeLanguage = {
+            id: list[0] ?? name.toLowerCase(),
+            name,
+            colour: style?.colour ?? null,
+            icon: style ? iconUrl(name, style.icon) : null,
+        };
+        (style ? styled : plain).push({ language, words: list });
+    }
+    return { styled, plain };
+}
+
 /** The language of a code element, from Obsidian's `language-…` class. */
 export function languageOfClass(className: string): string {
     const cls = className.split(/\s+/).find((c) => c.startsWith('language-'));

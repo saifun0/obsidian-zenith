@@ -12,6 +12,7 @@ import { ModuleDiagnostics } from './ModuleDiagnostics';
 import { NotificationDebug } from './NotificationDebug';
 import { StateInspector } from './StateInspector';
 import { StringsAudit } from './StringsAudit';
+import { CodeGallery } from './CodeGallery';
 
 /**
  * Debug tools, reachable only from About.
@@ -24,17 +25,27 @@ import { StringsAudit } from './StringsAudit';
  * what the controls look like, what every dialog and every field looks like,
  * what the store holds, what the loader believes, whether a reminder reaches
  * you, and which language is answering. An eighth while Study is on: the
- * timetable at any hour, without waiting for it.
+ * timetable at any hour, without waiting for it. And while the editor is on,
+ * every kind of code block and every language it knows.
  */
 
 type Tab =
-    'components' | 'modals' | 'inputs' | 'state' | 'modules' | 'notify' | 'study' | 'strings';
+    | 'components'
+    | 'modals'
+    | 'inputs'
+    | 'state'
+    | 'modules'
+    | 'notify'
+    | 'study'
+    | 'code'
+    | 'strings';
 
 export const DebugPanel: React.FC = () => {
     const t = useTranslation();
     const { plugin } = useApp();
     const [tab, setTab] = useState<Tab>('components');
     const study = useZenithStore((s) => s.settings.activeModuleIds.includes('study'));
+    const editor = useZenithStore((s) => s.settings.activeModuleIds.includes('editor'));
 
     // One line rather than a facts table: it is the same handful of values
     // every time, and every one of them belongs in a bug report.
@@ -62,6 +73,9 @@ export const DebugPanel: React.FC = () => {
                     ...(study
                         ? [{ value: 'study', label: t('debug.tab.study'), icon: 'graduation-cap' }]
                         : []),
+                    ...(editor
+                        ? [{ value: 'code', label: t('debug.tab.code'), icon: 'square-code' }]
+                        : []),
                     { value: 'strings', label: t('debug.tab.strings'), icon: 'languages' },
                 ]}
             />
@@ -73,6 +87,7 @@ export const DebugPanel: React.FC = () => {
             {tab === 'modules' && <ModuleDiagnostics />}
             {tab === 'notify' && <NotificationDebug />}
             {tab === 'study' && study && <StudyClockDebug />}
+            {tab === 'code' && editor && <CodeGallery />}
             {tab === 'strings' && <StringsAudit />}
         </div>
     );

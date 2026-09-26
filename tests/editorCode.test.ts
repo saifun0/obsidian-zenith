@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { codeText, findFencedBlocks, lineCount } from '../src/modules/editor/code/fences';
-import { languageOfClass, resolveLanguage } from '../src/modules/editor/code/languages';
+import {
+    languageOfClass,
+    languageTable,
+    resolveLanguage,
+} from '../src/modules/editor/code/languages';
 
 const lines = (text: string) => text.split('\n');
 
@@ -108,6 +112,16 @@ describe('languages', () => {
 
     it('draws each icon once', () => {
         expect(resolveLanguage('js').icon).toBe(resolveLanguage('javascript').icon);
+    });
+
+    it('lists every language once, split by whether it has an icon', () => {
+        const { styled, plain } = languageTable();
+        expect(styled.length).toBeGreaterThanOrEqual(177);
+        expect(styled.every((e) => e.language.icon !== null)).toBe(true);
+        expect(plain.every((e) => e.language.icon === null)).toBe(true);
+        const names = [...styled, ...plain].map((e) => e.language.name);
+        expect(new Set(names).size).toBe(names.length);
+        expect(styled.find((e) => e.language.name === 'JavaScript')?.words).toContain('js');
     });
 
     it('reads the language off Obsidian’s class', () => {

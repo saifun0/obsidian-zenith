@@ -355,3 +355,42 @@
     justify-content: flex-start;
     margin-top: 4px;
 }
+
+/* ── Code blocks (CodeGallery) ─────────────────────── */
+.zenith-debug__code {
+    min-width: 0;
+}
+
+.zenith-debug__code-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 8px;
+}
+
+.zenith-debug__code-tile {
+    min-width: 0;
+    border-left: var(--zenith-code-stripe) solid var(--zenith-code-edge);
+    border-radius: var(--code-radius);
+    background: var(--code-background);
+    overflow: hidden;
+}
+
+.zenith-debug__code-tile .zenith-code__head {
+    border-bottom: none;
+}
+
+.zenith-debug__code-words {
+    padding: 0 var(--size-4-3) var(--size-4-2);
+    color: var(--text-faint);
+    font-family: var(--font-monospace);
+    font-size: var(--font-ui-smaller);
+    overflow-wrap: anywhere;
+}
+
+.zenith-debug__code-plain {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}

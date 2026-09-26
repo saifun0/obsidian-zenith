@@ -47,6 +47,9 @@ and only while the feature is on:
   a WebDAV server, and it can be end-to-end encrypted. Settings sync makes no requests of its
   own: it travels with the vault, however you already sync it — this file sync included.
 - **Covers** given as a link load from that address, like any image in a note.
+- **Updates** — when Obsidian starts, Zenith's `manifest.json` is read from
+  `raw.githubusercontent.com` to see whether a newer version is out. Nothing is sent but the
+  request itself; *Check for updates* in settings switches it off.
 
 More in [Privacy](docs/en/privacy.md).
 
