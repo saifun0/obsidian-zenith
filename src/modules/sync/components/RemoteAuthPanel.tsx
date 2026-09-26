@@ -68,6 +68,39 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
     const [device, setDevice] = useState<DeviceCodeStart | null>(null);
     const cancelled = useRef(false);
 
+    /**
+     * A PKCE pair made before the press. Hashing the verifier is async, and a
+     * page opened after an `await` is no longer opened by the tap: a phone's
+     * WebView drops it without a word, which is how "Connect" came to do
+     * nothing on a phone. Made in advance, the press opens the page at once.
+     */
+    const prepared = useRef<{ verifier: string; challenge: string } | null>(null);
+    const prepare = useCallback(() => {
+        const secret = generateVerifier();
+        challengeFor(secret).then(
+            (challenge) => {
+                prepared.current = { verifier: secret, challenge };
+            },
+            () => {
+                prepared.current = null;
+            }
+        );
+    }, []);
+    const needsPair = provider === 'dropbox' && !!clientId && !tokens?.accessToken;
+    useEffect(() => {
+        if (needsPair && !prepared.current) prepare();
+    }, [needsPair, prepare]);
+
+    /**
+     * The sign-in page last opened, kept on screen as a link. Where the browser
+     * did not open anyway, tapping a link is a gesture nothing drops.
+     */
+    const [authUrl, setAuthUrl] = useState<string | null>(null);
+    const openPage = (url: string) => {
+        setAuthUrl(url);
+        window.open(url, '_blank');
+    };
+
     useEffect(
         () => () => {
             // The device poll outlives a render; stop it when the view closes so
@@ -82,6 +115,7 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
         plugin.oauthPending.cancel();
         setDevice(null);
         setAwaiting(null);
+        setAuthUrl(null);
         setError(null);
     }, [plugin, tokenKey, updateSettings]);
 
@@ -95,14 +129,22 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
      */
     const startDropbox = async (viaRedirect: boolean) => {
         setError(null);
-        setBusy(true);
+        // Taken, not peeked: a verifier is good for one authorization.
+        let pair = prepared.current;
+        prepared.current = null;
         try {
-            const secret = generateVerifier();
-            const challenge = await challengeFor(secret);
+            if (!pair) {
+                // Pressed before the pair was ready. On a phone the page may then
+                // stay shut, and the link this leaves on screen is the way on.
+                setBusy(true);
+                const fresh = generateVerifier();
+                pair = { verifier: fresh, challenge: await challengeFor(fresh) };
+            }
+            const { verifier: secret, challenge } = pair;
 
             if (!viaRedirect) {
                 verifier.current = secret;
-                window.open(DropboxRemote.authorizeUrl(clientId, challenge), '_blank');
+                openPage(DropboxRemote.authorizeUrl(clientId, challenge));
                 setAwaiting('paste');
                 return;
             }
@@ -118,18 +160,18 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
                 clientId,
                 redirectUri: DROPBOX_REDIRECT_URI,
             });
-            window.open(
+            openPage(
                 DropboxRemote.authorizeUrl(clientId, challenge, {
                     redirectUri: DROPBOX_REDIRECT_URI,
                     state,
-                }),
-                '_blank'
+                })
             );
             setAwaiting('redirect');
         } catch (err) {
             setError(describe(err));
         } finally {
             setBusy(false);
+            prepare();
         }
     };
 
@@ -149,6 +191,7 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
             }
             updateSettings({ syncDropboxTokens: result.tokens });
             setAwaiting(null);
+            setAuthUrl(null);
             setCodeDraft('');
             verifier.current = null;
         } catch (err) {
@@ -172,6 +215,8 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
                 return;
             }
             setDevice(start);
+            // After a network wait, so a phone will usually not open this: the
+            // page's address stays on screen as a link to tap.
             window.open(start.verificationUri, '_blank');
             await pollUntilGranted(start);
         } catch (err) {
@@ -255,13 +300,14 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
                 <div className="zenith-sync__deviceCode">
                     <p className="zenith-sync__hint">{t('auth.device.instructions')}</p>
                     <code className="zenith-sync__userCode">{device.userCode}</code>
-                    <button
-                        type="button"
-                        className="zenith-sync__inboxPath"
-                        onClick={() => window.open(device.verificationUri, '_blank')}
+                    <a
+                        className="zenith-sync__authLink"
+                        href={device.verificationUri}
+                        target="_blank"
+                        rel="noopener noreferrer"
                     >
                         {device.verificationUri}
-                    </button>
+                    </a>
                     <p className="zenith-sync__hint">{t('auth.device.waiting')}</p>
                 </div>
             )}
@@ -269,6 +315,7 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
             {provider === 'dropbox' && awaiting === 'redirect' && (
                 <div className="zenith-sync__deviceCode">
                     <p className="zenith-sync__hint">{t('auth.redirect.waiting')}</p>
+                    <AuthLink url={authUrl} label={t('auth.openPage')} />
                     <div className="zenith-sync__actions">
                         <button
                             type="button"
@@ -276,6 +323,7 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
                             onClick={() => {
                                 plugin.oauthPending.cancel();
                                 setAwaiting(null);
+                                setAuthUrl(null);
                             }}
                         >
                             {t('auth.cancel')}
@@ -295,6 +343,10 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {provider === 'dropbox' && awaiting === 'paste' && (
+                <AuthLink url={authUrl} label={t('auth.openPage')} />
             )}
 
             {provider === 'dropbox' && awaiting === 'paste' && (
@@ -337,6 +389,15 @@ export const RemoteAuthPanel: React.FC<Props> = ({ provider }) => {
         </div>
     );
 };
+
+/** The sign-in page as a link, for when opening it by itself did not work. */
+const AuthLink: React.FC<{ url: string | null; label: string }> = ({ url, label }) =>
+    url ? (
+        <a className="zenith-sync__authLink" href={url} target="_blank" rel="noopener noreferrer">
+            <ExternalLink size={13} />
+            {label}
+        </a>
+    ) : null;
 
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => window.setTimeout(resolve, ms));

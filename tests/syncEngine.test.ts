@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { ModuleFs } from '../src/core/moduleFs';
-import { SyncEngine, buildExcluder } from '../src/modules/sync/services/SyncEngine';
+import { SyncEngine, buildExcluder, settingsOwner } from '../src/modules/sync/services/SyncEngine';
 import { PrevSyncStore } from '../src/modules/sync/services/prevSyncStore';
 import type { SyncRemote } from '../src/modules/sync/services/remotes/types';
 import type { FileEntity } from '../src/modules/sync/fileSyncTypes';
@@ -113,6 +113,7 @@ const ENGINE_OPTS = {
     configDir: '.obsidian',
     userExcludes: [],
     pluginDir: '.obsidian/plugins/zenith',
+    carrySettings: false,
     conflictAction: 'keep_newer' as const,
     protectModifyRatio: 0.5,
     maxFileSize: 0,
@@ -201,6 +202,105 @@ describe('buildExcluder', () => {
         // so nothing there can be reached in the first place.
         const ex = buildExcluder({ ...base, localRoot: 'Notes' });
         expect(ex('a.md')).toBe(false);
+    });
+});
+
+// ── Carrying settings sync ───────────────────────────
+
+describe('carrying settings sync', () => {
+    const base = {
+        includeConfigDir: false,
+        configDir: '.obsidian',
+        userExcludes: [] as string[],
+        pluginDir: '.obsidian/plugins/zenith',
+        localRoot: '',
+        carrySettings: true,
+    };
+
+    it('lets outboxes and history through while settings sync is on, config folder or not', () => {
+        const ex = buildExcluder(base);
+        expect(ex('.obsidian/plugins/zenith/sync/outbox/devA.json')).toBe(false);
+        expect(ex('.obsidian/plugins/zenith/sync/outbox/devB.json')).toBe(false);
+        expect(ex('.obsidian/plugins/zenith/sync/journal/devB.jsonl')).toBe(false);
+        // The config folder itself is still left alone.
+        expect(ex('.obsidian/workspace.json')).toBe(true);
+    });
+
+    it('keeps the rest of the sync folder home: bases, the layout with its tokens, file records', () => {
+        const ex = buildExcluder(base);
+        expect(ex('.obsidian/plugins/zenith/sync/base/devA/devB.json')).toBe(true);
+        expect(ex('.obsidian/plugins/zenith/sync/local/devA.json')).toBe(true);
+        expect(ex('.obsidian/plugins/zenith/sync/prev/devA/remote-1.json')).toBe(true);
+        expect(ex('.obsidian/plugins/zenith/sync/outbox-old/devA.json')).toBe(true);
+        expect(ex('.obsidian/plugins/zenith/data.json')).toBe(true);
+    });
+
+    it('still honours what the user excluded', () => {
+        const ex = buildExcluder({ ...base, userExcludes: ['.obsidian'] });
+        expect(ex('.obsidian/plugins/zenith/sync/outbox/devA.json')).toBe(true);
+    });
+
+    it('carries nothing when settings sync is off', () => {
+        const ex = buildExcluder({ ...base, carrySettings: false });
+        expect(ex('.obsidian/plugins/zenith/sync/outbox/devA.json')).toBe(true);
+    });
+
+    it('knows each file by the device that writes it', () => {
+        const owner = settingsOwner({ ...base, deviceId: 'devA' });
+        expect(owner('.obsidian/plugins/zenith/sync/outbox/devA.json')).toBe('local');
+        expect(owner('.obsidian/plugins/zenith/sync/journal/devA.jsonl')).toBe('local');
+        expect(owner('.obsidian/plugins/zenith/sync/outbox/devB.json')).toBe('remote');
+        expect(owner('.obsidian/plugins/zenith/sync/journal/devB.jsonl')).toBe('remote');
+        expect(owner('.obsidian/plugins/zenith/sync/outbox/devB.jsonl')).toBe(null);
+        expect(owner('notes/devA.json')).toBe(null);
+        expect(settingsOwner({ ...base, carrySettings: false, deviceId: 'devA' })(
+            '.obsidian/plugins/zenith/sync/outbox/devB.json'
+        )).toBe(null);
+    });
+
+    it("sends this device's outbox, takes the others', and says settings arrived", async () => {
+        // Both sides hold both files and nothing is on record: a vault copied
+        // by hand. Each file has one writer, so neither is a conflict.
+        const files: Record<string, FakeFile> = {
+            '.obsidian/plugins/zenith/sync/outbox/devA.json': { data: '{"mine":2}', mtime: 5000 },
+            '.obsidian/plugins/zenith/sync/outbox/devB.json': { data: '{"old":1}', mtime: 9000 },
+        };
+        const remoteState: FakeRemoteState = {
+            objects: {
+                '.obsidian/plugins/zenith/sync/outbox/devA.json': { data: '{"mine":1}', mtimeSvr: 9000 },
+                '.obsidian/plugins/zenith/sync/outbox/devB.json': { data: '{"new":22}', mtimeSvr: 3000 },
+            },
+            calls: [],
+        };
+        const { engine } = makeEngine(files, remoteState, { carrySettings: true });
+
+        const plan = await engine.plan();
+        const byKey = Object.fromEntries(plan.items.map((i) => [i.key, i.decision]));
+        expect(byKey['.obsidian/plugins/zenith/sync/outbox/devA.json']).toBe(
+            'local_is_modified_then_push'
+        );
+        expect(byKey['.obsidian/plugins/zenith/sync/outbox/devB.json']).toBe(
+            'remote_is_modified_then_pull'
+        );
+        expect(plan.stats.conflict).toBe(0);
+
+        const result = await engine.apply(plan, { force: true });
+        expect(result.settingsArrived).toBe(true);
+        expect(remoteState.objects['.obsidian/plugins/zenith/sync/outbox/devA.json'].data).toBe(
+            '{"mine":2}'
+        );
+        expect(files['.obsidian/plugins/zenith/sync/outbox/devB.json'].data).toBe('{"new":22}');
+    });
+
+    it('does not report settings arriving when only notes came down', async () => {
+        const { engine } = makeEngine(
+            {},
+            { objects: { 'b.md': { data: 'x', mtimeSvr: 1 } }, calls: [] },
+            { carrySettings: true }
+        );
+        const result = await engine.apply(await engine.plan(), { force: true });
+        expect(result.applied).toBe(1);
+        expect(result.settingsArrived).toBe(false);
     });
 });
 

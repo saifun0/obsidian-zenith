@@ -643,6 +643,21 @@
     box-sizing: border-box;
 }
 
+/* The sign-in page, as a link to tap where opening it by itself did not work. */
+.zenith-sync__authLink {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--zenith-space-xs);
+    overflow-wrap: anywhere;
+    font-size: 0.85rem;
+    color: var(--zenith-accent);
+    text-decoration: none;
+}
+
+.zenith-sync__authLink:hover {
+    text-decoration: underline;
+}
+
 /* The code is read off one screen and typed into another, so it is set large,
    monospaced and widely tracked — the three things that stop 0/O and 1/l being
    guessed wrong. */

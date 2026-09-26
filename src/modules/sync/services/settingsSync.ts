@@ -259,6 +259,10 @@ export class SettingsSyncService {
                     kind: 'publish',
                     keys: moved,
                 });
+                // Where Zenith's file sync is what carries the vault, the new
+                // outbox waits for its next run — and the outbox lives under the
+                // config folder, which raises no vault events to start one.
+                this.plugin.fileSyncAuto?.nudge();
             }
             return sent;
         } catch (err) {

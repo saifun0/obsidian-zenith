@@ -35,6 +35,11 @@ export interface EngineOptions {
     userExcludes: string[];
     /** Where this plugin lives, so the engine can refuse to sync its own state. */
     pluginDir: string;
+    /**
+     * Carry each device's settings outbox and history — settings sync is on,
+     * and this engine may be the only thing moving the vault between devices.
+     */
+    carrySettings?: boolean;
     conflictAction: PlanOptions['conflictAction'];
     protectModifyRatio: number;
     maxFileSize: number;
@@ -105,6 +110,11 @@ export interface SyncRunResult {
      * and which were left as two copies to sort out by hand.
      */
     merges: MergeOutcomeReport[];
+    /**
+     * Another device's settings outbox came down in this run, so settings sync
+     * has something new to merge — now, rather than at its next poll.
+     */
+    settingsArrived: boolean;
 }
 
 const MTIME_TOLERANCE_MS = 2000;
@@ -144,6 +154,7 @@ export class SyncEngine {
             deviceLabel: this.opts.deviceLabel,
             now,
             firstRun: prev.length === 0,
+            ownerOf: this.owner(),
         });
     }
 
@@ -189,7 +200,14 @@ export class SyncEngine {
         opts: { force?: boolean; onProgress?: (p: SyncProgress) => void } = {}
     ): Promise<SyncRunResult> {
         if (plan.blocked && !opts.force) {
-            return { plan, applied: 0, failed: [], refused: true, merges: [] };
+            return {
+                plan,
+                applied: 0,
+                failed: [],
+                refused: true,
+                merges: [],
+                settingsArrived: false,
+            };
         }
 
         const work = plan.items.filter((i) => ACTIONABLE_DECISIONS.has(i.decision));
@@ -240,7 +258,12 @@ export class SyncEngine {
 
         await this.recordPrev(plan, settled);
 
-        return { plan, applied: settled.size, failed, refused: false, merges };
+        const ownerOf = this.owner();
+        const settingsArrived = work.some(
+            (item) => settled.has(item.key) && isPull(item) && ownerOf(item.key) === 'remote'
+        );
+
+        return { plan, applied: settled.size, failed, refused: false, merges, settingsArrived };
     }
 
     // ── Carrying out one decision ────────────────────
@@ -457,6 +480,16 @@ export class SyncEngine {
             userExcludes: this.opts.userExcludes,
             pluginDir: this.opts.pluginDir,
             localRoot: this.opts.localRoot,
+            carrySettings: this.opts.carrySettings,
+        });
+    }
+
+    private owner(): (key: string) => 'local' | 'remote' | null {
+        return settingsOwner({
+            pluginDir: this.opts.pluginDir,
+            localRoot: this.opts.localRoot,
+            deviceId: this.deviceId,
+            carrySettings: this.opts.carrySettings,
         });
     }
 
@@ -494,6 +527,20 @@ export interface ExcluderOptions {
     /** Vault path of this plugin, e.g. `.obsidian/plugins/zenith`. */
     pluginDir: string;
     localRoot: string;
+    /** Let settings sync's outboxes and history through. See below. */
+    carrySettings?: boolean;
+}
+
+/** The parts of Zenith's `sync/` folder that travel, when settings sync is on. */
+const CARRIED_SETTINGS = ['outbox', 'journal'] as const;
+
+/** A vault path, expressed relative to the sync root; null when outside it. */
+function relativeTo(localRoot: string, vaultPath: string): string | null {
+    const root = trimSlashes(localRoot);
+    const clean = trimSlashes(vaultPath);
+    if (!root) return clean;
+    if (clean === root) return '';
+    return clean.startsWith(`${root}/`) ? clean.slice(root.length + 1) : null;
 }
 
 /**
@@ -507,29 +554,36 @@ export interface ExcluderOptions {
  * one level down. `cache/` too: it holds what each device fetched for itself
  * (the prayer year tables), and carrying it would be traffic and conflicts for
  * files any device can fetch again.
+ *
+ * With one exception, while settings sync is on: its outboxes and history
+ * travel, config folder or not. Settings sync moves nothing itself — it waits
+ * for the vault to carry those files — and where this engine is what carries
+ * the vault, excluding them left every device merging with nobody. They are
+ * safe to carry because each has one writer, the device in its name (see
+ * `settingsOwner`). The rest of `sync/` stays: bases, each device's own layout
+ * with its tokens, and this engine's own records.
  */
 export function buildExcluder(opts: ExcluderOptions): (key: string) => boolean {
-    const root = trimSlashes(opts.localRoot);
-
-    /** A plugin-dir path, expressed relative to the sync root. */
-    const relativeToRoot = (vaultPath: string): string | null => {
-        const clean = trimSlashes(vaultPath);
-        if (!root) return clean;
-        if (clean === root) return '';
-        return clean.startsWith(`${root}/`) ? clean.slice(root.length + 1) : null;
-    };
-
-    const pluginRel = relativeToRoot(opts.pluginDir);
+    const pluginRel = relativeTo(opts.localRoot, opts.pluginDir);
     const ownState =
         pluginRel === null
             ? []
             : [`${pluginRel}/sync`, `${pluginRel}/data.json`, `${pluginRel}/cache`];
+    const carried =
+        opts.carrySettings && pluginRel
+            ? CARRIED_SETTINGS.map((part) => `${pluginRel}/sync/${part}`)
+            : [];
     const userPrefixes = opts.userExcludes.map(trimSlashes).filter(Boolean);
 
-    const configRel = relativeToRoot(opts.configDir);
+    const configRel = relativeTo(opts.localRoot, opts.configDir);
 
     return (key: string): boolean => {
         if (!key) return true;
+
+        // Under a carried folder only the user's own exclusions still apply.
+        if (carried.some((dir) => key === dir || key.startsWith(`${dir}/`))) {
+            return userPrefixes.some((prefix) => key === prefix || key.startsWith(`${prefix}/`));
+        }
 
         for (const own of ownState) {
             if (key === own || key.startsWith(`${own}/`)) return true;
@@ -544,6 +598,36 @@ export function buildExcluder(opts: ExcluderOptions): (key: string) => boolean {
         }
 
         return false;
+    };
+}
+
+/**
+ * Who writes a carried settings file: this device its own outbox and history,
+ * the other side every other device's. Settings sync writes only the files
+ * named after this device, so the other copy of one is never a competing edit —
+ * only an older download of it. Null for every other path.
+ */
+export function settingsOwner(opts: {
+    pluginDir: string;
+    localRoot: string;
+    deviceId: string;
+    carrySettings?: boolean;
+}): (key: string) => 'local' | 'remote' | null {
+    const pluginRel = relativeTo(opts.localRoot, opts.pluginDir);
+    if (!opts.carrySettings || !pluginRel) return () => null;
+    const folders: Array<[string, string]> = [
+        [`${pluginRel}/sync/outbox/`, '.json'],
+        [`${pluginRel}/sync/journal/`, '.jsonl'],
+    ];
+
+    return (key: string) => {
+        for (const [folder, ext] of folders) {
+            if (!key.startsWith(folder) || !key.endsWith(ext)) continue;
+            const name = key.slice(folder.length, key.length - ext.length);
+            if (!name || name.includes('/')) return null;
+            return name === opts.deviceId ? 'local' : 'remote';
+        }
+        return null;
     };
 }
 
@@ -581,6 +665,14 @@ function decodeText(buffer: ArrayBuffer): string | null {
     } catch {
         return null;
     }
+}
+
+function isPull(item: SyncPlanItem): boolean {
+    return (
+        item.decision === 'remote_is_created_then_pull' ||
+        item.decision === 'remote_is_modified_then_pull' ||
+        item.decision === 'conflict_created_then_keep_remote'
+    );
 }
 
 function isDeletion(item: SyncPlanItem): boolean {

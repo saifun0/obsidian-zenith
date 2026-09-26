@@ -44,7 +44,7 @@ and only while the feature is on:
   the location rounded to about a kilometre. Calculated mode makes no requests.
 - **Sync of note files** — only to the service you connect: Dropbox, OneDrive, an S3 bucket or
   a WebDAV server, and it can be end-to-end encrypted. Settings sync makes no requests of its
-  own: it travels with the vault, however you already sync it.
+  own: it travels with the vault, however you already sync it — this file sync included.
 - **Covers** given as a link load from that address, like any image in a note.
 
 More in [Privacy](docs/en/privacy.md).

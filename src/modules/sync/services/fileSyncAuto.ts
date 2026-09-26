@@ -58,6 +58,8 @@ const STARTUP_DELAY_MS = 8_000;
 
 export class FileSyncAuto {
     private timer: number | null = null;
+    /** A run put off by `MIN_GAP_MS`, waiting for the gap to pass. */
+    private deferred: number | null = null;
     private eventRefs: EventRef[] = [];
     private disposers: Array<() => void> = [];
     private started = false;
@@ -123,6 +125,10 @@ export class FileSyncAuto {
 
     stop(): void {
         this.onVaultChange.cancel();
+        if (this.deferred !== null) {
+            window.clearTimeout(this.deferred);
+            this.deferred = null;
+        }
         if (this.timer !== null) {
             window.clearInterval(this.timer);
             this.timer = null;
@@ -135,6 +141,16 @@ export class FileSyncAuto {
     }
 
     /**
+     * Something outside the vault's own events changed what a run would carry:
+     * settings sync wrote this device's outbox, under the config folder, where
+     * Obsidian raises no events. Treated as an edit — the same quiet window.
+     */
+    nudge(): void {
+        if (!this.started || this.muted) return;
+        this.onVaultChange();
+    }
+
+    /**
      * One automatic round: look, then decide whether to act.
      *
      * `force` is what the "Sync now" button passes. It skips the rate limit
@@ -143,7 +159,9 @@ export class FileSyncAuto {
      * press still means "do the safe thing", not "do anything".
      */
     async run(force = false): Promise<void> {
-        if (!this.shouldRun(force)) return;
+        const verdict = this.shouldRun(force);
+        if (verdict === 'wait') this.defer();
+        if (verdict !== 'go') return;
 
         this.lastRunAt = Date.now();
         this.muted = true;
@@ -180,34 +198,48 @@ export class FileSyncAuto {
 
     // ── Deciding whether to start ────────────────────
 
-    private shouldRun(force: boolean): boolean {
+    /** `wait`: not yet, only because the last run was too recent. */
+    private shouldRun(force: boolean): 'go' | 'no' | 'wait' {
         const { syncFilesEnabled, syncFilesAuto } = useZenithStore.getState().settings;
-        if (!syncFilesEnabled) return false;
-        if (!syncFilesAuto && !force) return false;
+        if (!syncFilesEnabled) return 'no';
+        if (!syncFilesAuto && !force) return 'no';
 
         const status = this.files.getStatus();
-        if (!status.configured) return false;
+        if (!status.configured) return 'no';
 
         // Never two at once. This one holds even for a forced run: a second
         // engine over the same files is the one thing no caller may ask for.
-        if (status.running) return false;
+        if (status.running) return 'no';
 
         // A forced run is the user pressing a button, and a button that
         // silently declines is a button that looks broken. Everything below
         // this line is about runs nobody asked for.
-        if (force) return true;
+        if (force) return 'go';
 
         // Never over the top of a plan someone is reading. Recomputing it
         // under them would swap the list they are halfway through for a
         // different one — which is exactly what holding it back was for.
-        if (status.plan) return false;
+        if (status.plan) return 'no';
 
         // `navigator.onLine` is only ever trustworthy when false, which is
         // exactly the direction this needs: it skips a run that was certain to
         // fail and never blocks one that might work.
-        if (typeof navigator !== 'undefined' && navigator.onLine === false) return false;
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'no';
 
-        return Date.now() - this.lastRunAt >= MIN_GAP_MS;
+        return Date.now() - this.lastRunAt >= MIN_GAP_MS ? 'go' : 'wait';
+    }
+
+    /**
+     * Run once the gap has passed. An edit made within a minute of the last run
+     * used to wait for the next timer, a quarter of an hour away by default.
+     */
+    private defer(): void {
+        if (this.deferred !== null || !this.started) return;
+        const wait = Math.max(0, this.lastRunAt + MIN_GAP_MS - Date.now());
+        this.deferred = window.setTimeout(() => {
+            this.deferred = null;
+            void this.run();
+        }, wait);
     }
 
     /**

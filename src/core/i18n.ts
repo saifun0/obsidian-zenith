@@ -1531,6 +1531,7 @@ const EN: Dict = {
     'auth.redirect.waiting':
         'Approve it in the browser — Dropbox hands it straight back to Obsidian.',
     'auth.redirect.stuck': 'The browser did not bring me back',
+    'auth.openPage': 'Browser did not open? Open the sign-in page',
     'auth.cancel': 'Cancel',
     'auth.paste': 'Authorization code',
     'auth.paste.placeholder': 'Paste the code from the browser',
@@ -3191,6 +3192,7 @@ const RU: Dict = {
     'auth.needClientId': 'Сначала укажите id приложения в настройках.',
     'auth.redirect.waiting': 'Подтвердите в браузере — Dropbox вернёт всё прямо в Obsidian.',
     'auth.redirect.stuck': 'Браузер не вернул меня обратно',
+    'auth.openPage': 'Браузер не открылся? Открыть страницу входа',
     'auth.cancel': 'Отмена',
     'auth.paste': 'Код авторизации',
     'auth.paste.placeholder': 'Вставьте код из браузера',

@@ -169,6 +169,10 @@ export class FileSyncService {
                 // exists, and offering it again would apply stale decisions.
                 plan: null,
             });
+            // Another device's settings just landed. Settings sync would find
+            // them at its next poll; merged now, they are in place before the
+            // user looks for them.
+            if (result.settingsArrived) await this.plugin.settingsSync?.pull();
             return result;
         } catch (err) {
             this.patch({ running: false, error: describe(err), progress: null });
@@ -327,6 +331,7 @@ export class FileSyncService {
             configDir: this.plugin.app.vault.configDir,
             userExcludes: s.syncExcludes,
             pluginDir: this.plugin.manifest.dir ?? '',
+            carrySettings: s.syncEnabled,
             conflictAction: s.syncConflictAction,
             // Clamped rather than trusted: these come back from `data.json`, and
             // a protect ratio of 0 would wave through a plan that deletes

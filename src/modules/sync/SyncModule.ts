@@ -297,6 +297,10 @@ export class SyncModule extends BaseModule {
         }
         await this.service.pull();
         await this.service.publish();
+        // When Zenith's own file sync carries the vault, it carries the settings
+        // too: a run sends this device's and brings the others', which are
+        // merged as they arrive.
+        if (this.files?.getStatus().configured) await this.auto?.run(true);
         const { error } = this.service.getStatus();
         new Notice(error ? `Zenith: sync failed — ${error}` : 'Zenith: settings synced.');
     }

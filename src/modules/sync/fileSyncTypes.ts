@@ -228,4 +228,11 @@ export interface PlanOptions {
     now: number;
     /** True when there is no previous sync record at all. */
     firstRun: boolean;
+    /**
+     * Which side writes this path, for files only one device ever writes —
+     * each device's settings outbox. When both copies moved, the writer's copy
+     * is the file and the other is only an older download of it: no conflict,
+     * no conflict copy. Null for every ordinary path.
+     */
+    ownerOf?: (key: string) => 'local' | 'remote' | null;
 }

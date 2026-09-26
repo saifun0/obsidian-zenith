@@ -329,6 +329,19 @@ function settle(
     key: string,
     why: string
 ): Verdict {
+    // A file with one writer cannot really diverge: the other copy is that
+    // writer's file as it was when it last arrived.
+    const owner = opts.ownerOf?.(key) ?? null;
+    if (owner === 'local') {
+        return { decision: 'local_is_modified_then_push', reason: `${why} — written only here` };
+    }
+    if (owner === 'remote') {
+        return {
+            decision: 'remote_is_modified_then_pull',
+            reason: `${why} — written only by its own device`,
+        };
+    }
+
     if (opts.conflictAction === 'smart') {
         // The plan cannot say whether the merge will succeed — it has metadata,
         // not contents. So it promises an attempt, and the engine reports what

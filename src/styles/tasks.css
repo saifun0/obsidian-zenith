@@ -16,9 +16,14 @@
 }
 
 /* ── Sticky Header & Tabs ───────────────────────── */
+/* `.zenith-tasks` scrolls itself, and a sticky box stops inside its scroller's
+   padding — which already holds the phone's inset. Taken back off, so the header
+   stops right under Obsidian's rather than an inset lower, over the list. */
 .zenith-tasks-header-wrapper {
     position: sticky;
-    top: var(--zenith-sticky-top, 0px);
+    top: calc(
+        var(--zenith-sticky-top, 0px) - var(--zenith-inset-top, 0px) - var(--zenith-space-md)
+    );
     z-index: 10;
     background: var(--background-primary);
     padding-top: var(--zenith-space-sm);
