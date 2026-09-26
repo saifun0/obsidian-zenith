@@ -32,6 +32,7 @@ import { CoreSettingsForm } from '../schema/CoreSettingsForm';
 import { appearanceSchema, generalSchema, notificationsSchema } from '../schema/coreSchemas';
 import { featureOnlySchema } from '../schema/featureGroup';
 import { CORE_MODULE, featureEnabled } from '../../core/features';
+import { takeSettingsPage } from '../openSettings';
 
 const CORE_FEATURES = featureOnlySchema(CORE_MODULE);
 
@@ -65,8 +66,13 @@ export const SettingsApp: React.FC = () => {
         [t, discovered]
     );
 
-    const [activeCategory, setActiveCategory] = useState<Category | null>(null);
-    const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
+    // Opened onto a module's page when something asked for one (see
+    // `openSettings.ts`), and at the front otherwise.
+    const [initialModule] = useState(takeSettingsPage);
+    const [activeCategory, setActiveCategory] = useState<Category | null>(
+        initialModule ? 'modules' : null
+    );
+    const [activeModuleId, setActiveModuleId] = useState<string | null>(initialModule);
     const toggleModule = (moduleId: string, checked: boolean) => {
         const active = settings.activeModuleIds;
         const newIds = checked

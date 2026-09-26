@@ -5,7 +5,8 @@ import { syncPaths } from '../syncTypes';
 import { dropboxClientId, onedriveClientId } from './remotes/appIds';
 import { CryptoRemote } from './crypto/cryptoRemote';
 import { PrevSyncStore } from './prevSyncStore';
-import { SyncEngine, type SyncProgress, type SyncRunResult } from './SyncEngine';
+import { SyncEngine, remoteBytesAfter, type SyncProgress, type SyncRunResult } from './SyncEngine';
+import { readMemory, summarizeRun, type RunSummary, type SyncMemory } from '../runSummary';
 import { WebdavRemote } from './remotes/webdavRemote';
 import { S3Remote } from './remotes/s3Remote';
 import { DropboxRemote } from './remotes/dropboxRemote';
@@ -44,9 +45,20 @@ export interface FileSyncStatus {
      */
     checkedAt: number;
     lastResult: SyncRunResult | null;
+    /** The last run that moved files, in numbers. Kept across restarts. */
+    lastRun: RunSummary | null;
+    /** What the synced files took up on the server when it was last looked at. */
+    remoteBytes: number | null;
     progress: SyncProgress | null;
     error: string | null;
 }
+
+/**
+ * Where a device keeps its sync record between starts: Obsidian's local
+ * storage, this device's and this vault's. Without it every start said
+ * "never synced" until the first automatic run came round.
+ */
+const MEMORY_KEY = 'zenith-file-sync';
 
 const EMPTY_STATUS: FileSyncStatus = {
     configured: false,
@@ -55,6 +67,8 @@ const EMPTY_STATUS: FileSyncStatus = {
     lastRunAt: 0,
     checkedAt: 0,
     lastResult: null,
+    lastRun: null,
+    remoteBytes: null,
     progress: null,
     error: null,
 };
@@ -69,6 +83,8 @@ export class FileSyncService {
         private readonly deviceLabel: () => string
     ) {
         this.status.configured = this.isConfigured();
+        const memory = readMemory(plugin.app.loadLocalStorage(MEMORY_KEY));
+        this.status = { ...this.status, ...memory };
     }
 
     getStatus(): FileSyncStatus {
@@ -128,8 +144,11 @@ export class FileSyncService {
             this.patch({
                 plan,
                 running: false,
+                // Every plan lists the server, so every plan knows its size.
+                remoteBytes: remoteBytesAfter(plan.items, new Map()),
                 ...(plan.actionable === 0 ? { checkedAt: Date.now() } : {}),
             });
+            this.remember();
             return plan;
         } catch (err) {
             this.patch({ running: false, error: describe(err) });
@@ -164,11 +183,15 @@ export class FileSyncService {
                 checkedAt:
                     !result.refused && result.failed.length === 0 ? now : this.status.checkedAt,
                 lastResult: result,
+                ...(result.refused
+                    ? {}
+                    : { lastRun: summarizeRun(result), remoteBytes: result.remoteBytes }),
                 progress: null,
                 // The plan is spent: its entities describe a state that no longer
                 // exists, and offering it again would apply stale decisions.
                 plan: null,
             });
+            this.remember();
             // Another device's settings just landed. Settings sync would find
             // them at its next poll; merged now, they are in place before the
             // user looks for them.
@@ -195,6 +218,14 @@ export class FileSyncService {
     async forgetHistory(): Promise<void> {
         await this.engine()?.forgetHistory();
         this.patch({ plan: null, lastResult: null, checkedAt: 0 });
+        this.remember();
+    }
+
+    /** Keep the record of this device's sync for the next start; see `MEMORY_KEY`. */
+    private remember(): void {
+        const { lastRunAt, checkedAt, lastRun, remoteBytes } = this.status;
+        const memory: SyncMemory = { lastRunAt, checkedAt, lastRun, remoteBytes };
+        this.plugin.app.saveLocalStorage(MEMORY_KEY, memory);
     }
 
     // ── Building from settings ───────────────────────

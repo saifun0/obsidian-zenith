@@ -826,10 +826,11 @@ body.zenith-no-motion .zenith-syncnotice__fill {
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    Zenith — Sync, the quick dialog
 
-   Four lines and three buttons, opened from the ribbon. It replaced a
-   workspace tab, and the point of the replacement is that it costs nothing to
-   open and nothing to close — so it is sized to its content rather than to the
-   screen, and the first screen never scrolls.
+   Opened from the ribbon to answer one question and closed again, so it is
+   sized to its content rather than to the screen and the first screen never
+   scrolls. It reads top to bottom as: the answer (a tinted card, its colour
+   the state), what the last run did, the one button that acts, the one switch
+   people reach for here, and "More" for everything else.
 
    Buttons go through the block root (parent + tag, 0,2,1) like the rest of
    Zenith: Obsidian styles bare button:not(.clickable-icon) at (0,1,1) with its
@@ -838,34 +839,134 @@ body.zenith-no-motion .zenith-syncnotice__fill {
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 .zenith-syncq-modal .modal-content {
-    padding-top: var(--zenith-space-sm);
+    padding-top: var(--zenith-space-xs);
 }
 
 .zenith-syncq {
     display: flex;
     flex-direction: column;
-    gap: var(--zenith-space-sm);
+    gap: var(--zenith-space-md);
     min-width: 0;
     font-family: var(--zenith-font);
 }
 
-/* The one fact the dialog exists to state. The time carries the emphasis, not
-   the word before it — somebody opening this already knows they are looking at
-   sync, and wants to know when. */
-.zenith-syncq__when {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--zenith-space-md);
-    margin: 0 0 var(--zenith-space-xs);
-    color: var(--zenith-text-muted);
-    font-size: 0.85rem;
+.zenith-syncq .is-spinning {
+    animation: zenith-sync-spin 1s linear infinite;
 }
 
-.zenith-syncq__when strong {
+.zenith-no-motion .zenith-syncq .is-spinning {
+    animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-syncq .is-spinning {
+        animation: none;
+    }
+}
+
+/* ── The answer ─────────────────────────────────── */
+.zenith-syncq__hero {
+    --zenith-syncq-tone: var(--zenith-text-muted);
+    --zenith-syncq-tint: var(--zenith-bg-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--zenith-space-md);
+    padding: var(--zenith-space-md);
+    border-radius: var(--zenith-radius-lg);
+    background: var(--zenith-syncq-tint);
+}
+
+.zenith-syncq__hero.is-ok {
+    --zenith-syncq-tone: var(--zenith-success);
+    --zenith-syncq-tint: var(--zenith-success-bg);
+}
+
+.zenith-syncq__hero.is-busy {
+    --zenith-syncq-tone: var(--zenith-accent);
+    --zenith-syncq-tint: color-mix(in srgb, var(--zenith-accent) 12%, transparent);
+}
+
+.zenith-syncq__hero.is-warn {
+    --zenith-syncq-tone: var(--zenith-warning);
+    --zenith-syncq-tint: var(--zenith-warning-bg);
+}
+
+.zenith-syncq__hero.is-error {
+    --zenith-syncq-tone: var(--zenith-danger);
+    --zenith-syncq-tint: var(--zenith-danger-bg);
+}
+
+.zenith-syncq__heroIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--zenith-syncq-tone) 18%, transparent);
+    color: var(--zenith-syncq-tone);
+}
+
+.zenith-syncq__heroText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.zenith-syncq__heroTitle {
+    color: var(--zenith-text-normal);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.zenith-syncq__heroSub {
+    color: var(--zenith-text-muted);
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+}
+
+/* ── What the last run did, and what the server holds ── */
+.zenith-syncq__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--zenith-space-xs);
+}
+
+.zenith-syncq__facts:empty {
+    display: none;
+}
+
+.zenith-syncq__fact {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--zenith-bg-secondary);
+    color: var(--zenith-text-muted);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-syncq__fact b {
     color: var(--zenith-text-normal);
     font-weight: 600;
 }
 
+/* The server's size ends the row: it is a standing fact, not part of the run. */
+.zenith-syncq__fact.is-end {
+    margin-left: auto;
+}
+
+.zenith-syncq__fact.is-danger,
+.zenith-syncq__fact.is-danger b {
+    background: var(--zenith-danger-bg);
+    color: var(--zenith-danger);
+}
+
+/* ── The one button ─────────────────────────────── */
 .zenith-syncq button.zenith-syncq__go {
     display: flex;
     align-items: center;
@@ -873,14 +974,15 @@ body.zenith-no-motion .zenith-syncnotice__fill {
     gap: var(--zenith-space-sm);
     width: 100%;
     height: auto;
+    min-height: 40px;
     padding: var(--zenith-space-sm) var(--zenith-space-md);
     border: none;
     border-radius: var(--zenith-radius-md);
     background: var(--zenith-accent);
     box-shadow: none;
-    color: #fff;
+    color: var(--text-on-accent, #fff);
     font-size: 0.9rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
 }
 
@@ -890,46 +992,156 @@ body.zenith-no-motion .zenith-syncnotice__fill {
 }
 
 .zenith-syncq button.zenith-syncq__go:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: default;
 }
 
-.zenith-syncq__pair {
+.zenith-syncq__progress {
     display: flex;
-    gap: var(--zenith-space-sm);
+    flex-direction: column;
+    gap: var(--zenith-space-xs);
 }
 
-/* Outlined rather than filled: these overrule the comparison, and two solid
-   red plates under the primary action would read as the dialog's main
-   business. The filled treatment is saved for the confirmation. */
-.zenith-syncq button.zenith-syncq__side {
-    display: inline-flex;
+.zenith-syncq__bar {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--zenith-bg-tertiary);
+    overflow: hidden;
+}
+
+.zenith-syncq__barFill {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--zenith-accent);
+    transition: width 240ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.zenith-syncq__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--zenith-space-md);
+    color: var(--zenith-text-muted);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── Automatic, and the devices ─────────────────── */
+.zenith-syncq__rows {
+    --zs-row-y: 10px;
+    padding: 0 var(--zenith-space-md);
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-md);
+}
+
+.zenith-syncq__rows > .zenith-settings__item:last-child {
+    border-bottom: none;
+}
+
+.zenith-syncq__count {
+    min-width: 1.6rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--zenith-bg-secondary);
+    color: var(--zenith-text-normal);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── More ───────────────────────────────────────── */
+.zenith-syncq__more > summary {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--zenith-space-xs);
-    flex: 1 1 0;
-    min-width: 0;
+    gap: 4px;
+    width: fit-content;
+    color: var(--zenith-text-muted);
+    font-size: 0.82rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.zenith-syncq__more > summary::-webkit-details-marker {
+    display: none;
+}
+
+.zenith-syncq__more > summary:hover {
+    color: var(--zenith-text-normal);
+}
+
+.zenith-syncq__more > summary svg {
+    transition: transform 120ms ease;
+}
+
+.zenith-syncq__more[open] > summary svg {
+    transform: rotate(90deg);
+}
+
+.zenith-syncq__moreBody {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: var(--zenith-space-xs);
+}
+
+.zenith-syncq button.zenith-syncq__item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: var(--zenith-space-sm);
+    width: 100%;
     height: auto;
-    padding: var(--zenith-space-xs) var(--zenith-space-sm);
-    border: 1px solid color-mix(in srgb, var(--zenith-danger) 40%, transparent);
+    padding: var(--zenith-space-sm);
+    border: none;
     border-radius: var(--zenith-radius-md);
     background: none;
     box-shadow: none;
-    color: var(--zenith-danger);
-    font-size: 0.8rem;
+    color: var(--zenith-text-normal);
+    text-align: left;
     white-space: normal;
     cursor: pointer;
 }
 
-.zenith-syncq button.zenith-syncq__side:hover:not(:disabled) {
-    border-color: var(--zenith-danger);
-    background: var(--zenith-danger-bg);
+.zenith-syncq button.zenith-syncq__item:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
     box-shadow: none;
 }
 
-.zenith-syncq button.zenith-syncq__side:disabled {
+.zenith-syncq button.zenith-syncq__item:disabled {
     opacity: 0.5;
     cursor: default;
+}
+
+.zenith-syncq__item > svg {
+    flex: none;
+    margin-top: 2px;
+    color: var(--zenith-text-muted);
+}
+
+.zenith-syncq__item > span {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.zenith-syncq__item b {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.zenith-syncq__item small {
+    color: var(--zenith-text-muted);
+    font-size: 0.75rem;
+}
+
+/* The two overwrites: red in their words, not in a plate — they are two items
+   of a list, and the list is not an alarm. */
+.zenith-syncq__item.is-danger b,
+.zenith-syncq__item.is-danger > svg {
+    color: var(--zenith-danger);
 }
 
 /* ── The review screen ───────────────────────────── */
@@ -944,13 +1156,13 @@ body.zenith-no-motion .zenith-syncnotice__fill {
     gap: var(--zenith-space-xs);
     width: 100%;
     height: auto;
-    padding: 0 0 var(--zenith-space-xs);
+    padding: 0;
     border: none;
     border-radius: 0;
     background: none;
     box-shadow: none;
-    color: var(--zenith-text-muted);
-    font-size: 0.85rem;
+    color: var(--zenith-text-normal);
+    font-size: 0.95rem;
     font-weight: 600;
     text-align: left;
     white-space: normal;
@@ -960,21 +1172,13 @@ body.zenith-no-motion .zenith-syncnotice__fill {
 .zenith-syncq button.zenith-syncq__back:hover {
     background: none;
     box-shadow: none;
-    color: var(--zenith-text-normal);
+    color: var(--zenith-accent);
 }
 
-.zenith-syncq__counts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--zenith-space-md);
+.zenith-syncq__hint {
     margin: 0;
-    font-size: 0.85rem;
     color: var(--zenith-text-muted);
-}
-
-.zenith-syncq__counts .is-danger {
-    color: var(--zenith-danger);
-    font-weight: 600;
+    font-size: 0.8rem;
 }
 
 /* Every deletion by name. This list is the reason the screen exists, so it is
@@ -1036,7 +1240,7 @@ body.zenith-no-motion .zenith-syncnotice__fill {
     color: var(--zenith-text-normal);
 }
 
-.zenith-syncq__rows {
+.zenith-syncq__list {
     list-style: none;
     margin: var(--zenith-space-xs) 0 0;
     padding: 0;
@@ -1044,7 +1248,7 @@ body.zenith-no-motion .zenith-syncnotice__fill {
     overflow-y: auto;
 }
 
-.zenith-syncq__rows li {
+.zenith-syncq__list li {
     display: flex;
     gap: var(--zenith-space-sm);
     min-width: 0;
@@ -1066,9 +1270,9 @@ body.zenith-no-motion .zenith-syncnotice__fill {
     color: var(--zenith-text-muted);
 }
 
-/* Cancel first and Confirm last, but Cancel is the one that looks pressable at
-   rest. The user arrived here by pressing something already; this row's job is
-   to offer them somewhere to stop. */
+/* Cancel first and Confirm last. Where the run would remove anything, Cancel
+   is the one that looks pressable at rest: the user arrived here by pressing
+   something already, and this row's job is to offer them somewhere to stop. */
 .zenith-syncq__decide {
     display: flex;
     justify-content: flex-end;
@@ -1100,60 +1304,26 @@ body.zenith-no-motion .zenith-syncnotice__fill {
     padding: var(--zenith-space-xs) var(--zenith-space-md);
     border: none;
     border-radius: var(--zenith-radius-md);
-    background: var(--zenith-danger);
+    background: var(--zenith-accent);
     box-shadow: none;
-    color: #fff;
+    color: var(--text-on-accent, #fff);
     font-size: 0.83rem;
     font-weight: 500;
     cursor: pointer;
 }
 
 .zenith-syncq button.zenith-syncq__confirm:hover {
-    background: color-mix(in srgb, var(--zenith-danger) 85%, #000);
+    background: var(--zenith-accent-hover);
     box-shadow: none;
 }
 
-.zenith-syncq__progress {
-    display: flex;
-    flex-direction: column;
-    gap: var(--zenith-space-xs);
+.zenith-syncq button.zenith-syncq__confirm.is-danger {
+    background: var(--zenith-danger);
+    color: #fff;
 }
 
-.zenith-syncq__bar {
-    height: 5px;
-    border-radius: 999px;
-    background: var(--zenith-bg-tertiary);
-    overflow: hidden;
-}
-
-.zenith-syncq__barFill {
-    width: 0;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--zenith-accent);
-    transition: width 240ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.zenith-syncq__meta,
-.zenith-syncq__hint {
-    margin: 0;
-    color: var(--zenith-text-muted);
-    font-size: 0.8rem;
-}
-
-.zenith-syncq__error {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--zenith-space-xs);
-    margin: 0;
-    color: var(--zenith-danger);
-    font-size: 0.8rem;
-    overflow-wrap: break-word;
-}
-
-.zenith-syncq__error svg {
-    flex: none;
-    margin-top: 2px;
+.zenith-syncq button.zenith-syncq__confirm.is-danger:hover {
+    background: color-mix(in srgb, var(--zenith-danger) 85%, #000);
 }
 
 /* ── Focus ──
