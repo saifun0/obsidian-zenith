@@ -133,6 +133,17 @@
     padding: 2px 10px;
 }
 
+/* ── Zenith's own notices ───────────────────────────
+   Obsidian draws every notice dark with white text, whatever the theme. The
+   ones Zenith builds — a sync run, a held plan, a newer version — carry more
+   than a sentence, in the theme's own colours, so they take its background
+   and text too, with a hairline to keep them off the note under them. */
+.notice.zenith-notice {
+    background-color: var(--background-primary);
+    color: var(--text-normal);
+    border: var(--border-width, 1px) solid var(--background-modifier-border);
+}
+
 /* ── A newer Zenith ─────────────────────────────────
    The notice `core/updateCheck.ts` raises. Obsidian's notices sit outside
    `.zenith-root`, so the theme's own variables, as in the sync notice. */

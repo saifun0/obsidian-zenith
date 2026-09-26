@@ -92,6 +92,7 @@ function showNotice(pluginId: string, version: string): void {
     // Until it is dealt with: pressed, it opens the update; anywhere else on
     // the notice, Obsidian closes it until the next start.
     const notice = new Notice(fragment, 0);
+    notice.containerEl.addClass('zenith-notice');
     link.addEventListener('click', (e) => {
         e.stopPropagation();
         notice.hide();

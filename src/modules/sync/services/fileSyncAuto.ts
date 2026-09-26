@@ -276,7 +276,7 @@ export class FileSyncAuto {
             void this.plugin.moduleManager.get('sync')?.activateView();
         });
 
-        new Notice(fragment, 15_000);
+        new Notice(fragment, 15_000).containerEl.addClass('zenith-notice');
     }
 }
 

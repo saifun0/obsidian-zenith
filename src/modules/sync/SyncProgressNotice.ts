@@ -1,6 +1,6 @@
-import { Notice } from 'obsidian';
+import { Notice, setIcon } from 'obsidian';
 import { translatorNow } from '../../core/i18n';
-import { countLine, doneLine, progressRatio, rateLine } from './progressFormat';
+import { countLine, doneLine, formatBytes, progressRatio, rateLine } from './progressFormat';
 import type { FileSyncService, FileSyncStatus } from './services/fileSync';
 import type { SyncProgress } from './services/SyncEngine';
 
@@ -46,6 +46,8 @@ interface NoticeParts {
     count: HTMLElement;
     fill: HTMLElement;
     rate: HTMLElement;
+    /** Right of the rate line: what the synced files take up on the server, once done. */
+    stored: HTMLElement;
     file: HTMLElement;
 }
 
@@ -113,6 +115,13 @@ export class SyncProgressNotice {
         this.parts.count.setText(p ? countLine(p) : '');
         this.parts.fill.setCssStyles({ width: '100%' });
         this.parts.rate.setText(p ? doneLine(p, Date.now(), t) : '');
+        const result = status.lastResult;
+        if (result && !result.refused) {
+            const stored = this.parts.stored;
+            setIcon(stored.createSpan({ cls: 'zenith-syncnotice__storedIcon' }), 'cloud');
+            stored.createSpan({ text: formatBytes(result.remoteBytes, t) });
+            stored.setAttr('aria-label', t('sync.progress.stored'));
+        }
         this.parts.file.setText('');
         this.close(LINGER_MS);
     }
@@ -158,7 +167,9 @@ export class SyncProgressNotice {
         const bar = root.createDiv({ cls: 'zenith-syncnotice__bar' });
         const fill = bar.createDiv({ cls: 'zenith-syncnotice__fill' });
 
-        const rate = root.createDiv({ cls: 'zenith-syncnotice__rate' });
+        const foot = root.createDiv({ cls: 'zenith-syncnotice__foot' });
+        const rate = foot.createDiv({ cls: 'zenith-syncnotice__rate' });
+        const stored = foot.createDiv({ cls: 'zenith-syncnotice__stored' });
         // The path goes inside a `<bdi>`: the line is `direction: rtl` so the
         // ellipsis eats the start rather than the filename, and without the
         // isolation that direction also reorders a path beginning with digits.
@@ -167,7 +178,8 @@ export class SyncProgressNotice {
         // Zero, so it stays up for as long as the run does. Every other exit
         // from this notice is `close()`.
         const notice = new Notice(fragment, 0);
-        this.parts = { notice, title, count, fill, rate, file };
+        notice.containerEl.addClass('zenith-notice');
+        this.parts = { notice, title, count, fill, rate, stored, file };
         this.lastDrawAt = 0;
         return this.parts;
     }

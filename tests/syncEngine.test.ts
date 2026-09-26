@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import type { ModuleFs } from '../src/core/moduleFs';
-import { SyncEngine, buildExcluder, settingsOwner } from '../src/modules/sync/services/SyncEngine';
+import {
+    SyncEngine,
+    buildExcluder,
+    remoteBytesAfter,
+    settingsOwner,
+} from '../src/modules/sync/services/SyncEngine';
 import { PrevSyncStore } from '../src/modules/sync/services/prevSyncStore';
 import type { SyncRemote } from '../src/modules/sync/services/remotes/types';
 import type { FileEntity } from '../src/modules/sync/fileSyncTypes';
@@ -206,6 +211,53 @@ describe('buildExcluder', () => {
 });
 
 // ── Carrying settings sync ───────────────────────────
+
+describe('what the server holds after a run', () => {
+    it('adds what was written, what was left, and what is outside the scope', async () => {
+        const remoteState: FakeRemoteState = {
+            objects: {
+                'b.md': { data: 'world!!', mtimeSvr: 1 },
+                '.obsidian/workspace.json': { data: '{}', mtimeSvr: 1 },
+            },
+            calls: [],
+        };
+        const { engine } = makeEngine({ 'a.md': { data: 'hello', mtime: 1 } }, remoteState);
+
+        const result = await engine.apply(await engine.plan(), { force: true });
+        const onServer = Object.values(remoteState.objects).reduce((n, o) => n + o.data.length, 0);
+        expect(result.remoteBytes).toBe(onServer);
+        expect(result.remoteBytes).toBe(5 + 7 + 2);
+    });
+
+    it('counts a carried-out file by its record, a deleted one as nothing, the rest as listed', () => {
+        const entity = (key: string, size: number) => ({ key, size, mtimeCli: 1 });
+        const items = [
+            {
+                key: 'pushed',
+                decision: 'local_is_modified_then_push',
+                local: entity('pushed', 9),
+                remote: entity('pushed', 4),
+            },
+            {
+                key: 'deleted',
+                decision: 'local_is_deleted_thus_also_delete_remote',
+                remote: entity('deleted', 50),
+            },
+            {
+                key: 'failed',
+                decision: 'local_is_modified_then_push',
+                local: entity('failed', 30),
+                remote: entity('failed', 3),
+            },
+            { key: 'same', decision: 'equal', local: entity('same', 6), remote: entity('same', 6) },
+        ] as Parameters<typeof remoteBytesAfter>[0];
+        const settled = new Map([
+            ['pushed', { key: 'pushed', local: { size: 9, mtime: 1 }, remote: { size: 9, mtime: 2 } }],
+            ['deleted', null],
+        ]);
+        expect(remoteBytesAfter(items, settled)).toBe(9 + 0 + 3 + 6);
+    });
+});
 
 describe('carrying settings sync', () => {
     const base = {

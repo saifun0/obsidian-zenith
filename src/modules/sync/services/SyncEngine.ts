@@ -115,6 +115,11 @@ export interface SyncRunResult {
      * has something new to merge — now, rather than at its next poll.
      */
     settingsArrived: boolean;
+    /**
+     * What the synced files take up on the server once the run is over — see
+     * `remoteBytesAfter`.
+     */
+    remoteBytes: number;
 }
 
 const MTIME_TOLERANCE_MS = 2000;
@@ -207,6 +212,7 @@ export class SyncEngine {
                 refused: true,
                 merges: [],
                 settingsArrived: false,
+                remoteBytes: remoteBytesAfter(plan.items, new Map()),
             };
         }
 
@@ -263,7 +269,15 @@ export class SyncEngine {
             (item) => settled.has(item.key) && isPull(item) && ownerOf(item.key) === 'remote'
         );
 
-        return { plan, applied: settled.size, failed, refused: false, merges, settingsArrived };
+        return {
+            plan,
+            applied: settled.size,
+            failed,
+            refused: false,
+            merges,
+            settingsArrived,
+            remoteBytes: remoteBytesAfter(plan.items, settled),
+        };
     }
 
     // ── Carrying out one decision ────────────────────
@@ -665,6 +679,28 @@ function decodeText(buffer: ArrayBuffer): string | null {
     } catch {
         return null;
     }
+}
+
+/**
+ * What the files take up on the server after a run, from what the run already
+ * knows — no second listing.
+ *
+ * A file the run carried out is as its record says: the size the server
+ * reported for what was written, or gone when it was deleted. Every other
+ * file on the plan is as the server listed it at the start — untouched, failed,
+ * or outside the synced scope but still on the server. Sizes are the server's
+ * own, so with encryption on they are the encrypted files.
+ */
+export function remoteBytesAfter(
+    items: readonly SyncPlanItem[],
+    settled: ReadonlyMap<string, PrevSyncRecord | null>
+): number {
+    let total = 0;
+    for (const item of items) {
+        if (settled.has(item.key)) total += settled.get(item.key)?.remote.size ?? 0;
+        else total += item.remote?.size ?? 0;
+    }
+    return total;
 }
 
 function isPull(item: SyncPlanItem): boolean {

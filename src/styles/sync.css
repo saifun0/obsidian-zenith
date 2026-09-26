@@ -737,10 +737,42 @@
     transition: width 240ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.zenith-syncnotice__foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
 .zenith-syncnotice__rate {
+    min-width: 0;
     color: var(--text-muted);
     font-size: 0.8em;
     font-variant-numeric: tabular-nums;
+}
+
+/* What the synced files take up on the server, once the run is over. */
+.zenith-syncnotice__stored {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex: none;
+    color: var(--text-muted);
+    font-size: 0.8em;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-syncnotice__stored:empty {
+    display: none;
+}
+
+.zenith-syncnotice__storedIcon {
+    display: inline-flex;
+}
+
+.zenith-syncnotice__storedIcon svg {
+    width: 12px;
+    height: 12px;
 }
 
 .zenith-syncnotice__rate.is-error {
