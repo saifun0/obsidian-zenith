@@ -22,7 +22,7 @@ files; there is no hidden database.
 | **Editor** | Code blocks with the language's icon and name, a stripe in its colour, line numbers and a copy button. |
 | **Tasks** | Parse, filter, search, group, create, edit, complete and delete tasks. |
 | **Journal** | Daily notes on a calendar, with configurable habit / scale / number tracking and the day's tasks. |
-| **Content** | Gallery + stats for tracked media: half-star ratings, statuses, progress, covers from the vault or a link, and import from MyAnimeList / Goodreads / Letterboxd. Works offline. |
+| **Content** | A library of what you read, watch and play: a list by status or a grid, favourites, half-star ratings, progress, covers from the vault or a link, stats, and import from MyAnimeList / Goodreads / Letterboxd / Anixart. Works offline. |
 | **Prayer** | Prayer times computed on the device, a countdown to the next one, and a record of what you prayed — kept in the daily note. |
 | **Media Banner** | Show a GIF/image (from the vault or a URL) above the file-explorer tree, with a picker. |
 
@@ -72,7 +72,7 @@ More in [Privacy](docs/en/privacy.md).
 | [Side panel](docs/en/side-panel.md) | Zenith's views and your command buttons in the right sidebar, and arranging them. |
 | [On a phone](docs/en/mobile.md) | Keeping views clear of the camera and of Obsidian's buttons: measured, or set by hand. |
 | [Study](docs/en/study.md) | The class timetable: pasting it (an AI chat can make it from a photo), editing it, the card and reminders. |
-| [Content](docs/en/content.md) | The content format, the library, and importing from MyAnimeList, Goodreads and Letterboxd. |
+| [Content](docs/en/content.md) | The content format, types and statuses, the library, and importing from MyAnimeList, Goodreads, Letterboxd and Anixart. |
 | [Language](docs/en/language.md) | How Zenith picks a language, and how a module brings its own strings. |
 | [Custom icons](docs/en/icons.md) | Icon packs, and what an SVG has to survive to be accepted. |
 

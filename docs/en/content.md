@@ -9,8 +9,9 @@ YAML frontmatter (the note body becomes a short description preview):
 ---
 title: "The Great Gatsby"
 type: book        # any configured type: book | movie | show | anime | manga | game | music | other
-status: completed # backlog | in-progress | completed | dropped
+status: completed # backlog | in-progress | on-hold | completed | dropped
 rating: 8         # your score, 0–10 (half stars in the UI, so odd values are reachable)
+favorite: true    # left out when it is not one
 cover: "covers/gatsby.jpg"   # vault path or https URL
 year: 1925
 creator: "F. Scott Fitzgerald"
@@ -19,7 +20,9 @@ progress: 88      # units done — pages, episodes, chapters…
 progressTotal: 218
 started: 2026-01-04          # stamped when the status becomes "in progress"
 finished: 2026-02-11         # stamped when it becomes "completed"
-tags: [favourite]
+aliases:                     # other names; Obsidian's own key, so links find them too
+  - Gatsby
+tags: [classics]
 ---
 
 Optional notes / description…
@@ -42,6 +45,30 @@ removed: editing the item leaves them in the file exactly as they were.
 An item's detail view can **delete** it — the note goes to your vault's trash, honouring
 your "deleted files" preference.
 
+## Types
+
+*Settings → Content → Types* lists the kinds of things the library holds. The **eye** beside
+each one shows or hides it. A hidden type leaves the type filter, the add form, the
+statistics, the dashboard widget and search; its notes stay in the vault untouched, and
+showing the type again brings them all back.
+
+A new install starts with books, films, anime and manga shown, and shows, games, music and
+other hidden. An existing setup keeps every type it had, visible.
+
+The built-in types speak the interface's language — "Книга", "страниц" — for as long as
+their names are the ones they shipped with. Rename one and it keeps your words.
+
+## Statuses
+
+Five: **Planned**, **In progress**, **On hold**, **Completed**, **Dropped**. The two that are
+verbs take the type's own: a book is *Reading* and *Read*, anime and films are *Watching*
+and *Watched*, a game is *Playing* and *Finished*, music is *Listening* and *Listened*.
+Where types are mixed — the statistics, a list of everything — the general words are used.
+A type you made yourself has no verb of its own and keeps the general ones too.
+
+**On hold** is a pause you meant: it keeps its `started` date and its progress, but it is
+not on the *Continue* shelf, has no "+1", and is never counted as gone quiet.
+
 **Started / finished dates** are stamped on the status transitions that cause them:
 beginning something records `started` (a re-read keeps the original), finishing it records
 `finished`, and sending it back to the backlog clears both. Completion deliberately does
@@ -60,8 +87,8 @@ readings: ["2019-03-01/2019-03-20", "2026-08-02/"]
 dates. `started` stays the first start and `finished` the last finish. Each reading counts
 for itself: the average reading time is taken over readings, so a book read again seven
 years later is two readings of a few weeks, not one of seven years (which is what it used to
-say). The item's card lists every reading, and the statistics count what was read more than
-once. Sending an item back to the backlog drops the reading that had begun, not the history.
+say). The item's card lists every reading. Sending an item back to the backlog drops the
+reading that had begun, not the history.
 
 **Yearly challenge** (*Content → Features → Yearly challenge*). Set how many of each type to
 finish this year under *Settings → Content → Goals for 2026* — "24 books". The statistics and
@@ -70,34 +97,77 @@ keeps up: *3 behind pace*, *on pace*, *2 ahead* — in whole items, since half a
 not behind. What counts is a reading finished in the year; with **Count re-reads** off, only
 what is finished for the first time. Each year's goals stay with that year.
 
+## Favourites
+
+The **heart** marks a favourite: on a line of the list, on a poster, in the add form and in
+the item's card. Tapping it switches it; the right-click menu does the same. The heart
+button in the toolbar shows favourites only. A favourite is only a mark — it doesn't move
+an item up the list or into the widget.
+
+On a phone an empty heart isn't drawn on every line, so the titles keep their room; the
+long-press menu and the item's card make a favourite there.
+
 ## Working with the library
 
-Every poster is a control, not just a picture. **Right-click** any card for a menu: set
-status, ±1 unit of progress, open the card or the note, delete. An in-progress card also
-shows a **"+1"** on hover (always visible on touch), so marking an episode watched never
-means opening anything. A card that hasn't been started shows its length ("13 ep") rather
-than a progress bar pinned at zero.
+The library opens as a **list**, grouped by status in the order it is lived in: *In
+progress*, *On hold*, *Planned*, *Completed*, *Dropped*. The first two start open; whichever
+you open or close stays that way on this device. Choosing one status in the filter drops the
+groups and shows that status alone. The **grid** button beside the sort swaps the list for
+posters, and the choice is remembered per device. Only the grid has the *Continue* shelf —
+one row that scrolls sideways — since the list's first group is the same items.
 
-The toolbar's **select button** turns the grid into a multi-select: pick any number of
+There is one sort, *Recently updated* by default; its arrow reverses it.
+
+Every line and every poster is a control. **Right-click** (long-press on a phone) for a
+menu: set the status, ±1 unit of progress, favourite, open the card or the note, delete.
+Something in progress shows a **"+1"**, so marking an episode watched never means opening
+anything. An item that hasn't been started shows its length ("13 ep") rather than a progress
+bar pinned at zero.
+
+The toolbar's **select button** turns the library into a multi-select: pick any number of
 items — the *Continue* shelf included — then set one status across all of them or delete
 them together.
 
 **Genres are filters.** Click one in an item's card or in the statistics view and the
-gallery narrows to it; the active genre appears as a removable chip beside the result count.
+library narrows to it; the active genre appears as a removable chip beside the result count.
+
+## Adding an item
+
+The add form asks for what matters first: the type (only the shown ones), the title with its
+heart, and the status. Progress appears for something in progress or on hold, the score for
+something completed or dropped. Cover, year, creator, genres, tags and a description are
+under **More**. Editing an existing item happens in its card.
 
 ## Importing an existing library
 
-**Content → Import** reads an export file from **MyAnimeList** (XML), **Goodreads** (CSV)
-or **Letterboxd** (CSV). The format is recognised from the file's own contents, and the
-dialog previews what will land — count per type, a sample of the entries, and how many rows
-were unusable — before anything is written.
+**Content → Import** reads an export file from **MyAnimeList** (XML), **Goodreads** (CSV),
+**Letterboxd** (CSV) or **Anixart** (CSV bookmarks). The format is recognised from the
+file's own contents, and nothing is written until you have seen what the file would do.
 
 Titles, scores (rescaled from 5 stars where needed), statuses, progress and the services'
-own start/finish dates all come across. Existing titles are skipped by default, so
-re-importing an updated export tops the library up instead of doubling it. Covers and
-synopses aren't part of these exports, and nothing is fetched to fill them in. The services'
-own ids and links stay behind too — an imported item doesn't point back at where it came
-from.
+own start/finish dates all come across. Covers and synopses aren't part of these exports,
+and nothing is fetched to fill them in. The services' own ids and links stay behind too — an
+imported item doesn't point back at where it came from.
+
+**Anixart** bookmarks are all anime. The Russian name becomes the title; the original and
+alternative names become `aliases`. Its *Смотрю*, *В планах*, *Просмотрено* and *Отложено*
+become *In progress*, *Planned*, *Completed* and *On hold*, *Не смотрю* becomes *Dropped*, and
+a bookmark added to favourites becomes a favourite. The export has no dates, scores or episode counts, so none
+are written.
+
+**A second import brings the library up to date.** The dialog sorts the file into three:
+
+- **New** — not in the library yet; these are created.
+- **Moved on in the export** — already in the library, but the export has another status
+  (or, from Anixart, another favourite mark). Each can be unticked. One that goes
+  *backwards* — watched in the library, planned in the export — starts unticked, since the
+  library is the likelier to be right.
+- **Already so** — just counted.
+
+An item is recognised by any of its names: its title or any alias, against any name in the
+export. An update writes the status and the favourite mark and nothing else: your score,
+progress and notes are never touched, and no date is stamped — the export can't say when
+the change happened.
 
 **Progress** is two numbers, so the UI can draw a bar, offer −/+ steppers and a "+1"
 straight from the dashboard widget. Reaching the total marks the item **completed**;
@@ -106,13 +176,16 @@ starting a backlog item moves it to **in progress**. Older free-text values
 numeric form on the first edit. What one unit is called comes from the type
 (`progressUnit`: pages, episodes, chapters …) and is editable in settings.
 
-The **statistics** view goes beyond totals: what you finished in the last 30 days, how long
-things take you end to end, the average progress of everything in flight, your most common
-genres, additions per month, and a "gone quiet" list — items still marked in progress whose
-note hasn't been touched in over a month.
+## Statistics
 
-"Finished recently" and "days to finish" read the item's own `finished` / `started` dates.
-Notes predating those dates fall back to the file's modification time, which is only a
-proxy — it moves whenever the note is edited at all — so the fallback is used and never
-preferred. "Gone quiet" is the one figure mtime is genuinely right for: the question there
-*is* when the note was last touched.
+Four figures across the top: everything in the library, what was finished in the last 30
+days, the average score, and what is in progress. Below them the statuses as one bar, the
+types as bars of their own, and **Finished by month** — the last twelve months, with their
+total and how many days a finish takes on average. Then the "gone quiet" list — items
+still in progress whose note hasn't been touched in over a month — and your most common
+genres.
+
+"Finished" reads the item's own `finished` date and nothing else. A note without one isn't
+counted as finished in any month: the file's modification time moves with every edit, and an
+import would otherwise show a whole library as finished today. "Gone quiet" is the one figure
+the modification time is right for: the question there *is* when the note was last touched.
