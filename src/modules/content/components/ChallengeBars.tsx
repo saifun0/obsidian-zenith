@@ -1,7 +1,7 @@
 import React, { useMemo, type CSSProperties, type FC } from 'react';
 import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
-import { effectiveContentTypes, resolveContentType } from '../../../core/contentTypes';
+import { useContentTypes } from '../useContentTypes';
 import { useZenithStore } from '../../../store';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
 import { challengeProgress, type ChallengeProgress } from '../services/challenge';
@@ -27,13 +27,12 @@ export const ChallengeBars: FC<{ progress: ChallengeProgress[]; compact?: boolea
     compact,
 }) => {
     const t = useTranslation();
-    const saved = useZenithStore((s) => s.settings.contentTypes);
-    const types = useMemo(() => effectiveContentTypes(saved), [saved]);
+    const types = useContentTypes();
 
     return (
         <div className={`zenith-challenge ${compact ? 'is-compact' : ''}`}>
             {progress.map((p) => {
-                const type = resolveContentType(types, p.typeId);
+                const type = types.typeOf(p.typeId);
                 const fraction = Math.min(1, p.done / p.target);
                 const behind = Math.max(0, Math.round(-p.pace.delta));
                 const ahead = Math.max(0, Math.round(p.pace.delta));

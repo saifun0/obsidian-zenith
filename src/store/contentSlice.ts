@@ -35,6 +35,14 @@ export interface ContentItem {
      * time. See `readings.ts`.
      */
     readings?: string[];
+    /** Marked as a favourite: a heart on the card and a filter of its own. */
+    favorite?: boolean;
+    /**
+     * Other names it goes by — the original title of a translated one, an
+     * abbreviation. Written as Obsidian's own `aliases`, so the quick switcher
+     * finds the note by them, and the library matches duplicates on them.
+     */
+    aliases?: string[];
     /** File creation time (ms) — powers "recently added" sorting. */
     createdAt?: number;
     /** File modification time (ms) — powers "recently updated" sorting. */

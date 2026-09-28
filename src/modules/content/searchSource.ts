@@ -2,11 +2,8 @@ import { createElement } from 'react';
 import { Notice } from 'obsidian';
 import { useZenithStore } from '../../store';
 import type { ContentItem } from '../../store/contentSlice';
-import {
-    effectiveContentTypes,
-    resolveContentType,
-    type ContentTypeConfig,
-} from '../../core/contentTypes';
+import type { ContentTypeConfig } from '../../core/contentTypes';
+import { contentTypesNow } from './useContentTypes';
 import { translateNow } from '../../core/i18n';
 import { openDialog } from '../../core/openDialog';
 import type { SearchCreator, SearchSource } from '../search/searchSources';
@@ -65,28 +62,35 @@ function creatorFor(plugin: ZenithPlugin, type: ContentTypeConfig): SearchCreato
 }
 
 export function contentSearchSource(plugin: ZenithPlugin): SearchSource {
-    const types = () => effectiveContentTypes(useZenithStore.getState().settings.contentTypes);
     return {
         id: 'content',
         labelKey: 'module.content.name',
         icon: 'library',
         order: 50,
+        // Only what the library shows: a switched-off type is out of Search too.
         items: () => {
-            const all = types();
-            return useZenithStore.getState().contentItems.map((item) => {
-                const type = resolveContentType(all, item.type);
-                return {
-                    id: `content:${item.filePath}`,
-                    title: item.title,
-                    aliases: item.creator ? [`${item.title} ${item.creator}`] : undefined,
-                    tags: item.tags,
-                    detail: type.label,
-                    icon: type.icon,
-                    run: () => open(plugin, item, type),
-                    reveal: () => void plugin.app.workspace.openLinkText(item.filePath, '', false),
-                };
-            });
+            const types = contentTypesNow();
+            return useZenithStore
+                .getState()
+                .contentItems.filter((item) => types.shown(item.type))
+                .map((item) => {
+                    const type = types.typeOf(item.type);
+                    return {
+                        id: `content:${item.filePath}`,
+                        title: item.title,
+                        aliases: [
+                            ...(item.aliases ?? []),
+                            ...(item.creator ? [`${item.title} ${item.creator}`] : []),
+                        ],
+                        tags: item.tags,
+                        detail: type.label,
+                        icon: type.icon,
+                        run: () => open(plugin, item, type),
+                        reveal: () =>
+                            void plugin.app.workspace.openLinkText(item.filePath, '', false),
+                    };
+                });
         },
-        creators: () => types().map((type) => creatorFor(plugin, type)),
+        creators: () => contentTypesNow().visible.map((type) => creatorFor(plugin, type)),
     };
 }

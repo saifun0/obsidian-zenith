@@ -78,4 +78,27 @@ describe('ContentWriter — keys it does not own', () => {
         expect(note).toContain('cover: "https://example.com/rublev.jpg"');
         expect(note).not.toMatch(/externalRating|source/);
     });
+
+    it('writes a favourite and the other names as Obsidian aliases', async () => {
+        const { app, created } = fakeApp({});
+        await new ContentWriter(app).createItem('Content', {
+            title: 'Сага о Винланде',
+            type: 'anime',
+            status: 'in-progress',
+            rating: 0,
+            tags: [],
+            favorite: true,
+            aliases: ['Vinland Saga', 'Vinland Saga: Season 1'],
+        });
+        const note = Object.values(created)[0];
+        expect(note).toContain('favorite: true');
+        expect(note).toContain('aliases:\n  - Vinland Saga\n  - "Vinland Saga: Season 1"');
+    });
+
+    it('leaves the favourite key out rather than writing false', async () => {
+        const fm: Record<string, unknown> = { title: 'Bleach', favorite: true };
+        const { app } = fakeApp(fm);
+        await new ContentWriter(app).setFavorite('Content/Bleach.md', false);
+        expect(fm).not.toHaveProperty('favorite');
+    });
 });

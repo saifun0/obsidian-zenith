@@ -1,10 +1,13 @@
 import type { ContentStatus } from '../../../core/constants';
+import type { ContentItem } from '../../../store/contentSlice';
+import { findSameItem } from './contentDuplicates';
 import type { NewContentInput } from './contentWriter';
 
 /**
  * Import a library from the services people already keep one in.
  *
- * MyAnimeList, Goodreads and Letterboxd all hand out a plain export file, and
+ * MyAnimeList, Goodreads, Letterboxd and Anixart all hand out a plain export
+ * file, and
  * re-typing several hundred entries by hand is the difference between trying
  * this plugin and using it. Everything here is pure text-in / objects-out — no
  * Obsidian, no network — so the formats are unit-testable and the caller stays
@@ -15,7 +18,7 @@ import type { NewContentInput } from './contentWriter';
  * ids and links stay behind — the library does not point back at them.
  */
 
-export type ImportFormat = 'mal' | 'goodreads' | 'letterboxd';
+export type ImportFormat = 'mal' | 'goodreads' | 'letterboxd' | 'anixart';
 
 export interface ImportedItem extends NewContentInput {
     /** `YYYY-MM-DD`, when the export records it. */
@@ -126,9 +129,9 @@ const MAL_STATUS: Record<string, ContentStatus> = {
     completed: 'completed',
     watching: 'in-progress',
     reading: 'in-progress',
-    // "On-Hold" is a paused thing, not an abandoned one; the library's own
-    // "gone quiet" statistic is what surfaces it later.
-    'on-hold': 'in-progress',
+    // "On-Hold" is a paused thing, not an abandoned one, and the library has
+    // a status for exactly that.
+    'on-hold': 'on-hold',
     dropped: 'dropped',
     'plan to watch': 'backlog',
     'plan to read': 'backlog',
@@ -280,6 +283,77 @@ function parseLetterboxd(rows: string[][], typeId: string): ImportResult {
     return { format: 'letterboxd', items, skipped };
 }
 
+// ── Anixart ──────────────────────────────────────────────────────────────────
+
+/**
+ * Anixart's bookmarks export: a Russian title, the original one, alternative
+ * names, whether it is a favourite, and one of five statuses — nothing about
+ * episodes, dates, scores or covers.
+ *
+ * Every entry is anime; the export does not say which are films. The Russian
+ * title is the entry's name, and the original and alternative titles become
+ * its aliases, so the library knows it by all of them.
+ */
+const ANIXART_STATUS: Record<string, ContentStatus> = {
+    'смотрю': 'in-progress',
+    'в планах': 'backlog',
+    'просмотрено': 'completed',
+    'отложено': 'on-hold',
+    'не смотрю': 'dropped',
+    'брошено': 'dropped',
+};
+
+/** What Anixart writes in a name column that has nothing in it. */
+const ANIXART_NONE = 'не указаны';
+
+function parseAnixart(rows: string[][], typeId: string): ImportResult {
+    const at = columnIndex(rows[0]);
+    const col = {
+        ru: at('Русское название'),
+        original: at('Оригинальное название'),
+        other: at('Альтернативные названия'),
+        favorite: at('Добавлено в избранное'),
+        status: at('Статус просмотра'),
+    };
+    const items: ImportedItem[] = [];
+    let skipped = 0;
+
+    for (const row of rows.slice(1)) {
+        const ru = (row[col.ru] ?? '').trim();
+        const original = (row[col.original] ?? '').trim();
+        const title = ru || original;
+        if (!title) {
+            skipped++;
+            continue;
+        }
+
+        const other = (row[col.other] ?? '').trim();
+        const names = [original, ...(other.toLowerCase() === ANIXART_NONE ? [] : other.split(','))]
+            .map((n) => n.trim())
+            .filter(Boolean);
+        // Each other name once, and never the title again.
+        const seen = new Set([title.toLowerCase()]);
+        const aliases = names.filter((n) => {
+            const key = n.toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+
+        items.push({
+            title,
+            type: typeId,
+            status: ANIXART_STATUS[(row[col.status] ?? '').trim().toLowerCase()] ?? 'backlog',
+            rating: 0,
+            tags: [],
+            aliases: aliases.length > 0 ? aliases : undefined,
+            favorite: (row[col.favorite] ?? '').trim().toLowerCase() === 'добавлено',
+        });
+    }
+
+    return { format: 'anixart', items, skipped };
+}
+
 // ── Entry point ──────────────────────────────────────────────────────────────
 
 /**
@@ -300,6 +374,80 @@ export function parseImport(text: string, types: ImportTypeMap): ImportResult | 
     const header = rows[0].map((h) => h.trim().toLowerCase());
     if (header.includes('exclusive shelf')) return parseGoodreads(rows, types.book);
     if (header.includes('letterboxd uri')) return parseLetterboxd(rows, types.movie);
+    if (header.includes('русское название') && header.includes('статус просмотра')) {
+        return parseAnixart(rows, types.anime);
+    }
 
     return null;
+}
+
+// ── What an import would do ──────────────────────────────────────────────────
+
+/** An entry that is already in the library, and what the export says differently. */
+export interface ImportUpdate {
+    item: ContentItem;
+    entry: ImportedItem;
+    /** The export's status, when it differs from the library's. */
+    status?: ContentStatus;
+    /** The export's favourite mark, when it differs (and the export has one). */
+    favorite?: boolean;
+    /**
+     * The status would move back — "watched" to "watching". The library is
+     * the likelier to be right about that, so it waits for a tick of its own.
+     */
+    backward: boolean;
+}
+
+export interface ImportPlan {
+    create: ImportedItem[];
+    update: ImportUpdate[];
+    /** Entries already in the library exactly as the export has them. */
+    same: number;
+}
+
+/** How far along a status is. On hold is as far along as in progress. */
+const STAGE: Record<ContentStatus, number> = {
+    backlog: 0,
+    'in-progress': 1,
+    'on-hold': 1,
+    completed: 2,
+    dropped: 2,
+};
+
+/**
+ * Sort an import into what to create, what to update and what is already so.
+ *
+ * An entry is the library's item when any of its names is any of the item's —
+ * so a second export tops the library up and moves statuses on, rather than
+ * adding every title again. Only the status and the favourite mark are ever
+ * taken from the export for an existing item; a score, progress or notes kept
+ * in Zenith are the library's own.
+ */
+export function planImport(result: ImportResult, library: ContentItem[]): ImportPlan {
+    const plan: ImportPlan = { create: [], update: [], same: 0 };
+    for (const entry of result.items) {
+        const item = findSameItem(library, [entry.title, ...(entry.aliases ?? [])]);
+        if (!item) {
+            plan.create.push(entry);
+            continue;
+        }
+        const status = entry.status !== item.status ? entry.status : undefined;
+        // Only a source that records favourites can say one was removed.
+        const favorite =
+            result.format === 'anixart' && !!entry.favorite !== !!item.favorite
+                ? !!entry.favorite
+                : undefined;
+        if (status === undefined && favorite === undefined) {
+            plan.same++;
+            continue;
+        }
+        plan.update.push({
+            item,
+            entry,
+            status,
+            favorite,
+            backward: status !== undefined && STAGE[status] < STAGE[item.status],
+        });
+    }
+    return plan;
 }

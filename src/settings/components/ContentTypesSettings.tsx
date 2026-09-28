@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useZenithStore } from '../../store';
 import {
@@ -12,11 +12,17 @@ import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
 import { IconPickerModal } from '../../core/IconPickerModal';
 import { ColorField } from '../../components/ui/fields';
 import { translateNow, useTranslation } from '../../core/i18n';
+import { localizeType } from '../../modules/content/contentLabels';
 
 /**
- * ContentTypesSettings — manage the content type catalogue: label, icon, colour,
- * the "creator" field's label, and which curated fields each type shows. Editing materializes the full list into `settings.contentTypes`
- * (until then the built-in defaults apply).
+ * ContentTypesSettings — manage the content type catalogue: whether it is
+ * shown, its label, icon, colour, the "creator" field's label, and which
+ * curated fields each type shows. Editing materializes the full list into
+ * `settings.contentTypes` (until then the built-in defaults apply).
+ *
+ * The fields show a built-in type's words in the reader's language, and keep
+ * the stored ones untouched until something is typed: what is saved is what
+ * was written, and a type nobody renamed goes on following the language.
  */
 export const ContentTypesSettings: React.FC = () => {
     const { app } = useApp();
@@ -67,82 +73,103 @@ export const ContentTypesSettings: React.FC = () => {
                 {t('ctypes.hint')}
             </div>
 
-            {types.map((type) => (
-                <div key={type.id} className="zenith-ctype">
-                    <div className="zenith-ctype__head">
-                        <button
-                            type="button"
-                            className="zenith-ctype__icon"
-                            style={{ color: type.color }}
-                            aria-label={t('a11y.changeIcon')}
-                            onClick={() =>
-                                new IconPickerModal(app, type.icon, (icon) => patch(type.id, { icon })).open()
-                            }
-                        >
-                            <ObsidianIcon name={type.icon} size={18} />
-                        </button>
-                        <input
-                            className="zenith-input zenith-ctype__label"
-                            value={type.label}
-                            aria-label={t('ctypes.typeName')}
-                            onChange={(e) => patch(type.id, { label: e.target.value })}
-                        />
-                        <ColorField
-                            className="zenith-ctype__color"
-                            value={type.color}
-                            aria-label={t('ctypes.colour')}
-                            onChange={(color) => patch(type.id, { color })}
-                        />
-                        <button
-                            type="button"
-                            className="zenith-ctype__remove"
-                            aria-label={t('ctypes.removeType')}
-                            onClick={() => remove(type.id)}
-                        >
-                            <Trash2 size={15} />
-                        </button>
-                    </div>
-
-                    <div className="zenith-ctype__row">
-                        <label className="zenith-ctype__field">
-                            <span>{t('ctypes.creatorLabel')}</span>
+            {types.map((raw) => {
+                const type = localizeType(t, raw);
+                return (
+                    <div key={type.id} className={`zenith-ctype${type.hidden ? ' is-hidden' : ''}`}>
+                        <div className="zenith-ctype__head">
+                            <button
+                                type="button"
+                                className="zenith-ctype__icon"
+                                style={{ color: type.color }}
+                                aria-label={t('a11y.changeIcon')}
+                                onClick={() =>
+                                    new IconPickerModal(app, type.icon, (icon) =>
+                                        patch(type.id, { icon })
+                                    ).open()
+                                }
+                            >
+                                <ObsidianIcon name={type.icon} size={18} />
+                            </button>
                             <input
-                                className="zenith-input zenith-input--sm"
-                                value={type.creatorLabel ?? ''}
-                                placeholder={t('ctypes.defaultCreator')}
-                                onChange={(e) => patch(type.id, { creatorLabel: e.target.value })}
+                                className="zenith-input zenith-ctype__label"
+                                value={type.label}
+                                aria-label={t('ctypes.typeName')}
+                                onChange={(e) => patch(type.id, { label: e.target.value })}
                             />
-                        </label>
-                        {type.fields.includes('progress') && (
+                            <ColorField
+                                className="zenith-ctype__color"
+                                value={type.color}
+                                aria-label={t('ctypes.colour')}
+                                onChange={(color) => patch(type.id, { color })}
+                            />
+                            <button
+                                type="button"
+                                className={`zenith-ctype__show${type.hidden ? '' : ' is-on'}`}
+                                aria-pressed={!type.hidden}
+                                aria-label={t(type.hidden ? 'ctypes.show' : 'ctypes.hide')}
+                                title={t(type.hidden ? 'ctypes.show' : 'ctypes.hide')}
+                                onClick={() => patch(type.id, { hidden: !type.hidden })}
+                            >
+                                {type.hidden ? <EyeOff size={15} /> : <Eye size={15} />}
+                            </button>
+                            <button
+                                type="button"
+                                className="zenith-ctype__remove"
+                                aria-label={t('ctypes.removeType')}
+                                onClick={() => remove(type.id)}
+                            >
+                                <Trash2 size={15} />
+                            </button>
+                        </div>
+
+                        <div className="zenith-ctype__row">
                             <label className="zenith-ctype__field">
-                                <span>{t('ctypes.progressUnit')}</span>
+                                <span>{t('ctypes.creatorLabel')}</span>
                                 <input
                                     className="zenith-input zenith-input--sm"
-                                    value={type.progressUnit ?? ''}
-                                    placeholder={t('ctypes.unitExample')}
-                                    onChange={(e) => patch(type.id, { progressUnit: e.target.value })}
+                                    value={type.creatorLabel ?? ''}
+                                    placeholder={t('ctypes.defaultCreator')}
+                                    onChange={(e) =>
+                                        patch(type.id, { creatorLabel: e.target.value })
+                                    }
                                 />
                             </label>
-                        )}
-                    </div>
+                            {type.fields.includes('progress') && (
+                                <label className="zenith-ctype__field">
+                                    <span>{t('ctypes.progressUnit')}</span>
+                                    <input
+                                        className="zenith-input zenith-input--sm"
+                                        value={type.progressUnit ?? ''}
+                                        placeholder={t('ctypes.unitExample')}
+                                        onChange={(e) =>
+                                            patch(type.id, { progressUnit: e.target.value })
+                                        }
+                                    />
+                                </label>
+                            )}
+                        </div>
 
-                    <div className="zenith-ctype__fields">
-                        <span className="zenith-ctype__fields-label">{t('ctypes.shownFields')}</span>
-                        <div className="zenith-ctype__chips">
-                            {CONTENT_FIELDS.map((f) => (
-                                <button
-                                    key={f.id}
-                                    type="button"
-                                    className={`zenith-ctype__chip ${type.fields.includes(f.id) ? 'is-on' : ''}`}
-                                    onClick={() => toggleField(type.id, f.id)}
-                                >
-                                    {t(f.labelKey)}
-                                </button>
-                            ))}
+                        <div className="zenith-ctype__fields">
+                            <span className="zenith-ctype__fields-label">
+                                {t('ctypes.shownFields')}
+                            </span>
+                            <div className="zenith-ctype__chips">
+                                {CONTENT_FIELDS.map((f) => (
+                                    <button
+                                        key={f.id}
+                                        type="button"
+                                        className={`zenith-ctype__chip ${type.fields.includes(f.id) ? 'is-on' : ''}`}
+                                        onClick={() => toggleField(type.id, f.id)}
+                                    >
+                                        {t(f.labelKey)}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
-            ))}
+                );
+            })}
 
             <button type="button" className="zenith-ctype__add" onClick={addType}>
                 <Plus size={15} /> {t('ctypes.addType')}

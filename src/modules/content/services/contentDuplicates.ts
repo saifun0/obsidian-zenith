@@ -60,7 +60,9 @@ export function findDuplicates(
         const other = normalizeTitle(item.title);
         if (!other) continue;
 
-        if (other === key) {
+        // Any name the item goes by is the item: "Vinland Saga" is the same
+        // entry as "Сага о Винланде" that carries it as an alias.
+        if (other === key || (item.aliases ?? []).some((a) => normalizeTitle(a) === key)) {
             matches.push({ item, kind: 'exact' });
             continue;
         }
@@ -75,4 +77,22 @@ export function findDuplicates(
     }
 
     return matches.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'exact' ? -1 : 1));
+}
+
+/**
+ * The item in the library that is this one, by any of its names — for an
+ * import deciding between "new" and "already have". Exact matches only: a
+ * guess here would update the wrong entry.
+ */
+export function findSameItem(
+    items: ContentItem[],
+    names: readonly string[]
+): ContentItem | null {
+    const keys = new Set(names.map(normalizeTitle).filter(Boolean));
+    if (keys.size === 0) return null;
+    for (const item of items) {
+        if (keys.has(normalizeTitle(item.title))) return item;
+        if ((item.aliases ?? []).some((a) => keys.has(normalizeTitle(a)))) return item;
+    }
+    return null;
 }

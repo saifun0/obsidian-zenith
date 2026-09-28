@@ -29,6 +29,7 @@ export function normalizeContentItem(
 
     const year = Number(fm.year);
     const genres = toStringArray(fm.genres);
+    const aliases = toStringArray(fm.aliases);
     // `progress` is a number in current notes and free text in older ones
     // ("Ep 5/12"); both parse into the same {current,total} shape.
     const progress = parseProgress(fm.progress, fm.progressTotal);
@@ -62,6 +63,8 @@ export function normalizeContentItem(
         started: toIsoDate(fm.started),
         finished: toIsoDate(fm.finished),
         readings: parseReadingList(fm.readings),
+        favorite: fm.favorite === true || fm.favorite === 'true' || undefined,
+        aliases: aliases.length > 0 ? aliases : undefined,
         createdAt: stat?.ctime || undefined,
         updatedAt: stat?.mtime || undefined,
     };

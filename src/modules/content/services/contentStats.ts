@@ -1,17 +1,16 @@
 import type { ContentItem } from '../../../store/contentSlice';
 import { toLocalIsoDate } from '../../../core/dateUtils';
-import { finishedReadings, readingDurations } from './readings';
-import { progressPercent } from './progress';
+import { readingDurations } from './readings';
 
 /**
  * Statistics for the content library. Pure — no Obsidian, no `Date.now` — so
  * it's unit-testable and the view just renders what it returns.
  *
- * "Finished recently" and "how long it took" come from the item's own
- * `started` / `finished` dates, which are stamped on the status change. Items
- * predating those dates fall back to the file's mtime, which is only a proxy —
- * it moves whenever the note is edited for any reason — so the fallback is
- * used and never preferred.
+ * "Finished recently", "finished by month" and "how long it took" come only
+ * from the item's own `started` / `finished` dates, stamped on the status
+ * change. The file's mtime used to stand in where there was no date, and it
+ * made an import of a hundred watched titles read as a hundred finished this
+ * month: an item with no finish date is finished, just not at a known time.
  *
  * "Gone quiet" is the one metric mtime is genuinely right for: the question
  * there *is* "when was this note last touched".
@@ -33,14 +32,12 @@ export interface ContentStatsResult {
     byStatus: Record<string, number>;
     byType: Record<string, number>;
     avgRating: number;
-    /** Percentage of items marked completed, 0–100. */
-    completionRate: number;
-    /** Completed items finished within the last `staleDays` days. */
+    /** Items in progress now. */
+    inProgress: number;
+    /** Completed items whose finish date is within the last `staleDays` days. */
     finishedRecently: number;
     /** In-progress items untouched for `staleDays`, most neglected first. */
     stalled: ContentItem[];
-    /** Mean completion of everything in progress that has a known total, 0–100. */
-    averageProgress: number | null;
     /**
      * Mean days a finished reading took, over every reading that records both
      * ends — each re-read on its own, so a book read again seven years later
@@ -48,11 +45,27 @@ export interface ContentStatsResult {
      * least one item has been tracked end to end.
      */
     avgDaysToFinish: number | null;
-    /** Items finished more than once. */
-    reread: number;
     topGenres: GenreCount[];
-    /** Items added per month, oldest first — only months that have any. */
-    addedByMonth: MonthCount[];
+    /**
+     * Items finished in each of the last twelve months, this one included,
+     * oldest first — every month present, so a quiet one reads as a gap.
+     */
+    finishedByMonth: MonthCount[];
+}
+
+/** `YYYY-MM` of a local date. */
+function monthOf(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** The last `count` months up to the one `now` falls in, oldest first. */
+export function lastMonths(now: number, count = 12): string[] {
+    const today = new Date(now);
+    const out: string[] = [];
+    for (let back = count - 1; back >= 0; back--) {
+        out.push(monthOf(new Date(today.getFullYear(), today.getMonth() - back, 1)));
+    }
+    return out;
 }
 
 const DAY_MS = 86_400_000;
@@ -68,12 +81,12 @@ export function computeContentStats(
     const byStatus: Record<string, number> = {};
     const byType: Record<string, number> = {};
     const genres = new Map<string, number>();
-    const months = new Map<string, number>();
+    const window = lastMonths(now);
+    const months = new Map<string, number>(window.map((m) => [m, 0]));
 
     let ratingSum = 0;
     let ratedCount = 0;
     let finishedRecently = 0;
-    const progressValues: number[] = [];
     const durations: number[] = [];
     const stalled: ContentItem[] = [];
 
@@ -94,39 +107,22 @@ export function computeContentStats(
             if (key) genres.set(key, (genres.get(key) ?? 0) + 1);
         }
 
-        if (item.createdAt) {
-            const d = new Date(item.createdAt);
-            const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            months.set(month, (months.get(month) ?? 0) + 1);
-        }
-
-        const idleDays = item.updatedAt ? (now - item.updatedAt) / DAY_MS : null;
-
         if (item.status === 'completed') {
-            // A recorded finish date is the answer; mtime is only consulted for
-            // items old enough not to have one, and is ignored the moment a
-            // real date exists — otherwise editing a note would keep declaring
-            // a book you read two years ago as "finished this month".
             if (item.finished) {
                 if (item.finished >= recentCutoff) finishedRecently++;
-            } else if (idleDays != null && idleDays <= staleDays) {
-                finishedRecently++;
+                const month = item.finished.slice(0, 7);
+                if (months.has(month)) months.set(month, (months.get(month) ?? 0) + 1);
             }
-
             durations.push(...readingDurations(item));
         }
 
+        // Only what is running can go quiet: something put on hold was
+        // stopped on purpose, and saying so again is not news.
         if (item.status === 'in-progress') {
-            const pct = progressPercent({
-                current: item.progressCurrent ?? 0,
-                total: item.progressTotal,
-            });
-            if (pct != null) progressValues.push(pct);
+            const idleDays = item.updatedAt ? (now - item.updatedAt) / DAY_MS : null;
             if (idleDays != null && idleDays > staleDays) stalled.push(item);
         }
     }
-
-    const reread = items.filter((item) => finishedReadings(item) > 1).length;
 
     stalled.sort((a, b) => (a.updatedAt ?? 0) - (b.updatedAt ?? 0));
 
@@ -135,23 +131,15 @@ export function computeContentStats(
         byStatus,
         byType,
         avgRating: ratedCount > 0 ? ratingSum / ratedCount : 0,
-        completionRate:
-            items.length > 0 ? Math.round(((byStatus.completed ?? 0) / items.length) * 100) : 0,
+        inProgress: byStatus['in-progress'] ?? 0,
         finishedRecently,
         stalled,
-        averageProgress:
-            progressValues.length > 0
-                ? progressValues.reduce((a, b) => a + b, 0) / progressValues.length
-                : null,
         avgDaysToFinish:
             durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : null,
-        reread,
         topGenres: [...genres.entries()]
             .map(([genre, count]) => ({ genre, count }))
             .sort((a, b) => b.count - a.count || a.genre.localeCompare(b.genre))
             .slice(0, 8),
-        addedByMonth: [...months.entries()]
-            .map(([month, count]) => ({ month, count }))
-            .sort((a, b) => a.month.localeCompare(b.month)),
+        finishedByMonth: window.map((month) => ({ month, count: months.get(month) ?? 0 })),
     };
 }

@@ -100,9 +100,9 @@ describe('parseImport — MyAnimeList', () => {
         });
     });
 
-    it('maps On-Hold to in progress rather than dropped', () => {
+    it('maps On-Hold to on hold, rather than dropped or in progress', () => {
         const manga = result?.items.find((i) => i.type === 'manga');
-        expect(manga).toMatchObject({ title: 'One Piece', status: 'in-progress', progress: 400 });
+        expect(manga).toMatchObject({ title: 'One Piece', status: 'on-hold', progress: 400 });
     });
 
     it('skips entries without a title', () => {

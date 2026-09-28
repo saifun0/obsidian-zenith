@@ -5,7 +5,10 @@ import {
     ArrowDownNarrowWide,
     ArrowUpNarrowWide,
     LayoutGrid,
+    List,
     CheckSquare,
+    ChevronRight,
+    Heart,
     Tag,
     Trash2,
 } from 'lucide-react';
@@ -18,25 +21,22 @@ import { useApp } from '../../../context/AppContext';
 import { confirmDelete } from '../../../core/ConfirmModal';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
-import { effectiveContentTypes, resolveContentType } from '../../../core/contentTypes';
 import { deleteItems, setItemsStatus } from '../services/contentActions';
 import { progressPercent } from '../services/progress';
+import { STATUS_COLOR, STATUS_ORDER, statusLabel } from '../contentLabels';
+import type { LibraryTypes } from '../useContentTypes';
 import { ContentCard } from './ContentCard';
+import { ContentRow } from './ContentRow';
 import { ResumeRow } from './ResumeRow';
 import { ContentDetailModal } from './ContentDetailModal';
 import { Dropdown, SearchField } from '../../../components/ui/fields';
 
 interface ContentGalleryProps {
+    /** The items to show — those of switched-off types already left out. */
     items: ContentItem[];
+    types: LibraryTypes;
     loading?: boolean;
 }
-
-const STATUS_KEY: Record<ContentStatus, string> = {
-    backlog: 'status.backlog',
-    'in-progress': 'status.inProgress',
-    completed: 'status.completed',
-    dropped: 'status.dropped',
-};
 
 type SortKey = 'title' | 'rating' | 'year' | 'status' | 'progress' | 'added' | 'updated';
 
@@ -66,15 +66,20 @@ const SORT_DEFAULT_DESC: Record<SortKey, boolean> = {
 };
 
 /**
- * ContentGallery — a poster wall with type/status filtering, search and sort,
- * a "Continue" shelf for in-progress items, and a detail modal on click. Type
- * tabs and each card's presentation come from the configured content types.
+ * ContentGallery — the library: filtered by type, status, genre and favourite,
+ * searched and sorted, and shown as one of two things.
+ *
+ * The list (the default) groups rows by status — what you are on, what you
+ * paused, what is next, then what is behind you — each section folding away and
+ * remembering it. It is what a library without covers reads well as, which is
+ * most imported ones. The grid is the poster wall, with the "Continue" shelf
+ * above it as one scrolling line; the list has no shelf, because its first
+ * section is the same items with the same "+1".
  */
-export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }) => {
+export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, loading }) => {
     const t = useTranslation();
     const { app } = useApp();
-    const savedTypes = useZenithStore((s) => s.settings.contentTypes);
-    const types = useMemo(() => effectiveContentTypes(savedTypes), [savedTypes]);
+    const typeOf = types.typeOf;
     const patchContentItem = useZenithStore((s) => s.patchContentItem);
 
     // Set from outside the gallery: a genre chip in the detail modal or the
@@ -105,14 +110,29 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
         saved.sort in SORT_KEY ? (saved.sort as SortKey) : 'title'
     );
     const [desc, setDesc] = useState(!!saved.desc);
+    const [layout, setLayout] = useState<'list' | 'grid'>(saved.layout === 'grid' ? 'grid' : 'list');
+    const [open, setOpen] = useState<string[]>(() =>
+        Array.isArray(saved.open) ? saved.open : ['in-progress', 'on-hold']
+    );
+    const [favoritesOnly, setFavoritesOnly] = useState(!!saved.favorites);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [selectMode, setSelectMode] = useState(false);
     const [picked, setPicked] = useState<Set<string>>(new Set());
     const [bulkBusy, setBulkBusy] = useState(false);
 
     useEffect(() => {
-        updateSettings({ contentView: { type: activeType, status: statusFilter, sort, desc } });
-    }, [activeType, statusFilter, sort, desc, updateSettings]);
+        updateSettings({
+            contentView: {
+                type: activeType,
+                status: statusFilter,
+                sort,
+                desc,
+                layout,
+                open,
+                favorites: favoritesOnly,
+            },
+        });
+    }, [activeType, statusFilter, sort, desc, layout, open, favoritesOnly, updateSettings]);
 
     // Selecting ends with its feature, so no bulk bar is left without the
     // button that closes it.
@@ -138,25 +158,14 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
         [items, selectedId]
     );
 
-    const typeOf = useMemo(() => {
-        const cache = new Map<string, ReturnType<typeof resolveContentType>>();
-        return (id: string) => {
-            let c = cache.get(id);
-            if (!c) {
-                c = resolveContentType(types, id);
-                cache.set(id, c);
-            }
-            return c;
-        };
-    }, [types]);
-
     const changeSort = (key: SortKey) => {
         setSort(key);
         setDesc(SORT_DEFAULT_DESC[key]);
     };
 
     const query = search.trim().toLowerCase();
-    const filtersActive = statusFilter !== 'all' || !!query || activeType !== 'all' || !!genreFilter;
+    const filtersActive =
+        statusFilter !== 'all' || !!query || activeType !== 'all' || !!genreFilter || favoritesOnly;
 
     const filteredItems = useMemo(() => {
         let result = activeType === 'all' ? [...items] : items.filter((i) => i.type === activeType);
@@ -164,6 +173,8 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
         if (statusFilter !== 'all') {
             result = result.filter((i) => i.status === statusFilter);
         }
+
+        if (favoritesOnly) result = result.filter((i) => i.favorite);
 
         if (genreFilter) {
             const g = genreFilter.toLowerCase();
@@ -174,6 +185,7 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
             result = result.filter(
                 (i) =>
                     i.title.toLowerCase().includes(query) ||
+                    i.aliases?.some((a) => a.toLowerCase().includes(query)) ||
                     i.creator?.toLowerCase().includes(query) ||
                     i.tags.some((t) => t.toLowerCase().includes(query)) ||
                     i.genres?.some((g) => g.toLowerCase().includes(query))
@@ -214,7 +226,7 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
         });
 
         return result;
-    }, [items, activeType, statusFilter, genreFilter, query, sort, desc]);
+    }, [items, activeType, statusFilter, favoritesOnly, genreFilter, query, sort, desc]);
 
     /**
      * Type filters, rendered as a segmented control in the toolbar rather than a
@@ -235,7 +247,7 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
                 color: undefined as string | undefined,
             },
         ];
-        for (const t of types) {
+        for (const t of types.visible) {
             const count = items.filter((i) => i.type === t.id).length;
             // Empty types stay hidden — except the one currently selected, so the
             // filter row can't drop the option you're standing on.
@@ -264,12 +276,30 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
         return c;
     }, [items, activeType]);
 
-    // "Continue" shelf — only on the unfiltered view, so it complements the grid.
+    // "Continue" shelf — only above the unfiltered grid. The list needs none:
+    // its first section is the same items, with the same "+1".
     const continueItems = useMemo(
         () =>
-            filtersActive || !resumeOn ? [] : items.filter((i) => i.status === 'in-progress'),
-        [items, filtersActive, resumeOn]
+            filtersActive || !resumeOn || layout === 'list'
+                ? []
+                : items.filter((i) => i.status === 'in-progress'),
+        [items, filtersActive, resumeOn, layout]
     );
+
+    /** The list's sections: every status that has something, in the library's order. */
+    const sections = useMemo(
+        () =>
+            STATUS_ORDER.map((status) => ({
+                status,
+                items: filteredItems.filter((i) => i.status === status),
+            })).filter((section) => section.items.length > 0),
+        [filteredItems]
+    );
+    const toggleSection = (status: string) =>
+        setOpen((prev) => (prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]));
+    /** Statuses in words: the type's own verbs when one type is shown. */
+    const labelOf = (status: ContentStatus) =>
+        statusLabel(t, status, activeType === 'all' ? undefined : activeType);
 
     // The shelf is a shortcut into the same library, so anything on it is left
     // out of the grid below. Showing both meant a third of a small library
@@ -285,12 +315,16 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
         setStatusFilter('all');
         setSearch('');
         setGenreFilter(null);
+        setFavoritesOnly(false);
     };
 
     // ── Bulk selection ──────────────────────────────────────────────────────
     // Everything on screen is selectable, shelf included, so "select all" means
     // what it looks like it means.
-    const visible = useMemo(() => [...continueItems, ...gridItems], [continueItems, gridItems]);
+    const visible = useMemo(
+        () => (layout === 'list' ? filteredItems : [...continueItems, ...gridItems]),
+        [layout, filteredItems, continueItems, gridItems]
+    );
     const pickedItems = useMemo(() => items.filter((i) => picked.has(i.id)), [items, picked]);
 
     const toggleSelectMode = () => {
@@ -332,6 +366,18 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
             setBulkBusy(false);
         }
     };
+
+    const row = (item: ContentItem) => (
+        <ContentRow
+            key={item.id}
+            item={item}
+            type={typeOf(item.type)}
+            onOpen={(i) => setSelectedId(i.id)}
+            selectionMode={selectMode}
+            selected={picked.has(item.id)}
+            onToggleSelect={togglePicked}
+        />
+    );
 
     // Skeletons only stand in for a *first* load. Re-parsing after an edit used
     // to swap the whole grid (and the open modal) for placeholders and back.
@@ -390,9 +436,9 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
                         { value: 'all', label: t('content.allStatuses') },
                         // Counts in the labels turn the filter into a breakdown:
                         // you can see what's there before committing to a click.
-                        ...CONTENT_STATUSES.map((s) => ({
+                        ...STATUS_ORDER.map((s) => ({
                             value: s,
-                            label: `${t(STATUS_KEY[s])} (${statusCounts[s] ?? 0})`,
+                            label: `${labelOf(s)} (${statusCounts[s] ?? 0})`,
                             disabled: !statusCounts[s],
                         })),
                     ]}
@@ -406,7 +452,7 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
                         value={sort}
                         options={(Object.keys(SORT_KEY) as SortKey[]).map((k) => ({
                             value: k,
-                            label: t('content.sortBy', { name: t(SORT_KEY[k]) }),
+                            label: t(SORT_KEY[k]),
                         }))}
                         onChange={(v) => changeSort(v as SortKey)}
                     />
@@ -418,6 +464,25 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
                         onClick={() => setDesc((d) => !d)}
                     >
                         {desc ? <ArrowDownNarrowWide size={15} /> : <ArrowUpNarrowWide size={15} />}
+                    </button>
+                    <button
+                        type="button"
+                        className={`zenith-content-gallery__sortdir ${favoritesOnly ? 'is-active is-heart' : ''}`}
+                        aria-pressed={favoritesOnly}
+                        aria-label={t('content.favorite.filter')}
+                        title={t('content.favorite.filter')}
+                        onClick={() => setFavoritesOnly((on) => !on)}
+                    >
+                        <Heart size={15} fill={favoritesOnly ? 'currentColor' : 'none'} />
+                    </button>
+                    <button
+                        type="button"
+                        className="zenith-content-gallery__sortdir"
+                        aria-label={t(layout === 'list' ? 'content.layout.grid' : 'content.layout.list')}
+                        title={t(layout === 'list' ? 'content.layout.grid' : 'content.layout.list')}
+                        onClick={() => setLayout((l) => (l === 'list' ? 'grid' : 'list'))}
+                    >
+                        {layout === 'list' ? <LayoutGrid size={15} /> : <List size={15} />}
                     </button>
                     {multiSelectOn && (
                         <button
@@ -481,7 +546,7 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
                         placeholder={t('content.bulk.setStatus')}
                         value=""
                         disabled={picked.size === 0 || bulkBusy}
-                        options={CONTENT_STATUSES.map((s) => ({ value: s, label: t(STATUS_KEY[s]) }))}
+                        options={STATUS_ORDER.map((s) => ({ value: s, label: labelOf(s) }))}
                         onChange={(v) => void bulkStatus(v as ContentStatus)}
                     />
                     <button
@@ -520,28 +585,54 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, loading }
                 </section>
             )}
 
-            {gridItems.length === 0 ? (
-                // With the shelf showing everything, an empty grid is a success
-                // state ("nothing left in the backlog"), not a dead end.
-                filtersActive || continueItems.length === 0 ? (
-                    <div className="zenith-empty-state">
-                        <span className="zenith-empty-state__icon">🎬</span>
-                        <p className="zenith-empty-state__text">
-                            {t(filtersActive ? 'content.noMatch' : 'content.empty')}
-                        </p>
-                        {filtersActive ? (
-                            <button type="button" className="zenith-content-gallery__clear" onClick={clearFilters}>
-                                <X size={12} /> {t('common.clearFilters')}
-                            </button>
-                        ) : (
-                            <p className="zenith-text--muted">{t('content.emptyHint')}</p>
-                        )}
+            {filteredItems.length === 0 ? (
+                <div className="zenith-empty-state">
+                    <span className="zenith-empty-state__icon">🎬</span>
+                    <p className="zenith-empty-state__text">
+                        {t(filtersActive ? 'content.noMatch' : 'content.empty')}
+                    </p>
+                    {filtersActive ? (
+                        <button type="button" className="zenith-content-gallery__clear" onClick={clearFilters}>
+                            <X size={12} /> {t('common.clearFilters')}
+                        </button>
+                    ) : (
+                        <p className="zenith-text--muted">{t('content.emptyHint')}</p>
+                    )}
+                </div>
+            ) : layout === 'list' ? (
+                statusFilter !== 'all' ? (
+                    // One status asked for: its rows, with no section around them.
+                    <div className="zenith-crows">
+                        {filteredItems.map((item) => row(item))}
                     </div>
                 ) : (
-                    <p className="zenith-content-gallery__allclear">
-                        {t('content.allClear')}
-                    </p>
+                    sections.map(({ status, items: rows }) => {
+                        const isOpen = open.includes(status);
+                        return (
+                            <section key={status} className="zenith-csection">
+                                <button
+                                    type="button"
+                                    className={`zenith-csection__head ${isOpen ? 'is-open' : ''}`}
+                                    aria-expanded={isOpen}
+                                    onClick={() => toggleSection(status)}
+                                >
+                                    <ChevronRight size={14} className="zenith-csection__chevron" />
+                                    <span
+                                        className="zenith-csection__dot"
+                                        style={{ background: STATUS_COLOR[status] }}
+                                    />
+                                    <span className="zenith-csection__label">{labelOf(status)}</span>
+                                    <span className="zenith-csection__count">{rows.length}</span>
+                                </button>
+                                {isOpen && <div className="zenith-crows">{rows.map((item) => row(item))}</div>}
+                            </section>
+                        );
+                    })
                 )
+            ) : gridItems.length === 0 ? (
+                // With the shelf showing everything, an empty grid is a success
+                // state ("nothing left in the backlog"), not a dead end.
+                <p className="zenith-content-gallery__allclear">{t('content.allClear')}</p>
             ) : (
                 <section>
                     {continueItems.length > 0 && (

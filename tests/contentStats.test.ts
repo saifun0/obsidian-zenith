@@ -21,21 +21,13 @@ function item(over: Partial<ContentItem> = {}): ContentItem {
 describe('computeContentStats', () => {
     it('handles an empty library without dividing by zero', () => {
         const s = computeContentStats([], NOW);
-        expect(s).toMatchObject({ total: 0, avgRating: 0, completionRate: 0, averageProgress: null });
+        expect(s).toMatchObject({ total: 0, avgRating: 0, inProgress: 0, avgDaysToFinish: null });
         expect(s.stalled).toEqual([]);
     });
 
     it('averages only the rated items', () => {
         const s = computeContentStats([item({ rating: 8 }), item({ rating: 0 })], NOW);
         expect(s.avgRating).toBe(8);
-    });
-
-    it('counts completion as a percentage of everything', () => {
-        const s = computeContentStats(
-            [item({ status: 'completed' }), item({ status: 'backlog' }), item({ status: 'dropped' })],
-            NOW
-        );
-        expect(s.completionRate).toBe(33);
     });
 
     it('flags in-progress items untouched past the threshold', () => {
@@ -62,24 +54,42 @@ describe('computeContentStats', () => {
     it('counts what was finished inside the window', () => {
         const s = computeContentStats(
             [
-                item({ filePath: 'x.md', status: 'completed', updatedAt: NOW - 5 * DAY }),
-                item({ filePath: 'y.md', status: 'completed', updatedAt: NOW - 300 * DAY }),
+                item({ filePath: 'x.md', status: 'completed', finished: '2026-07-20' }),
+                item({ filePath: 'y.md', status: 'completed', finished: '2025-09-01' }),
             ],
             NOW
         );
         expect(s.finishedRecently).toBe(1);
     });
 
-    it('averages progress only where a total is known', () => {
+    it('counts what is in progress now, and never calls something on hold stalled', () => {
         const s = computeContentStats(
             [
-                item({ filePath: 'a.md', status: 'in-progress', progressCurrent: 5, progressTotal: 10 }),
-                item({ filePath: 'b.md', status: 'in-progress', progressCurrent: 30 }), // no total
-                item({ filePath: 'c.md', status: 'in-progress', progressCurrent: 1, progressTotal: 4 }),
+                item({ filePath: 'a.md', status: 'in-progress' }),
+                item({ filePath: 'b.md', status: 'on-hold', updatedAt: NOW - 200 * DAY }),
             ],
             NOW
         );
-        expect(s.averageProgress).toBe(37.5);
+        expect(s.inProgress).toBe(1);
+        expect(s.stalled).toEqual([]);
+    });
+
+    it('buckets finishes by month over the last year, every month present', () => {
+        const s = computeContentStats(
+            [
+                item({ filePath: 'a.md', status: 'completed', finished: '2026-07-03' }),
+                item({ filePath: 'b.md', status: 'completed', finished: '2026-07-20' }),
+                item({ filePath: 'c.md', status: 'completed', finished: '2026-05-11' }),
+                item({ filePath: 'd.md', status: 'completed', finished: '2024-01-01' }),
+                item({ filePath: 'e.md', status: 'completed' }),
+            ],
+            NOW
+        );
+        expect(s.finishedByMonth).toHaveLength(12);
+        expect(s.finishedByMonth[0].month).toBe('2025-08');
+        expect(s.finishedByMonth[11]).toEqual({ month: '2026-07', count: 2 });
+        expect(s.finishedByMonth[9]).toEqual({ month: '2026-05', count: 1 });
+        expect(s.finishedByMonth.reduce((n, m) => n + m.count, 0)).toBe(3);
     });
 
     it('ranks genres by frequency, then alphabetically', () => {
@@ -95,21 +105,6 @@ describe('computeContentStats', () => {
             { genre: 'drama', count: 2 },
             { genre: 'action', count: 1 },
             { genre: 'comedy', count: 1 },
-        ]);
-    });
-
-    it('buckets additions by month, oldest first', () => {
-        const s = computeContentStats(
-            [
-                item({ filePath: 'a.md', createdAt: Date.UTC(2026, 4, 3) }),
-                item({ filePath: 'b.md', createdAt: Date.UTC(2026, 6, 1) }),
-                item({ filePath: 'c.md', createdAt: Date.UTC(2026, 6, 20) }),
-            ],
-            NOW
-        );
-        expect(s.addedByMonth).toEqual([
-            { month: '2026-05', count: 1 },
-            { month: '2026-07', count: 2 },
         ]);
     });
 
@@ -135,9 +130,11 @@ describe('computeContentStats', () => {
             expect(s.finishedRecently).toBe(0);
         });
 
-        it('falls back to mtime for items with no finish date', () => {
+        it('does not guess a finish date from mtime', () => {
+            // An import of a hundred watched titles is a hundred finishes at no
+            // known time, not a hundred this month.
             const s = computeContentStats([item({ status: 'completed', updatedAt: NOW - 3 * DAY })], NOW);
-            expect(s.finishedRecently).toBe(1);
+            expect(s.finishedRecently).toBe(0);
         });
 
         it('averages how long tracked items took', () => {

@@ -1,7 +1,7 @@
-import React, { useMemo, type FC } from 'react';
+import React, { type FC } from 'react';
 import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
-import { effectiveContentTypes } from '../../../core/contentTypes';
+import { useContentTypes } from '../useContentTypes';
 import { useZenithStore } from '../../../store';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
 import { SettingRow, Toggle } from '../../../settings/controls';
@@ -13,11 +13,11 @@ import { goalsFor, withGoal } from '../services/challenge';
  */
 export const ChallengeField: FC = () => {
     const t = useTranslation();
-    const saved = useZenithStore((s) => s.settings.contentTypes);
     const goals = useZenithStore((s) => s.settings.contentChallenges);
     const rereads = useZenithStore((s) => s.settings.contentChallengeRereads);
     const updateSettings = useZenithStore((s) => s.updateSettings);
-    const types = useMemo(() => effectiveContentTypes(saved), [saved]);
+    // Goals only for the types switched on.
+    const types = useContentTypes().visible;
     const year = Number(getTodayString().slice(0, 4));
     const current = goalsFor(goals, year);
 

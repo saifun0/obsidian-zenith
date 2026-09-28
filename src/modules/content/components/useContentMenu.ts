@@ -2,26 +2,25 @@ import React from 'react';
 import { Menu, Notice } from 'obsidian';
 import type { ContentItem } from '../../../store/contentSlice';
 import type { ContentTypeConfig } from '../../../core/contentTypes';
-import { CONTENT_STATUSES } from '../../../core/constants';
 import type { ContentStatus } from '../../../core/constants';
 import { useApp } from '../../../context/AppContext';
 import { confirmDelete } from '../../../core/ConfirmModal';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { openFileAtLine } from '../../../core/openInVault';
-import { bumpProgress, deleteItems, setItemStatus } from '../services/contentActions';
+import {
+    bumpProgress,
+    deleteItems,
+    setItemFavorite,
+    setItemStatus,
+} from '../services/contentActions';
 import { shortUnit } from '../services/progress';
-
-const STATUS_KEY: Record<ContentStatus, string> = {
-    backlog: 'status.backlog',
-    'in-progress': 'status.inProgress',
-    completed: 'status.completed',
-    dropped: 'status.dropped',
-};
+import { STATUS_ORDER, statusLabel } from '../contentLabels';
 
 const STATUS_ICON: Record<ContentStatus, string> = {
     backlog: 'inbox',
     'in-progress': 'play',
+    'on-hold': 'pause',
     completed: 'check',
     dropped: 'x',
 };
@@ -75,15 +74,27 @@ export function useContentMenu(
 
         const menu = new Menu();
 
-        for (const s of CONTENT_STATUSES) {
+        for (const s of STATUS_ORDER) {
             menu.addItem((mi) =>
                 mi
-                    .setTitle(t(STATUS_KEY[s]))
+                    .setTitle(statusLabel(t, s, item.type))
                     .setIcon(STATUS_ICON[s])
                     .setChecked(item.status === s)
                     .onClick(() => changeStatus(s))
             );
         }
+
+        menu.addSeparator();
+        menu.addItem((mi) =>
+            mi
+                .setTitle(t(item.favorite ? 'content.favorite.remove' : 'content.favorite.add'))
+                .setIcon('heart')
+                .onClick(() =>
+                    void run(async () => {
+                        patchContentItem(item.id, await setItemFavorite(app, item, !item.favorite));
+                    }, 'content.error.status')
+                )
+        );
 
         if (tracksProgress) {
             menu.addSeparator();

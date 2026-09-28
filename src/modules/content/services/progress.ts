@@ -105,6 +105,14 @@ export function shortUnit(unit: string | undefined): string {
         hours: 'h',
         minutes: 'min',
         seasons: 'S',
+        // The same, as `localizeType` puts the built-in units into Russian.
+        страниц: 'стр.',
+        серий: 'сер.',
+        глав: 'гл.',
+        часов: 'ч',
+        минут: 'мин',
+        треков: 'тр.',
+        единиц: 'ед.',
     };
     return SHORT[u] ?? u;
 }

@@ -127,10 +127,9 @@ describe('reading time — each reading on its own', () => {
         expect(finishedReadings(reread)).toBe(2);
     });
 
-    it('averages readings, and counts the book as read more than once', () => {
+    it('averages readings, each on its own', () => {
         const stats = computeContentStats([reread], Date.parse(`${TODAY}T12:00:00`));
         expect(stats.avgDaysToFinish).toBe(18.5);
-        expect(stats.reread).toBe(1);
     });
 
     it('still reads an item with only its two dates', () => {

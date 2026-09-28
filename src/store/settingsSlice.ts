@@ -17,7 +17,7 @@ import {
 import type { WidgetBundle } from '../modules/dashboard/grid/bundleTypes';
 import { normalizePresets, type DashboardPreset } from '../modules/dashboard/dashboardPresets';
 import { normalizeSession, type TimerSession } from '../modules/tasks/services/taskTimer';
-import type { ContentTypeConfig } from '../core/contentTypes';
+import { DEFAULT_CONTENT_TYPES, type ContentTypeConfig } from '../core/contentTypes';
 import type { WeatherPlace } from '../modules/weather/weatherTypes';
 import { DEFAULT_REVIEW_NOTES, type ReviewNotes } from '../modules/journal/services/reviewPeriods';
 import type { Recents } from '../modules/search/recents';
@@ -639,6 +639,12 @@ export interface ContentViewState {
     status: string;
     sort: string;
     desc: boolean;
+    /** Rows grouped by status, or the poster wall. */
+    layout: 'list' | 'grid';
+    /** The list's status sections left open. */
+    open: string[];
+    /** Only the favourites. */
+    favorites: boolean;
 }
 
 export interface TaskViewState {
@@ -693,7 +699,7 @@ export interface SettingsSlice {
  * Bump when a migration is added, and gate that migration on the value below.
  * Version 1 is "everything written before versioning existed".
  */
-export const CURRENT_SETTINGS_VERSION = 14;
+export const CURRENT_SETTINGS_VERSION = 15;
 
 /**
  * Object-valued settings that must be merged field-by-field rather than
@@ -880,7 +886,15 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     mediaSelected: '',
     mediaSaved: [],
     dashboardGrid: { ...DEFAULT_GRID_CONFIG },
-    contentView: { type: 'all', status: 'all', sort: 'title', desc: false },
+    contentView: {
+        type: 'all',
+        status: 'all',
+        sort: 'updated',
+        desc: true,
+        layout: 'list',
+        open: ['in-progress', 'on-hold'],
+        favorites: false,
+    },
     taskView: { tab: 'all', priority: 'all', tag: '', sort: 'manual', group: 'smart' },
     calendarView: {
         view: 'month',
@@ -1099,6 +1113,18 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             // aside by itself where Code Styler already does the job.
             if (from < 14 && !merged.activeModuleIds.includes('editor')) {
                 merged.activeModuleIds = [...merged.activeModuleIds, 'editor'];
+            }
+
+            // ── v14 → v15 ──
+            // Shows, games, music and "other" became off by default. A library
+            // that has been in use keeps them: its built-in types are written
+            // out as they were, all on, so nothing it holds drops out of sight.
+            if (from < 15 && Object.keys(saved).length > 0 && merged.contentTypes.length === 0) {
+                merged.contentTypes = DEFAULT_CONTENT_TYPES.map((type) => ({
+                    ...type,
+                    fields: [...type.fields],
+                    hidden: false,
+                }));
             }
 
             return { settings: merged };

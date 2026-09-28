@@ -5,7 +5,7 @@ import { useApp } from '../../../context/AppContext';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import { featureEnabled } from '../../../core/features';
 import { useFeature } from '../../../core/useFeature';
-import { effectiveContentTypes, resolveContentType } from '../../../core/contentTypes';
+import { contentTypesNow } from '../../content/useContentTypes';
 import { getTodayString } from '../../../core/dateUtils';
 import { isoToDate } from '../../../core/calendarDates';
 import { useZenithStore } from '../../../store';
@@ -82,7 +82,7 @@ export function summaryLabels(
     settings: ZenithSettings,
     heading: string
 ): SnapshotLabels {
-    const types = effectiveContentTypes(settings.contentTypes);
+    const types = contentTypesNow();
     return {
         heading,
         section: (s) => t(`review.section.${s}`),
@@ -107,7 +107,7 @@ export function summaryLabels(
             ]
                 .filter(Boolean)
                 .join(' · '),
-        contentType: (id) => resolveContentType(types, id).label,
+        contentType: (id) => types.typeOf(id).label,
         prayer: (p) => {
             const total = p.ontime + p.late + p.missed;
             const percent = total ? Math.round((p.ontime / total) * 100) : 0;

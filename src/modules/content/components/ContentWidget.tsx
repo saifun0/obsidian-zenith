@@ -8,7 +8,8 @@ import { useReducedMotion } from '../../../components/shared/useCrossFade';
 import { useCountUp } from '../../../components/shared/useCountUp';
 import type { ContentItem } from '../../../store/contentSlice';
 import type { ContentTypeConfig } from '../../../core/contentTypes';
-import { effectiveContentTypes, resolveContentType } from '../../../core/contentTypes';
+import { STATUS_COLOR, STATUS_ORDER, statusLabel } from '../contentLabels';
+import { useLibraryItems } from '../useContentTypes';
 import { resolveCover } from '../services/coverUrl';
 import { useFeature } from '../../../core/useFeature';
 import { bumpProgress } from '../services/contentActions';
@@ -74,12 +75,8 @@ const LAYOUT: Record<WidgetSize, WidgetLayout> = {
     lg: { rows: 5, spotlight: true, stats: true },
 };
 
-const STATUS_META: { key: string; i18n: string; color: string }[] = [
-    { key: 'in-progress', i18n: 'status.inProgress', color: 'var(--zenith-info)' },
-    { key: 'completed', i18n: 'status.completed', color: 'var(--zenith-success)' },
-    { key: 'backlog', i18n: 'status.backlog', color: 'var(--zenith-text-faint)' },
-    { key: 'dropped', i18n: 'status.dropped', color: 'var(--zenith-danger)' },
-];
+/** The statuses the card counts, in the library's order and colours. */
+const STATUS_META = STATUS_ORDER.map((key) => ({ key, color: STATUS_COLOR[key] }));
 
 /** How long a "+1" floats over the row that earned it. Matches the keyframe. */
 const CHEER_MS = 900;
@@ -117,15 +114,15 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
     const { app, plugin } = useApp();
     const t = useTranslation();
     const quickOn = useFeature('content.quickIncrement');
-    const items = useZenithStore((s) => s.contentItems);
-    const savedTypes = useZenithStore((s) => s.settings.contentTypes);
+    // Items of a switched-off type are kept out, as in the library.
+    const { items, types } = useLibraryItems();
     const patchContentItem = useZenithStore((s) => s.patchContentItem);
     const setFocusContentId = useZenithStore((s) => s.setFocusContentId);
     const animations = useZenithStore((s) => s.settings.uiAnimations);
     const reduced = useReducedMotion();
     const animate = animations && !reduced;
 
-    const types = useMemo(() => effectiveContentTypes(savedTypes), [savedTypes]);
+
     const layout = LAYOUT[size];
 
     // `now` is read once per render rather than per item: a shelf where two
@@ -265,7 +262,7 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
 
     const facts = useCallback(
         (item: ContentItem, mode: 'resume' | 'next'): RowFacts => {
-            const type = resolveContentType(types, item.type);
+            const type = types.typeOf(item.type);
             const progress = { current: item.progressCurrent ?? 0, total: item.progressTotal };
             const tracks = type.fields.includes('progress');
             // Same rule as the poster tiles: no bar until something is under way.
@@ -332,11 +329,11 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
                         <span
                             key={s.key}
                             className="zenith-cw__stat"
-                            title={`${counts.byStatus[s.key]} · ${t(s.i18n)}`}
+                            title={`${counts.byStatus[s.key]} · ${statusLabel(t, s.key)}`}
                         >
                             <span className="zenith-cw__stat-dot" style={{ background: s.color }} />
                             <span className="zenith-cw__stat-value">{counts.byStatus[s.key]}</span>
-                            <span className="zenith-cw__stat-label">{t(s.i18n)}</span>
+                            <span className="zenith-cw__stat-label">{statusLabel(t, s.key)}</span>
                         </span>
                     ))}
 
@@ -378,7 +375,7 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
                                 background: s.color,
                                 ['--cw-at' as string]: i,
                             }}
-                            title={`${counts.byStatus[s.key]} ${t(s.i18n)}`}
+                            title={`${counts.byStatus[s.key]} ${statusLabel(t, s.key)}`}
                         />
                     ))}
                 </div>

@@ -57,21 +57,33 @@ export interface ContentTypeConfig {
     progressUnit?: string;
     /** Which curated fields this type displays, in {@link CONTENT_FIELDS} order. */
     fields: ContentFieldId[];
+    /**
+     * Switched off in settings: out of the tabs, the add form, the statistics
+     * and the dashboard. Its items stay in the vault, untouched, and come back
+     * the moment it is switched on.
+     */
+    hidden?: boolean;
 }
 
 const ALL_FIELDS: ContentFieldId[] = ['year', 'creator', 'genres', 'rating', 'progress', 'tags', 'description'];
 const NO_PROGRESS: ContentFieldId[] = ['year', 'creator', 'genres', 'rating', 'tags', 'description'];
 
-/** Built-in types, applied whenever the user hasn't saved a custom set. */
+/**
+ * Built-in types, applied whenever the user hasn't saved a custom set.
+ *
+ * Shows, games, music and "other" start switched off: a new library opens on
+ * the four things most people keep, and the rest are one switch away. A
+ * library from before this keeps them on — see the v15 migration.
+ */
 export const DEFAULT_CONTENT_TYPES: readonly ContentTypeConfig[] = [
     { id: 'book', label: 'Book', icon: 'book-open', color: '#8b5cf6', creatorLabel: 'Author', progressUnit: 'pages', fields: [...ALL_FIELDS] },
     { id: 'movie', label: 'Movie', icon: 'film', color: '#ec4899', creatorLabel: 'Director', progressUnit: 'minutes', fields: [...NO_PROGRESS] },
-    { id: 'show', label: 'Show', icon: 'tv', color: '#3b82f6', creatorLabel: 'Network', progressUnit: 'episodes', fields: [...ALL_FIELDS] },
+    { id: 'show', label: 'Show', icon: 'tv', color: '#3b82f6', creatorLabel: 'Network', progressUnit: 'episodes', fields: [...ALL_FIELDS], hidden: true },
     { id: 'anime', label: 'Anime', icon: 'sparkles', color: '#f59e0b', creatorLabel: 'Studio', progressUnit: 'episodes', fields: [...ALL_FIELDS] },
     { id: 'manga', label: 'Manga', icon: 'book', color: '#10b981', creatorLabel: 'Author', progressUnit: 'chapters', fields: [...ALL_FIELDS] },
-    { id: 'game', label: 'Game', icon: 'gamepad-2', color: '#22c55e', creatorLabel: 'Developer', progressUnit: 'hours', fields: [...ALL_FIELDS] },
-    { id: 'music', label: 'Music', icon: 'music', color: '#eab308', creatorLabel: 'Artist', progressUnit: 'tracks', fields: [...NO_PROGRESS] },
-    { id: 'other', label: 'Other', icon: 'package', color: '#6b7280', creatorLabel: 'Creator', progressUnit: 'units', fields: [...ALL_FIELDS] },
+    { id: 'game', label: 'Game', icon: 'gamepad-2', color: '#22c55e', creatorLabel: 'Developer', progressUnit: 'hours', fields: [...ALL_FIELDS], hidden: true },
+    { id: 'music', label: 'Music', icon: 'music', color: '#eab308', creatorLabel: 'Artist', progressUnit: 'tracks', fields: [...NO_PROGRESS], hidden: true },
+    { id: 'other', label: 'Other', icon: 'package', color: '#6b7280', creatorLabel: 'Creator', progressUnit: 'units', fields: [...ALL_FIELDS], hidden: true },
 ] as const;
 
 /**
@@ -114,6 +126,20 @@ export function resolveContentType(types: ContentTypeConfig[], id: string): Cont
             fields: [...ALL_FIELDS],
         }
     );
+}
+
+/** The types switched on, in their order. */
+export function visibleContentTypes(types: ContentTypeConfig[]): ContentTypeConfig[] {
+    return types.filter((t) => !t.hidden);
+}
+
+/**
+ * Whether items of a type id are shown. Only a type that exists and is
+ * switched off hides its items: an item whose type was deleted, or never
+ * configured, still shows — as "other" — rather than vanishing.
+ */
+export function isTypeShown(types: ContentTypeConfig[], id: string): boolean {
+    return !types.find((t) => t.id === id)?.hidden;
 }
 
 /** Whether a type shows a given curated field. */

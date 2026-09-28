@@ -131,6 +131,26 @@ describe('loadSettings — versioning', () => {
         expect(already.activeModuleIds).not.toContain('editor');
     });
 
+    it('keeps every content type showing for a library already in use', () => {
+        // Shows, games, music and "other" are off in a new library; one that
+        // has been in use keeps them, written out all on.
+        const used = load({ settingsVersion: 14, activeModuleIds: ['content'] });
+        expect(used.contentTypes.map((t) => t.id)).toEqual([
+            'book',
+            'movie',
+            'show',
+            'anime',
+            'manga',
+            'game',
+            'music',
+            'other',
+        ]);
+        expect(used.contentTypes.every((t) => !t.hidden)).toBe(true);
+
+        // A fresh config keeps the built-ins, switched-off ones included.
+        expect(load({}).contentTypes).toEqual([]);
+    });
+
     it('switches the picture widget on for an existing config', () => {
         // It costs a board nothing — one more entry in the widget gallery, and
         // nothing on the board until the user puts it there — and a built-in

@@ -12,6 +12,7 @@ import { ViewHeader } from '../../../components/shared';
 import { ContentGallery } from './ContentGallery';
 import { ContentStats } from './ContentStats';
 import { Plus } from 'lucide-react';
+import { useLibraryItems } from '../useContentTypes';
 
 /**
  * ContentApp — root React component for the Content module.
@@ -26,7 +27,8 @@ export const ContentApp: React.FC = () => {
     const importOn = useFeature('content.import');
     const statsOn = useFeature('content.stats');
     const genreFilterOn = useFeature('content.genreFilter');
-    const contentItems = useZenithStore((s) => s.contentItems);
+    // Items of a switched-off type stay in the vault and out of every view here.
+    const { items: contentItems, types } = useLibraryItems();
     const contentLoading = useZenithStore((s) => s.contentLoading);
     const setContentGenreFilter = useZenithStore((s) => s.setContentGenreFilter);
 
@@ -128,6 +130,7 @@ export const ContentApp: React.FC = () => {
             {statsOn && showStats ? (
                 <ContentStats
                     items={contentItems}
+                    types={types}
                     // Picking a genre out of the statistics is a request to see
                     // those items, so it hands the view back to the gallery.
                     onSelectGenre={
@@ -140,7 +143,7 @@ export const ContentApp: React.FC = () => {
                     }
                 />
             ) : (
-                <ContentGallery items={contentItems} loading={contentLoading} />
+                <ContentGallery items={contentItems} types={types} loading={contentLoading} />
             )}
         </div>
     );

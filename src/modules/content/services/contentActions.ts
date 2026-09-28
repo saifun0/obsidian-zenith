@@ -44,6 +44,16 @@ export async function setItemStatus(
     return { status: next, ...(dates ?? {}) };
 }
 
+/** Mark or unmark a favourite. */
+export async function setItemFavorite(
+    app: App,
+    item: ContentItem,
+    favorite: boolean
+): Promise<ItemPatch> {
+    await new ContentWriter(app).setFavorite(item.filePath, favorite);
+    return { favorite: favorite || undefined };
+}
+
 /**
  * Advance (or rewind) progress by `delta` units.
  *

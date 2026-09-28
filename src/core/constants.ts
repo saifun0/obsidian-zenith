@@ -132,7 +132,7 @@ export function charFromStatus(status: TaskStatus): string {
 }
 
 // ── Content Statuses ─────────────────────────────────
-export const CONTENT_STATUSES = ['backlog', 'in-progress', 'completed', 'dropped'] as const;
+export const CONTENT_STATUSES = ['backlog', 'in-progress', 'on-hold', 'completed', 'dropped'] as const;
 export type ContentStatus = (typeof CONTENT_STATUSES)[number];
 
 // ── Task Filter Tabs ─────────────────────────────────

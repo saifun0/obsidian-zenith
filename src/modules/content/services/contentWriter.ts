@@ -20,6 +20,9 @@ export interface NewContentInput {
     /** `YYYY-MM-DD`. */
     started?: string;
     finished?: string;
+    favorite?: boolean;
+    /** Other names; written as Obsidian's `aliases`. */
+    aliases?: string[];
 }
 
 /**
@@ -34,6 +37,11 @@ export interface NewContentInput {
  */
 export class ContentWriter {
     constructor(private readonly app: App) {}
+
+    /** Mark or unmark a favourite. Unmarked, the key goes rather than reading `false`. */
+    async setFavorite(filePath: string, favorite: boolean): Promise<void> {
+        await this.updateFields(filePath, { favorite: favorite ? true : undefined });
+    }
 
     async setRating(filePath: string, rating: number): Promise<void> {
         const clamped = Math.min(10, Math.max(0, Math.round(rating)));
@@ -131,6 +139,12 @@ export class ContentWriter {
         }
         if (input.started) fm.push(`started: ${input.started}`);
         if (input.finished) fm.push(`finished: ${input.finished}`);
+        if (input.favorite) fm.push('favorite: true');
+        const aliases = (input.aliases ?? []).map((a) => a.trim()).filter(Boolean);
+        if (aliases.length > 0) {
+            fm.push('aliases:');
+            for (const alias of aliases) fm.push(`  - ${this.yamlString(alias)}`);
+        }
         fm.push('---');
         fm.push('');
         if (input.description) fm.push(input.description.trim());

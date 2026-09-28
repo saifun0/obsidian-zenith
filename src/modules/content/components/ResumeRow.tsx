@@ -75,9 +75,12 @@ export const ResumeRow: React.FC<ResumeRowProps> = ({
     };
 
     // Without a total there is no meter to draw, so the count carries the whole
-    // story ("40 ep") and takes the space the bar would have used.
+    // story ("40 ep") and takes the space the bar would have used. With neither
+    // (an import brings no progress) it says nothing rather than "0 ep".
     const count = tracksProgress
-        ? formatProgress(progress, type.progressUnit, { short: true })
+        ? progress.current > 0 || progress.total
+            ? formatProgress(progress, type.progressUnit, { short: true })
+            : ''
         : [item.year, item.creator].filter(Boolean).join(' · ');
 
     return (

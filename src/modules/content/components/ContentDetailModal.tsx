@@ -4,7 +4,6 @@ import { Notice } from 'obsidian';
 import { CalendarCheck, CalendarClock, FileText, Trash2 } from 'lucide-react';
 import type { ContentItem } from '../../../store/contentSlice';
 import type { ContentTypeConfig, ContentFieldId } from '../../../core/contentTypes';
-import { CONTENT_STATUSES } from '../../../core/constants';
 import type { ContentStatus } from '../../../core/constants';
 import { useZenithStore } from '../../../store';
 import { useApp } from '../../../context/AppContext';
@@ -23,6 +22,8 @@ import { Modal } from '../../../components/shared/Modal';
 import { Dropdown } from '../../../components/ui/fields';
 import { StarRating } from '../../../components/shared/StarRating';
 import { ProgressControl } from './ProgressControl';
+import { ItemHeart } from './FavoriteHeart';
+import { STATUS_ORDER, statusLabel } from '../contentLabels';
 
 interface ContentDetailModalProps {
     item: ContentItem;
@@ -32,13 +33,6 @@ interface ContentDetailModalProps {
 
 /** Characters of synopsis to show before folding the rest behind a toggle. */
 const DESC_CLAMP = 320;
-
-const STATUS_KEY: Record<ContentStatus, string> = {
-    backlog: 'status.backlog',
-    'in-progress': 'status.inProgress',
-    completed: 'status.completed',
-    dropped: 'status.dropped',
-};
 
 /** How long to sit on rapid progress clicks before writing to disk. */
 const PROGRESS_WRITE_DELAY = 600;
@@ -243,7 +237,13 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
                     <ObsidianIcon name={type.icon} size={13} />
                     {type.label}
                 </span>
-                <h2 className="zenith-content-modal__title">{item.title}</h2>
+                <div className="zenith-content-modal__title-row">
+                    <h2 className="zenith-content-modal__title">{item.title}</h2>
+                    <ItemHeart item={item} size={18} />
+                </div>
+                {item.aliases && item.aliases.length > 0 && (
+                    <p className="zenith-content-modal__aliases">{item.aliases.join(' · ')}</p>
+                )}
                 {sub && <p className="zenith-content-modal__sub">{sub}</p>}
 
                 {shows('genres') && item.genres && item.genres.length > 0 && (
@@ -299,7 +299,10 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
                             className={`zenith-content-modal__status is-${status}`}
                             aria-label={t('content.form.status')}
                             value={status}
-                            options={CONTENT_STATUSES.map((s) => ({ value: s, label: t(STATUS_KEY[s]) }))}
+                            options={STATUS_ORDER.map((s) => ({
+                                value: s,
+                                label: statusLabel(t, s, item.type),
+                            }))}
                             onChange={(v) => void persistStatus(v as ContentStatus)}
                         />
                     </div>

@@ -547,9 +547,6 @@ const EN: Dict = {
     'status.inProgress': 'In progress',
     'status.done': 'Done',
     'status.cancelled': 'Cancelled',
-    'status.backlog': 'Backlog',
-    'status.completed': 'Completed',
-    'status.dropped': 'Dropped',
 
     // ── Priority ────────────────────────────────────
     'priority.none': 'None',
@@ -1076,7 +1073,7 @@ const EN: Dict = {
     'content.form.duplicateSimilar': 'Something similar is already here:',
     'content.import.title': 'Import a library',
     'content.import.intro':
-        'Bring your list across from MyAnimeList (XML), Goodreads or Letterboxd (CSV). Export from the service, then pick the file here.',
+        'Bring your list across from MyAnimeList (XML), Goodreads, Letterboxd or Anixart (CSV). Export from the service, then pick the file here. A newer export later moves statuses on instead of adding everything again.',
     'content.import.choose': 'Choose an export file…',
     'content.import.unrecognised':
         'This doesn’t look like a MyAnimeList, Goodreads or Letterboxd export.',
@@ -1104,16 +1101,12 @@ const EN: Dict = {
     'content.added': 'Zenith: content item added.',
     'content.stats.total': 'Total items',
     'content.stats.avgRating': 'Avg rating',
-    'content.stats.completion': 'Completion rate',
     'content.stats.finishedRecently': 'Finished (30 days)',
-    'content.stats.avgProgress': 'Avg progress',
-    'content.stats.avgDaysToFinish': 'Avg days to finish',
     'content.stats.stalled': 'Gone quiet',
     'content.stats.stalledHint': 'In progress, but untouched for over a month.',
     'content.stats.daysIdle.one': '{count} day',
     'content.stats.daysIdle.other': '{count} days',
     'content.stats.topGenres': 'Top genres',
-    'content.stats.addedOverTime': 'Added over time',
     'content.stats.byStatus': 'By status',
     'content.stats.byType': 'By type',
     'content.widget.noContent': 'No content tracked yet',
@@ -2239,9 +2232,6 @@ const RU: Dict = {
     'status.inProgress': 'В работе',
     'status.done': 'Готово',
     'status.cancelled': 'Отменено',
-    'status.backlog': 'Отложено',
-    'status.completed': 'Завершено',
-    'status.dropped': 'Брошено',
 
     // ── Приоритет ───────────────────────────────────
     'priority.none': 'Без приоритета',
@@ -2770,7 +2760,7 @@ const RU: Dict = {
     'content.form.duplicateSimilar': 'Похожее уже есть:',
     'content.import.title': 'Импорт библиотеки',
     'content.import.intro':
-        'Перенесите список из MyAnimeList (XML), Goodreads или Letterboxd (CSV). Выгрузите файл в сервисе и выберите его здесь.',
+        'Перенесите список из MyAnimeList (XML), Goodreads, Letterboxd или Anixart (CSV). Выгрузите файл в сервисе и выберите его здесь. Более новая выгрузка потом обновит статусы, а не добавит всё заново.',
     'content.import.choose': 'Выбрать файл выгрузки…',
     'content.import.unrecognised':
         'Это не похоже на выгрузку MyAnimeList, Goodreads или Letterboxd.',
@@ -2802,17 +2792,13 @@ const RU: Dict = {
     'content.added': 'Zenith: запись добавлена.',
     'content.stats.total': 'Всего записей',
     'content.stats.avgRating': 'Средняя оценка',
-    'content.stats.completion': 'Доля завершённых',
     'content.stats.finishedRecently': 'Завершено за 30 дней',
-    'content.stats.avgProgress': 'Средний прогресс',
-    'content.stats.avgDaysToFinish': 'Дней на прохождение',
     'content.stats.stalled': 'Заброшено',
     'content.stats.stalledHint': 'В процессе, но больше месяца никто не трогал.',
     'content.stats.daysIdle.one': '{count} день',
     'content.stats.daysIdle.few': '{count} дня',
     'content.stats.daysIdle.many': '{count} дней',
     'content.stats.topGenres': 'Частые жанры',
-    'content.stats.addedOverTime': 'Пополнение по месяцам',
     'content.stats.byStatus': 'По статусу',
     'content.stats.byType': 'По типу',
     'content.widget.noContent': 'Пока ничего не отслеживается',

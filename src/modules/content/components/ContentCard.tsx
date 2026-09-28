@@ -12,6 +12,7 @@ import { bumpProgress } from '../services/contentActions';
 import { formatProgress, progressPercent, shortUnit } from '../services/progress';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
 import { useContentMenu } from './useContentMenu';
+import { ItemHeart } from './FavoriteHeart';
 
 interface ContentCardProps {
     item: ContentItem;
@@ -155,6 +156,10 @@ export const ContentCard: React.FC<ContentCardProps> = ({
                     )
                 )}
 
+                {!selectionMode && (
+                    <ItemHeart item={item} quiet className="zenith-poster__heart" />
+                )}
+
                 {/* The only mark left on the artwork besides the score: how far
                     in this is, as a hairline along the bottom edge. It carries
                     the status in its colour — live for something running, grey
@@ -202,7 +207,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
                     </span>
                     {slot &&
                         (slot.done ? (
-                            <span className="zenith-poster__slot is-done" title={t('status.completed')}>
+                            <span className="zenith-poster__slot is-done" title={t('content.status.completed')}>
                                 <Check size={12} strokeWidth={2.6} />
                             </span>
                         ) : (
