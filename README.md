@@ -22,7 +22,7 @@ files; there is no hidden database.
 | **Editor** | Code blocks with the language's icon and name, a stripe in its colour, line numbers and a copy button. |
 | **Tasks** | Parse, filter, search, group, create, edit, complete and delete tasks. |
 | **Journal** | Daily notes on a calendar, with configurable habit / scale / number tracking and the day's tasks. |
-| **Content** | A library of what you read, watch and play: a list by status or a grid, favourites, half-star ratings, progress, covers from the vault or a link, stats, and import from MyAnimeList / Goodreads / Letterboxd / Anixart. Works offline. |
+| **Content** | A library of what you read, watch and play: a list by status or a grid, series, favourites, half-star ratings, progress, covers from the vault or a link, stats, and import from MyAnimeList / Goodreads / Letterboxd / Anixart. Works offline. |
 | **Prayer** | Prayer times computed on the device, a countdown to the next one, and a record of what you prayed — kept in the daily note. |
 | **Media Banner** | Show a GIF/image (from the vault or a URL) above the file-explorer tree, with a picker. |
 

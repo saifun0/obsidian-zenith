@@ -22,6 +22,8 @@ started: 2026-01-04          # stamped when the status becomes "in progress"
 finished: 2026-02-11         # stamped when it becomes "completed"
 aliases:                     # other names; Obsidian's own key, so links find them too
   - Gatsby
+series: "Jazz Age"           # the series it is a part of — see Series below
+seriesOrder: 2               # its place in the series, when set
 tags: [classics]
 ---
 
@@ -131,6 +133,46 @@ them together.
 **Genres are filters.** Click one in an item's card or in the statistics view and the
 library narrows to it; the active genre appears as a removable chip beside the result count.
 
+## Series
+
+The seasons, films and spin-offs of one thing belong together: *Sword Art Online* is one
+title with eleven parts, each named differently. A **series** is the name every part carries
+in its `series` key — nothing else, so it reads in Dataview and survives any edit made
+outside Zenith. *Content → Features → Series* switches it off.
+
+**In the list**, the parts of one series in the same status section fold into one line — its
+cover or type mark with the edges of the others behind it, the name, "8 parts · Anime". The
+arrow unfolds the parts in place, each an ordinary line with its "+1" and heart; inside a
+series a part is listed by what sets it apart ("TV-2", "Alicization"), not by the name all of
+them repeat. A series with parts in several statuses shows in each section with the parts of
+that status, so every section stays true. One part alone is an ordinary line. A search opens
+the series it found parts in. **In the grid** a series is one stacked poster with "×11" on it.
+
+**Tapping the name** opens the series' own page: how far through it is ("Watched 8 of 11")
+with a bar of its statuses, and every part in order. **Edit** turns the same page into its
+workbench: rename it, drag the parts into order, take one out, add one from the library or a
+new one, or ungroup it all — the parts stay in the library, each on its own.
+
+Parts are ordered by `seriesOrder` when it is set (dragging sets it; Goodreads' "#3" does too),
+then by year, then by title: the name itself, the numbered sequels in number order, then the
+subtitled ones.
+
+**Putting things in a series:**
+
+- the **Series** field under *More* in the add form, offering the series there are;
+- **Put in a series…** in an item's card, and in the right-click menu (which can also take it
+  out);
+- in select mode, pick several and **Put in a series…** — the name offered is what their titles
+  share. Tapping a series line in select mode picks all its parts.
+
+**Find series** (the layers button in the header, or the command palette) looks for series
+nobody has named yet: a title that continues another title — "X 2", "X ТВ-2", "X: Film",
+"X. Part 2" — goes under it, matching on aliases as well, so an original name helps where the
+translated ones differ. Only a whole title counts, so *Monster* never swallows *Monster
+Hunter*; a part of a part goes to the outermost series; an item already in a series is never
+moved. You see the list first — untick what is wrong, rename what you like — and nothing is
+written until you confirm.
+
 ## Adding an item
 
 The add form asks for what matters first: the type (only the shown ones), the title with its
@@ -154,6 +196,15 @@ alternative names become `aliases`. Its *Смотрю*, *В планах*, *Пр
 become *In progress*, *Planned*, *Completed* and *On hold*, *Не смотрю* becomes *Dropped*, and
 a bookmark added to favourites becomes a favourite. The export has no dates, scores or episode counts, so none
 are written.
+
+**Goodreads** writes a book's series into its title — "The Name of the Wind (The Kingkiller
+Chronicle, #1)". The title comes across as the book's own, with the series and its number
+taken out of it. A book imported that way by an earlier version is still recognised.
+
+With series on, the dialog offers **Group parts into series** (ticked): the series the export
+names, and the ones its titles show — among the new entries and with the library, so a new
+"X 3" joins the "X" you already have. Series made only of items already in the library are
+left to *Find series*.
 
 **A second import brings the library up to date.** The dialog sorts the file into three:
 
