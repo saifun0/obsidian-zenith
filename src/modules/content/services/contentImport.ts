@@ -2,6 +2,7 @@ import type { ContentStatus } from '../../../core/constants';
 import type { ContentItem } from '../../../store/contentSlice';
 import { findSameItem } from './contentDuplicates';
 import type { NewContentInput } from './contentWriter';
+import { findSeries, seriesKey } from './series';
 
 /**
  * Import a library from the services people already keep one in.
@@ -24,6 +25,12 @@ export interface ImportedItem extends NewContentInput {
     /** `YYYY-MM-DD`, when the export records it. */
     started?: string;
     finished?: string;
+    /**
+     * Names the entry is recognised by and nothing more — the title as the
+     * export wrote it, before a series was taken out of it — so a library
+     * imported by an older version still knows it. Never written to the note.
+     */
+    knownAs?: string[];
 }
 
 export interface ImportResult {
@@ -204,6 +211,21 @@ function columnIndex(header: string[]): (name: string) => number {
     return (name: string) => map.get(name.toLowerCase()) ?? -1;
 }
 
+/**
+ * Goodreads writes a book's series into its title: "The Name of the Wind (The
+ * Kingkiller Chronicle, #1)". Taken out, the title is the book's own and the
+ * series and its number become the book's place in it. A book in several
+ * series ("Discworld, #1; Rincewind #1") goes into the first; an omnibus
+ * ("#1-3") takes its first number.
+ */
+export function splitGoodreadsTitle(raw: string): { title: string; series?: string; order?: number } {
+    const m = raw.match(
+        /^(.*\S)\s*\(([^()#]*?),?\s*#(\d+(?:\.\d+)?)(?:\s*[-–]\s*\d+(?:\.\d+)?)?(?:\s*;[^()]*)?\)\s*$/
+    );
+    if (!m || !m[2].trim()) return { title: raw.trim() };
+    return { title: m[1].trim(), series: m[2].trim(), order: Number(m[3]) };
+}
+
 function parseGoodreads(rows: string[][], typeId: string): ImportResult {
     const at = columnIndex(rows[0]);
     const items: ImportedItem[] = [];
@@ -221,16 +243,20 @@ function parseGoodreads(rows: string[][], typeId: string): ImportResult {
     };
 
     for (const row of rows.slice(1)) {
-        const title = (row[col.title] ?? '').trim();
-        if (!title) {
+        const raw = (row[col.title] ?? '').trim();
+        if (!raw) {
             skipped++;
             continue;
         }
+        const { title, series, order } = splitGoodreadsTitle(raw);
         const status = GOODREADS_STATUS[(row[col.shelf] ?? '').trim().toLowerCase()] ?? 'backlog';
         const finished = isoDate(row[col.dateRead]);
 
         items.push({
             title,
+            series,
+            seriesOrder: order,
+            knownAs: series ? [raw] : undefined,
             type: typeId,
             status,
             rating: fromFiveScale(row[col.rating]),
@@ -306,6 +332,22 @@ const ANIXART_STATUS: Record<string, ContentStatus> = {
 /** What Anixart writes in a name column that has nothing in it. */
 const ANIXART_NONE = 'не указаны';
 
+/**
+ * Anixart's alternative names, one list joined by commas — commas that also
+ * occur inside the names ("Клинок, рассекающий демонов: …"). A piece that
+ * starts in lower case is the rest of the name before it, not a name of its own.
+ */
+function splitAnixartNames(list: string): string[] {
+    const names: string[] = [];
+    for (const piece of list.split(',')) {
+        const text = piece.trim();
+        if (!text) continue;
+        if (names.length > 0 && /^\p{Ll}/u.test(text)) names[names.length - 1] += `, ${text}`;
+        else names.push(text);
+    }
+    return names;
+}
+
 function parseAnixart(rows: string[][], typeId: string): ImportResult {
     const at = columnIndex(rows[0]);
     const col = {
@@ -328,7 +370,7 @@ function parseAnixart(rows: string[][], typeId: string): ImportResult {
         }
 
         const other = (row[col.other] ?? '').trim();
-        const names = [original, ...(other.toLowerCase() === ANIXART_NONE ? [] : other.split(','))]
+        const names = [original, ...(other.toLowerCase() === ANIXART_NONE ? [] : splitAnixartNames(other))]
             .map((n) => n.trim())
             .filter(Boolean);
         // Each other name once, and never the title again.
@@ -426,7 +468,7 @@ const STAGE: Record<ContentStatus, number> = {
 export function planImport(result: ImportResult, library: ContentItem[]): ImportPlan {
     const plan: ImportPlan = { create: [], update: [], same: 0 };
     for (const entry of result.items) {
-        const item = findSameItem(library, [entry.title, ...(entry.aliases ?? [])]);
+        const item = findSameItem(library, [entry.title, ...(entry.aliases ?? []), ...(entry.knownAs ?? [])]);
         if (!item) {
             plan.create.push(entry);
             continue;
@@ -450,4 +492,55 @@ export function planImport(result: ImportResult, library: ContentItem[]): Import
         });
     }
     return plan;
+}
+
+// ── Series an import brings ─────────────────────────────────────────────────
+
+export interface ImportSeries {
+    /** The series each new entry goes into, by its place in `plan.create`. */
+    assign: Map<number, { series: string; seriesOrder?: number }>;
+    /** Library items without a series that a new entry is a part of, or the base of. */
+    join: { item: ContentItem; series: string }[];
+    /** How many series all that makes or adds to. */
+    count: number;
+}
+
+/**
+ * The series the new entries of an import fall into — the ones the export
+ * names (Goodreads) and the ones their titles show, among themselves and with
+ * what the library already has. A series made only of items already in the
+ * library is not the import's business; "Find series" is for that.
+ */
+export function planImportSeries(plan: ImportPlan, library: ContentItem[]): ImportSeries {
+    const assign: ImportSeries['assign'] = new Map();
+    const join: ImportSeries['join'] = [];
+    const names = new Set<string>();
+
+    plan.create.forEach((entry, index) => {
+        if (entry.series?.trim()) {
+            assign.set(index, { series: entry.series.trim(), seriesOrder: entry.seriesOrder });
+            names.add(seriesKey(entry.series));
+        }
+    });
+
+    type Candidate = { title: string; aliases?: string[]; series?: string; type?: string; index?: number; item?: ContentItem };
+    const candidates: Candidate[] = [
+        ...library.map((item) => ({ title: item.title, aliases: item.aliases, series: item.series, type: item.type, item })),
+        ...plan.create.map((entry, index) => ({
+            title: entry.title,
+            aliases: entry.aliases,
+            series: assign.get(index)?.series,
+            type: entry.type,
+            index,
+        })),
+    ];
+    for (const proposal of findSeries(candidates)) {
+        if (!proposal.joining.some((c) => c.index !== undefined)) continue;
+        names.add(proposal.key);
+        for (const c of proposal.joining) {
+            if (c.index !== undefined) assign.set(c.index, { series: proposal.name });
+            else if (c.item) join.push({ item: c.item, series: proposal.name });
+        }
+    }
+    return { assign, join, count: names.size };
 }

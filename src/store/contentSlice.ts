@@ -43,6 +43,13 @@ export interface ContentItem {
      * finds the note by them, and the library matches duplicates on them.
      */
     aliases?: string[];
+    /**
+     * The series it is a part of — "Sword Art Online" for each of its seasons
+     * and films. Parts are grouped by it; see `services/series.ts`.
+     */
+    series?: string;
+    /** Its place in the series, when set by hand (dragging) or by the source. */
+    seriesOrder?: number;
     /** File creation time (ms) — powers "recently added" sorting. */
     createdAt?: number;
     /** File modification time (ms) — powers "recently updated" sorting. */
@@ -62,10 +69,16 @@ export interface ContentSlice {
     focusContentId: string | null;
     /** A genre the gallery should filter by, set by clicking a genre chip. */
     contentGenreFilter: string | null;
+    /**
+     * A dialog the library should open, asked for from outside it — a command
+     * in the palette. Cleared once the view has opened it.
+     */
+    contentRequest: 'findSeries' | null;
 
     setContentItems: (items: ContentItem[]) => void;
     setFocusContentId: (id: string | null) => void;
     setContentGenreFilter: (genre: string | null) => void;
+    setContentRequest: (request: 'findSeries' | null) => void;
     /**
      * Swap in the item a single file holds (or drop it, when `item` is null).
      * Lets a vault change re-read one file instead of the whole folder.
@@ -83,6 +96,7 @@ export const createContentSlice: ZenithSliceCreator<ContentSlice> = (set) => ({
     contentLoading: false,
     focusContentId: null,
     contentGenreFilter: null,
+    contentRequest: null,
 
     setContentItems: (items) =>
         set(() => ({ contentItems: items })),
@@ -90,6 +104,8 @@ export const createContentSlice: ZenithSliceCreator<ContentSlice> = (set) => ({
     setFocusContentId: (id) => set(() => ({ focusContentId: id })),
 
     setContentGenreFilter: (genre) => set(() => ({ contentGenreFilter: genre })),
+
+    setContentRequest: (request) => set(() => ({ contentRequest: request })),
 
     replaceItemForFile: (filePath, item) =>
         set((state) => ({

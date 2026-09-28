@@ -23,6 +23,8 @@ export interface NewContentInput {
     favorite?: boolean;
     /** Other names; written as Obsidian's `aliases`. */
     aliases?: string[];
+    series?: string;
+    seriesOrder?: number;
 }
 
 /**
@@ -41,6 +43,18 @@ export class ContentWriter {
     /** Mark or unmark a favourite. Unmarked, the key goes rather than reading `false`. */
     async setFavorite(filePath: string, favorite: boolean): Promise<void> {
         await this.updateFields(filePath, { favorite: favorite ? true : undefined });
+    }
+
+    /**
+     * Put an item in a series, or take it out of one (an empty name). Leaving a
+     * series drops the place it had in it too, which means nothing elsewhere.
+     */
+    async setSeries(filePath: string, series: string | undefined, order?: number): Promise<void> {
+        const name = series?.trim();
+        await this.updateFields(filePath, {
+            series: name || undefined,
+            seriesOrder: name && order != null ? order : undefined,
+        });
     }
 
     async setRating(filePath: string, rating: number): Promise<void> {
@@ -140,6 +154,10 @@ export class ContentWriter {
         if (input.started) fm.push(`started: ${input.started}`);
         if (input.finished) fm.push(`finished: ${input.finished}`);
         if (input.favorite) fm.push('favorite: true');
+        if (input.series?.trim()) {
+            fm.push(`series: ${this.yamlString(input.series)}`);
+            if (input.seriesOrder != null) fm.push(`seriesOrder: ${input.seriesOrder}`);
+        }
         const aliases = (input.aliases ?? []).map((a) => a.trim()).filter(Boolean);
         if (aliases.length > 0) {
             fm.push('aliases:');

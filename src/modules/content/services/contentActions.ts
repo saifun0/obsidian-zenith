@@ -135,3 +135,60 @@ export async function setItemsStatus(
     }
     return out;
 }
+
+/**
+ * Put items into one series, or take them out of theirs (no name). The store
+ * follows each write, so the list regroups as it goes. Items already in that
+ * series are left as they are — with the place they have in it. Returns how
+ * many notes were written.
+ */
+export async function setItemsSeries(
+    app: App,
+    items: readonly ContentItem[],
+    series: string | undefined
+): Promise<number> {
+    const writer = new ContentWriter(app);
+    const patchContentItem = useZenithStore.getState().patchContentItem;
+    const name = series?.trim() || undefined;
+    let written = 0;
+    for (const item of items) {
+        if (name && item.series?.trim() === name) continue;
+        if (!name && !item.series) continue;
+        try {
+            await writer.setSeries(item.filePath, name);
+            patchContentItem(item.id, { series: name, seriesOrder: undefined });
+            written++;
+        } catch (err) {
+            console.error('Zenith: Failed to set series:', item.filePath, err);
+        }
+    }
+    return written;
+}
+
+/** Give a series a new name, keeping every part where it stands in it. */
+export async function renameSeries(app: App, parts: readonly ContentItem[], name: string): Promise<void> {
+    const writer = new ContentWriter(app);
+    const patchContentItem = useZenithStore.getState().patchContentItem;
+    const next = name.trim();
+    if (!next) return;
+    // The whole series moves in the store at once, so it never shows split
+    // between two names while the notes are written one by one.
+    const changed = parts.filter((item) => item.series !== next);
+    for (const item of changed) patchContentItem(item.id, { series: next });
+    for (const item of changed) await writer.patch(item.filePath, { series: next });
+}
+
+/**
+ * Number the parts 1…n in the order given — the order a drag left them in.
+ * The store moves first, so the row lands where it was dropped at once; only
+ * the notes whose number changed are written.
+ */
+export async function setSeriesOrder(app: App, parts: readonly ContentItem[]): Promise<void> {
+    const writer = new ContentWriter(app);
+    const patchContentItem = useZenithStore.getState().patchContentItem;
+    const changed = parts
+        .map((item, index) => ({ item, order: index + 1 }))
+        .filter(({ item, order }) => item.seriesOrder !== order);
+    for (const { item, order } of changed) patchContentItem(item.id, { seriesOrder: order });
+    for (const { item, order } of changed) await writer.patch(item.filePath, { seriesOrder: order });
+}
