@@ -81,9 +81,11 @@ export function contentSearchSource(plugin: ZenithPlugin): SearchSource {
                         aliases: [
                             ...(item.aliases ?? []),
                             ...(item.creator ? [`${item.title} ${item.creator}`] : []),
+                            // "SAO" finds every season of it.
+                            ...(item.series ? [`${item.series} ${item.title}`] : []),
                         ],
                         tags: item.tags,
-                        detail: type.label,
+                        detail: item.series ? `${type.label} · ${item.series}` : type.label,
                         icon: type.icon,
                         run: () => open(plugin, item, type),
                         reveal: () =>

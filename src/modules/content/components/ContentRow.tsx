@@ -21,6 +21,8 @@ interface ContentRowProps {
     selectionMode?: boolean;
     selected?: boolean;
     onToggleSelect?: (item: ContentItem) => void;
+    /** The title to show, when a series lists the part by what sets it apart. */
+    title?: string;
 }
 
 /**
@@ -39,6 +41,7 @@ export const ContentRow: React.FC<ContentRowProps> = ({
     selectionMode,
     selected,
     onToggleSelect,
+    title,
 }) => {
     const { app } = useApp();
     const t = useTranslation();
@@ -122,7 +125,9 @@ export const ContentRow: React.FC<ContentRowProps> = ({
             </span>
 
             <span className="zenith-crow__main">
-                <span className="zenith-crow__title">{item.title}</span>
+                <span className="zenith-crow__title" title={title && title !== item.title ? item.title : undefined}>
+                    {title ?? item.title}
+                </span>
                 <span className="zenith-crow__sub">{sub}</span>
             </span>
 

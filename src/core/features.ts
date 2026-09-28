@@ -183,6 +183,7 @@ export const FEATURES = [
     feature('content.resume', 'content'),
     feature('content.quickIncrement', 'content'),
     feature('content.multiSelect', 'content'),
+    feature('content.series', 'content'),
     feature('content.genreFilter', 'content'),
     feature('content.import', 'content'),
     feature('content.readings', 'content'),

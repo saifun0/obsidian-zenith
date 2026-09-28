@@ -2247,3 +2247,418 @@ button.zenith-ctype__add {
     background: var(--background-modifier-hover);
     color: var(--text-normal);
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Series
+   ───────────────────────────────────────────────────────────── */
+
+/* The parts behind a series' face: two edges up and to the right. Shadows,
+   not extra boxes, so the art keeps its size and the line its alignment; the
+   edges sit in the padding and the gap around it. */
+.zenith-stack {
+    --zenith-stack-step: 3px;
+    /* In the type's colour (the art's own `color`), fainter the further back —
+       a plain surface colour vanished into the list around it. */
+    --zenith-stack-shadow: var(--zenith-stack-step) calc(var(--zenith-stack-step) * -1) 0 -1px
+            color-mix(in srgb, currentColor 30%, var(--zenith-bg-primary)),
+        calc(var(--zenith-stack-step) * 2) calc(var(--zenith-stack-step) * -2) 0 -2px
+            color-mix(in srgb, currentColor 16%, var(--zenith-bg-primary));
+    box-shadow: var(--zenith-stack-shadow);
+}
+
+.zenith-poster__art.zenith-stack {
+    --zenith-stack-step: 5px;
+}
+
+.zenith-poster--series:hover .zenith-poster__art.zenith-stack,
+.zenith-poster--series:focus-visible .zenith-poster__art.zenith-stack {
+    box-shadow: var(--zenith-stack-shadow), var(--zenith-shadow-lg);
+}
+
+.zenith-poster__count {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px 2px 6px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* A series line: the name opens its page, the arrow unfolds its parts. */
+.zenith-crow.zenith-cseries__row {
+    gap: 4px;
+    cursor: default;
+}
+
+.zenith-root button.zenith-cseries__open {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    height: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-cseries__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-cseries__toggle:hover {
+    color: var(--zenith-text-normal);
+}
+
+.zenith-cseries__toggle svg {
+    transition: transform var(--zenith-transition-fast);
+}
+
+.zenith-cseries.is-open .zenith-cseries__toggle svg {
+    transform: rotate(90deg);
+}
+
+.zenith-cseries__parts {
+    margin: 0 0 4px 20px;
+    padding-left: 6px;
+    border-left: 1px solid var(--zenith-border);
+}
+
+/* The way from an item's card into its series. */
+.zenith-root button.zenith-content-modal__series {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    max-width: 100%;
+    height: auto;
+    margin: 2px 0 6px;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-content-modal__series:hover {
+    color: var(--zenith-accent);
+}
+
+.zenith-content-modal__series-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-weight: 600;
+}
+
+/* ── The page of one series ── */
+.zenith-series__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-series__art {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 40px;
+    height: 54px;
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+}
+
+.zenith-series__heading {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.zenith-dialog__title.zenith-series__name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.zenith-series__name-input {
+    width: 100%;
+    font-weight: 600;
+}
+
+.zenith-series__sub {
+    color: var(--zenith-text-muted);
+    font-size: 0.78rem;
+}
+
+.zenith-series__summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.zenith-series__done {
+    flex: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.zenith-cstats__stack.zenith-series__stack {
+    flex: 1;
+    min-width: 40px;
+    height: 6px;
+}
+
+.zenith-series__edit {
+    flex: none;
+}
+
+.zenith-series__parts {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.zenith-series__part {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    border-radius: var(--zenith-radius-md);
+}
+
+.zenith-series__part > .zenith-crow {
+    flex: 1;
+}
+
+.zenith-series__part.is-dragging {
+    opacity: 0.45;
+}
+
+.zenith-series__part.is-drop-before {
+    box-shadow: inset 0 2px 0 var(--zenith-accent);
+}
+
+.zenith-series__part.is-drop-after {
+    box-shadow: inset 0 -2px 0 var(--zenith-accent);
+}
+
+.zenith-series__grip {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 2px;
+    color: var(--zenith-text-faint);
+    cursor: grab;
+    touch-action: none;
+}
+
+.zenith-series__grip:hover,
+.zenith-series__grip:focus-visible {
+    color: var(--zenith-text-normal);
+}
+
+.zenith-root button.zenith-series__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-series__remove:hover {
+    color: #ef4444;
+}
+
+.zenith-series__tools {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-series__add-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-series__add-field .zenith-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-series__found {
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.82rem;
+}
+
+.zenith-root .zenith-series__found button {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    width: 100%;
+    height: auto;
+    padding: 6px 8px;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    text-align: left;
+    cursor: pointer;
+}
+
+.zenith-root .zenith-series__found button:hover {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-series__found-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* The series it would leave: a hint, never at the title's expense. */
+.zenith-series__found button > .zenith-text--muted {
+    flex: none;
+    max-width: 35%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.zenith-series__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.zenith-series__ungroup {
+    margin-left: auto;
+}
+
+/* ── Find series ── */
+.zenith-seriesfind__intro {
+    margin: 0 0 12px;
+    color: var(--zenith-text-muted);
+    font-size: 0.82rem;
+}
+
+.zenith-seriesfind__list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.zenith-seriesfind__list > li.is-off {
+    opacity: 0.55;
+}
+
+.zenith-seriesfind__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zenith-seriesfind__name {
+    flex: 1;
+    min-width: 0;
+}
+
+.zenith-root button.zenith-seriesfind__count {
+    display: inline-flex;
+    align-items: center;
+    /* One width for every count, so the names above one another line up. */
+    justify-content: flex-end;
+    gap: 2px;
+    flex: none;
+    min-width: 5.5rem;
+    height: auto;
+    padding: 4px 2px;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.78rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.zenith-seriesfind__count svg {
+    transition: transform var(--zenith-transition-fast);
+}
+
+.zenith-seriesfind__count.is-open svg {
+    transform: rotate(90deg);
+}
+
+.zenith-seriesfind__parts {
+    margin: 4px 0 6px 28px;
+    padding: 0;
+    list-style: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.8rem;
+    line-height: 1.6;
+}
+
+/* ── Import: grouping what it brings ── */
+.zenith-import__series {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}

@@ -20,10 +20,16 @@ import { pickVaultImage } from '../../../components/shared/ImagePickerModal';
 import { STATUS_ORDER, statusLabel } from '../contentLabels';
 import { useContentTypes } from '../useContentTypes';
 import { FavoriteHeart } from './FavoriteHeart';
+import { useFeature } from '../../../core/useFeature';
+import { seriesNames } from './seriesPrompt';
 
 interface ContentFormProps {
     onCancel: () => void;
     onCreated?: () => void | Promise<void>;
+    /** Start in this series — a new part added from the series' page. */
+    initialSeries?: string;
+    /** Start on this type, when it is one of those offered. */
+    initialType?: string;
 }
 
 /** Statuses that are partway through something, where progress means anything. */
@@ -46,7 +52,7 @@ const OVER: readonly ContentStatus[] = ['completed', 'dropped'];
  * The cover is a picture from the vault or a link pasted by hand, shown from
  * where it is and never downloaded.
  */
-export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
+export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated, initialSeries, initialType }) => {
     const { app } = useApp();
     const t = useTranslation();
     const contentFolderPath = useZenithStore((s) => s.settings.contentFolderPath);
@@ -56,7 +62,12 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
     // "other" still gives the form something to write.
     const offered = types.visible.length > 0 ? types.visible : [types.typeOf('other')];
 
-    const [typeId, setTypeId] = useState(offered[0]?.id ?? 'other');
+    const [typeId, setTypeId] = useState(
+        offered.find((x) => x.id === initialType)?.id ?? offered[0]?.id ?? 'other'
+    );
+    const seriesOn = useFeature('content.series');
+    const [series, setSeries] = useState(initialSeries ?? '');
+    const knownSeries = useMemo(() => (seriesOn ? seriesNames() : []), [seriesOn]);
     const typeCfg = types.typeOf(typeId);
     const shows = (f: ContentFieldId) => typeCfg.fields.includes(f);
     const unit = typeCfg.progressUnit || DEFAULT_PROGRESS_UNIT;
@@ -129,6 +140,7 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                 // else has no date to claim yet.
                 finished: finalStatus === 'completed' ? getTodayString() : undefined,
                 started: finalStatus === 'in-progress' ? getTodayString() : undefined,
+                series: seriesOn ? series.trim() || undefined : undefined,
             });
             await onCreated?.();
             onCancel();
@@ -266,13 +278,35 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated }) => {
                     </div>
                 )}
 
-                <details className="zenith-cform__more">
+                <details className="zenith-cform__more" open={!!initialSeries}>
                     <summary>
                         <ChevronRight size={14} />
                         {t('content.form.more')}
                     </summary>
 
                     <div className="zenith-cform__more-body">
+                        {seriesOn && (
+                            <div className="zenith-field">
+                                <label className="zenith-field__label" htmlFor="content-series">
+                                    {t('content.series.label')}
+                                </label>
+                                <input
+                                    id="content-series"
+                                    type="text"
+                                    className="zenith-input zenith-field__input"
+                                    list="zenith-content-series-names"
+                                    placeholder={t('content.series.promptPlaceholder')}
+                                    value={series}
+                                    onChange={(e) => setSeries(e.target.value)}
+                                />
+                                <datalist id="zenith-content-series-names">
+                                    {knownSeries.map((name) => (
+                                        <option key={name} value={name} />
+                                    ))}
+                                </datalist>
+                            </div>
+                        )}
+
                         <div className="zenith-field">
                             <label className="zenith-field__label" htmlFor="content-cover">
                                 {t('content.form.cover')}

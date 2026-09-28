@@ -9,6 +9,7 @@ import {
     CheckSquare,
     ChevronRight,
     Heart,
+    Layers,
     Tag,
     Trash2,
 } from 'lucide-react';
@@ -21,7 +22,8 @@ import { useApp } from '../../../context/AppContext';
 import { confirmDelete } from '../../../core/ConfirmModal';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
-import { deleteItems, setItemsStatus } from '../services/contentActions';
+import { deleteItems, setItemsSeries, setItemsStatus } from '../services/contentActions';
+import { groupSeries, partTitle, seriesKey, suggestSeriesName } from '../services/series';
 import { progressPercent } from '../services/progress';
 import { STATUS_COLOR, STATUS_ORDER, statusLabel } from '../contentLabels';
 import type { LibraryTypes } from '../useContentTypes';
@@ -29,6 +31,10 @@ import { ContentCard } from './ContentCard';
 import { ContentRow } from './ContentRow';
 import { ResumeRow } from './ResumeRow';
 import { ContentDetailModal } from './ContentDetailModal';
+import { SeriesRow } from './SeriesRow';
+import { SeriesCard } from './SeriesCard';
+import { SeriesModal } from './SeriesModal';
+import { askSeriesName } from './seriesPrompt';
 import { Dropdown, SearchField } from '../../../components/ui/fields';
 
 interface ContentGalleryProps {
@@ -36,7 +42,14 @@ interface ContentGalleryProps {
     items: ContentItem[];
     types: LibraryTypes;
     loading?: boolean;
+    /** Open the add form for a new part of a series. */
+    onCreateInSeries?: (name: string, typeId: string) => void;
 }
+
+/** A line of the list or a tile of the grid: one item, or a series of them. */
+type Entry =
+    | { kind: 'item'; item: ContentItem }
+    | { kind: 'series'; key: string; name: string; parts: ContentItem[] };
 
 type SortKey = 'title' | 'rating' | 'year' | 'status' | 'progress' | 'added' | 'updated';
 
@@ -76,7 +89,7 @@ const SORT_DEFAULT_DESC: Record<SortKey, boolean> = {
  * above it as one scrolling line; the list has no shelf, because its first
  * section is the same items with the same "+1".
  */
-export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, loading }) => {
+export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, loading, onCreateInSeries }) => {
     const t = useTranslation();
     const { app } = useApp();
     const typeOf = types.typeOf;
@@ -91,6 +104,7 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
     const genreFilter = genreFilterOn ? storedGenre : null;
     const resumeOn = useFeature('content.resume');
     const multiSelectOn = useFeature('content.multiSelect');
+    const seriesOn = useFeature('content.series');
     const setGenreFilter = useZenithStore((s) => s.setContentGenreFilter);
     const focusId = useZenithStore((s) => s.focusContentId);
     const setFocusId = useZenithStore((s) => s.setFocusContentId);
@@ -119,6 +133,10 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
     const [selectMode, setSelectMode] = useState(false);
     const [picked, setPicked] = useState<Set<string>>(new Set());
     const [bulkBusy, setBulkBusy] = useState(false);
+    /** Series unfolded in place, by where they are shown. Not kept: a list reopens short. */
+    const [expanded, setExpanded] = useState<Set<string>>(new Set());
+    /** The series whose own page is open, by key. */
+    const [openSeries, setOpenSeries] = useState<string | null>(null);
 
     useEffect(() => {
         updateSettings({
@@ -186,6 +204,7 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
                 (i) =>
                     i.title.toLowerCase().includes(query) ||
                     i.aliases?.some((a) => a.toLowerCase().includes(query)) ||
+                    i.series?.toLowerCase().includes(query) ||
                     i.creator?.toLowerCase().includes(query) ||
                     i.tags.some((t) => t.toLowerCase().includes(query)) ||
                     i.genres?.some((g) => g.toLowerCase().includes(query))
@@ -301,6 +320,41 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
     const labelOf = (status: ContentStatus) =>
         statusLabel(t, status, activeType === 'all' ? undefined : activeType);
 
+    /** Every series of the library, for the name it goes by everywhere. */
+    const allSeries = useMemo(() => groupSeries(items), [items]);
+
+    /**
+     * A run of items as lines: the parts of one series, two or more of them
+     * here, folded into one entry where the first of them stands in the
+     * current sort. One part alone stays a plain line.
+     */
+    const toEntries = (list: ContentItem[]): Entry[] => {
+        if (!seriesOn) return list.map((item) => ({ kind: 'item', item }));
+        const groups = groupSeries(list);
+        const placed = new Set<string>();
+        const out: Entry[] = [];
+        for (const item of list) {
+            const key = item.series?.trim() ? seriesKey(item.series) : '';
+            const group = key ? groups.get(key) : undefined;
+            if (!group || group.items.length < 2) {
+                out.push({ kind: 'item', item });
+                continue;
+            }
+            if (placed.has(key)) continue;
+            placed.add(key);
+            out.push({ kind: 'series', key, name: allSeries.get(key)?.name ?? group.name, parts: group.items });
+        }
+        return out;
+    };
+
+    const toggleExpanded = (id: string) =>
+        setExpanded((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+
     // The shelf is a shortcut into the same library, so anything on it is left
     // out of the grid below. Showing both meant a third of a small library
     // appeared twice on one screen.
@@ -340,6 +394,35 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
             return next;
         });
 
+    /** Pick every part of a series, or, with all of them picked, none. */
+    const pickAll = (parts: ContentItem[]) =>
+        setPicked((prev) => {
+            const next = new Set(prev);
+            const all = parts.every((p) => next.has(p.id));
+            for (const p of parts) {
+                if (all) next.delete(p.id);
+                else next.add(p.id);
+            }
+            return next;
+        });
+    const pickedCount = (parts: ContentItem[]) => parts.filter((p) => picked.has(p.id)).length;
+
+    const bulkSeries = async () => {
+        if (bulkBusy || pickedItems.length === 0) return;
+        const name = await askSeriesName(app, t, suggestSeriesName(pickedItems));
+        if (!name) return;
+        setBulkBusy(true);
+        try {
+            await setItemsSeries(app, pickedItems, name);
+            setPicked(new Set());
+        } catch (err) {
+            console.error('Zenith: could not set series:', err);
+            new Notice(t('content.error.series'));
+        } finally {
+            setBulkBusy(false);
+        }
+    };
+
     const bulkStatus = async (next: ContentStatus) => {
         if (bulkBusy || pickedItems.length === 0) return;
         setBulkBusy(true);
@@ -367,17 +450,41 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
         }
     };
 
-    const row = (item: ContentItem) => (
+    const row = (item: ContentItem, series?: string) => (
         <ContentRow
             key={item.id}
             item={item}
             type={typeOf(item.type)}
+            title={series ? partTitle(item.title, series) : undefined}
             onOpen={(i) => setSelectedId(i.id)}
             selectionMode={selectMode}
             selected={picked.has(item.id)}
             onToggleSelect={togglePicked}
         />
     );
+
+    /** A list's lines, series folded; `place` tells apart the same series in two sections. */
+    const lines = (list: ContentItem[], place: string) =>
+        toEntries(list).map((entry) => {
+            if (entry.kind === 'item') return row(entry.item);
+            const id = `${place}|${entry.key}`;
+            return (
+                <SeriesRow
+                    key={id}
+                    name={entry.name}
+                    parts={entry.parts}
+                    typeOf={typeOf}
+                    // A search opens the series it found parts in, so the parts show.
+                    expanded={!!query || expanded.has(id)}
+                    onToggle={() => toggleExpanded(id)}
+                    onOpen={() => setOpenSeries(entry.key)}
+                    renderPart={(part) => row(part, entry.name)}
+                    selectionMode={selectMode}
+                    picked={pickedCount(entry.parts)}
+                    onPickAll={() => pickAll(entry.parts)}
+                />
+            );
+        });
 
     // Skeletons only stand in for a *first* load. Re-parsing after an edit used
     // to swap the whole grid (and the open modal) for placeholders and back.
@@ -549,6 +656,16 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
                         options={STATUS_ORDER.map((s) => ({ value: s, label: labelOf(s) }))}
                         onChange={(v) => void bulkStatus(v as ContentStatus)}
                     />
+                    {seriesOn && (
+                        <button
+                            type="button"
+                            className="zenith-content-gallery__clear"
+                            disabled={picked.size === 0 || bulkBusy}
+                            onClick={() => void bulkSeries()}
+                        >
+                            <Layers size={13} /> {t('content.series.putIn')}
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="zenith-content-gallery__bulkdelete"
@@ -602,9 +719,7 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
             ) : layout === 'list' ? (
                 statusFilter !== 'all' ? (
                     // One status asked for: its rows, with no section around them.
-                    <div className="zenith-crows">
-                        {filteredItems.map((item) => row(item))}
-                    </div>
+                    <div className="zenith-crows">{lines(filteredItems, 'flat')}</div>
                 ) : (
                     sections.map(({ status, items: rows }) => {
                         const isOpen = open.includes(status);
@@ -624,7 +739,7 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
                                     <span className="zenith-csection__label">{labelOf(status)}</span>
                                     <span className="zenith-csection__count">{rows.length}</span>
                                 </button>
-                                {isOpen && <div className="zenith-crows">{rows.map((item) => row(item))}</div>}
+                                {isOpen && <div className="zenith-crows">{lines(rows, status)}</div>}
                             </section>
                         );
                     })
@@ -642,17 +757,30 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
                         </h2>
                     )}
                     <div className="zenith-content-gallery__grid">
-                        {gridItems.map((item) => (
-                            <ContentCard
-                                key={item.id}
-                                item={item}
-                                type={typeOf(item.type)}
-                                onOpen={(i) => setSelectedId(i.id)}
-                                selectionMode={selectMode}
-                                selected={picked.has(item.id)}
-                                onToggleSelect={togglePicked}
-                            />
-                        ))}
+                        {toEntries(gridItems).map((entry) =>
+                            entry.kind === 'item' ? (
+                                <ContentCard
+                                    key={entry.item.id}
+                                    item={entry.item}
+                                    type={typeOf(entry.item.type)}
+                                    onOpen={(i) => setSelectedId(i.id)}
+                                    selectionMode={selectMode}
+                                    selected={picked.has(entry.item.id)}
+                                    onToggleSelect={togglePicked}
+                                />
+                            ) : (
+                                <SeriesCard
+                                    key={entry.key}
+                                    name={entry.name}
+                                    parts={entry.parts}
+                                    typeOf={typeOf}
+                                    onOpen={() => setOpenSeries(entry.key)}
+                                    selectionMode={selectMode}
+                                    picked={pickedCount(entry.parts)}
+                                    onPickAll={() => pickAll(entry.parts)}
+                                />
+                            )
+                        )}
                     </div>
                 </section>
             )}
@@ -662,6 +790,34 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
                     item={selected}
                     type={typeOf(selected.type)}
                     onClose={() => setSelectedId(null)}
+                    onOpenSeries={
+                        seriesOn
+                            ? (key) => {
+                                  setSelectedId(null);
+                                  setOpenSeries(key);
+                              }
+                            : undefined
+                    }
+                />
+            )}
+
+            {seriesOn && openSeries && (
+                <SeriesModal
+                    seriesKey={openSeries}
+                    onClose={() => setOpenSeries(null)}
+                    onRenamed={setOpenSeries}
+                    onOpenItem={(item) => {
+                        setOpenSeries(null);
+                        setSelectedId(item.id);
+                    }}
+                    onCreatePart={
+                        onCreateInSeries
+                            ? (name, typeId) => {
+                                  setOpenSeries(null);
+                                  onCreateInSeries(name, typeId);
+                              }
+                            : undefined
+                    }
                 />
             )}
         </div>

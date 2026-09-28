@@ -10,13 +10,16 @@ import { ContentWriter } from '../services/contentWriter';
 import {
     parseImport,
     planImport,
+    planImportSeries,
     type ImportPlan,
+    type ImportSeries,
     type ImportResult,
     type ImportTypeMap,
     type ImportUpdate,
 } from '../services/contentImport';
 import { statusLabel } from '../contentLabels';
 import { useContentTypes } from '../useContentTypes';
+import { useFeature } from '../../../core/useFeature';
 
 interface ContentImportModalProps {
     onClose: () => void;
@@ -50,6 +53,7 @@ export const ContentImportModal: FC<ContentImportModalProps> = ({ onClose, onImp
     const contentFolderPath = useZenithStore((s) => s.settings.contentFolderPath);
     const library = useZenithStore((s) => s.contentItems);
     const types = useContentTypes();
+    const seriesOn = useFeature('content.series');
 
     const [fileName, setFileName] = useState('');
     const [result, setResult] = useState<ImportResult | null>(null);
@@ -59,6 +63,9 @@ export const ContentImportModal: FC<ContentImportModalProps> = ({ onClose, onImp
      * under the user's eyes.
      */
     const [plan, setPlan] = useState<ImportPlan | null>(null);
+    /** The series the new entries fall into, worked out with the plan. */
+    const [series, setSeries] = useState<ImportSeries | null>(null);
+    const [grouping, setGrouping] = useState(true);
     const [error, setError] = useState<string | null>(null);
     /** Updates left out, by the item's file. */
     const [skipped, setSkipped] = useState<Set<string>>(new Set());
@@ -91,6 +98,7 @@ export const ContentImportModal: FC<ContentImportModalProps> = ({ onClose, onImp
         setError(null);
         setResult(null);
         setPlan(null);
+        setSeries(null);
         setFileName(file.name);
         try {
             const parsed = parseImport(await file.text(), typeMap);
@@ -102,6 +110,7 @@ export const ContentImportModal: FC<ContentImportModalProps> = ({ onClose, onImp
             // Backward moves start left out; the rest are taken.
             setSkipped(new Set(next.update.filter((u) => u.backward).map((u) => u.item.filePath)));
             setPlan(next);
+            setSeries(seriesOn ? planImportSeries(next, library) : null);
             setResult(parsed);
         } catch (err) {
             console.error('Zenith: could not read import file:', err);
@@ -117,7 +126,8 @@ export const ContentImportModal: FC<ContentImportModalProps> = ({ onClose, onImp
             return next;
         });
 
-    const work = (plan?.create.length ?? 0) + updates.length;
+    const groups = seriesOn && grouping && series && series.count > 0 ? series : null;
+    const work = (plan?.create.length ?? 0) + updates.length + (groups?.join.length ?? 0);
 
     const runImport = async () => {
         if (!plan || progress) return;
@@ -126,9 +136,16 @@ export const ContentImportModal: FC<ContentImportModalProps> = ({ onClose, onImp
         let done = 0;
         let ok = 0;
 
-        for (const entry of plan.create) {
+        for (const [index, entry] of plan.create.entries()) {
             try {
-                await writer.createItem(contentFolderPath, { ...entry, tags: entry.tags ?? [] });
+                // Unticked, not even the series an export names is written.
+                const place = groups?.assign.get(index);
+                await writer.createItem(contentFolderPath, {
+                    ...entry,
+                    tags: entry.tags ?? [],
+                    series: place?.series,
+                    seriesOrder: place?.seriesOrder,
+                });
                 ok++;
             } catch (err) {
                 console.error('Zenith: could not import item:', entry.title, err);
@@ -148,6 +165,17 @@ export const ContentImportModal: FC<ContentImportModalProps> = ({ onClose, onImp
                 ok++;
             } catch (err) {
                 console.error('Zenith: could not update item:', u.item.title, err);
+            }
+            setProgress({ done: ++done, total: work });
+        }
+
+        // Library items the new parts continue join the series with them.
+        for (const { item, series: name } of groups?.join ?? []) {
+            try {
+                await writer.setSeries(item.filePath, name);
+                ok++;
+            } catch (err) {
+                console.error('Zenith: could not put item in series:', item.title, err);
             }
             setProgress({ done: ++done, total: work });
         }
@@ -335,6 +363,17 @@ export const ContentImportModal: FC<ContentImportModalProps> = ({ onClose, onImp
                                     <p className="zenith-import__note">{t('content.import.backward')}</p>
                                 )}
                             </section>
+                        )}
+
+                        {seriesOn && series && series.count > 0 && (
+                            <label className="zenith-import__series">
+                                <input
+                                    type="checkbox"
+                                    checked={grouping}
+                                    onChange={() => setGrouping((on) => !on)}
+                                />
+                                {t('content.series.importGroup', { count: series.count })}
+                            </label>
                         )}
 
                         {plan.same > 0 && (

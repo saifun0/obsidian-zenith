@@ -9,6 +9,8 @@ import type ZenithPlugin from '../../main';
 import { contentTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
 import { contentSearchSource } from './searchSource';
+import { useZenithStore } from '../../store';
+import { featureEnabled } from '../../core/features';
 
 /**
  * ContentModule — gallery-style content tracker.
@@ -37,6 +39,20 @@ export class ContentModule extends BaseModule {
             id: 'open-content',
             name: 'Open Content Library',
             callback: () => this.activateView(),
+        });
+
+        this.addCommand({
+            id: 'find-content-series',
+            name: 'Find series in the content library',
+            checkCallback: (checking) => {
+                if (!featureEnabled(useZenithStore.getState().settings, 'content.series')) return false;
+                if (!checking) {
+                    void this.activateView().then(() =>
+                        useZenithStore.getState().setContentRequest('findSeries')
+                    );
+                }
+                return true;
+            },
         });
 
         // Contribute the Content widget to the dashboard.

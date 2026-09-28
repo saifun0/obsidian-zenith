@@ -1,7 +1,7 @@
 import { useFeature } from '../../../core/useFeature';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Notice } from 'obsidian';
-import { CalendarCheck, CalendarClock, FileText, Trash2 } from 'lucide-react';
+import { CalendarCheck, CalendarClock, FileText, Layers, Trash2 } from 'lucide-react';
 import type { ContentItem } from '../../../store/contentSlice';
 import type { ContentTypeConfig, ContentFieldId } from '../../../core/contentTypes';
 import type { ContentStatus } from '../../../core/constants';
@@ -9,7 +9,9 @@ import { useZenithStore } from '../../../store';
 import { useApp } from '../../../context/AppContext';
 import { confirmDelete } from '../../../core/ConfirmModal';
 import { ContentWriter } from '../services/contentWriter';
-import { setItemStatus } from '../services/contentActions';
+import { setItemsSeries, setItemStatus } from '../services/contentActions';
+import { partsOf, seriesKey } from '../services/series';
+import { askSeriesName } from './seriesPrompt';
 import { daysBetween, type ContentDates } from '../services/contentDates';
 import { readingsOf, transitionFor } from '../services/readings';
 import { getTodayString } from '../../../core/dateUtils';
@@ -29,6 +31,8 @@ interface ContentDetailModalProps {
     item: ContentItem;
     type: ContentTypeConfig;
     onClose: () => void;
+    /** Open the series this item is a part of, by its key. Absent with series off. */
+    onOpenSeries?: (key: string) => void;
 }
 
 /** Characters of synopsis to show before folding the rest behind a toggle. */
@@ -48,7 +52,7 @@ const PROGRESS_WRITE_DELAY = 600;
  * edit visibly reset the modal. Progress writes are additionally debounced so
  * holding "+1" produces one file write, not ten.
  */
-export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, type, onClose }) => {
+export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, type, onClose, onOpenSeries }) => {
     const { app } = useApp();
     const t = useTranslation();
     const genreFilterOn = useFeature('content.genreFilter');
@@ -56,6 +60,26 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
     const updateItemRating = useZenithStore((s) => s.updateItemRating);
     const patchContentItem = useZenithStore((s) => s.patchContentItem);
     const setContentGenreFilter = useZenithStore((s) => s.setContentGenreFilter);
+    const library = useZenithStore((s) => s.contentItems);
+
+    /** Where this item stands in its series: "3 of 11". */
+    const series = useMemo(() => {
+        if (!onOpenSeries || !item.series?.trim()) return null;
+        const key = seriesKey(item.series);
+        const parts = partsOf(library, key);
+        return { key, index: parts.findIndex((p) => p.id === item.id) + 1, total: parts.length };
+    }, [onOpenSeries, item.series, item.id, library]);
+
+    const putInSeries = async () => {
+        const name = await askSeriesName(app, t, item.series ?? '');
+        if (!name) return;
+        try {
+            await setItemsSeries(app, [item], name);
+        } catch (err) {
+            console.error('Zenith: Failed to set series:', err);
+            new Notice(t('content.error.series'));
+        }
+    };
 
     // Local mirror so the modal reflects edits without waiting for a re-parse.
     const [rating, setRating] = useState(item.rating);
@@ -245,6 +269,21 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
                     <p className="zenith-content-modal__aliases">{item.aliases.join(' · ')}</p>
                 )}
                 {sub && <p className="zenith-content-modal__sub">{sub}</p>}
+                {series && onOpenSeries && (
+                    <button
+                        type="button"
+                        className="zenith-content-modal__series"
+                        onClick={() => onOpenSeries(series.key)}
+                    >
+                        <Layers size={13} />
+                        <span className="zenith-content-modal__series-name">{item.series}</span>
+                        {series.total > 1 && (
+                            <span className="zenith-text--muted">
+                                {t('content.series.of', { index: series.index, total: series.total })}
+                            </span>
+                        )}
+                    </button>
+                )}
 
                 {shows('genres') && item.genres && item.genres.length > 0 && (
                     <div className="zenith-content-modal__genres">
@@ -400,6 +439,16 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
                     >
                         <FileText size={15} /> {t('common.openNote')}
                     </button>
+                    {onOpenSeries && (
+                        <button
+                            className="zenith-btn zenith-btn--ghost"
+                            onClick={() => void putInSeries()}
+                            aria-label={t('content.series.putIn')}
+                            title={t('content.series.putIn')}
+                        >
+                            <Layers size={15} />
+                        </button>
+                    )}
                     {/* Destructive, so it sits apart from the row and is named by
                         its tooltip: as a full red button it read as one of the
                         things you might reasonably want to do next. */}

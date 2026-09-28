@@ -1,12 +1,13 @@
 import { useFeature } from '../../../core/useFeature';
-import React, { useState, useCallback, useMemo } from 'react';
-import { RotateCw, BarChart3, LayoutGrid, Library, Star, FileUp } from 'lucide-react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { RotateCw, BarChart3, LayoutGrid, Layers, Library, Star, FileUp } from 'lucide-react';
 import { Notice } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { ContentForm } from './ContentForm';
 import { ContentImportModal } from './ContentImportModal';
+import { SeriesSuggestModal } from './SeriesSuggestModal';
 import { IconButton } from '../../../components/shared/IconButton';
 import { ViewHeader } from '../../../components/shared';
 import { ContentGallery } from './ContentGallery';
@@ -27,6 +28,7 @@ export const ContentApp: React.FC = () => {
     const importOn = useFeature('content.import');
     const statsOn = useFeature('content.stats');
     const genreFilterOn = useFeature('content.genreFilter');
+    const seriesOn = useFeature('content.series');
     // Items of a switched-off type stay in the vault and out of every view here.
     const { items: contentItems, types } = useLibraryItems();
     const contentLoading = useZenithStore((s) => s.contentLoading);
@@ -35,6 +37,21 @@ export const ContentApp: React.FC = () => {
     const [showStats, setShowStats] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [showImport, setShowImport] = useState(false);
+    const [showFindSeries, setShowFindSeries] = useState(false);
+    /** The series a new item is being added to, from a series' own page. */
+    const [formSeries, setFormSeries] = useState<{ name: string; typeId: string } | null>(null);
+
+    // "Find series" from the command palette arrives as a request in the store.
+    const request = useZenithStore((s) => s.contentRequest);
+    const setRequest = useZenithStore((s) => s.setContentRequest);
+    useEffect(() => {
+        if (request !== 'findSeries') return;
+        setRequest(null);
+        if (seriesOn) {
+            setShowStats(false);
+            setShowFindSeries(true);
+        }
+    }, [request, setRequest, seriesOn]);
 
     /** One-line pulse of the library, so the header says more than a raw count. */
     const summary = useMemo(() => {
@@ -85,6 +102,14 @@ export const ContentApp: React.FC = () => {
                         onClick={() => setShowForm(true)}
                         variant="default"
                     />
+                    {seriesOn && (
+                        <IconButton
+                            icon={Layers}
+                            tooltip={t('content.series.find')}
+                            onClick={() => setShowFindSeries(true)}
+                            variant="ghost"
+                        />
+                    )}
                     {importOn && (
                         <IconButton
                             icon={FileUp}
@@ -112,13 +137,20 @@ export const ContentApp: React.FC = () => {
 
             {showForm && (
                 <ContentForm
-                    onCancel={() => setShowForm(false)}
+                    initialSeries={formSeries?.name}
+                    initialType={formSeries?.typeId}
+                    onCancel={() => {
+                        setShowForm(false);
+                        setFormSeries(null);
+                    }}
                     onCreated={async () => {
                         await loadContent();
                         new Notice(t('content.added'));
                     }}
                 />
             )}
+
+            {seriesOn && showFindSeries && <SeriesSuggestModal onClose={() => setShowFindSeries(false)} />}
 
             {importOn && showImport && (
                 <ContentImportModal
@@ -143,7 +175,15 @@ export const ContentApp: React.FC = () => {
                     }
                 />
             ) : (
-                <ContentGallery items={contentItems} types={types} loading={contentLoading} />
+                <ContentGallery
+                    items={contentItems}
+                    types={types}
+                    loading={contentLoading}
+                    onCreateInSeries={(name, typeId) => {
+                        setFormSeries({ name, typeId });
+                        setShowForm(true);
+                    }}
+                />
             )}
         </div>
     );

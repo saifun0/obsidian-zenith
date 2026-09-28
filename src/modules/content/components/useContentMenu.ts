@@ -12,8 +12,11 @@ import {
     bumpProgress,
     deleteItems,
     setItemFavorite,
+    setItemsSeries,
     setItemStatus,
 } from '../services/contentActions';
+import { featureEnabled } from '../../../core/features';
+import { askSeriesName } from './seriesPrompt';
 import { shortUnit } from '../services/progress';
 import { STATUS_ORDER, statusLabel } from '../contentLabels';
 
@@ -95,6 +98,30 @@ export function useContentMenu(
                     }, 'content.error.status')
                 )
         );
+
+        if (featureEnabled(useZenithStore.getState().settings, 'content.series')) {
+            menu.addItem((mi) =>
+                mi
+                    .setTitle(t('content.series.putIn'))
+                    .setIcon('layers')
+                    .onClick(() =>
+                        void run(async () => {
+                            const name = await askSeriesName(app, t, item.series ?? '');
+                            if (name) await setItemsSeries(app, [item], name);
+                        }, 'content.error.series')
+                    )
+            );
+            if (item.series) {
+                menu.addItem((mi) =>
+                    mi
+                        .setTitle(t('content.series.remove'))
+                        .setIcon('unlink')
+                        .onClick(() =>
+                            void run(() => setItemsSeries(app, [item], undefined), 'content.error.series')
+                        )
+                );
+            }
+        }
 
         if (tracksProgress) {
             menu.addSeparator();

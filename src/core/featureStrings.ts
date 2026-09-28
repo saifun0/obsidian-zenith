@@ -87,7 +87,7 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'feature.content.multiSelect.desc': 'Change the status of, or delete, many items at once.',
         'feature.content.genreFilter': 'Filter by genre',
         'feature.content.import': 'Import',
-        'feature.content.import.desc': 'From MyAnimeList, Goodreads or Letterboxd exports.',
+        'feature.content.import.desc': 'From MyAnimeList, Goodreads, Letterboxd or Anixart exports.',
         'feature.content.stats': 'Statistics',
         'feature.content.widget': 'Dashboard widget',
 
@@ -202,7 +202,7 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'feature.content.multiSelect.desc': 'Сменить статус или удалить сразу много элементов.',
         'feature.content.genreFilter': 'Фильтр по жанру',
         'feature.content.import': 'Импорт',
-        'feature.content.import.desc': 'Из выгрузок MyAnimeList, Goodreads или Letterboxd.',
+        'feature.content.import.desc': 'Из выгрузок MyAnimeList, Goodreads, Letterboxd или Anixart.',
         'feature.content.stats': 'Статистика',
         'feature.content.widget': 'Виджет на дашборде',
 

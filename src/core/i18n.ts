@@ -421,7 +421,9 @@ const EN: Dict = {
         'One library item: poster, metadata, rating, status and progress.',
     'debug.modals.desc.contentForm': 'Adding an item to the library.',
     'debug.modals.desc.contentImport':
-        'Importing a library exported from MyAnimeList, Goodreads or Letterboxd.',
+        'Importing a library exported from MyAnimeList, Goodreads, Letterboxd or Anixart.',
+    'debug.modals.desc.contentSeries': 'One series: how far through it is, and its parts in order.',
+    'debug.modals.desc.contentSeriesFind': 'The series a library holds but has not named, before grouping them.',
     'debug.modals.desc.projectForm': 'Creating a project.',
     'debug.modals.desc.prayer':
         'The full prayer tracker, as the widget, the launcher and the command open it.',
@@ -2103,7 +2105,9 @@ const RU: Dict = {
         'Одна запись библиотеки: постер, метаданные, оценка, статус и прогресс.',
     'debug.modals.desc.contentForm': 'Добавление записи в библиотеку.',
     'debug.modals.desc.contentImport':
-        'Импорт библиотеки, выгруженной из MyAnimeList, Goodreads или Letterboxd.',
+        'Импорт библиотеки, выгруженной из MyAnimeList, Goodreads, Letterboxd или Anixart.',
+    'debug.modals.desc.contentSeries': 'Одна серия: сколько пройдено и её части по порядку.',
+    'debug.modals.desc.contentSeriesFind': 'Серии, которые есть в библиотеке, но не названы, — до того как их собрать.',
     'debug.modals.desc.projectForm': 'Создание проекта.',
     'debug.modals.desc.prayer':
         'Полный трекер намазов — так его открывают виджет, лаунчер и команда.',

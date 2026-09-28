@@ -21,6 +21,9 @@ import type { TaskAttachment } from '../../../modules/tasks/services/taskDetails
 import { ContentDetailModal } from '../../../modules/content/components/ContentDetailModal';
 import { ContentForm } from '../../../modules/content/components/ContentForm';
 import { ContentImportModal } from '../../../modules/content/components/ContentImportModal';
+import { SeriesModal } from '../../../modules/content/components/SeriesModal';
+import { SeriesSuggestModal } from '../../../modules/content/components/SeriesSuggestModal';
+import { groupSeries } from '../../../modules/content/services/series';
 import { ProjectFormModal } from '../../../modules/projects/ProjectFormModal';
 import { PrayerModal } from '../../../modules/prayer/PrayerModal';
 import { SyncQuickModal } from '../../../modules/sync/SyncQuickModal';
@@ -424,6 +427,28 @@ export const MODAL_CATALOG: readonly ModalEntry[] = [
         render: ({ report }, onClose) => (
             <ContentImportModal onClose={onClose} onImported={() => report('imported')} />
         ),
+    },
+    {
+        id: 'contentSeries',
+        name: 'SeriesModal',
+        owner: 'content',
+        kind: 'react',
+        writes: true,
+        render: (_ctx, onClose) => {
+            // A series is only ever a real one: its page reads the library, so
+            // a made-up one would close the moment it opened.
+            const [first] = groupSeries(useZenithStore.getState().contentItems).values();
+            if (!first) return <p className="zenith-text--muted">{t('content.series.findNone')}</p>;
+            return <SeriesModal seriesKey={first.key} onClose={onClose} onOpenItem={() => onClose()} />;
+        },
+    },
+    {
+        id: 'contentSeriesFind',
+        name: 'SeriesSuggestModal',
+        owner: 'content',
+        kind: 'react',
+        writes: true,
+        render: (_ctx, onClose) => <SeriesSuggestModal onClose={onClose} />,
     },
     {
         id: 'projectForm',

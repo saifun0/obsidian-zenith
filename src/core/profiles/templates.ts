@@ -206,6 +206,7 @@ export const TEMPLATES: readonly ProfileTemplate[] = [
             'content.resume',
             'content.quickIncrement',
             'content.multiSelect',
+            'content.series',
             'content.genreFilter',
             'content.import',
             'content.stats',

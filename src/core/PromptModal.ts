@@ -27,6 +27,8 @@ export class PromptModal extends Modal {
             cancelText: string;
             /** Longest accepted input; the field enforces it too. */
             maxLength?: number;
+            /** Values offered as the field is typed in — names already in use. */
+            suggestions?: readonly string[];
         }
     ) {
         super(app);
@@ -53,6 +55,14 @@ export class PromptModal extends Modal {
         });
         if (this.opts.placeholder) input.placeholder = this.opts.placeholder;
         if (this.opts.maxLength) input.maxLength = this.opts.maxLength;
+        if (this.opts.suggestions?.length) {
+            // The browser's own list: typed-ahead, filtered, and keyboard-driven
+            // without a line of code here.
+            const list = contentEl.createEl('datalist');
+            list.id = `zenith-prompt-${Date.now()}`;
+            for (const value of this.opts.suggestions) list.createEl('option', { value });
+            input.setAttribute('list', list.id);
+        }
 
         const actions = contentEl.createDiv({ cls: 'zenith-prompt__actions' });
         const cancel = actions.createEl('button', { text: this.opts.cancelText });
