@@ -5,11 +5,9 @@ import type { WidgetSize } from '../src/modules/dashboard/grid/gridTypes';
 import {
     METRICS,
     NOMINAL_H,
-    LOAD_H,
     FIGURE_GAP,
     FIGURE_DROP_ORDER,
     fitFigures,
-    weekWidth,
     planWidget,
     splitTasks,
     type Line,
@@ -159,35 +157,45 @@ describe('splitting the day', () => {
     });
 });
 
-describe('sm — one flat list', () => {
+const groupLines = (p: Plan): Line[] => (p.groups ?? []).flatMap((g) => g.lines);
+
+/** What the groups of a plan take, drawn: rows, gaps, labels and the gaps between groups. */
+const groupsHeight = (p: Plan, size: 'md' | 'lg'): number => {
+    const m = METRICS[size];
+    return (p.groups ?? []).reduce(
+        (n, g, i) => n + heightOf(g.lines, p.gap) + m.label + (i > 0 ? m.area : 0),
+        0
+    );
+};
+
+describe('sm — the three most urgent', () => {
     it('fits inside the height it was given', () => {
         const p = plan(screenshot(), 'sm');
         const m = METRICS.sm;
-        const budget = NOMINAL_H.sm - m.head - LOAD_H - 2 * m.area;
         expect(p.groups).toBeNull();
-        expect(heightOf(p.lines, p.gap)).toBeLessThanOrEqual(budget);
+        expect(heightOf(p.lines, p.gap)).toBeLessThanOrEqual(NOMINAL_H.sm - m.head - 2 * m.area);
     });
 
     it('orders by urgency, not by file', () => {
         const p = plan(burning(), 'sm');
-        // The three burning ones come first; "Резервная копия" is merely next.
-        expect(titlesOf(p.lines)[0]).toBe('Улучшение ПК 3.0');
-        expect(titlesOf(p.lines)).not.toContain('Резервная копия хранилища');
+        // The three burning ones, and "Резервная копия" — merely next — left out.
+        expect(titlesOf(p.lines)).toEqual(['Улучшение ПК 3.0', 'Подписка Claude Code', 'Zenith 0.1.0']);
+        expect(p.hidden).toBe(1);
     });
 
-    it('reports every task it left out', () => {
+    it('never shows more than three, however tall the card', () => {
         const many = Array.from({ length: 9 }, (_, i) => task(`Задача ${i}`, { dueDate: '2026-08-20' }));
-        const p = plan(many, 'sm');
-        expect(titlesOf(p.lines).length + p.hidden).toBe(9);
-        expect(p.hidden).toBeGreaterThan(0);
+        const split = splitTasks(many, TODAY);
+        const p = planWidget({ split, size: 'sm', available: 900, expanded: null });
+        expect(titlesOf(p.lines)).toHaveLength(3);
+        expect(p.hidden).toBe(6);
     });
 
     it('still fits once the footer takes a row', () => {
         const many = Array.from({ length: 9 }, (_, i) => task(`Задача ${i}`, { dueDate: '2026-08-20' }));
         const p = plan(many, 'sm');
         const m = METRICS.sm;
-        const budget = NOMINAL_H.sm - m.head - LOAD_H - 2 * m.area - m.foot - m.area;
-        expect(heightOf(p.lines, p.gap)).toBeLessThanOrEqual(budget);
+        expect(heightOf(p.lines, p.gap)).toBeLessThanOrEqual(NOMINAL_H.sm - m.head - 2 * m.area - m.foot - m.area);
     });
 
     it('opens one task’s subtasks in place, and floats it to the top', () => {
@@ -199,8 +207,6 @@ describe('sm — one flat list', () => {
         expect(p.lines.filter((l) => l.kind === 'sub')).toHaveLength(2);
         const more = p.lines.find((l) => l.kind === 'more');
         expect(more?.kind === 'more' && more.count).toBe(2);
-        const m = METRICS.sm;
-        expect(heightOf(p.lines, p.gap)).toBeLessThanOrEqual(NOMINAL_H.sm - m.head - LOAD_H - 2 * m.area);
     });
 
     it('shows no subtasks at all until one is opened', () => {
@@ -209,40 +215,43 @@ describe('sm — one flat list', () => {
     });
 });
 
-describe('md — two columns', () => {
-    it('labels each column and keeps both inside the budget', () => {
-        const p = plan(screenshot(), 'md');
+describe('md — labelled groups, up to five', () => {
+    it('groups the day and keeps it inside the budget', () => {
         const m = METRICS.md;
-        const budget = NOMINAL_H.md - m.head - LOAD_H - m.foot - 3 * m.area - m.label - m.gap;
-        expect(p.columns).toEqual(['doing', 'next']);
-        expect(heightOf(p.lines, p.gap)).toBeLessThanOrEqual(budget);
-        expect(heightOf(p.lines2, p.gap)).toBeLessThanOrEqual(budget);
+        // At its nominal height the card holds the group in progress…
+        const p = plan(screenshot(), 'md');
+        expect(p.lines).toEqual([]);
+        expect(p.groups?.map((g) => g.label)).toEqual(['doing']);
+        expect(groupsHeight(p, 'md')).toBeLessThanOrEqual(NOMINAL_H.md - m.head - m.stats - 3 * m.area);
+        // …and a taller one what is next as well.
+        const split = splitTasks(screenshot(), TODAY);
+        const tall = planWidget({ split, size: 'md', available: 300, expanded: null });
+        expect(tall.groups?.map((g) => g.label)).toEqual(['doing', 'next']);
+        expect(groupsHeight(tall, 'md')).toBeLessThanOrEqual(300 - m.head - m.stats - 3 * m.area);
     });
 
-    it('puts the burning ones first, in urgency order', () => {
-        const p = plan(burning(), 'md');
-        // Every started task here is also burning, so "in progress" is empty
-        // and the second column goes to what is merely next.
-        expect(p.columns).toEqual(['today', 'next']);
-        expect(titlesOf(p.lines)[0]).toBe('Улучшение ПК 3.0');
-        expect(titlesOf(p.lines2)).toEqual(['Резервная копия хранилища']);
-        expect(titlesOf(p.lines).length + titlesOf(p.lines2).length + p.hidden).toBe(4);
+    it('puts what is burning first', () => {
+        const split = splitTasks(burning(), TODAY);
+        const p = planWidget({ split, size: 'md', available: 400, expanded: null });
+        expect(p.groups?.[0].label).toBe('today');
+        expect(titlesOf(p.groups?.[0].lines ?? [])[0]).toBe('Улучшение ПК 3.0');
     });
 
-    it('continues one long group into the second column without repeating the label', () => {
-        const many = Array.from({ length: 6 }, (_, i) => task(`Задача ${i}`, { dueDate: '2026-08-20' }));
-        const p = plan(many, 'md');
-        expect(p.columns?.[0]).toBe('next');
-        expect(p.columns?.[1]).toBe('');
-        expect(titlesOf(p.lines2).length).toBeGreaterThan(0);
-        // The split is 3/3, but each column still only draws what it can hold.
-        expect(titlesOf(p.lines).length + titlesOf(p.lines2).length + p.hidden).toBe(6);
+    it('stops at five tasks, however tall the card', () => {
+        const many = Array.from({ length: 12 }, (_, i) => task(`Задача ${i}`, { dueDate: '2026-08-20' }));
+        const split = splitTasks(many, TODAY);
+        const p = planWidget({ split, size: 'md', available: 900, expanded: null });
+        expect(titlesOf(groupLines(p))).toHaveLength(5);
+        expect(p.hidden).toBe(7);
     });
 
-    it('counts the overflow of a split group', () => {
-        const many = Array.from({ length: 10 }, (_, i) => task(`Задача ${i}`, { dueDate: '2026-08-20' }));
-        const p = plan(many, 'md');
-        expect(titlesOf(p.lines).length + titlesOf(p.lines2).length + p.hidden).toBe(10);
+    it('opens subtasks only for the task asked', () => {
+        const tasks = screenshot();
+        const split = splitTasks(tasks, TODAY);
+        const closed = planWidget({ split, size: 'md', available: 400, expanded: null });
+        expect(groupLines(closed).some((l) => l.kind === 'sub')).toBe(false);
+        const open = planWidget({ split, size: 'md', available: 400, expanded: tasks[0].id });
+        expect(groupLines(open).filter((l) => l.kind === 'sub').length).toBeGreaterThan(0);
     });
 });
 
@@ -251,18 +260,12 @@ describe('lg — labelled groups', () => {
         const p = plan(screenshot(), 'lg');
         const m = METRICS.lg;
         expect(p.groups?.map((g) => g.label)).toEqual(['doing', 'next']);
-
-        const used = (p.groups ?? []).reduce(
-            (n, g, i) => n + heightOf(g.lines, m.gap) + m.label + (i > 0 ? m.area : 0),
-            0
-        );
-        expect(used).toBeLessThanOrEqual(NOMINAL_H.lg - m.head - LOAD_H - m.stats - 3 * m.area);
+        expect(groupsHeight(p, 'lg')).toBeLessThanOrEqual(NOMINAL_H.lg - m.head - m.stats - 3 * m.area);
     });
 
-    it('shows subtasks without being asked', () => {
+    it('keeps subtasks folded until one task is opened', () => {
         const p = plan(screenshot(), 'lg');
-        const lines = (p.groups ?? []).flatMap((g) => g.lines);
-        expect(lines.filter((l) => l.kind === 'sub').length).toBeGreaterThan(0);
+        expect(groupLines(p).some((l) => l.kind === 'sub')).toBe(false);
     });
 
     it('names the group by count, not by a sentence', () => {
@@ -271,25 +274,17 @@ describe('lg — labelled groups', () => {
         expect(today?.count).toBe(3);
     });
 
-    it('drops the subtask preview from the group that is only "up next"', () => {
-        const p = plan(burning(), 'lg');
-        const next = p.groups?.find((g) => g.label === 'next');
-        expect(next?.lines.some((l) => l.kind === 'sub')).toBe(false);
-    });
-
     it('keeps a long day inside the card and counts what it cut', () => {
         const many = Array.from({ length: 30 }, (_, i) =>
             task(`Задача ${i}`, { dueDate: '2026-08-01', subtasks: [sub('раз'), sub('два'), sub('три')] })
         );
         const p = plan(many, 'lg');
         const m = METRICS.lg;
-        const shown = (p.groups ?? []).flatMap((g) => titlesOf(g.lines)).length;
+        const shown = titlesOf(groupLines(p)).length;
         expect(shown + p.hidden).toBe(30);
-        const used = (p.groups ?? []).reduce(
-            (n, g, i) => n + heightOf(g.lines, m.gap) + m.label + (i > 0 ? m.area : 0),
-            0
+        expect(groupsHeight(p, 'lg')).toBeLessThanOrEqual(
+            NOMINAL_H.lg - m.head - m.stats - 3 * m.area - m.foot - m.area
         );
-        expect(used).toBeLessThanOrEqual(NOMINAL_H.lg - m.head - LOAD_H - m.stats - 3 * m.area - m.foot - m.area);
     });
 });
 
@@ -309,18 +304,9 @@ describe('an empty day', () => {
     });
 });
 
-describe('the bottom strip in a narrow card', () => {
-    // Roughly what the Russian labels measure at 9px uppercase.
-    const WIDTHS: Record<string, number> = {
-        active: 62,
-        overdue: 74,
-        done: 105,
-        cancelled: 100,
-        subtasks: 70,
-        nextDue: 92,
-        link: 84,
-    };
-    const ALL = ['active', 'overdue', 'done', 'cancelled', 'subtasks', 'nextDue', 'link'];
+describe('the three figures in a narrow card', () => {
+    const WIDTHS: Record<string, number> = { active: 62, overdue: 74, done: 90, link: 84 };
+    const ALL = ['active', 'overdue', 'done', 'link'];
     const spanOf = (keys: string[]): number =>
         keys.reduce((n, k) => n + WIDTHS[k], 0) + FIGURE_GAP * Math.max(0, keys.length - 1);
 
@@ -328,66 +314,20 @@ describe('the bottom strip in a narrow card', () => {
         expect(fitFigures(ALL, WIDTHS, spanOf(ALL))).toEqual(ALL);
     });
 
-    /**
-     * The same card, at the same width, in two languages.
-     *
-     * These are measured widths, not invented ones: an lg card 621px wide
-     * leaves the figures 295px once the week strip and its gap are paid for.
-     * With the label free to run to whatever length the dictionary gives it,
-     * "next due" measured 48px and "ближайший срок" 98, "closed today"
-     * 73 and "завершено сегодня" 109 — so the English card showed two
-     * figures and the Russian one showed one, with 38px of the difference
-     * being nothing but longer words.
-     *
-     * The label is capped and wraps now, which puts every figure at 76 and
-     * makes what the strip can hold a question about the card rather than
-     * about the language it is being read in.
-     */
-    const ROOM_AT_621 = 295;
-    const KEYS = ['overdue', 'active', 'nextDue', 'done', 'cancelled', 'subtasks', 'link'];
-
-    it('held fewer figures in Russian than in English, before the cap', () => {
-        const loose = (nextDue: number, done: number) => ({
-            active: 54, overdue: 68, cancelled: 104, subtasks: 55, link: 74, nextDue, done,
-        });
-        expect(fitFigures(KEYS, loose(48, 73), ROOM_AT_621)).toEqual(['nextDue', 'done', 'link']);
-        expect(fitFigures(KEYS, loose(98, 109), ROOM_AT_621)).toEqual(['done', 'link']);
-    });
-
-    it('holds the same figures in both, once the label is capped', () => {
-        const capped = { active: 54, overdue: 68, cancelled: 76, subtasks: 55, link: 74 };
-        const en = { ...capped, nextDue: 48, done: 73 };
-        const ru = { ...capped, nextDue: 76, done: 76 };
-        expect(fitFigures(KEYS, ru, ROOM_AT_621)).toEqual(['nextDue', 'done', 'link']);
-        expect(fitFigures(KEYS, en, ROOM_AT_621)).toEqual(fitFigures(KEYS, ru, ROOM_AT_621));
-    });
-
-    it('never returns more than the width allows', () => {
-        for (const available of [560, 430, 300, 210, 120, 40, 0]) {
-            const kept = fitFigures(ALL, WIDTHS, available);
-            // The link is the one thing that cannot be dropped, so it is the
-            // only case allowed to exceed the space it was given.
-            if (kept.length > 1) expect(spanOf(kept)).toBeLessThanOrEqual(available);
-        }
-    });
-
-    it('gives up what the heading already says, in that order', () => {
-        // The heading leads with the active count, so "active" buys the least.
-        expect(fitFigures(ALL, WIDTHS, spanOf(ALL) - 1)).not.toContain('active');
-        // A day that produced nothing offers no outcome figures to begin with.
-        const quiet = ['active', 'overdue', 'subtasks', 'nextDue', 'link'];
-        expect(fitFigures(quiet, WIDTHS, 320)).toEqual(['subtasks', 'nextDue', 'link']);
-        expect(fitFigures(quiet, WIDTHS, 220)).toEqual(['nextDue', 'link']);
+    it('gives up what the heading already says first', () => {
+        expect(fitFigures(ALL, WIDTHS, spanOf(ALL) - 1)).toEqual(['overdue', 'done', 'link']);
+        expect(fitFigures(ALL, WIDTHS, spanOf(['done', 'link']))).toEqual(['done', 'link']);
     });
 
     it('keeps what the day produced longest — it is said nowhere else', () => {
-        // On a narrow card the last figure standing is what got finished.
-        expect(fitFigures(ALL, WIDTHS, 250)).toEqual(['done', 'link']);
-        expect(fitFigures(ALL, WIDTHS, 215)).toEqual(['done', 'link']);
+        expect(FIGURE_DROP_ORDER.at(-1)).toBe('done');
     });
 
-    it('never offers an "in progress" figure — the heading owns that number', () => {
-        expect(FIGURE_DROP_ORDER).not.toContain('doing');
+    it('never returns more than the width allows', () => {
+        for (const available of [400, 300, 200, 120, 40, 0]) {
+            const kept = fitFigures(ALL, WIDTHS, available);
+            if (kept.length > 1) expect(spanOf(kept)).toBeLessThanOrEqual(available);
+        }
     });
 
     it('falls back to the link alone rather than clipping', () => {
@@ -395,23 +335,7 @@ describe('the bottom strip in a narrow card', () => {
     });
 
     it('keeps an unmeasured figure, so the first pass shows everything', () => {
-        // Widths arrive after the browser has drawn them; until then nothing
-        // has a known cost and the strip renders in full to be measured.
         expect(fitFigures(ALL, {}, 0)).toEqual(ALL);
-    });
-
-    it('drops nothing that was already dropped from the data', () => {
-        // A day with no subtasks never offers that figure in the first place.
-        const keys = ['active', 'overdue', 'nextDue', 'link'];
-        expect(fitFigures(keys, WIDTHS, 250)).not.toContain('subtasks');
-    });
-
-    it('reserves the width the week means to take, not the width it settles for', () => {
-        // 42 for today + six ordinary days, and the overdue tally when there is
-        // one. Measuring the strip instead would report whatever it had already
-        // been squeezed to, and nothing beside it would ever be dropped.
-        expect(weekWidth(false)).toBe(222);
-        expect(weekWidth(true)).toBe(268);
     });
 });
 

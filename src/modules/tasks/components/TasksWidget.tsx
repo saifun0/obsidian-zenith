@@ -24,16 +24,10 @@ import {
     FIGURE_GAP,
     METRICS,
     NOMINAL_H,
-    STATS_GAP,
-    WEEK_CELL,
-    WEEK_OVERDUE,
-    WEEK_TODAY,
     daysUntil,
     fitFigures,
-    isoOf,
     planWidget,
     splitTasks,
-    weekWidth,
     type Line,
 } from '../services/widgetLayout';
 
@@ -41,14 +35,13 @@ import {
  * The tasks card: what is burning, what is running, what is next.
  *
  * Hierarchy is carried by type size and rhythm rather than by boxes — there is
- * no badge, no pill and no section chrome inside the card, because on three
- * task rows those cost more attention than the rows themselves. The first line
- * answers the question ("2 overdue", "Nothing burning"); a 3px bar under it
- * shows what the day is made of; the rest is the list.
+ * no badge, no pill and no section chrome inside the card. The first line
+ * answers the question ("2 overdue", "3 active"); the rest is the list, and
+ * along the bottom three figures: active, overdue, closed today.
  *
- * Each preset is a different composition, not the same one cropped: `sm` is a
- * flat urgency-ordered list, `md` splits it into two labelled columns, `lg`
- * adds subtasks, group labels and a summary strip along the bottom.
+ * `sm` is the three most urgent tasks. `md` and `lg` are labelled groups over
+ * the figures, `md` stopping at five tasks. Subtasks stay folded behind their
+ * tally, which opens them one task at a time.
  */
 
 export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
@@ -66,9 +59,8 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
     const m = METRICS[size];
 
     /**
-     * The one task whose subtasks are open, on the presets that don't show them
-     * outright. One at a time: the row budget is what makes the card fit, and
-     * two expansions would spend it all on one task.
+     * The one task whose subtasks are open. One at a time: the row budget is
+     * what makes the card fit, and two expansions would spend it all on one task.
      */
     const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -149,8 +141,8 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
 
     const split = useMemo(() => splitTasks(tasks, today), [tasks, today]);
 
-    /** Only the detailed preset has the height for the bottom strip. */
-    const showStats = size === 'lg' && split.active.length > 0;
+    /** `sm` has no room for the strip of figures; the others end on it. */
+    const showStats = size !== 'sm' && split.active.length > 0;
 
     // ── Layout ───────────────────────────────────────
 
@@ -216,21 +208,19 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
     };
 
     /**
-     * The quiet right-hand note: what the task is made of.
-     *
-     * On the detailed preset that means its tags and recurrence; everywhere else
-     * only the subtask tally, which doubles as the control that opens them.
+     * The quiet right-hand note: what the task is made of — on the wide preset
+     * its tags and a repeat, and everywhere the subtask tally, which is also
+     * the control that opens them.
      */
     const infoOf = (task: Task): { text: string; toggles: boolean } | null => {
         const parts: string[] = [];
-        if (m.detailed) {
+        if (m.tags) {
             for (const tag of task.tags.slice(0, 2)) parts.push(`#${tag}`);
-            if (task.recurrence) parts.push(`↻ ${task.recurrence}`);
+            if (task.recurrence) parts.push('↻');
         }
         const { done, total } = countSubtasks(task.subtasks);
-        const toggles = !m.detailed && total > 0;
-        if (total > 0)
-            parts.push(`${done}/${total}${toggles ? (expanded === task.id ? ' ⌄' : ' ›') : ''}`);
+        const toggles = total > 0;
+        if (total > 0) parts.push(`${done}/${total}${expanded === task.id ? ' ⌄' : ' ›'}`);
         if (parts.length === 0) return null;
         return { text: parts.join(' · '), toggles };
     };
@@ -282,11 +272,7 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
         const info = infoOf(task);
         const struck = task.status === 'done' || task.status === 'cancelled';
         return (
-            <div
-                key={line.key}
-                className={`zenith-tw__row is-prio-${task.priority}`}
-                style={{ height: line.height }}
-            >
+            <div key={line.key} className="zenith-tw__row" style={{ height: line.height }}>
                 <TaskStatusControl
                     status={task.status}
                     size={m.box}
@@ -360,93 +346,30 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
         say(t('tasks.widget.noActive'), 'is-strong is-dim');
     }
 
-    // On `lg` the summary strip carries the link, so the heading doesn't repeat it.
+    // Where the strip of figures is, it carries the link; the heading doesn't repeat it.
     const headLink = showStats
         ? ''
         : size === 'sm'
           ? t('tasks.widget.allShort')
           : t('tasks.widget.allTasks');
 
-    /** Proportions of the day: overdue, due today, running, waiting. */
-    const load = [
-        { n: split.overdue, cls: 'is-overdue' },
-        { n: split.dueToday, cls: 'is-today' },
-        { n: split.doing.length, cls: 'is-doing' },
-        { n: split.next.length, cls: 'is-next' },
-    ].filter((s) => s.n > 0);
-
-    const week = useMemo(() => {
-        if (!showStats) return [];
-        return Array.from({ length: 7 }, (_, i) => {
-            const iso = isoOf(today, i);
-            const due = split.active.filter((task) => task.dueDate === iso);
-            return {
-                iso,
-                isToday: i === 0,
-                label:
-                    i === 0
-                        ? t('tasks.widget.week.today')
-                        : new Date(`${iso}T00:00:00`).toLocaleDateString(t.locale, {
-                              weekday: 'short',
-                          }),
-                bars: due.slice(0, 3).map((task) => task.status),
-            };
-        });
-    }, [showStats, split.active, today, t]);
-
+    /**
+     * Three figures, always the same three: what is on you, what is late, and
+     * what the day closed. A nought is a number too — the strip keeps its shape.
+     */
     const figures = useMemo(() => {
         if (!showStats) return [];
-        let subDone = 0;
-        let subTotal = 0;
-        for (const task of split.active) {
-            const { done, total } = countSubtasks(task.subtasks);
-            subDone += done;
-            subTotal += total;
-        }
-        const dues = split.active
-            .map((task) => task.dueDate)
-            .filter((d): d is string => d !== undefined)
-            .sort();
-        // No "in progress" figure: the heading states it a few pixels above,
-        // and the same number twice on one card is a number you stop reading.
-        const out = [
+        return [
             { key: 'active', value: String(split.active.length), cls: '' },
-            {
-                key: 'overdue',
-                value: String(split.overdue),
-                cls: split.overdue > 0 ? 'is-danger' : 'is-faint',
-            },
+            { key: 'overdue', value: String(split.overdue), cls: split.overdue > 0 ? 'is-danger' : 'is-faint' },
+            { key: 'done', value: String(split.doneToday), cls: split.doneToday > 0 ? 'is-done' : 'is-faint' },
         ];
-        // The day's outcome, only on a day that had one: a nought here would
-        // spend the width of a whole figure to report that nothing happened.
-        if (split.doneToday > 0) {
-            out.push({ key: 'done', value: String(split.doneToday), cls: 'is-done' });
-        }
-        if (split.cancelledToday > 0) {
-            out.push({ key: 'cancelled', value: String(split.cancelledToday), cls: 'is-faint' });
-        }
-        if (subTotal > 0) out.push({ key: 'subtasks', value: `${subDone}/${subTotal}`, cls: '' });
-        out.push({
-            key: 'nextDue',
-            value: dues.length
-                ? new Date(`${dues[0]}T00:00:00`).toLocaleDateString(t.locale, {
-                      month: 'short',
-                      day: 'numeric',
-                  })
-                : '—',
-            cls: 'is-date',
-        });
-        return out;
-    }, [showStats, split, t]);
+    }, [showStats, split]);
 
     /**
-     * The bottom strip at a width the design didn't draw.
-     *
-     * `lg` is "full grid width", which is 886px on the default canvas but far
-     * less in a narrow pane or on a re-sized grid — and the strip is the one
-     * part of the card laid out in fixed pixels, so it is the part that runs
-     * off the edge. Each figure is measured as drawn and the ones there is no
-     * room for are dropped, rather than clipped in place.
+     * The bottom strip at a width the design didn't draw: each figure is
+     * measured as drawn, and the ones there is no room for are dropped rather
+     * than clipped in place.
      */
     const figuresRef = useRef<HTMLDivElement>(null);
     const figureWidths = useRef(new Map<string, number>());
@@ -475,12 +398,11 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
             if (w !== undefined) widths[key] = w;
         }
 
-        const room = stats.clientWidth - weekWidth(split.overdue > 0) - STATS_GAP;
-        const kept = fitFigures(figureKeys, widths, room);
+        const kept = fitFigures(figureKeys, widths, stats.clientWidth);
         setShownFigures((prev) =>
             prev && prev.length === kept.length && prev.every((k, i) => k === kept[i]) ? prev : kept
         );
-    }, [showStats, figureKeys, shownFigures, t.locale, box.w, split.overdue]);
+    }, [showStats, figureKeys, shownFigures, t.locale, box.w]);
 
     const visible = (key: string): boolean => shownFigures === null || shownFigures.includes(key);
 
@@ -505,57 +427,23 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                 )}
             </div>
 
-            {load.length > 0 && (
-                <div className="zenith-tw__load" aria-hidden="true">
-                    {load.map((seg) => (
-                        <i
-                            key={seg.cls}
-                            className={`zenith-tw__load-seg ${seg.cls}`}
-                            style={{ flexGrow: seg.n }}
-                        />
-                    ))}
-                </div>
-            )}
-
             {layout.groups ? (
                 <div className="zenith-tw__groups">
                     {layout.groups.map((g) => (
                         <div key={g.label} className="zenith-tw__group" style={{ gap: layout.gap }}>
                             <div className="zenith-tw__group-head">
-                                <span className="zenith-tw__group-num">
-                                    {String(g.count).padStart(2, '0')}
-                                </span>
                                 <span className="zenith-tw__group-label">
                                     {t(`tasks.widget.group.${g.label}`)}
                                 </span>
-                                <i className="zenith-tw__group-rule" />
+                                <span className="zenith-tw__group-count">{g.count}</span>
                             </div>
                             {g.lines.map(renderLine)}
                         </div>
                     ))}
                 </div>
             ) : (
-                <div className="zenith-tw__body">
-                    <div className="zenith-tw__col" style={{ gap: layout.gap }}>
-                        {layout.columns?.[0] && (
-                            <span className="zenith-tw__col-label">
-                                {t(`tasks.widget.group.${layout.columns[0]}`)}
-                            </span>
-                        )}
-                        {layout.lines.map(renderLine)}
-                    </div>
-                    {layout.lines2.length > 0 && (
-                        <div className="zenith-tw__col" style={{ gap: layout.gap }}>
-                            {/* An empty label still occupies its line: the two
-                                columns have to start at the same height. */}
-                            <span className="zenith-tw__col-label">
-                                {layout.columns?.[1]
-                                    ? t(`tasks.widget.group.${layout.columns[1]}`)
-                                    : ' '}
-                            </span>
-                            {layout.lines2.map(renderLine)}
-                        </div>
-                    )}
+                <div className="zenith-tw__body" style={{ gap: layout.gap }}>
+                    {layout.lines.map(renderLine)}
                 </div>
             )}
 
@@ -570,52 +458,7 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
             )}
 
             {showStats && (
-                <div className="zenith-tw__stats" ref={statsRef} style={{ gap: STATS_GAP }}>
-                    {/* The width the fitting maths reserved, stated. Without
-                        it the strip sized itself to its content — the cells
-                        are shrinkable, so a flex container measuring its own
-                        max-content ignores their bases entirely — and came out
-                        at 174px where 268 had been set aside for it. Two
-                        consequences, both visible: the overdue cell arrived at
-                        34px with a label that needs 42, ellipsised to
-                        "просроч…", and ninety pixels the figures could have
-                        used sat empty between the two halves of the strip. */}
-                    <div
-                        className="zenith-tw__week"
-                        style={{ flexBasis: weekWidth(split.overdue > 0) }}
-                    >
-                        {split.overdue > 0 && (
-                            <div
-                                className="zenith-tw__week-cell is-overdue"
-                                style={{ flexBasis: WEEK_OVERDUE }}
-                            >
-                                <span className="zenith-tw__week-num">−{split.overdue}</span>
-                                <i className="zenith-tw__week-rule" />
-                                <span className="zenith-tw__week-label">
-                                    {t('tasks.widget.week.overdue')}
-                                </span>
-                            </div>
-                        )}
-                        {week.map((day) => (
-                            <div
-                                key={day.iso}
-                                className={`zenith-tw__week-cell ${day.isToday ? 'is-today' : ''}`}
-                                style={{ flexBasis: day.isToday ? WEEK_TODAY : WEEK_CELL }}
-                            >
-                                <span className="zenith-tw__week-bars">
-                                    {day.bars.map((status, i) => (
-                                        <i
-                                            key={i}
-                                            className={`zenith-tw__week-bar is-${status}`}
-                                            style={{ height: 5 + i * 4 }}
-                                        />
-                                    ))}
-                                </span>
-                                <i className="zenith-tw__week-rule" />
-                                <span className="zenith-tw__week-label">{day.label}</span>
-                            </div>
-                        ))}
-                    </div>
+                <div className="zenith-tw__stats" ref={statsRef}>
                     <div
                         className="zenith-tw__figures"
                         ref={figuresRef}
