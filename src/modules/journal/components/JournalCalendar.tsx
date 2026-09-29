@@ -2,7 +2,7 @@ import { useFeature } from '../../../core/useFeature';
 import React, { useMemo, type FC } from 'react';
 import { ChevronLeft, ChevronRight, Grid3x3 } from 'lucide-react';
 import { coerceTrackerValue, trackerColor, type JournalTracker } from '../../../core/journalConfig';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import type { JournalEntry } from '../../../store/journalSlice';
 import type { JournalWeekStart } from '../../../store/settingsSlice';
 import { isJournalled } from '../services/journalStats';
@@ -67,7 +67,7 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
 }) => {
     const t = useTranslation();
     const wordsOn = useFeature('journal.wordCount');
-    const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
+    const locale = intlLocale(t.locale);
 
     const days = useMemo(() => monthGrid(monthAnchor, weekStart), [monthAnchor, weekStart]);
     const weekdays = useMemo(() => weekdayLabels(locale, weekStart), [locale, weekStart]);

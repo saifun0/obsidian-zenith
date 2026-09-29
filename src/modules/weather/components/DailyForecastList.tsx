@@ -2,6 +2,7 @@ import React from 'react';
 import { Cloud, Droplets, Sun, Wind } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import type { Locale, Translator } from '../../../core/i18n';
+import { intlLocale } from '../../../core/i18n';
 import type { WeatherUnit } from '../../../store/settingsSlice';
 import { describeWeather } from '../weatherService';
 import { precipitation, temperature, unitSystem, uvBand, wind as windOf } from '../weatherFormat';
@@ -18,7 +19,7 @@ function dayLabel(date: string, index: number, locale: Locale, t: Translator): s
     if (index === 0) return t('weather.today');
     const [y, m, d] = date.split('-').map(Number);
     return new Date(y, (m ?? 1) - 1, d ?? 1).toLocaleDateString(
-        locale === 'ru' ? 'ru-RU' : 'en-US',
+        intlLocale(locale),
         { weekday: 'short' }
     );
 }

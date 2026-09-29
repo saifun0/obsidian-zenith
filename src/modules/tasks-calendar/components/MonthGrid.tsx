@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, type FC } from 'react';
 import type { Translator } from '../../../core/i18n';
+import { intlLocale } from '../../../core/i18n';
 import {
     addDays,
     monthHeading,
@@ -113,7 +114,7 @@ export const MonthGrid: FC<MonthGridProps> = ({
     onVisibleMonth,
     jumpTo,
 }) => {
-    const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
+    const locale = intlLocale(t.locale);
     const weekdays = weekdayLabels(locale, weekStart);
     const rows = useMemo(() => monthRows(days, columns), [days, columns]);
     /**

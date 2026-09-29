@@ -13,6 +13,7 @@
  */
 
 import type { Locale, Translator } from './i18n';
+import { intlLocale } from './i18n';
 import { daysBetweenIso, toLocalIsoDate } from './dateUtils';
 
 /** How urgently the deadline wants attention. Drives the row's colour. */
@@ -46,7 +47,7 @@ function msUntilMidnight(now: Date): number {
 function longDate(iso: string, locale: Locale, now: Date): string {
     const date = new Date(`${iso}T00:00:00`);
     if (Number.isNaN(date.getTime())) return iso;
-    return date.toLocaleDateString(locale === 'ru' ? 'ru-RU' : 'en-US', {
+    return date.toLocaleDateString(intlLocale(locale), {
         day: 'numeric',
         month: 'long',
         ...(date.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),

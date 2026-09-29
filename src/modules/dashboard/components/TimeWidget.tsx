@@ -9,7 +9,7 @@ import {
     journalConfig,
     type JournalConfig,
 } from '../../journal/services/journalWriter';
-import { useTranslation, type Translator } from '../../../core/i18n';
+import { intlLocale, useTranslation, type Translator } from '../../../core/i18n';
 
 // ── Helpers ──────────────────────────────────────────
 
@@ -46,7 +46,7 @@ function formatRemaining(t: Translator, date: Date): string {
  * show English weekday names, and nothing in settings would explain why.
  */
 function dateLocale(t: Translator): string {
-    return t.locale === 'ru' ? 'ru-RU' : 'en-GB';
+    return intlLocale(t.locale, 'en-GB');
 }
 
 /** Local `yyyy-mm-dd` key (stable identity for "is this cell today?"). */

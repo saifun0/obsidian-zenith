@@ -56,6 +56,7 @@ export const generalSchema: CoreSettingsSchema = coreSchema({
                         { value: 'auto', labelKey: 'settings.language.auto' },
                         { value: 'en', label: 'English' },
                         { value: 'ru', label: 'Русский' },
+                        { value: 'zh', label: '简体中文' },
                     ],
                 },
             ],

@@ -1,5 +1,5 @@
 import React, { useMemo, type FC } from 'react';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
 import { daysBetweenIso } from '../../../core/dateUtils';
 import type { JournalTracker } from '../../../core/journalConfig';
@@ -62,7 +62,7 @@ export const JournalStats: FC<JournalStatsProps> = ({
     showMonth = true,
 }) => {
     const t = useTranslation();
-    const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
+    const locale = intlLocale(t.locale);
     const weekStart = useZenithStore((st) => st.settings.journalWeekStart);
     const stats = useMemo(
         () => journalStats(entries, trackers, today, WINDOW_DAYS, weekStart),

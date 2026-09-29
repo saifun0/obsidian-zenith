@@ -2,7 +2,7 @@ import React, { useMemo, type FC } from 'react';
 import { ChevronLeft, ChevronRight, CalendarCheck, Flame } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import type { JournalTracker } from '../../../core/journalConfig';
 import { usableTrackers } from '../services/usableTrackers';
@@ -47,7 +47,7 @@ const DailyNoteBody: FC<DailyNoteBlockProps> = ({ sourcePath }) => {
     const settings = useZenithStore((s) => s.settings);
 
     const today = getTodayString();
-    const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
+    const locale = intlLocale(t.locale);
     const byDate = useMemo(() => entriesByDate(entries), [entries]);
 
     /**

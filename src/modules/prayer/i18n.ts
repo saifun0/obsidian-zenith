@@ -18,4 +18,8 @@ export const prayerTranslations: TranslationTable = {
         'module.prayer.name': 'Намаз',
         'module.prayer.desc': 'Время намаза — из календаря или расчётом на устройстве — и учёт прочитанного.',
     },
+    zh: {
+        'module.prayer.name': '礼拜',
+        'module.prayer.desc': '礼拜时间——来自公布的时间表或在本地计算——以及你完成礼拜的记录。',
+    },
 };

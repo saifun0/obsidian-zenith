@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, type FC } fro
 import { Notice, Platform } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import { openFileAtLine } from '../../../core/openInVault';
 import type { TaskStatus } from '../../../core/constants';
@@ -103,7 +103,7 @@ function toColumns(raw: number | undefined, roomy: boolean): number {
 export const TasksCalendarApp: FC = () => {
     const t = useTranslation();
     const { app, plugin } = useApp();
-    const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
+    const locale = intlLocale(t.locale);
 
     const tasks = useZenithStore((s) => s.tasks);
     const settings = useZenithStore((s) => s.settings);

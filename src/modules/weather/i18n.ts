@@ -18,4 +18,8 @@ export const weatherTranslations: TranslationTable = {
         'module.weather.name': 'Погода',
         'module.weather.desc': 'Виджет погоды: по часам, прогноз на 10 дней, восход и закат, °C/°F.',
     },
+    zh: {
+        'module.weather.name': '天气',
+        'module.weather.desc': '天气小组件：逐小时和 10 天预报、日出日落以及 °C/°F。',
+    },
 };

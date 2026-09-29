@@ -18,4 +18,8 @@ export const journalTranslations: TranslationTable = {
         'module.journal.name': 'Дневник',
         'module.journal.desc': 'Ежедневные заметки с календарём и трекерами привычек, шкал и чисел.',
     },
+    zh: {
+        'module.journal.name': '日记',
+        'module.journal.desc': '带日历的每日笔记，可追踪习惯、评分和数字。',
+    },
 };

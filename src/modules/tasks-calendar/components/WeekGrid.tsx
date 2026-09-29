@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, type FC } from 'react';
 import type { Translator } from '../../../core/i18n';
+import { intlLocale } from '../../../core/i18n';
 import { isoToDate } from '../../../core/calendarDates';
 import {
     layoutSpans,
@@ -73,7 +74,7 @@ export const WeekGrid: FC<WeekGridProps> = ({
     onOpenSpan,
     classes,
 }) => {
-    const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
+    const locale = intlLocale(t.locale);
     const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' });
     const { segments, lanes } = layoutSpans(calendar.spans, days);
     // Over all three bands: a task's all-day chip and its block on the hours

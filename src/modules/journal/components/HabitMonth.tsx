@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type FC } from 'react';
 import { useApp } from '../../../context/AppContext';
-import { useTranslation, type Translator } from '../../../core/i18n';
+import { intlLocale, useTranslation, type Translator } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
 import { isoToDate, monthLabel } from '../../../core/calendarDates';
 import type { JournalTracker } from '../../../core/journalConfig';
@@ -75,7 +75,7 @@ export const HabitMonth: FC<HabitMonthProps> = ({
 }) => {
     const { app } = useApp();
     const t = useTranslation();
-    const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
+    const locale = intlLocale(t.locale);
     const weekday = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: 'narrow' }), [locale]);
 
     const hostRef = useRef<HTMLDivElement>(null);

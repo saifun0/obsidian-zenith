@@ -12,4 +12,8 @@ export const editorTranslations: TranslationTable = {
         'module.editor.desc':
             'Блоки кода с языком, его иконкой, номерами строк и кнопкой копирования.',
     },
+    zh: {
+        'module.editor.name': '编辑器',
+        'module.editor.desc': '带语言名称、图标、行号和复制按钮的代码块。',
+    },
 };

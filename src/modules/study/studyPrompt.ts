@@ -99,6 +99,44 @@ ${PROMPT_EXAMPLE}
 
 Теперь дождись моего расписания.`;
 
+const ZH = `你要把一份课程表转换成一个日程应用使用的 JSON。
+
+我会发送课程表的照片和/或文字，可能还有作息时间（每节课的时间）。请仔细阅读，并且只用一个 JSON 对象回答——不要解释，不要注释，外面也不要加 Markdown。
+
+格式
+{
+  "weeks": 1 或 2,
+  "bells": [ { "n": 数字, "start": "HH:MM", "end": "HH:MM" } ],
+  "lessons": [ {
+    "day": 1–7（1 = 星期一 … 7 = 星期日）,
+    "n": 节次编号（对应 "bells"）,
+    "start": "HH:MM", "end": "HH:MM"   （仅当这节课有自己的时间，或没有作息时间表时）,
+    "week": 0 每周，1 第一周，2 第二周,
+    "subject": 按原文照写,
+    "kind": "lecture" | "practice" | "lab" | "seminar" | "exam" | "consultation" | "other",
+    "room": 字符串（可选）,
+    "teacher": 字符串（可选）,
+    "subgroup": 1 或 2（可选——仅当这节课只针对一个小组时）,
+    "note": 字符串（可选）
+  } ]
+}
+
+规则
+1. 时间用 24 小时制 HH:MM（"08:30"、"13:50"）。
+2. 如果课程按周交替（单周/双周、"A 周/B 周"、"第一周/第二周"、格子的上半/下半），设 "weeks": 2。单周 / A 周 / 第一周 / 上半格为 "week": 1，另一周为 "week": 2。每周都上的课为 "week": 0。没有交替时，使用 "weeks": 1，并且所有课都是 "week": 0。
+3. 被横线一分为二的格子通常表示上面是第 1 周、下面是第 2 周；被竖线分开通常表示第 1 和第 2 小组。
+4. 课程类型：讲授/理论课 → "lecture"，习题课/练习课 → "practice"，实验课 → "lab"，研讨课 → "seminar"，考试 → "exam"，答疑 → "consultation"。
+5. 如果标出了节次编号，就使用 "n"，并把这节的时间在 "bells" 中写一次。像"第1-2节"这样连上的课，写成一条课程并给出它自己的 "start"/"end"。如果只标出了时间，就在课程上写 "start"/"end"。
+6. 绝不编造：看不清的教室、教师或类型就省略（类型未知时用 "other"）。科目名称按原文照写，保留原来的语言。
+7. 每节课每种周只写一条：两周的星期一都上的课是一条 "week": 0 的记录，而不是两条。
+
+回答示例
+${PROMPT_EXAMPLE}
+
+现在请等待我的课程表。`;
+
 export function aiPrompt(locale: Locale): string {
-    return locale === 'ru' ? RU : EN;
+    if (locale === 'ru') return RU;
+    if (locale === 'zh') return ZH;
+    return EN;
 }

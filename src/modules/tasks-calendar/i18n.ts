@@ -18,4 +18,8 @@ export const tasksCalendarTranslations: TranslationTable = {
         'module.tasks-calendar.name': 'Календарь задач',
         'module.tasks-calendar.desc': 'Задачи на календаре: месяц, неделя или список.',
     },
+    zh: {
+        'module.tasks-calendar.name': '任务日历',
+        'module.tasks-calendar.desc': '在月、周或日程日历上查看任务。',
+    },
 };

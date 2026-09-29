@@ -18,4 +18,8 @@ export const dashboardTranslations: TranslationTable = {
         'module.dashboard.name': 'Дашборд',
         'module.dashboard.desc': 'Главный экран: обзор всех данных Zenith.',
     },
+    zh: {
+        'module.dashboard.name': '仪表盘',
+        'module.dashboard.desc': '汇总 Zenith 数据的中心概览。',
+    },
 };

@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { DICTS, pluralForm, translate, translatePlural, resolveLocale } from '../src/core/i18n';
+import {
+    DICTS,
+    intlLocale,
+    pluralForm,
+    translate,
+    translatePlural,
+    resolveLocale,
+} from '../src/core/i18n';
 import { mockLanguage } from './mocks/obsidian';
 
 describe('dictionary parity', () => {
@@ -54,6 +61,41 @@ describe('dictionary parity', () => {
         }
         expect(missing).toEqual([]);
     });
+
+    const zh = split(DICTS.zh);
+
+    it('translates every English string into Chinese', () => {
+        expect(missingFrom(en.plain, zh.plain)).toEqual([]);
+        expect(missingFrom(en.plural, zh.plural)).toEqual([]);
+        expect(missingFrom(zh.plain, en.plain)).toEqual([]);
+        expect(missingFrom(zh.plural, en.plural)).toEqual([]);
+    });
+
+    it('gives each counted Chinese string its one form, and only that', () => {
+        // Chinese does not inflect for number, so `pluralForm` always says
+        // `other`; a `one` there would never be read.
+        const wrong = Object.keys(DICTS.zh).filter((k) => /\.(one|few|many)$/.test(k));
+        const missing = [...zh.plural].filter((b) => DICTS.zh[`${b}.other`] === undefined);
+        expect(wrong).toEqual([]);
+        expect(missing).toEqual([]);
+    });
+
+    it('keeps every placeholder of the English in the Russian and the Chinese', () => {
+        // A `{count}` lost in translation prints nothing where the number was;
+        // one misspelt prints itself.
+        const names = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
+        const base = (k: string) => k.replace(PLURAL_SUFFIX, '');
+        const english = new Map<string, string>();
+        for (const [k, v] of Object.entries(DICTS.en)) english.set(base(k), names(v));
+        const differ: string[] = [];
+        for (const locale of ['ru', 'zh'] as const) {
+            for (const [k, v] of Object.entries(DICTS[locale])) {
+                const want = english.get(base(k));
+                if (want !== undefined && names(v) !== want) differ.push(`${locale}:${k}`);
+            }
+        }
+        expect(differ).toEqual([]);
+    });
 });
 
 describe('pluralForm', () => {
@@ -82,6 +124,12 @@ describe('pluralForm', () => {
         expect(pluralForm('ru', 0)).toBe('many');
         expect(pluralForm('ru', 5)).toBe('many');
         expect(pluralForm('ru', 100)).toBe('many');
+    });
+
+    it('has one form for Chinese', () => {
+        expect(pluralForm('zh', 1)).toBe('other');
+        expect(pluralForm('zh', 5)).toBe('other');
+        expect(translatePlural('zh', 'common.items', 1)).toBe('1 项');
     });
 
     it('treats negatives and fractions by magnitude', () => {
@@ -122,12 +170,24 @@ describe('resolveLocale', () => {
     it('honours an explicit choice', () => {
         expect(resolveLocale('ru')).toBe('ru');
         expect(resolveLocale('en')).toBe('en');
+        expect(resolveLocale('zh')).toBe('zh');
+    });
+
+    it('names each locale for Intl', () => {
+        expect(intlLocale('ru')).toBe('ru-RU');
+        expect(intlLocale('zh')).toBe('zh-CN');
+        expect(intlLocale('en')).toBe('en-US');
+        expect(intlLocale('en', 'en-GB')).toBe('en-GB');
     });
 
     it("follows Obsidian's language on auto, and English for anything else", () => {
         try {
             mockLanguage.value = 'ru';
             expect(resolveLocale('auto')).toBe('ru');
+            mockLanguage.value = 'zh';
+            expect(resolveLocale('auto')).toBe('zh');
+            mockLanguage.value = 'zh-TW';
+            expect(resolveLocale('auto')).toBe('zh');
             mockLanguage.value = 'de';
             expect(resolveLocale('auto')).toBe('en');
         } finally {

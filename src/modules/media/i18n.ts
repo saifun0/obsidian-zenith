@@ -18,4 +18,8 @@ export const mediaTranslations: TranslationTable = {
         'module.media.name': 'Медиа-баннер',
         'module.media.desc': 'GIF или картинка над проводником файлов, с удобным выбором.',
     },
+    zh: {
+        'module.media.name': '横幅图片',
+        'module.media.desc': '在文件列表上方显示 GIF 或图片，并提供便捷的选择器。',
+    },
 };

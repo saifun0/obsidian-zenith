@@ -10,7 +10,7 @@ import {
     PenLine,
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import type { JournalTracker } from '../../../core/journalConfig';
 import type { JournalEntry, TrackerValue } from '../../../store/journalSlice';
 import type { Task } from '../../../store/taskSlice';
@@ -60,7 +60,7 @@ export const DayPanel: FC<DayPanelProps> = ({
     const wordsOn = useFeature('journal.wordCount');
     const { app, plugin } = useApp();
     const setTaskStatus = useZenithStore((s) => s.setTaskStatus);
-    const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
+    const locale = intlLocale(t.locale);
 
     const { kept, total } = keptOn(entry, trackers);
     /** What was actually written, as opposed to what the template laid down. */

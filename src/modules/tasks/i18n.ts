@@ -18,4 +18,8 @@ export const tasksTranslations: TranslationTable = {
         'module.tasks.name': 'Задачи',
         'module.tasks.desc': 'Задачи, проекты и дела на каждый день.',
     },
+    zh: {
+        'module.tasks.name': '任务',
+        'module.tasks.desc': '管理你的任务、项目和每日待办。',
+    },
 };

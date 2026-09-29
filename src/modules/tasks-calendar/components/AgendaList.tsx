@@ -1,6 +1,7 @@
 import React, { type FC } from 'react';
 import { CalendarX } from 'lucide-react';
 import type { Translator } from '../../../core/i18n';
+import { intlLocale } from '../../../core/i18n';
 import { dayLabel } from '../../../core/calendarDates';
 import type { TaskStatus } from '../../../core/constants';
 import { TaskStatusControl } from '../../tasks/components/taskStatusUi';
@@ -38,7 +39,7 @@ export const AgendaList: FC<AgendaListProps> = ({
     onOpenEntry,
     onStatus,
 }) => {
-    const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
+    const locale = intlLocale(t.locale);
     const groups = agenda(calendar, days);
 
     if (groups.length === 0) {

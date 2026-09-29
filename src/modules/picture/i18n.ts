@@ -18,4 +18,8 @@ export const pictureTranslations: TranslationTable = {
         'module.picture.name': 'Картинка',
         'module.picture.desc': 'Фото или GIF на дашборде — по ссылке или из хранилища.',
     },
+    zh: {
+        'module.picture.name': '图片',
+        'module.picture.desc': '仪表盘上的一张照片或 GIF，来自链接或仓库。',
+    },
 };

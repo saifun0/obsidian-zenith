@@ -1,6 +1,6 @@
 import React, { useMemo, type CSSProperties, type FC } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import {
     SCALE_COLORS,
     SCALE_MAX,
@@ -84,7 +84,7 @@ export const YearPixels: FC<YearPixelsProps> = ({
     onMonth,
 }) => {
     const t = useTranslation();
-    const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
+    const locale = intlLocale(t.locale);
     const months = useMemo(() => yearMonths(year), [year]);
     const monthName = new Intl.DateTimeFormat(locale, { month: 'narrow' });
 

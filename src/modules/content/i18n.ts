@@ -18,4 +18,8 @@ export const contentTranslations: TranslationTable = {
         'module.content.name': 'Контент',
         'module.content.desc': 'Статьи, заметки и длинные тексты в одном месте.',
     },
+    zh: {
+        'module.content.name': '内容',
+        'module.content.desc': '书籍、电影、动画等内容的媒体库：状态、进度、评分和统计。',
+    },
 };

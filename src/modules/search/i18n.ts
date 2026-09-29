@@ -16,4 +16,8 @@ export const searchTranslations: TranslationTable = {
         'module.search.desc':
             'Найти любой вид, действие, задачу, проект или материал и добавить задачу прямо из одной строки.',
     },
+    zh: {
+        'module.search.name': '搜索',
+        'module.search.desc': '在一行中查找任何视图、操作、任务、项目或媒体库条目，并直接添加任务。',
+    },
 };

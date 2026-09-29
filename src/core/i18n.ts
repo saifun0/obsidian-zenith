@@ -13,19 +13,21 @@ import { DASHBOARD_STRINGS } from '../modules/dashboard/strings';
 import { STUDY_STRINGS } from '../modules/study/strings';
 import { SEARCH_STRINGS } from '../modules/search/strings';
 import { EDITOR_STRINGS } from '../modules/editor/strings';
+import { ZH } from './i18n.zh';
 
 /**
  * Minimal i18n for Zenith's own UI.
  *
  * The views were a mix of English and Russian; this centralizes the strings so
  * the interface reads consistently and can follow either the user's explicit
- * choice or Obsidian's locale (`language: 'auto'`).
+ * choice or Obsidian's locale (`language: 'auto'`). Simplified Chinese came
+ * third, as one table of its own (`i18n.zh.ts`).
  */
 
-export type Locale = 'en' | 'ru';
+export type Locale = 'en' | 'ru' | 'zh';
 
 /** Every locale Zenith ships. Contributed chunks are filtered against it. */
-export const LOCALES: readonly Locale[] = ['en', 'ru'];
+export const LOCALES: readonly Locale[] = ['en', 'ru', 'zh'];
 
 type Dict = Record<string, string>;
 
@@ -1078,7 +1080,7 @@ const EN: Dict = {
         'Bring your list across from MyAnimeList (XML), Goodreads, Letterboxd or Anixart (CSV). Export from the service, then pick the file here. A newer export later moves statuses on instead of adding everything again.',
     'content.import.choose': 'Choose an export file…',
     'content.import.unrecognised':
-        'This doesn’t look like a MyAnimeList, Goodreads or Letterboxd export.',
+        'This doesn’t look like a MyAnimeList, Goodreads, Letterboxd or Anixart export.',
     'content.import.unreadable': 'Couldn’t read that file.',
     'content.import.found.one': '{count} entry',
     'content.import.found.other': '{count} entries',
@@ -2767,7 +2769,7 @@ const RU: Dict = {
         'Перенесите список из MyAnimeList (XML), Goodreads, Letterboxd или Anixart (CSV). Выгрузите файл в сервисе и выберите его здесь. Более новая выгрузка потом обновит статусы, а не добавит всё заново.',
     'content.import.choose': 'Выбрать файл выгрузки…',
     'content.import.unrecognised':
-        'Это не похоже на выгрузку MyAnimeList, Goodreads или Letterboxd.',
+        'Это не похоже на выгрузку MyAnimeList, Goodreads, Letterboxd или Anixart.',
     'content.import.unreadable': 'Не удалось прочитать файл.',
     'content.import.found.one': '{count} запись',
     'content.import.found.few': '{count} записи',
@@ -3435,6 +3437,7 @@ export const DICTS: Record<Locale, Dict> = {
         ...SEARCH_STRINGS.ru,
         ...EDITOR_STRINGS.ru,
     },
+    zh: ZH,
 };
 
 // ── Contributed dictionaries ────────────────────────────────────────────────
@@ -3578,9 +3581,25 @@ export function hasTranslation(locale: Locale, key: string): boolean {
 
 /** Resolve the effective locale from an explicit language + Obsidian's setting. */
 export function resolveLocale(language: ZenithLanguage): Locale {
-    if (language === 'en' || language === 'ru') return language;
-    // 'auto' → follow Obsidian's own language.
-    return getLanguage().startsWith('ru') ? 'ru' : 'en';
+    if (language === 'en' || language === 'ru' || language === 'zh') return language;
+    // 'auto' → follow Obsidian's own language. Obsidian's Chinese is `zh` and
+    // its Traditional one `zh-TW`; the Simplified strings serve both better
+    // than English does.
+    const obsidian = getLanguage();
+    if (obsidian.startsWith('ru')) return 'ru';
+    if (obsidian.startsWith('zh')) return 'zh';
+    return 'en';
+}
+
+/**
+ * The BCP 47 tag for `Intl` and `toLocale…String` — dates and numbers in the
+ * interface language. English defaults to US conventions; a view that wants
+ * day-before-month English passes its own.
+ */
+export function intlLocale(locale: Locale, english = 'en-US'): string {
+    if (locale === 'ru') return 'ru-RU';
+    if (locale === 'zh') return 'zh-CN';
+    return english;
 }
 
 /** Values substituted into `{placeholders}` in a string. */
@@ -3602,6 +3621,8 @@ function interpolate(text: string, params?: TParams): string {
  * interface, so counts go through here rather than through string concatenation.
  */
 export function pluralForm(locale: Locale, count: number): 'one' | 'few' | 'many' | 'other' {
+    // Chinese does not inflect for number: "1 个" and "5 个" are the same word.
+    if (locale === 'zh') return 'other';
     const n = Math.abs(Math.round(count));
     if (locale === 'ru') {
         const mod10 = n % 10;

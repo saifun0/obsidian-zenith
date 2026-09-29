@@ -13,4 +13,8 @@ export const studyTranslations: TranslationTable = {
         'module.study.name': 'Учёба',
         'module.study.desc': 'Расписание занятий: что сейчас, где и что дальше.',
     },
+    zh: {
+        'module.study.name': '学习',
+        'module.study.desc': '你的课程表：现在上什么课、在哪里、接下来是什么。',
+    },
 };

@@ -214,7 +214,7 @@ export function weeklyCount(tracker: JournalTracker): number {
  * business importing the i18n layer (and the store behind it); a test asserts
  * this list stays in step with `journal.template.notes`.
  */
-export const NOTES_HEADINGS: readonly string[] = ['notes', 'заметки'] as const;
+export const NOTES_HEADINGS: readonly string[] = ['notes', 'заметки', '笔记'] as const;
 
 export const DEFAULT_TRACKERS: readonly JournalTracker[] = [
     { id: 'mood', label: 'Mood', icon: 'smile', color: '#eab308', kind: 'scale' },

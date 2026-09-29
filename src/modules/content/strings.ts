@@ -113,6 +113,7 @@ export const CONTENT_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'content.series.already': '{count} already in it',
         'content.series.importGroup': 'Group parts into series ({count} found)',
         'content.error.series': 'Could not change the series.',
+        'command.find-content-series': 'Find series in the library',
     },
     ru: {
         'feature.content.readings': 'Повторные прочтения',
@@ -226,5 +227,6 @@ export const CONTENT_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'content.series.already': 'уже в ней: {count}',
         'content.series.importGroup': 'Собрать части в серии (найдено {count})',
         'content.error.series': 'Не удалось изменить серию.',
+        'command.find-content-series': 'Найти серии в библиотеке',
     },
 };

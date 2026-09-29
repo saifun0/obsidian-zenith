@@ -18,4 +18,8 @@ export const syncTranslations: TranslationTable = {
         'module.sync.name': 'Синхронизация',
         'module.sync.desc': 'Настройки объединяются между устройствами, а не перезаписываются.',
     },
+    zh: {
+        'module.sync.name': '同步',
+        'module.sync.desc': '在设备之间合并设置，而不是互相覆盖。',
+    },
 };

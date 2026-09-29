@@ -2,7 +2,7 @@ import React, { useMemo, type FC } from 'react';
 import { AlertTriangle, ChevronRight, CircleCheck } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
-import { useTranslation, type Translator } from '../../../core/i18n';
+import { intlLocale, useTranslation, type Translator } from '../../../core/i18n';
 import { daysBetweenIso, toLocalIsoDate } from '../../../core/dateUtils';
 import { dueCountdown } from '../../../core/dueCountdown';
 import { useNow } from '../../../core/useNow';
@@ -104,7 +104,7 @@ function footerText(t: Translator, rows: Row[], overdue: number, days: Day[]): s
 export const CalendarWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const t = useTranslation();
     const { plugin } = useApp();
-    const locale = t.locale === 'ru' ? 'ru-RU' : 'en-US';
+    const locale = intlLocale(t.locale);
 
     const tasks = useZenithStore((s) => s.tasks);
     const settings = useZenithStore((s) => s.settings);
