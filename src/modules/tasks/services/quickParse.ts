@@ -4,7 +4,7 @@ import { shiftIsoDate } from './taskFormat';
 /**
  * "Позвонить маме завтра в 18 !" → a title, a date, a time and a priority.
  *
- * A narrow grammar on purpose, in Russian and English: a word it does not know
+ * A narrow grammar on purpose, in Russian, English and Chinese: a word it does not know
  * stays part of the title, and only what it did recognise is shown back as a
  * chip the user can take away. A phrase half understood therefore looks half
  * understood — nothing is dropped, and nothing is guessed at silently.
@@ -16,6 +16,12 @@ import { shiftIsoDate } from './taskFormat';
  * - priority: `!` (🔼) and `!!` (⏫), standing alone;
  * - repeats the recurrence engine can run: every day / week / month / year,
  *   every N days / weeks / months / years.
+ *
+ * Chinese writes no spaces between words, so its pieces — `明天`, `周五`,
+ * `9月12日`, `下午6点`, `每周` — and a clock time with a colon may sit right
+ * against the characters around them: "明天下午6点给妈妈打电话". The rest
+ * still needs space around it, and so does a priority mark: "打电话！" is
+ * punctuation, "打电话 ！" is a mark.
  *
  * `#tags` are left in the title: they are already the task's own syntax.
  *
@@ -58,8 +64,15 @@ export interface QuickParse {
  * iOS before 16.4 cannot compile.
  */
 const STARTS_PIECE = /[\s(]/u;
+/** A Chinese character. */
+const HAN = /\p{Script=Han}/u;
 /** Ends one: the end, whitespace, a closing bracket or punctuation. */
-const E = '(?=$|[\\s),.;:!?])';
+const E = '(?=$|[\\s),.;:!?，。；：！？）、])';
+
+/** What a piece that may touch Chinese can also follow: a character, or its punctuation. */
+const CJK_BEFORE = /[\p{Script=Han}，。；：！？、（]/u;
+/** …and what it can also run into: a character, or a digit ("明天18:00"). */
+const E_CJK = '(?=$|[\\s),.;:!?，。；：！？）、\\d]|\\p{Script=Han})';
 
 interface Candidate {
     kind: QuickPieceKind;
@@ -74,28 +87,56 @@ type Rule = {
     re: RegExp;
     /** Fills the fields; false when the match turns out not to mean anything (31.02). */
     apply: (m: RegExpExecArray, out: QuickParse, today: string) => boolean;
+    /** May stand right against Chinese characters, with no space between. */
+    cjk?: boolean;
 };
 
-const rule = (kind: QuickPieceKind, body: string, apply: Rule['apply']): Rule => ({
+/**
+ * How a piece may end: as a word (`E`); against Chinese, as a Chinese word
+ * that may also run into a digit ("明天18:00"); or against Chinese, as a
+ * number, which must not ("12:345" is no time).
+ */
+type Edge = 'word' | 'zh' | 'zhNumber';
+const END: Record<Edge, string> = { word: E, zh: E_CJK, zhNumber: E_CJK.replace('\\d', '') };
+
+const rule = (kind: QuickPieceKind, body: string, apply: Rule['apply'], edge: Edge = 'word'): Rule => ({
     kind,
-    re: new RegExp(`(?:${body})${E}`, 'giu'),
+    re: new RegExp(`(?:${body})${END[edge]}`, 'giu'),
     apply,
+    cjk: edge !== 'word',
 });
+
+/** The same, for a Chinese word — which may touch the characters around it. */
+const zhRule = (kind: QuickPieceKind, body: string, apply: Rule['apply']): Rule =>
+    rule(kind, body, apply, 'zh');
+
+/** …and for a clock time, which may touch Chinese characters but not more digits. */
+const zhTimeRule = (body: string, apply: Rule['apply']): Rule => rule('time', body, apply, 'zhNumber');
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
 // ── Dates ────────────────────────────────────────────
 
 /** Weekday names by JS day number (0 = Sunday). Short English forms that are also words need "on". */
-const WEEKDAYS: Array<{ day: number; ru: string; en: string }> = [
-    { day: 1, ru: 'пн|пнд|понедельник', en: 'mon|monday' },
-    { day: 2, ru: 'вт|втр|вторник', en: 'tue|tues|tuesday' },
-    { day: 3, ru: 'ср|среда|среду', en: 'wed|wednesday' },
-    { day: 4, ru: 'чт|чтв|четверг', en: 'thu|thur|thurs|thursday' },
-    { day: 5, ru: 'пт|птн|пятница|пятницу', en: 'fri|friday' },
-    { day: 6, ru: 'сб|суббота|субботу', en: 'saturday|on\\s+sat' },
-    { day: 0, ru: 'вс|воскресенье', en: 'sunday|on\\s+sun' },
+const WEEKDAYS: Array<{ day: number; ru: string; en: string; zh: string }> = [
+    { day: 1, ru: 'пн|пнд|понедельник', en: 'mon|monday', zh: '一' },
+    { day: 2, ru: 'вт|втр|вторник', en: 'tue|tues|tuesday', zh: '二' },
+    { day: 3, ru: 'ср|среда|среду', en: 'wed|wednesday', zh: '三' },
+    { day: 4, ru: 'чт|чтв|четверг', en: 'thu|thur|thurs|thursday', zh: '四' },
+    { day: 5, ru: 'пт|птн|пятница|пятницу', en: 'fri|friday', zh: '五' },
+    { day: 6, ru: 'сб|суббота|субботу', en: 'saturday|on\\s+sat', zh: '六' },
+    { day: 0, ru: 'вс|воскресенье', en: 'sunday|on\\s+sun', zh: '日|天' },
 ];
+
+/** "周五", "星期五", "礼拜五" — the three ways Chinese names a weekday. */
+const zhWeekday = (zh: string) => `(?:周|星期|礼拜)(?:${zh})`;
+
+/** The weekday in the week after this one (weeks start on Monday): "下周五". */
+function weekdayNextWeek(today: string, day: number): string {
+    const now = new Date(`${today}T00:00:00`).getDay();
+    const toMonday = (8 - now) % 7 || 7;
+    return shiftIsoDate(today, toMonday + ((day + 6) % 7));
+}
 
 /** The next such weekday after today — a weekday named for today means next week. */
 function nextWeekday(today: string, day: number): string {
@@ -161,14 +202,27 @@ type Unit = 'day' | 'week' | 'month' | 'year';
 
 const every = (n: number, unit: Unit) => (n === 1 ? `every ${unit}` : `every ${n} ${unit}s`);
 
-/** Russian and English unit words, singular and plural, to the engine's unit. */
+/** Russian, English and Chinese unit words, singular and plural, to the engine's unit. */
 function unitOf(word: string): Unit | null {
     const w = word.toLowerCase();
-    if (/^(день|дня|дней|day|days)$/.test(w)) return 'day';
-    if (/^(неделю|недели|недель|week|weeks)$/.test(w)) return 'week';
-    if (/^(месяц|месяца|месяцев|month|months)$/.test(w)) return 'month';
-    if (/^(год|года|лет|year|years)$/.test(w)) return 'year';
+    if (/^(день|дня|дней|day|days|天|日)$/.test(w)) return 'day';
+    if (/^(неделю|недели|недель|week|weeks|周|星期|礼拜)$/.test(w)) return 'week';
+    if (/^(месяц|месяца|месяцев|month|months|月|个月)$/.test(w)) return 'month';
+    if (/^(год|года|лет|year|years|年)$/.test(w)) return 'year';
     return null;
+}
+
+/**
+ * "下午6点", "早上7点半", "20点15分" → `HH:MM`. The part of the day moves an
+ * afternoon or evening hour past noon; "中午12点" is noon.
+ */
+function zhClock(part: string | undefined, h: string, min: string | undefined, half: string | undefined): string | null {
+    let hours = Number(h);
+    const minutes = half ? 30 : min === undefined ? 0 : Number(min);
+    if (part && /下午|晚上|傍晚/.test(part) && hours >= 1 && hours < 12) hours += 12;
+    if (part === '中午' && hours >= 1 && hours < 11) hours += 12;
+    if (part === '凌晨' && hours === 12) hours = 0;
+    return clock(String(hours), String(minutes));
 }
 
 /** "Every day" said in one word. */
@@ -214,6 +268,19 @@ const RULES: Rule[] = [
     rule('recurrence', 'daily|weekly|monthly|yearly|annually', (m, out) =>
         setRepeat(out, every(1, ADVERB[m[0].toLowerCase()]))
     ),
+    // "每周五": every week, from the next Friday.
+    ...WEEKDAYS.map((w) =>
+        zhRule('recurrence', `每${zhWeekday(w.zh)}`, (_m, out, today) => {
+            out.dueDate ??= nextWeekday(today, w.day);
+            return setRepeat(out, every(1, 'week'));
+        })
+    ),
+    zhRule('recurrence', '每(?:隔)?\\s*(\\d{1,3})\\s*(天|日|周|星期|礼拜|个月|年)', (m, out) =>
+        setRepeat(out, Number(m[1]) > 0 ? every(Number(m[1]), unitOf(m[2])!) : null)
+    ),
+    zhRule('recurrence', '每(天|日|周|星期|礼拜|个月|月|年)', (m, out) =>
+        setRepeat(out, every(1, unitOf(m[1])!))
+    ),
 
     // Dates.
     rule('date', 'послезавтра|day\\s+after\\s+tomorrow', (_m, out, today) =>
@@ -221,11 +288,30 @@ const RULES: Rule[] = [
     ),
     rule('date', 'сегодня|today', (_m, out, today) => setDate(out, today)),
     rule('date', 'завтра|tomorrow', (_m, out, today) => setDate(out, shiftIsoDate(today, 1))),
+    zhRule('date', '大后天', (_m, out, today) => setDate(out, shiftIsoDate(today, 3))),
+    zhRule('date', '后天', (_m, out, today) => setDate(out, shiftIsoDate(today, 2))),
+    zhRule('date', '今天|今日', (_m, out, today) => setDate(out, today)),
+    zhRule('date', '明天|明日', (_m, out, today) => setDate(out, shiftIsoDate(today, 1))),
     ...WEEKDAYS.map((w) =>
         rule('date', `(?:(?:в|во|on)\\s+)?(?:${w.ru}|${w.en})`, (_m, out, today) =>
             setDate(out, nextWeekday(today, w.day))
         )
     ),
+    ...WEEKDAYS.map((w) =>
+        zhRule('date', `下${zhWeekday(w.zh)}`, (_m, out, today) =>
+            setDate(out, weekdayNextWeek(today, w.day))
+        )
+    ),
+    ...WEEKDAYS.map((w) =>
+        zhRule('date', `(?:这|本)?${zhWeekday(w.zh)}`, (_m, out, today) =>
+            setDate(out, nextWeekday(today, w.day))
+        )
+    ),
+    // "9月12日", "2027年9月12号": the next one, as with `15.10`.
+    zhRule('date', '(?:(\\d{4})年)?(\\d{1,2})月(\\d{1,2})[日号]', (m, out, today) => {
+        const iso = dotDate([m[0], m[3], m[2], m[1]] as unknown as RegExpExecArray, today);
+        return !!iso && setDate(out, iso);
+    }),
     rule('date', '\\+(\\d{1,3})\\s?(д|дн|d|н|нед|w)', (m, out, today) => {
         const n = Number(m[1]);
         const weeks = /^(н|нед|w)$/i.test(m[2]);
@@ -244,8 +330,13 @@ const RULES: Rule[] = [
     rule('time', `(?:в|во|at)\\s+${HM}${DASH}${HM}`, (m, out) =>
         setTime(out, clock(m[1], m[2]), clock(m[3], m[4]))
     ),
-    rule('time', `(\\d{1,2}):(\\d{2})${DASH}${HM}`, (m, out) =>
+    zhTimeRule(`(\\d{1,2}):(\\d{2})${DASH}${HM}`, (m, out) =>
         setTime(out, clock(m[1], m[2]), clock(m[3], m[4]))
+    ),
+    zhRule(
+        'time',
+        '(上午|早上|早晨|中午|下午|晚上|傍晚|凌晨)?\\s*(\\d{1,2})\\s*[点时](?:\\s*(\\d{1,2})\\s*分|(半))?',
+        (m, out) => setTime(out, zhClock(m[1], m[2], m[3], m[4]))
     ),
     rule('time', `${H}${DASH}(\\d{1,2}):(\\d{2})`, (m, out) =>
         setTime(out, clock(m[1], undefined), clock(m[2], m[3]))
@@ -254,14 +345,14 @@ const RULES: Rule[] = [
         setTime(out, clock(m[1], m[2], m[3]))
     ),
     rule('time', `(?:в|во|at)\\s+${HM}`, (m, out) => setTime(out, clock(m[1], m[2]))),
-    rule('time', '(\\d{1,2}):(\\d{2})', (m, out) => setTime(out, clock(m[1], m[2]))),
+    zhTimeRule('(\\d{1,2}):(\\d{2})', (m, out) => setTime(out, clock(m[1], m[2]))),
 
     // Priority, as marks standing on their own; "Позвонить!" keeps its "!".
-    rule('priority', '!!', (_m, out) => {
+    rule('priority', '!!|！！', (_m, out) => {
         out.priority = 'urgent';
         return true;
     }),
-    rule('priority', '!', (_m, out) => {
+    rule('priority', '!|！', (_m, out) => {
         out.priority = 'high';
         return true;
     }),
@@ -289,7 +380,8 @@ export function quickParse(
         let m: RegExpExecArray | null;
         while ((m = r.re.exec(text))) {
             const match = m;
-            if (match.index > 0 && !STARTS_PIECE.test(text[match.index - 1])) {
+            const before = match.index > 0 ? text[match.index - 1] : '';
+            if (before && !STARTS_PIECE.test(before) && !(r.cjk && CJK_BEFORE.test(before))) {
                 // Inside a word: look again from the next character.
                 r.re.lastIndex = match.index + 1;
                 continue;
@@ -336,13 +428,20 @@ export function quickParse(
     }
     out.pieces.sort((a, b) => a.start - b.start);
 
-    let title = '';
+    // What is left, joined by a space where a piece came out — except between
+    // two Chinese characters, which were never apart: "给妈妈明天打电话" is
+    // "给妈妈打电话", not "给妈妈 打电话".
+    const parts: string[] = [];
     let at = 0;
     for (const p of out.pieces) {
-        title += `${text.slice(at, p.start)} `;
+        parts.push(text.slice(at, p.start));
         at = p.end;
     }
-    title += text.slice(at);
+    parts.push(text.slice(at));
+    let title = parts[0];
+    for (const part of parts.slice(1)) {
+        title += HAN.test(title.slice(-1)) && HAN.test(part.charAt(0)) ? part : ` ${part}`;
+    }
     out.title = title.replace(/\s+/g, ' ').trim();
 
     // A time or a repeat with no day is today's.

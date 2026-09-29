@@ -1,6 +1,6 @@
 /**
  * A day, read from what was typed into the Search panel: "вчера", "пн",
- * "12 сентября", "sep 12", "12.09", "2026-09-12".
+ * "12 сентября", "sep 12", "12.09", "2026-09-12", "昨天", "周一", "9月12日".
  *
  * Only a query that is a date and nothing else — "12" alone, or "купить хлеб
  * завтра", is not a question about the journal. Looking back, not ahead: a
@@ -18,17 +18,22 @@ const RELATIVE: Record<string, number> = {
     завтра: 1,
     tomorrow: 1,
     послезавтра: 2,
+    今天: 0,
+    昨天: -1,
+    前天: -2,
+    明天: 1,
+    后天: 2,
 };
 
 /** Weekday names and abbreviations, 0 = Sunday as in `Date.getDay`. */
 const WEEKDAYS: Array<[number, string[]]> = [
-    [1, ['понедельник', 'пн', 'пон', 'monday', 'mon']],
-    [2, ['вторник', 'вт', 'tuesday', 'tue', 'tues']],
-    [3, ['среда', 'среду', 'ср', 'wednesday', 'wed']],
-    [4, ['четверг', 'чт', 'thursday', 'thu', 'thur', 'thurs']],
-    [5, ['пятница', 'пятницу', 'пт', 'friday', 'fri']],
-    [6, ['суббота', 'субботу', 'сб', 'saturday', 'sat']],
-    [0, ['воскресенье', 'вс', 'sunday', 'sun']],
+    [1, ['понедельник', 'пн', 'пон', 'monday', 'mon', '周一', '星期一', '礼拜一']],
+    [2, ['вторник', 'вт', 'tuesday', 'tue', 'tues', '周二', '星期二', '礼拜二']],
+    [3, ['среда', 'среду', 'ср', 'wednesday', 'wed', '周三', '星期三', '礼拜三']],
+    [4, ['четверг', 'чт', 'thursday', 'thu', 'thur', 'thurs', '周四', '星期四', '礼拜四']],
+    [5, ['пятница', 'пятницу', 'пт', 'friday', 'fri', '周五', '星期五', '礼拜五']],
+    [6, ['суббота', 'субботу', 'сб', 'saturday', 'sat', '周六', '星期六', '礼拜六']],
+    [0, ['воскресенье', 'вс', 'sunday', 'sun', '周日', '周天', '星期日', '星期天', '礼拜天']],
 ];
 
 /** Every full form of each month; a query word matches by its start (three letters or more). */
@@ -112,6 +117,13 @@ export function parseJournalQuery(query: string, today: string): string | null {
     let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(q);
     if (m) {
         const d = valid(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+        return d ? iso(d) : null;
+    }
+
+    // "9月12日", "2026年9月12号"
+    m = /^(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]?$/.exec(q);
+    if (m) {
+        const d = dayMonth(now, Number(m[3]), Number(m[2]) - 1, m[1] ? Number(m[1]) : undefined);
         return d ? iso(d) : null;
     }
 

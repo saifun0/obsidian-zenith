@@ -152,6 +152,51 @@ describe('quickParse — English', () => {
     ])('%s', (text, want) => check(text, want));
 });
 
+describe('quickParse — Chinese', () => {
+    it.each<[string, Expect]>([
+        // The placeholder the Chinese interface shows.
+        [
+            '明天 18:00 给妈妈打电话 !',
+            { title: '给妈妈打电话', dueDate: '2026-09-24', dueTime: '18:00', priority: 'high' },
+        ],
+        // No spaces at all, and the pieces anywhere in the phrase.
+        [
+            '明天下午6点给妈妈打电话',
+            { title: '给妈妈打电话', dueDate: '2026-09-24', dueTime: '18:00', pieces: ['明天', '下午6点'] },
+        ],
+        ['给妈妈明天打电话', { title: '给妈妈打电话', dueDate: '2026-09-24' }],
+        ['明天18:00打电话', { title: '打电话', dueDate: '2026-09-24', dueTime: '18:00' }],
+        ['后天交报告', { title: '交报告', dueDate: '2026-09-25' }],
+        ['大后天交报告', { title: '交报告', dueDate: '2026-09-26' }],
+        ['周五开会', { title: '开会', dueDate: '2026-09-25' }],
+        // Named on that very day, it is next week's, as in Russian.
+        ['星期三开会', { title: '开会', dueDate: '2026-09-30' }],
+        ['下周五开会', { title: '开会', dueDate: '2026-10-02' }],
+        ['10月15号办护照', { title: '办护照', dueDate: '2026-10-15' }],
+        // Already past this year, so next year's.
+        ['9月12日交报告', { title: '交报告', dueDate: '2027-09-12' }],
+        ['早上7点半跑步', { title: '跑步', dueDate: '2026-09-23', dueTime: '07:30', impliedDate: true }],
+        ['晚上8点15分看书', { title: '看书', dueDate: '2026-09-23', dueTime: '20:15', impliedDate: true }],
+    ])('dates and times: %s', (text, want) => check(text, want));
+
+    it.each<[string, Expect]>([
+        ['每天喝水', { title: '喝水', recurrence: 'every day', dueDate: '2026-09-23', impliedDate: true }],
+        ['每月交房租', { title: '交房租', recurrence: 'every month', dueDate: '2026-09-23', impliedDate: true }],
+        ['每2周汇报', { title: '汇报', recurrence: 'every 2 weeks', dueDate: '2026-09-23', impliedDate: true }],
+        ['每周五打扫', { title: '打扫', recurrence: 'every week', dueDate: '2026-09-25' }],
+    ])('repeats: %s', (text, want) => check(text, want));
+
+    it.each<[string, Expect]>([
+        // Punctuation, not a mark: it touches the word.
+        ['打电话！', { title: '打电话！' }],
+        ['打电话 ！', { title: '打电话', priority: 'high' }],
+        ['打电话 ！！', { title: '打电话', priority: 'urgent' }],
+        // A bare number is still never a time, and a clock time ends where its digits do.
+        ['买2个面包', { title: '买2个面包' }],
+        ['编号12:345', { title: '编号12:345' }],
+    ])('marks and words: %s', (text, want) => check(text, want));
+});
+
 describe('quickParse — what stays words', () => {
     it.each<[string, Expect]>([
         // A bare number is never a time.

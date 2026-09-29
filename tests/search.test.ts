@@ -275,6 +275,16 @@ describe('a date typed into Search', () => {
         expect(day('25 декабря')).toBe('2026-12-25');
     });
 
+    it('reads a day written in Chinese', () => {
+        expect(day('昨天')).toBe(parseJournalQuery('вчера', TODAY));
+        expect(day('今天')).toBe(TODAY);
+        expect(day('周一')).toBe(parseJournalQuery('пн', TODAY));
+        expect(day('星期日')).toBe(parseJournalQuery('вс', TODAY));
+        expect(day('9月12日')).toBe(parseJournalQuery('12.09', TODAY));
+        expect(day('2025年3月1号')).toBe('2025-03-01');
+        expect(day('2月30日')).toBeNull();
+    });
+
     it('is nothing unless the whole query is a date', () => {
         expect(day('12')).toBeNull();
         expect(day('купить хлеб завтра')).toBeNull();
