@@ -10,6 +10,9 @@ vault.
 Your data stays as plain Markdown in your vault. Zenith reads and writes ordinary `.md`
 files; there is no hidden database.
 
+The interface speaks English, Russian and Simplified Chinese — Obsidian's language by default,
+or the one set in *Settings → Zenith → General → Language*.
+
 ---
 
 ## Modules
