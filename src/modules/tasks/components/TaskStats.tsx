@@ -1,34 +1,19 @@
-import React, { useMemo, useState, type FC } from 'react';
+import React, { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import type { Task } from '../../../store/taskSlice';
-import { STATUS_META } from '../../../core/constants';
-import type { TaskStatus } from '../../../core/constants';
+import { TASK_STATUSES } from '../../../core/constants';
 import { getTodayString } from '../../../core/dateUtils';
-import { computeTaskStats, type StatsRange } from '../services/taskStats';
-import { PieChart } from '../../../components/shared/PieChart';
-import { STATUS_COLOR } from './taskStatusUi';
+import { computeTaskStats, type HeatCell, type StatsRange } from '../services/taskStats';
+import { STATUS_COLOR, STATUS_I18N } from './taskStatusUi';
 import { useTranslation } from '../../../core/i18n';
 import { useFeature } from '../../../core/useFeature';
 
-const RANGES: { id: StatsRange; label: string }[] = [
-    { id: 'week', label: 'Week' },
-    { id: 'month', label: 'Month' },
-    { id: 'year', label: 'Year' },
-    { id: 'all', label: 'All' },
-];
+const RANGES: StatsRange[] = ['week', 'month', 'year', 'all'];
 
-// Distinct, theme-neutral colors for tag segments.
-const TAG_PALETTE = [
-    '#7c6cff',
-    '#4c9be8',
-    '#3fb950',
-    '#e0913b',
-    '#e5534b',
-    '#d9b02a',
-    '#c678dd',
-    '#2bb0a3',
-    '#e06c9f',
-    '#8a94a6',
-];
+/** Tags drawn as bars; the rest are one "other" line. */
+const TAGS_SHOWN = 8;
+
+/** A heatmap column: an 11px cell and the 3px gap after it. */
+const WEEK_PX = 14;
 
 function heatLevel(count: number): number {
     if (count <= 0) return 0;
@@ -42,6 +27,16 @@ interface TaskStatsProps {
     tasks: Task[];
 }
 
+/**
+ * TaskStats — the tasks at a distance, in the library's own shape.
+ *
+ * Four figures in a row rather than four boxes that ran off the edge of a
+ * phone; the rest of what the numbers say in one quiet line under them — the
+ * active days, the streak, how the deadlines are kept. Statuses are one bar,
+ * tags are bars: two rings the height of a phone screen said less. Last, the
+ * year of completions, which fits the width it is given — a phone gets the
+ * recent months, never a scroll that started in the empty middle of the year.
+ */
 export const TaskStats: FC<TaskStatsProps> = ({ tasks }) => {
     const heatmapOn = useFeature('tasks.heatmap');
     const t = useTranslation();
@@ -49,146 +44,167 @@ export const TaskStats: FC<TaskStatsProps> = ({ tasks }) => {
     const today = getTodayString();
     const stats = useMemo(() => computeTaskStats(tasks, today, range), [tasks, today, range]);
 
-    const statusData = useMemo(
-        () =>
-            (Object.keys(stats.byStatus) as TaskStatus[])
-                .filter((s) => stats.byStatus[s] > 0)
-                .map((s) => ({
-                    label: STATUS_META[s].label,
-                    value: stats.byStatus[s],
-                    color: STATUS_COLOR[s],
-                })),
-        [stats]
+    const statuses = TASK_STATUSES.map((status) => ({ status, count: stats.byStatus[status] })).filter(
+        (s) => s.count > 0
     );
 
-    const tagData = useMemo(() => {
-        const top = stats.byTag.slice(0, 9);
-        const rest = stats.byTag.slice(9).reduce((sum, t) => sum + t.count, 0);
-        const data = top.map((t, i) => ({
-            label: t.tag,
-            value: t.count,
-            color: TAG_PALETTE[i % TAG_PALETTE.length],
-        }));
-        if (rest > 0) data.push({ label: 'Other', value: rest, color: '#5a6373' });
-        return data;
-    }, [stats]);
+    const tags = stats.byTag.slice(0, TAGS_SHOWN);
+    const otherTags = stats.byTag.slice(TAGS_SHOWN).reduce((n, x) => n + x.count, 0);
+    const maxTag = Math.max(1, ...tags.map((x) => x.count), otherTags);
+
+    const line: string[] = [
+        t.plural('tasks.stats.activeDays', stats.activeDays),
+        t.plural('tasks.stats.streakDays', stats.streak),
+    ];
+    if (stats.avgOffsetDays !== null) {
+        const days = Math.abs(stats.avgOffsetDays);
+        line.push(
+            stats.avgOffsetDays > 0
+                ? t('tasks.stats.late', { days })
+                : stats.avgOffsetDays < 0
+                  ? t('tasks.stats.early', { days })
+                  : t('tasks.stats.onTime')
+        );
+    }
 
     return (
-        <div className="zenith-taskstats">
-            <div className="zenith-taskstats__rangebar">
-                <span className="zenith-taskstats__range-label">{t('tasks.stats.range')}</span>
-                <div className="zenith-seg">
-                    {RANGES.map((r) => (
-                        <button
-                            key={r.id}
-                            className={`zenith-seg__btn ${range === r.id ? 'is-active' : ''}`}
-                            onClick={() => setRange(r.id)}
-                        >
-                            {r.label}
-                        </button>
-                    ))}
-                </div>
+        <div className="zenith-cstats zenith-taskstats">
+            <div className="zenith-seg zenith-taskstats__range" role="group" aria-label={t('tasks.stats.range')}>
+                {RANGES.map((r) => (
+                    <button
+                        key={r}
+                        type="button"
+                        className={`zenith-seg__btn ${range === r ? 'is-active' : ''}`}
+                        aria-pressed={range === r}
+                        onClick={() => setRange(r)}
+                    >
+                        {t(`tasks.stats.range.${r}`)}
+                    </button>
+                ))}
             </div>
 
-            {/* Stat tiles */}
-            <div className="zenith-taskstats__tiles">
-                <div className="zenith-stat-tile zenith-stat-tile--done">
-                    <div className="zenith-stat-tile__value">
-                        {stats.done}
-                        <span className="zenith-stat-tile__sub"> / {stats.total}</span>
-                    </div>
-                    <div className="zenith-stat-tile__label">{t('tasks.stats.done')}</div>
-                </div>
-                <div className="zenith-stat-tile zenith-stat-tile--progress">
-                    <div className="zenith-stat-tile__value">{stats.inProgress}</div>
-                    <div className="zenith-stat-tile__label">{t('tasks.stats.inProgress')}</div>
-                </div>
-                <div className="zenith-stat-tile zenith-stat-tile--overdue">
-                    <div className="zenith-stat-tile__value">{stats.overdue}</div>
-                    <div className="zenith-stat-tile__label">{t('tasks.stats.overdue')}</div>
-                </div>
-                <div className="zenith-stat-tile zenith-stat-tile--pct">
-                    <div className="zenith-stat-tile__value">{stats.progress}%</div>
-                    <div className="zenith-stat-tile__label">{t('tasks.stats.progress')}</div>
-                </div>
+            <div className="zenith-cstats__figures">
+                <Figure
+                    value={
+                        <>
+                            {stats.done}
+                            <span className="zenith-taskstats__of">/{stats.total}</span>
+                        </>
+                    }
+                    label={t('tasks.stats.done')}
+                />
+                <Figure value={stats.inProgress} label={t('tasks.stats.inProgress')} />
+                <Figure
+                    value={stats.overdue}
+                    label={t('tasks.stats.overdue')}
+                    tone={stats.overdue > 0 ? 'danger' : undefined}
+                />
+                <Figure value={`${stats.progress}%`} label={t('tasks.stats.progress')} />
             </div>
+            <p className="zenith-taskstats__line">{line.join(' · ')}</p>
 
-            {/* Progress bar */}
-            <div className="zenith-taskstats__progress">
-                <div className="zenith-taskstats__progress-label">
-                    {stats.done} of {stats.total} tasks done
-                </div>
-                <div className="zenith-taskstats__progress-track">
-                    <div
-                        className="zenith-taskstats__progress-fill"
-                        style={{ width: `${stats.progress}%` }}
-                    />
-                </div>
-            </div>
-
-            {/* Chips */}
-            <div className="zenith-taskstats__chips">
-                <span className="zenith-chip">
-                    {stats.completedInRange} done this {range === 'all' ? 'time' : range}
-                </span>
-                <span className="zenith-chip">{stats.activeDays} active days</span>
-                <span className="zenith-chip">{stats.streak} streak</span>
-                {stats.avgOffsetDays !== null && (
-                    <span className="zenith-chip">
-                        {stats.avgOffsetDays > 0 ? '+' : ''}
-                        {stats.avgOffsetDays}d avg vs due
-                    </span>
-                )}
-            </div>
-
-            {/* Donuts */}
-            <div className="zenith-taskstats__charts">
-                <div className="zenith-taskstats__chart">
-                    <div className="zenith-taskstats__chart-title">{t('tasks.stats.byStatus')}</div>
-                    <PieChart
-                        data={statusData}
-                        size={150}
-                        centerLabel={stats.total}
-                        centerCaption="tasks"
-                    />
-                </div>
-                <div className="zenith-taskstats__chart">
-                    <div className="zenith-taskstats__chart-title">{t('tasks.stats.byTag')}</div>
-                    <PieChart
-                        data={tagData}
-                        size={150}
-                        centerLabel={`${stats.progress}%`}
-                        centerCaption="done"
-                    />
-                </div>
-            </div>
-
-            {/* Heatmap */}
-            {heatmapOn && (
-                <div className="zenith-taskstats__heat">
-                    <div className="zenith-taskstats__chart-title">{t('tasks.stats.activity')}</div>
-                    <div className="zenith-heatmap">
-                        {chunkWeeks(stats.heatmap).map((week, wi) => (
-                            <div key={wi} className="zenith-heatmap__col">
-                                {week.map((cell) => (
-                                    <div
-                                        key={cell.date}
-                                        className={`zenith-heatmap__cell zenith-heatmap__cell--l${heatLevel(cell.count)}`}
-                                        title={`${cell.date}: ${cell.count} done`}
-                                    />
-                                ))}
-                            </div>
+            {statuses.length > 0 && (
+                <section className="zenith-cstats__section">
+                    <h3 className="zenith-cstats__title">{t('tasks.stats.byStatus')}</h3>
+                    <div className="zenith-cstats__stack" aria-hidden="true">
+                        {statuses.map(({ status, count }) => (
+                            <span key={status} style={{ flexGrow: count, background: STATUS_COLOR[status] }} />
                         ))}
                     </div>
-                </div>
+                    <div className="zenith-cstats__legend">
+                        {statuses.map(({ status, count }) => (
+                            <span key={status} className="zenith-cstats__legend-item">
+                                <span className="zenith-cstats__dot" style={{ background: STATUS_COLOR[status] }} />
+                                {t(STATUS_I18N[status])}
+                                <b>{count}</b>
+                            </span>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {tags.length > 0 && (
+                <section className="zenith-cstats__section">
+                    <h3 className="zenith-cstats__title">{t('tasks.stats.byTag')}</h3>
+                    <div className="zenith-cstats__types">
+                        {[...tags, ...(otherTags > 0 ? [{ tag: '', count: otherTags }] : [])].map(
+                            ({ tag, count }) => (
+                                <div key={tag || '·other'} className="zenith-cstats__type">
+                                    <span className="zenith-cstats__type-label">
+                                        {tag ? `#${tag}` : t('tasks.stats.otherTags')}
+                                    </span>
+                                    <span className="zenith-cstats__type-track">
+                                        <span
+                                            className="zenith-cstats__type-fill zenith-taskstats__tag-fill"
+                                            style={{ width: `${(count / maxTag) * 100}%` }}
+                                        />
+                                    </span>
+                                    <span className="zenith-cstats__type-count">{count}</span>
+                                </div>
+                            )
+                        )}
+                    </div>
+                </section>
+            )}
+
+            {heatmapOn && (
+                <section className="zenith-cstats__section">
+                    <h3 className="zenith-cstats__title">{t('tasks.stats.activity')}</h3>
+                    <Heatmap cells={stats.heatmap} t={t} />
+                </section>
             )}
         </div>
     );
 };
 
-/** Split the flat day list into weeks (columns of 7). */
-function chunkWeeks<T>(cells: T[]): T[][] {
-    const weeks: T[][] = [];
-    for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
-    return weeks;
-}
+const Figure: FC<{ value: React.ReactNode; label: string; tone?: 'danger' }> = ({ value, label, tone }) => (
+    <div className="zenith-cstats__figure">
+        <span className={`zenith-cstats__figure-value ${tone ? `is-${tone}` : ''}`}>{value}</span>
+        <span className="zenith-cstats__figure-label">{label}</span>
+    </div>
+);
+
+/**
+ * The year of completions, as many recent weeks as the width holds.
+ *
+ * It used to be all 53 weeks, centred in a box that scrolled: wider than a
+ * phone, the centring pushed the recent weeks past the edge and left the
+ * empty middle of the year in view — a heatmap that looked broken. Measuring
+ * the width and dropping the oldest weeks keeps the newest one at the right
+ * edge, always.
+ */
+const Heatmap: FC<{ cells: HeatCell[]; t: ReturnType<typeof useTranslation> }> = ({ cells, t }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const [weeks, setWeeks] = useState(53);
+
+    useEffect(() => {
+        const el = ref.current;
+        if (!el || typeof ResizeObserver === 'undefined') return;
+        const ro = new ResizeObserver(([entry]) => {
+            const fit = Math.floor((entry.contentRect.width + 3) / WEEK_PX);
+            setWeeks(Math.max(8, Math.min(53, fit)));
+        });
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    const shown = cells.slice(-weeks * 7);
+    const columns: HeatCell[][] = [];
+    for (let i = 0; i < shown.length; i += 7) columns.push(shown.slice(i, i + 7));
+
+    return (
+        <div className="zenith-heatmap" ref={ref}>
+            {columns.map((week, wi) => (
+                <div key={wi} className="zenith-heatmap__col">
+                    {week.map((cell) => (
+                        <div
+                            key={cell.date}
+                            className={`zenith-heatmap__cell zenith-heatmap__cell--l${heatLevel(cell.count)}`}
+                            title={t('tasks.stats.cell', { date: cell.date, count: cell.count })}
+                        />
+                    ))}
+                </div>
+            ))}
+        </div>
+    );
+};

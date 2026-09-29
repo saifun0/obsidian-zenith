@@ -111,7 +111,10 @@ export const TasksApp: FC = () => {
     const [filters, setFilters] = useState<TaskFilterState>(() => restoreFilters(saved));
 
     useEffect(() => {
-        updateSettings({ taskView: { tab: activeTab, ...filters } });
+        // Spread over what is there: the list keeps its open tasks and folded
+        // groups in the same slice, and they are not this effect's to reset.
+        const view = useZenithStore.getState().settings.taskView;
+        updateSettings({ taskView: { ...view, tab: activeTab, ...filters } });
     }, [activeTab, filters, updateSettings]);
     const [search, setSearch] = useState('');
     const [showCreate, setShowCreate] = useState(false);
@@ -264,23 +267,26 @@ export const TasksApp: FC = () => {
                     </div>
                 </div>
 
-                {/* Tabs */}
-                <Tabs tabs={tabsWithCounts} activeTab={activeTab} onTabChange={setActiveTab} />
-
-                {/* Search */}
-                <SearchField
-                    className="zenith-tasks-search"
-                    value={search}
-                    onChange={setSearch}
-                    placeholder={t('tasks.searchPlaceholder')}
-                />
+                {/* The tabs and the search narrow the list; the statistics
+                    take its place and count everything, so they go with it. */}
+                {!(statsOn && showStats) && (
+                    <>
+                        <Tabs tabs={tabsWithCounts} activeTab={activeTab} onTabChange={setActiveTab} />
+                        <SearchField
+                            className="zenith-tasks-search"
+                            value={search}
+                            onChange={setSearch}
+                            placeholder={t('tasks.searchPlaceholder')}
+                        />
+                    </>
+                )}
             </div>
 
-            {/* Statistics panel */}
-            {statsOn && showStats && <TaskStats tasks={tasks} />}
-
-            {/* Task List */}
-            {tasksLoading ? (
+            {/* The statistics take the list's place, as the library's do: over
+                a long list they were a panel you scrolled past to reach it. */}
+            {statsOn && showStats ? (
+                <TaskStats tasks={tasks} />
+            ) : tasksLoading ? (
                 <div className="zenith-tasks-loading">
                     <RotateCw size={20} className="zenith-spin" />
                     <span>{t('tasks.loading')}</span>

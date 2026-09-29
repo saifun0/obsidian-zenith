@@ -653,6 +653,12 @@ export interface TaskViewState {
     tag: string;
     sort: string;
     group: string;
+    /** Deadline filter. */
+    due?: string;
+    /** Tasks whose subtasks and attachments are open, by `file::title`. */
+    open?: string[];
+    /** Groups folded away, by id. Unset means the default: done and cancelled. */
+    closed?: string[];
 }
 
 /**

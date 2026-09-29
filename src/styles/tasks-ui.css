@@ -37,20 +37,6 @@
 /* The menu itself is `.zenith-pop` in ui.css now — it was this block, and six
    more like it in five other stylesheets. */
 
-/* ── Task item additions ────────────────────────── */
-.zenith-task-item__title-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-}
-.zenith-task-item--dimmed { opacity: 0.55; }
-.zenith-task-item__title.is-dimmed { text-decoration: line-through; color: var(--text-muted); }
-.zenith-task-pill--done {
-    color: var(--zenith-success, #3fb950);
-    border-color: color-mix(in srgb, var(--zenith-success, #3fb950) 40%, transparent);
-}
-
 /* ── Subtasks ───────────────────────────────────── */
 .zenith-subtasks {
     list-style: none;
@@ -64,29 +50,48 @@
 }
 /* Only add top spacing when there are real subtasks (not just the add row). */
 .zenith-subtasks:has(.zenith-subtask:not(.zenith-subtask--add)) {
-    margin-top: 6px;
+    margin-top: 2px;
 }
 .zenith-subtask {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.86rem;
+    gap: 7px;
+    font-size: 0.84rem;
     color: var(--text-normal);
     border-radius: 6px;
-    padding: 2px 4px 2px 0;
+    padding: 0 4px 0 0;
+    min-height: 26px;
 }
 .zenith-subtask:hover { background: color-mix(in srgb, var(--background-modifier-hover) 60%, transparent); }
 /* Compact status control inside subtasks. */
 .zenith-subtask .zenith-status__btn { width: 22px; height: 22px; }
 .zenith-subtask.is-done .zenith-subtask__title { text-decoration: line-through; color: var(--text-muted); }
 
+/* The title and, beside it, the first line of its note — a tap opens the
+   subtask's editor. */
 .zenith-subtask__title {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
     flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    outline: none;
+}
+.zenith-subtask__text {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    cursor: text;
+}
+.zenith-subtask__note {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-faint);
+    font-size: 0.76rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 /* ── Quick add (an Obsidian modal around a React form) ── */
 .zenith-quick-add__form {
@@ -185,23 +190,6 @@
     flex: 1;
     min-width: 0;
 }
-.zenith-subtask__actions {
-    display: flex;
-    gap: 2px;
-    flex-shrink: 0;
-    opacity: 0;
-    /* Collapse to zero width while hidden so the title keeps its room on narrow
-       (mobile) widths; expand on hover/focus. */
-    max-width: 0;
-    overflow: hidden;
-    transition: opacity 0.12s ease, max-width 0.15s ease;
-}
-.zenith-subtask:hover .zenith-subtask__actions,
-.zenith-subtask:focus-within .zenith-subtask__actions {
-    opacity: 1;
-    /* Four 22px buttons (drag, edit, add, delete) plus their 2px gaps. */
-    max-width: 120px;
-}
 button.zenith-subtask__action {
     display: inline-flex;
     align-items: center;
@@ -216,29 +204,14 @@ button.zenith-subtask__action {
     box-shadow: none;
 }
 .zenith-subtask__action:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
-.zenith-subtask__action--danger:hover {
-    color: var(--text-error, #e5534b);
-    background: color-mix(in srgb, var(--text-error, #e5534b) 12%, transparent);
-}
+/* The grip comes up with the row, on a desktop. */
+.zenith-subtask .zenith-drag-handle { opacity: 0; transition: opacity 0.12s ease; }
+.zenith-subtask:hover .zenith-drag-handle,
+.zenith-subtask:focus-within .zenith-drag-handle { opacity: 1; }
 
-/* Add-subtask row — revealed on task hover to keep clean rows. */
-.zenith-subtask--add { display: none; padding-left: 18px; }
+/* The field "add subtask" opens. */
+.zenith-subtask--add { display: flex; padding-left: 18px; }
 .zenith-subtask--add:hover { background: transparent; }
-.zenith-task-item:hover .zenith-subtask--add,
-.zenith-subtask--add:focus-within { display: flex; }
-.zenith-subtask__add {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 8px 3px 4px;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.82rem;
-}
-.zenith-subtask__add:hover { color: var(--zenith-accent); }
 
 /* ── Recursive tree connectors (├ / └ with rounded elbows) ── */
 .zenith-subtask-group {
@@ -298,7 +271,7 @@ button.zenith-subtask__action {
 /* Tuck each trunk under its parent's checkbox so the branch clearly stems from
    it. Top level reaches back under the task's 28px checkbox (+12px gap +6px
    inset); nested levels nudge to the 22px subtask checkbox centre. */
-.zenith-task-item__content > .zenith-subtasks { margin-left: -32px; }
+.zenith-task-item__content > .zenith-subtasks { margin-left: -30px; }
 .zenith-subtask-group > .zenith-subtasks { margin: 0 0 0 5px; }
 .zenith-subtask--nested-add { padding-left: 18px; }
 .zenith-subtask--nested-add:hover { background: transparent; }
@@ -456,25 +429,13 @@ button.zenith-add-row {
 }
 
 
-/* ── Statistics panel ───────────────────────────── */
+/* ── Statistics ─────────────────────────────────── */
+/* The library's statistics (`.zenith-cstats`, content.css) lend their shapes:
+   figures, a status bar, bars for tags. What is the tasks' own is below. */
 .zenith-taskstats {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    margin-bottom: 20px;
-    padding: 18px;
-    border: 1px solid var(--zenith-border);
-    border-radius: 14px;
-    background: color-mix(in srgb, var(--background-secondary) 45%, transparent);
-    animation: zenith-slide-up 0.2s ease both;
+    padding-bottom: var(--zenith-space-lg);
 }
-.zenith-taskstats__rangebar { display: flex; align-items: center; justify-content: space-between; }
-.zenith-taskstats__range-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-}
+/* The segmented control — here the range, and in settings its radio rows. */
 .zenith-seg {
     display: inline-flex;
     gap: 2px;
@@ -497,78 +458,38 @@ button.zenith-seg__btn {
     color: var(--text-normal);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-
-.zenith-taskstats__tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.zenith-stat-tile {
-    padding: 12px 14px;
-    border-radius: 11px;
-    border: 1px solid var(--zenith-border);
-    background: var(--background-primary);
-    border-top: 2px solid var(--zenith-border);
-}
-.zenith-stat-tile--done { border-top-color: var(--zenith-success, #3fb950); }
-.zenith-stat-tile--progress { border-top-color: var(--zenith-info, #4c9be8); }
-.zenith-stat-tile--overdue { border-top-color: var(--zenith-danger, #e5534b); }
-.zenith-stat-tile--pct { border-top-color: var(--color-orange, #e0913b); }
-.zenith-stat-tile__value { font-size: 1.6rem; font-weight: 700; line-height: 1; color: var(--text-normal); }
-.zenith-stat-tile--done .zenith-stat-tile__value { color: var(--zenith-success, #3fb950); }
-.zenith-stat-tile--progress .zenith-stat-tile__value { color: var(--zenith-info, #4c9be8); }
-.zenith-stat-tile--overdue .zenith-stat-tile__value { color: var(--zenith-danger, #e5534b); }
-.zenith-stat-tile--pct .zenith-stat-tile__value { color: var(--color-orange, #e0913b); }
-.zenith-stat-tile__sub { font-size: 0.9rem; font-weight: 500; color: var(--text-muted); }
-.zenith-stat-tile__label {
-    margin-top: 4px;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted);
-}
-
-.zenith-taskstats__progress-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; }
-.zenith-taskstats__progress-track {
-    height: 8px;
-    border-radius: 999px;
-    background: var(--background-modifier-form-field);
-    overflow: hidden;
-}
-.zenith-taskstats__progress-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: var(--zenith-success, #3fb950);
-    transition: width 0.4s ease;
-}
-
-.zenith-taskstats__chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.zenith-chip {
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--zenith-border);
-    background: var(--background-primary);
-    font-size: 0.78rem;
-    color: var(--text-muted);
-}
-
-.zenith-taskstats__charts { display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; }
-.zenith-taskstats__chart { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.zenith-taskstats__chart-title {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
+.zenith-taskstats__range {
     align-self: flex-start;
+    margin-bottom: var(--zenith-space-sm);
+}
+.zenith-taskstats__of {
+    color: var(--text-faint);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+.zenith-cstats__figure-value.is-danger {
+    color: var(--zenith-danger, #e5534b);
+}
+.zenith-taskstats__line {
+    margin: 8px 0 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+.zenith-taskstats__tag-fill {
+    background: color-mix(in srgb, var(--interactive-accent) 75%, transparent);
 }
 
-.zenith-taskstats__heat { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.zenith-taskstats__heat .zenith-taskstats__chart-title { align-self: center; }
-.zenith-heatmap { display: flex; gap: 3px; justify-content: center; max-width: 100%; overflow-x: auto; padding-bottom: 4px; }
+/* The newest week at the right edge, as many before it as fit — never a
+   scroll that opens on the empty middle of the year. */
+.zenith-heatmap { display: flex; gap: 3px; justify-content: flex-end; overflow: hidden; }
 .zenith-heatmap__col { display: flex; flex-direction: column; gap: 3px; }
 .zenith-heatmap__cell {
     width: 11px;
     height: 11px;
     border-radius: 3px;
-    background: var(--background-modifier-form-field);
+    background: color-mix(in srgb, var(--text-muted) 16%, transparent);
 }
-.zenith-heatmap__cell--l1 { background: color-mix(in srgb, var(--zenith-success, #3fb950) 30%, var(--background-modifier-form-field)); }
+.zenith-heatmap__cell--l1 { background: color-mix(in srgb, var(--zenith-success, #3fb950) 35%, transparent); }
 .zenith-heatmap__cell--l2 { background: color-mix(in srgb, var(--zenith-success, #3fb950) 55%, transparent); }
 .zenith-heatmap__cell--l3 { background: color-mix(in srgb, var(--zenith-success, #3fb950) 78%, transparent); }
 .zenith-heatmap__cell--l4 { background: var(--zenith-success, #3fb950); }
@@ -577,19 +498,19 @@ button.zenith-seg__btn {
    Tasks — dashboard widget
 
    Hierarchy is carried by type size and rhythm: there is not one border,
-   pill or filled box inside the card. Numbers, dates and fractions are set
-   in the theme's monospace so data reads apart from names and the right
-   edge lines up on its own.
+   pill or filled box inside the card. One typeface throughout — numbers in
+   tabular figures, so a column of dates still lines up.
    ══════════════════════════════════════════════════════════ */
 .zenith-tw {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 8px;
     height: 100%;
     min-height: 0;
     /* The card must never scroll: whatever doesn't fit is counted into the
        "+N more" link by the layout, not left hanging over the edge. */
     overflow: hidden;
+    font-variant-numeric: tabular-nums;
 }
 .zenith-tw--lg { gap: 10px; }
 
@@ -604,8 +525,7 @@ button.zenith-seg__btn {
 
 /* ── Heading ─────────────────────────────────────── */
 /* A sentence assembled from the data ("2 overdue · today 1 · active 6"),
-   not a fixed label. The parts share a baseline so the big number and the
-   words beside it sit on one line. */
+   sharing a baseline so the number and the words beside it sit on one line. */
 .zenith-tw__head {
     display: flex;
     align-items: baseline;
@@ -621,39 +541,31 @@ button.zenith-seg__btn {
 }
 .zenith-tw__say { white-space: nowrap; }
 
-/* The heading always leads with a number; colour is what says whether it is
-   news to worry about, so the default is plain text and `is-danger` overrides. */
 .zenith-tw__say.is-big {
-    font-family: var(--zenith-font-mono);
-    font-size: 26px;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 0.85;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
     color: var(--zenith-text-normal);
 }
-.zenith-tw--md .zenith-tw__say.is-big { font-size: 30px; }
-.zenith-tw--lg .zenith-tw__say.is-big { font-size: 34px; }
+.zenith-tw--md .zenith-tw__say.is-big { font-size: 24px; }
+.zenith-tw--lg .zenith-tw__say.is-big { font-size: 26px; }
 
 .zenith-tw__say.is-strong {
-    font-size: 16px;
-    font-weight: 620;
-    letter-spacing: -0.015em;
-    color: var(--zenith-text-normal);
-}
-.zenith-tw--md .zenith-tw__say.is-strong { font-size: 19px; }
-.zenith-tw--lg .zenith-tw__say.is-strong { font-size: 22px; }
-
-.zenith-tw__say.is-mid {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--zenith-text-normal);
 }
-.zenith-tw--lg .zenith-tw__say.is-mid { font-size: 15px; }
+.zenith-tw--lg .zenith-tw__say.is-strong { font-size: 15px; }
+
+.zenith-tw__say.is-mid {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--zenith-text-normal);
+}
 
 .zenith-tw__say.is-faint {
-    font-family: var(--zenith-font-mono);
-    font-size: 10.5px;
-    letter-spacing: 0.01em;
+    font-size: 12px;
     color: var(--zenith-text-faint);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -663,151 +575,58 @@ button.zenith-seg__btn {
 /* Colour only — keeps the weight and size of whatever it sits with. */
 .zenith-tw__say.is-dim { color: var(--zenith-text-faint); }
 
-/* ── Load bar ────────────────────────────────────── */
-/* What the day is made of, in proportion: overdue, due today, running,
-   waiting. Not a progress bar — nothing here fills up. */
-.zenith-tw__load {
+/* ── List ────────────────────────────────────────── */
+/* The list is the part that gives: everything else on the card has a fixed
+   height, and a row clipped at the bottom is one the "+N more" link already
+   counted, where a strip pushed past the edge would be the whole strip. */
+.zenith-tw__body,
+.zenith-tw__groups {
     display: flex;
-    gap: 2px;
-    height: 3px;
-    flex: 0 0 auto;
-    border-radius: 2px;
-    overflow: hidden;
-}
-.zenith-tw__load-seg {
-    flex-basis: 0;
-    flex-shrink: 0;
-    min-width: 2px;
-}
-.zenith-tw__load-seg.is-overdue { background: var(--zenith-danger, #e5534b); }
-.zenith-tw__load-seg.is-today { background: var(--zenith-danger, #e5534b); opacity: 0.45; }
-.zenith-tw__load-seg.is-doing { background: var(--zenith-accent); opacity: 0.85; }
-.zenith-tw__load-seg.is-next { background: var(--zenith-text-muted); opacity: 0.3; }
-
-/* ── Columns (sm, md) ────────────────────────────── */
-/* Same bargain as `__groups` on the flat presets: it may shrink, never grow,
-   and what it cannot hold it clips rather than spilling past the card. */
-.zenith-tw__body {
-    display: flex;
-    gap: 36px;
+    flex-direction: column;
     flex: 0 1 auto;
     min-height: 0;
     overflow: hidden;
 }
-.zenith-tw__col {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 0;
-    min-width: 0;
-}
-.zenith-tw__col-label {
-    height: 16px;
-    line-height: 16px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--zenith-text-faint);
-    white-space: nowrap;
-}
-
-/* ── Groups (lg) ─────────────────────────────────── */
-/* Spread down the card rather than stacked at the top: the bottom strip is
-   pinned, and the space between groups is what separates them. */
-/* The list is the part that gives.
-
-   Everything else on the card is furniture with a fixed height — the heading,
-   the load bar, the "+N more" link, the strip along the bottom — and the plan
-   fits rows into what is left. If the plan is a pixel or two optimistic the
-   slack has to come out of something, and it must be the list: a row clipped
-   at the bottom of a list costs a row that the "+N more" link already counted,
-   where a strip pushed past the card's edge costs the whole strip. */
-.zenith-tw__groups {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 10px;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-}
+.zenith-tw__groups { gap: 8px; }
 .zenith-tw__group {
     display: flex;
     flex-direction: column;
-    gap: 3px;
     flex: 0 0 auto;
 }
 .zenith-tw__group-head {
     display: flex;
     align-items: center;
-    gap: 9px;
-    height: 26px;
+    gap: 6px;
+    height: 20px;
     flex: 0 0 auto;
-}
-.zenith-tw__group-num {
-    font-family: var(--zenith-font-mono);
-    font-size: 9.5px;
-    color: var(--zenith-text-faint);
-}
-.zenith-tw__group-label {
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--zenith-text-muted);
 }
-/* The rule runs on to the right edge, so a two-word group and a one-word
-   group still end at the same place. */
-.zenith-tw__group-rule {
-    flex: 1 1 auto;
-    height: 1px;
-    background: var(--zenith-border);
-    opacity: 0.7;
+.zenith-tw__group-count {
+    color: var(--zenith-text-faint);
+    font-weight: 500;
 }
 
 /* ── Rows ────────────────────────────────────────── */
 .zenith-tw__row {
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 10px;
     flex: 0 0 auto;
     border-radius: 5px;
-    /* `background-color` rather than the shorthand: the priority wash below is
-       a background *image*, and a shorthand here would erase it on hover. */
     transition: background-color var(--zenith-transition-fast);
 }
 .zenith-tw__row:hover { background-color: var(--zenith-bg-hover); }
 
 /* A subtask's checkbox stands at the left edge of its parent's title, so the
    nesting reads as an indented paragraph rather than a second column. */
-.zenith-tw__row--sub { gap: 9px; padding-left: 27px; }
-.zenith-tw--lg .zenith-tw__row--sub { padding-left: 29px; }
-.zenith-tw__row--more { padding-left: 49px; }
-.zenith-tw--lg .zenith-tw__row--more { padding-left: 51px; }
-
-/* Priority as a wash under the row: strongest where the eye enters, gone well
-   before the dates on the right, so it colours the task without competing with
-   anything written on it. Nothing is reserved in the layout for it, which is
-   what keeps the titles on one left edge whether or not a priority is set. */
-.zenith-tw__row.is-prio-urgent { --zenith-tw-prio: var(--zenith-priority-urgent, #ef4444); }
-.zenith-tw__row.is-prio-high { --zenith-tw-prio: var(--zenith-priority-high, #f59e0b); }
-.zenith-tw__row.is-prio-medium { --zenith-tw-prio: var(--zenith-priority-medium, #3b82f6); }
-.zenith-tw__row.is-prio-low { --zenith-tw-prio: var(--zenith-priority-low, #6b7280); }
-
-.zenith-tw__row.is-prio-urgent,
-.zenith-tw__row.is-prio-high,
-.zenith-tw__row.is-prio-medium,
-.zenith-tw__row.is-prio-low {
-    background-image: linear-gradient(
-        90deg,
-        color-mix(in srgb, var(--zenith-tw-prio) var(--zenith-tw-prio-strength, 14%), transparent) 0%,
-        color-mix(in srgb, var(--zenith-tw-prio) 4%, transparent) 58%,
-        transparent 100%
-    );
-}
-.zenith-tw__row.is-prio-urgent { --zenith-tw-prio-strength: 17%; }
-.zenith-tw__row.is-prio-medium { --zenith-tw-prio-strength: 11%; }
-.zenith-tw__row.is-prio-low { --zenith-tw-prio-strength: 8%; }
+.zenith-tw__row--sub { gap: 9px; padding-left: 26px; }
+.zenith-tw--lg .zenith-tw__row--sub { padding-left: 27px; }
+.zenith-tw__row--more { padding-left: 48px; }
+.zenith-tw--lg .zenith-tw__row--more { padding-left: 49px; }
 
 .zenith-tw__title {
     flex: 1 1 auto;
@@ -820,20 +639,17 @@ button.zenith-seg__btn {
     color: var(--zenith-text-normal);
     cursor: pointer;
 }
-.zenith-tw--lg .zenith-tw__title { font-size: 15px; }
+.zenith-tw--lg .zenith-tw__title { font-size: 14px; }
 .zenith-tw__title.is-sub { font-size: 12.5px; color: var(--zenith-text-muted); }
-.zenith-tw--lg .zenith-tw__title.is-sub { font-size: 13px; }
 .zenith-tw__title.is-struck {
     color: var(--zenith-text-faint);
     text-decoration: line-through;
 }
 
-/* Tags, recurrence and the subtask tally — and on the compact presets the
-   tally is also the control that opens them. */
+/* Tags, the repeat and the subtask tally — which is also what opens them. */
 .zenith-tw__info {
     flex: 0 0 auto;
-    font-family: var(--zenith-font-mono);
-    font-size: 10.5px;
+    font-size: 11.5px;
     color: var(--zenith-text-faint);
     white-space: nowrap;
 }
@@ -844,13 +660,11 @@ button.zenith-seg__btn {
 /* One right edge of fixed width: dates line up without a table. */
 .zenith-tw__due {
     flex: 0 0 auto;
-    width: 66px;
+    width: 62px;
     text-align: right;
-    font-family: var(--zenith-font-mono);
-    font-size: 11px;
+    font-size: 11.5px;
     color: var(--zenith-text-muted);
 }
-.zenith-tw--lg .zenith-tw__due { width: 74px; }
 .zenith-tw__due.is-overdue,
 .zenith-tw__due.is-today {
     color: var(--zenith-danger, #e5534b);
@@ -860,13 +674,7 @@ button.zenith-seg__btn {
 .zenith-tw__due.is-past { color: var(--zenith-text-faint); }
 
 /* ── Links ───────────────────────────────────────── */
-/* The ghost button from ui.css, flush so it lines up with the text above it.
-   This block used to draw its own: a bare `font-size` and `color`, which is
-   fine on a span and a grey box the moment it becomes a button, because
-   Obsidian styles bare `button` at (0,1,1). That box cost the bottom strip
-   about thirty pixels of width, and the strip drops a figure when it runs out
-   of width — which is how a change of tag name came out looking like a
-   layout bug. */
+/* The ghost button from ui.css, flush so it lines up with the text above it. */
 .zenith-root button.zenith-tw__link {
     flex: 0 0 auto;
 }
@@ -878,150 +686,52 @@ button.zenith-seg__btn {
    maths, so the button does not get to have a height of its own. */
 .zenith-root .zenith-tw__row--more .zenith-tw__link {
     min-height: 0;
-    font-family: var(--zenith-font-mono);
 }
 
-/* ── Bottom strip (lg) ───────────────────────────── */
-/* Seven days of what is coming, and the month's figures. Pinned to the
-   bottom by `margin-top: auto` so the list above can breathe. */
+/* ── Figures (md, lg) ────────────────────────────── */
+/* Active, overdue, closed today — and the way to the whole list. Pinned to
+   the bottom so the list above can breathe. */
 .zenith-tw__stats {
     display: flex;
     align-items: flex-end;
-    justify-content: space-between;
-    /* `gap` is set inline from STATS_GAP — the fitting maths subtracts it. */
     flex: 0 0 auto;
     margin-top: auto;
-    padding-top: 11px;
+    padding-top: 10px;
     border-top: 1px solid var(--zenith-border);
 }
-
-/* A card narrower than the one this was drawn for loses figures, not days:
-   `fitFigures` drops them against the width the week means to take, so the
-   week keeps its own. Shrinking here is the last resort for a card too narrow
-   even for that, which is why the floor is a legible cell and not zero. */
-.zenith-tw__week {
-    display: flex;
-    align-items: flex-end;
-    /* `flex-basis` is set inline from `weekWidth()`, the same number the
-       figure fitting sets aside for this strip. It has to be stated: the cells
-       below are shrinkable, and a flex container sizing itself to content
-       takes their content widths rather than their bases — so a strip of
-       two-letter weekday labels measured 174px where 268 was reserved. */
-    flex: 0 1 auto;
-    min-width: 0;
-}
-/* `flex-basis` is set inline from the same constants the fitting maths uses. */
-.zenith-tw__week-cell {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    flex-grow: 0;
-    flex-shrink: 1;
-    min-width: 22px;
-    overflow: hidden;
-}
-
-.zenith-tw__week-bars {
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 3px;
-    height: 7px;
-}
-.zenith-tw__week-bar {
-    width: 6px;
-    flex: 0 0 auto;
-    border-radius: 1px;
-    background: var(--zenith-text-muted);
-    opacity: 0.7;
-}
-.zenith-tw__week-bar.is-in-progress { background: var(--zenith-accent); }
-.zenith-tw__week-cell.is-today .zenith-tw__week-bar {
-    background: var(--zenith-danger, #e5534b);
-    opacity: 1;
-}
-.zenith-tw__week-num {
-    height: 7px;
-    line-height: 7px;
-    font-family: var(--zenith-font-mono);
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--zenith-danger, #e5534b);
-}
-.zenith-tw__week-rule {
-    width: 100%;
-    height: 1px;
-    background: var(--zenith-border);
-}
-.zenith-tw__week-cell.is-today .zenith-tw__week-rule {
-    height: 2px;
-    background: var(--zenith-text-normal);
-}
-.zenith-tw__week-cell.is-overdue .zenith-tw__week-rule {
-    background: var(--zenith-danger, #e5534b);
-    opacity: 0.5;
-}
-.zenith-tw__week-label {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-family: var(--zenith-font-mono);
-    font-size: 9px;
-    letter-spacing: 0.04em;
-    color: var(--zenith-text-faint);
-    white-space: nowrap;
-}
-.zenith-tw__week-cell.is-today .zenith-tw__week-label { color: var(--zenith-text-normal); }
-.zenith-tw__week-cell.is-overdue .zenith-tw__week-label { color: var(--zenith-danger, #e5534b); }
-
 .zenith-tw__figures {
     display: flex;
     align-items: flex-end;
     /* `gap` is set inline from FIGURE_GAP, which the fitting maths counts. */
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.zenith-tw__figures > .zenith-tw__link {
+    margin-left: auto;
 }
 .zenith-tw__figure {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 2px;
     flex: 0 0 auto;
 }
 .zenith-tw__figure-num {
-    font-family: var(--zenith-font-mono);
     font-size: 16px;
-    font-weight: 600;
-    line-height: 1.05;
+    font-weight: 700;
+    line-height: 1.1;
     color: var(--zenith-text-normal);
 }
 .zenith-tw__figure-num.is-danger { color: var(--zenith-danger, #e5534b); }
 .zenith-tw__figure-num.is-faint { color: var(--zenith-text-faint); }
 /* What got finished is the one figure worth a colour of its own. */
 .zenith-tw__figure-num.is-done { color: var(--zenith-success, #3fb950); }
-.zenith-tw__figure-num.is-date {
-    font-size: 13px;
-    line-height: 1.25;
-    padding-top: 2px;
-    color: var(--zenith-text-muted);
-}
-/* The label wraps, and its column is capped.
-
-   It used to be one unbreakable line, which made a figure as wide as the
-   longest word for it in whatever language is loaded — and the strip drops
-   figures it cannot fit. "closed today" is twelve characters; "завершено
-   сегодня" is seventeen, so the same card at the same width showed two
-   figures in English and one in Russian. That is not a narrow card; that is a
-   budget written against English word lengths.
-
-   Capped rather than merely wrappable, because the fitting maths measures what
-   is drawn: a cap makes a figure's width a number this file decides rather
-   than one the dictionary decides. */
+/* One line: a label that wraps makes the strip taller, and every pixel it
+   takes is a row the list above cannot have. A figure there is no width for
+   is dropped whole by `fitFigures` instead. */
 .zenith-tw__figure-lab {
-    max-width: 76px;
-    font-size: 9px;
+    font-size: 11px;
     line-height: 1.2;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
     color: var(--zenith-text-faint);
+    white-space: nowrap;
 }
