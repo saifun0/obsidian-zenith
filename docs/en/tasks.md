@@ -52,12 +52,26 @@ once done — a recurring one leaves its next occurrence, with the description u
 file may also declare **defaults** via YAML frontmatter (`priority`, `due`, `tags`); inline
 markers on a line override them, and editing a task doesn't copy them onto the line.
 
-The Tasks view adds a **status picker** on each row, a rich **create/edit modal** (status,
-priority, tags with autocomplete, due/start/scheduled dates, recurrence, subtasks), and a
-**statistics panel** (done/total, in-progress, overdue, progress, streak, active days,
-by-status & by-tag donuts, and a completion heatmap). Task rows show a rolled-up subtask
-tally, and the filter bar can narrow by deadline — including **no date**, which is where
-forgotten tasks accumulate. New tasks created from the UI or the
+The Tasks view lists each task as a **line**: its checkbox (a status picker), the title,
+and under it one quiet line — the deadline (red when overdue, orange today), a repeat, a
+flag for high or urgent priority, the subtask tally, two tags, time spent, a paperclip —
+and the first line of its note. **A tap opens the editor** (status, priority, tags with
+autocomplete, due/start/scheduled dates, recurrence, subtasks). **Right-click, or a long
+press on a phone,** opens the rest: status, add a subtask, start the timer, open in file,
+delete. On a desktop the timer and **⋯** come up when you point at a row; nothing sits
+under the rows as buttons.
+
+Subtasks and attachments **fold** behind the tally (or the paperclip) and stay as you left
+them on this device. A subtask is a thinner line; a tap opens its own editor, and its menu
+is behind the same gesture. The groups — *Overdue*, *Today*, *Later*, *Done*, *Cancelled* —
+fold from their header too, and *Done* and *Cancelled* start folded. On a phone the tabs
+keep to one line and scroll sideways.
+
+The chart button swaps the list for the **statistics**: four figures (done, in progress,
+overdue, progress), a line with the active days, the streak and how deadlines are kept,
+the statuses as one bar, the tags as bars, and the year of completions — as many recent
+weeks as the width holds, the newest at the right edge. The filter bar can narrow by
+deadline — including **no date**, which is where forgotten tasks accumulate. New tasks created from the UI or the
 **“Quick add task”** command go into today's daily note when the Journal module's task
 capture is on (the default — see [Journal](journal.md)), and to `Zenith Inbox.md` otherwise.
 
@@ -66,14 +80,17 @@ capture is on (the default — see [Journal](journal.md)), and to `Zenith Inbox.
 <a id="natural-input"></a>**Natural input.** In quick add, the title can carry the rest: *Call mom tomorrow at 6pm !*
 becomes the task *Call mom*, due tomorrow at 18:00, priority 🔼. Every piece that was
 understood shows as a chip under the field, and × on a chip keeps those words in the title
-instead. What is read, in English and Russian:
+instead. What is read, in English, Russian and Chinese:
 
 | | Examples |
 | --- | --- |
-| Date → 📅 | `today`, `tomorrow`, `friday` / `on fri`, `+3d`, `+2w`, `15.10`, `15.10.2027` · `сегодня`, `завтра`, `послезавтра`, `в пятницу`, `пт`, `+3д`, `+2н` |
-| Time → ⏰ | `at 18`, `9:30`, `6pm`, `18:00–19:30`, `from 9 to 10` · `в 18`, `с 9 до 10:30` |
-| Priority | `!` → 🔼, `!!` → ⏫ — standing on their own |
-| Repeat → 🔁 | `every day/week/month/year`, `every 3 days`, `daily`, `weekly` · `каждый день`, `каждые 2 недели`, `ежемесячно` |
+| Date → 📅 | `today`, `tomorrow`, `friday` / `on fri`, `+3d`, `+2w`, `15.10`, `15.10.2027` · `сегодня`, `завтра`, `послезавтра`, `в пятницу`, `пт`, `+3д`, `+2н` · `今天`, `明天`, `后天`, `周五`, `下周五`, `9月12日` |
+| Time → ⏰ | `at 18`, `9:30`, `6pm`, `18:00–19:30`, `from 9 to 10` · `в 18`, `с 9 до 10:30` · `下午6点`, `7点半` |
+| Priority | `!` → 🔼, `!!` → ⏫ — standing on their own; `！` too |
+| Repeat → 🔁 | `every day/week/month/year`, `every 3 days`, `daily`, `weekly` · `каждый день`, `каждые 2 недели`, `ежемесячно` · `每天`, `每周五`, `每2周` |
+
+Chinese needs no spaces: in *明天下午6点给妈妈打电话* the date and the time are read where
+they stand.
 
 It stays narrow on purpose. A bare number is never a time (*buy 2 loaves*), a weekday named
 on that day means next week's, a date already past this year means next year's, and a time
@@ -82,7 +99,8 @@ understood looks half understood, and nothing is dropped. `#tags` are the task's
 syntax and stay in the title; typing `#` offers the tags already in use. Switch it off under
 **Tasks → Features → Natural input**.
 
-**Drag and drop.** Every task and subtask row has a grip in its action cluster. A task
+**Drag and drop.** In manual order every task and subtask row has a grip — on a desktop
+when you point at the row, on a phone always. A task
 carries its whole subtree, and lands with the indentation of whatever it's dropped next
 to — so dragging a subtask beside a top-level task promotes it, and dropping a task inside
 another one's children nests it. Dropping a task into its *own* subtree is refused; it

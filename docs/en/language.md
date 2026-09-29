@@ -3,9 +3,10 @@
 [← Documentation](../../README.md) · **English** · [Русский](../ru/language.md)
 
 Zenith's own interface follows **Settings → General → Language** (`Automatic` tracks
-Obsidian's). English and Russian ship in `src/core/i18n.ts`; counted nouns go through a
-plural helper, so Russian gets its one/few/many forms rather than a number glued to a
-singular.
+Obsidian's). English and Russian ship in `src/core/i18n.ts`, Simplified Chinese in
+`src/core/i18n.zh.ts`; counted nouns go through a plural helper, so Russian gets its
+one/few/many forms rather than a number glued to a singular, and Chinese its single one.
+The tests hold every language to the English keys and placeholders.
 
 ## Modules bring their own strings
 
