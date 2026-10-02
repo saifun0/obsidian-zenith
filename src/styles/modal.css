@@ -234,6 +234,14 @@
     color: var(--zenith-text-muted);
 }
 
+/* A line under a field about what was typed into it — a warning, not an error:
+   the value is still saved. */
+.zenith-dialog .zenith-field__hint {
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--zenith-warning, #f59e0b);
+}
+
 /* A form field fills its column. How it looks is the shared field skin
    (`.zenith-input`, fields.css) — the same one settings and every view use. */
 .zenith-dialog .zenith-field__input {

@@ -85,7 +85,11 @@ export class SuggestModal<T> extends Modal {
 export class FuzzySuggestModal<T> extends SuggestModal<T> {}
 
 export class Notice {
-    constructor(public message?: string) {}
+    /** Every notice raised, in order, so a test can ask what the user was told. */
+    static shown: unknown[] = [];
+    constructor(public message?: unknown) {
+        Notice.shown.push(message);
+    }
     hide(): void {}
 }
 

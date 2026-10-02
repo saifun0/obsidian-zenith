@@ -12,6 +12,7 @@ import { resolveTaskTarget } from '../services/taskTarget';
 import {
     diffTaskFields,
     formatDuration,
+    isRecurrenceUnderstood,
     normalizeTimeOfDay,
     parseDuration,
 } from '../services/taskFormat';
@@ -460,6 +461,11 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({ editTask, onClose, o
                         value={recurrence}
                         onChange={(e) => setRecurrence(e.target.value)}
                     />
+                    {recurrence.trim() && !isRecurrenceUnderstood(recurrence) && (
+                        <span className="zenith-field__hint">
+                            {t('tasks.editor.recurrenceUnread')}
+                        </span>
+                    )}
                 </div>
 
                 {/* Subtasks — create only */}

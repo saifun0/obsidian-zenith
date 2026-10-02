@@ -1,8 +1,10 @@
-import { App, TFile, TFolder, normalizePath } from 'obsidian';
+import { App, Notice, TFile, TFolder, normalizePath } from 'obsidian';
+import { translateNow } from '../../../core/i18n';
 import {
     applyTaskPatch,
     buildTaskLine,
     parseTaskText,
+    isRecurrenceUnderstood,
     nextRecurrenceDate,
     daysBetweenIso,
     shiftIsoDate,
@@ -77,7 +79,8 @@ function recurrenceRollover(body: string, prefix: string, today: string): string
     const ref = parsed.dueDate ?? parsed.scheduledDate ?? parsed.startDate;
     if (!ref) return null;
 
-    const next = nextRecurrenceDate(parsed.recurrence, ref);
+    // `today` matters only to `when done`, which counts from the day of completion.
+    const next = nextRecurrenceDate(parsed.recurrence, ref, today);
     if (!next) return null;
 
     const delta = daysBetweenIso(ref, next);
@@ -131,6 +134,8 @@ export class TaskWriter {
         if (!(file instanceof TFile)) return false;
 
         let ok = false;
+        /** A repeat rule this engine cannot read, met while completing the task. */
+        let unreadRule: string | null = null;
         await this.app.vault.process(file, (data) => {
             const lines = data.split('\n');
             const idx = lineNumber - 1;
@@ -147,6 +152,8 @@ export class TaskWriter {
 
             const [, prefix, , body] = m;
             const today = getTodayString();
+            const rule = parseTaskText(body, { priority: 'none', tags: [] }).recurrence;
+            if (status === 'done' && rule && !isRecurrenceUnderstood(rule)) unreadRule = rule;
             lines[idx] = `${prefix}[${charFromStatus(status)}] ${applyTaskPatch(
                 body,
                 outcomeStamps(status, today)
@@ -174,6 +181,12 @@ export class TaskWriter {
             ok = true;
             return lines.join('\n');
         });
+        if (ok && unreadRule) {
+            // Done is what was asked for, so the task is done. But the series
+            // ends here, and that must not happen without a word: it used to,
+            // for every rule the Tasks plugin knows and this engine did not.
+            new Notice(translateNow('tasks.recurrence.unread', { rule: unreadRule }), 12_000);
+        }
         return ok;
     }
 
