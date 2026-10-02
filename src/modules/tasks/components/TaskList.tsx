@@ -1,20 +1,19 @@
 import React, { useMemo, type FC } from 'react';
 import { Notice } from 'obsidian';
-import {
-    ClipboardList,
-    AlertCircle,
-    CalendarClock,
-    Inbox,
-    CheckCircle2,
-    FileText,
-    CircleX,
-} from 'lucide-react';
 import type { Task } from '../../../store/taskSlice';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation, type Translator } from '../../../core/i18n';
-import { getTodayString, isOverdue, isToday } from '../../../core/dateUtils';
+import { getTodayString } from '../../../core/dateUtils';
 import { TaskWriter } from '../services/taskWriter';
-import { bucketDrop, canDropInBucket, type BucketId } from '../services/taskBuckets';
+import {
+    BUCKETS,
+    bucketDrop,
+    bucketOf,
+    canDropInBucket,
+    type BucketId,
+} from '../services/taskBuckets';
+import { isClosingOf, useClosingTasks, type Closing } from '../services/closingTasks';
+import { compareTasks, type TaskQuery } from '../services/taskFilter';
 import type { DropPosition } from '../services/taskMove';
 import { TaskGroup } from './TaskGroup';
 import { useSortableRows, type SortableRow } from './useSortableRows';
@@ -30,14 +29,24 @@ interface TaskListProps {
      * order, so in any other sort the list would snap straight back.
      */
     reorderable?: boolean;
+    /** The sort in force, which a task being closed is slotted back by. */
+    sort?: TaskQuery['sort'];
+    /** Shown when the list is empty — what to do about it, not a mood. */
+    empty?: React.ReactNode;
+}
+
+/** One row of a group: a task, and its moment of closing if it is in one. */
+export interface ListItem {
+    key: string;
+    task: Task;
+    closing?: Closing;
 }
 
 interface Group {
     id: string;
     title?: string;
-    icon?: React.ReactNode;
-    tasks: Task[];
-    /** Smart-bucket id, when this group is a date/status bucket. */
+    items: ListItem[];
+    /** Smart-group id, when this group is a date/status bucket. */
     bucket?: BucketId;
     /** Source file, when grouping by file. */
     filePath?: string;
@@ -53,72 +62,88 @@ function fileLabel(path: string): string {
     return base.replace(/\.md$/i, '');
 }
 
-function buildGroups(tasks: Task[], groupMode: 'smart' | 'file' | 'none', t: Translator): Group[] {
-    if (groupMode === 'none') return [{ id: 'all', tasks }];
+/** Drop hints for the groups that take a drop; see `bucketDrop`. */
+const HINT: Partial<Record<BucketId, string>> = {
+    today: 'tasks.drop.today',
+    tomorrow: 'tasks.drop.tomorrow',
+    week: 'tasks.drop.week',
+    nodate: 'tasks.drop.nodate',
+    done: 'tasks.drop.done',
+    cancelled: 'tasks.drop.cancelled',
+};
+
+/**
+ * The list's items, with the tasks being closed put back where they were.
+ *
+ * A task that has just been closed is still in `tasks` when the tab shows
+ * finished ones — found by what it was, see `isClosingOf` — and is missing
+ * when the tab does not; then its snapshot stands in for it, slotted in by
+ * the list's own order.
+ */
+function withClosing(
+    tasks: Task[],
+    closings: Record<string, Closing>,
+    sort: TaskQuery['sort']
+): ListItem[] {
+    const entries = Object.entries(closings);
+    const items: ListItem[] = tasks.map((task) => {
+        const hit = entries.find(([, c]) => isClosingOf(c, task));
+        return { key: task.id, task, closing: hit?.[1] };
+    });
+    const cmp = compareTasks(sort);
+    for (const [id, closing] of entries) {
+        if (items.some((it) => it.closing === closing)) continue;
+        const ghost: ListItem = { key: `closing:${id}`, task: closing.snapshot, closing };
+        const at = items.findIndex((it) => cmp(closing.snapshot, it.task) < 0);
+        if (at === -1) items.push(ghost);
+        else items.splice(at, 0, ghost);
+    }
+    return items;
+}
+
+function buildGroups(
+    items: ListItem[],
+    groupMode: 'smart' | 'file' | 'none',
+    t: Translator,
+    today: string
+): Group[] {
+    if (groupMode === 'none') return [{ id: 'all', items }];
 
     if (groupMode === 'file') {
-        const byFile = new Map<string, Task[]>();
-        for (const task of tasks) {
-            const key = task.filePath || 'Unfiled';
+        const byFile = new Map<string, ListItem[]>();
+        for (const item of items) {
+            const key = item.task.filePath || 'Unfiled';
             const list = byFile.get(key) ?? [];
-            list.push(task);
+            list.push(item);
             byFile.set(key, list);
         }
         return Array.from(byFile.entries())
             .sort((a, b) => fileLabel(a[0]).localeCompare(fileLabel(b[0])))
-            .map(([path, groupTasks]) => ({
+            .map(([path, groupItems]) => ({
                 id: path,
                 title: fileLabel(path),
-                icon: <FileText size={14} />,
-                tasks: groupTasks,
+                items: groupItems,
                 filePath: path,
                 hint: t('tasks.drop.moveTo', { name: fileLabel(path) }),
             }));
     }
 
-    // 'smart' — date buckets for active tasks, then done/cancelled groups.
-    const active = tasks.filter((t) => t.status === 'todo' || t.status === 'in-progress');
-    return [
-        {
-            id: 'overdue',
-            title: t('tasks.group.overdue'),
-            icon: <AlertCircle size={14} />,
-            tasks: active.filter((t) => isOverdue(t.dueDate)),
-            bucket: 'overdue',
-        },
-        {
-            id: 'today',
-            title: t('tasks.group.today'),
-            icon: <CalendarClock size={14} />,
-            tasks: active.filter((t) => isToday(t.dueDate)),
-            bucket: 'today',
-            hint: t('tasks.drop.today'),
-        },
-        {
-            id: 'later',
-            title: t('tasks.group.later'),
-            icon: <Inbox size={14} />,
-            tasks: active.filter((t) => !isOverdue(t.dueDate) && !isToday(t.dueDate)),
-            bucket: 'later',
-            hint: t('tasks.drop.later'),
-        },
-        {
-            id: 'done',
-            title: t('tasks.group.done'),
-            icon: <CheckCircle2 size={14} />,
-            tasks: tasks.filter((t) => t.status === 'done'),
-            bucket: 'done',
-            hint: t('tasks.drop.done'),
-        },
-        {
-            id: 'cancelled',
-            title: t('tasks.group.cancelled'),
-            icon: <CircleX size={14} />,
-            tasks: tasks.filter((t) => t.status === 'cancelled'),
-            bucket: 'cancelled',
-            hint: t('tasks.drop.cancelled'),
-        },
-    ];
+    // Smart: the diary's groups, a task being closed staying in the one it was in.
+    const byBucket = new Map<BucketId, ListItem[]>(BUCKETS.map((b) => [b, []]));
+    for (const item of items) {
+        const bucket = item.closing ? item.closing.bucket : bucketOf(item.task, today);
+        byBucket.get(bucket)?.push(item);
+    }
+    return BUCKETS.map((bucket) => {
+        const hint = HINT[bucket];
+        return {
+            id: bucket,
+            title: t(`tasks.group.${bucket}`),
+            items: byBucket.get(bucket) ?? [],
+            bucket,
+            hint: hint ? t(hint) : undefined,
+        };
+    });
 }
 
 // ── Component ────────────────────────────────────────
@@ -129,25 +154,39 @@ function buildGroups(tasks: Task[], groupMode: 'smart' | 'file' | 'none', t: Tra
  * The drag lives here rather than in each group because a drop can cross a
  * group boundary, and that means something: within a group it reorders lines in
  * the file, across groups it edits the task until it belongs where you dropped
- * it (schedules it for today, clears its date, completes it, or moves it to
- * another file). One shared row registry is what lets a single gesture do
- * either.
+ * it (schedules it, clears its date, completes it, or moves it to another
+ * file). One shared row registry is what lets a single gesture do either.
  */
-export const TaskList: FC<TaskListProps> = ({ tasks, groupMode = 'none', reorderable = false }) => {
+export const TaskList: FC<TaskListProps> = ({
+    tasks,
+    groupMode = 'none',
+    reorderable = false,
+    sort = 'manual',
+    empty,
+}) => {
     const { app, plugin } = useApp();
     const t = useTranslation();
-    const groups = useMemo(() => buildGroups(tasks, groupMode, t), [tasks, groupMode, t]);
+    const closings = useClosingTasks((s) => s.items);
+    const today = getTodayString();
+    const items = useMemo(() => withClosing(tasks, closings, sort), [tasks, closings, sort]);
+    const groups = useMemo(
+        () => buildGroups(items, groupMode, t, today),
+        [items, groupMode, t, today]
+    );
 
     const byId = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks]);
+    // A task in its moment of closing is not something to drag.
     const rows: SortableRow[] = useMemo(
         () =>
             groups.flatMap((g) =>
-                g.tasks.map((t) => ({
-                    key: t.id,
-                    filePath: t.filePath,
-                    lineNumber: t.lineNumber,
-                    zone: g.id,
-                }))
+                g.items
+                    .filter((it) => !it.closing)
+                    .map((it) => ({
+                        key: it.task.id,
+                        filePath: it.task.filePath,
+                        lineNumber: it.task.lineNumber,
+                        zone: g.id,
+                    }))
             ),
         [groups]
     );
@@ -242,12 +281,14 @@ export const TaskList: FC<TaskListProps> = ({ tasks, groupMode = 'none', reorder
 
         // Otherwise it means "put it last here" — anchored on the final row that
         // isn't the task being dragged.
-        const last = [...group.tasks].reverse().find((t) => t.id !== source.key);
+        const last = [...group.items]
+            .reverse()
+            .find((it) => !it.closing && it.task.id !== source.key);
         if (!last) {
             if (zoneId !== source.zone) new Notice(t('tasks.error.move'));
             return;
         }
-        await relocate(task, rowOf(last, zoneId), 'after');
+        await relocate(task, rowOf(last.task, zoneId), 'after');
     };
 
     const zoneDroppable = (zoneId: string, source: SortableRow) => {
@@ -258,7 +299,7 @@ export const TaskList: FC<TaskListProps> = ({ tasks, groupMode = 'none', reorder
         if (group.bucket) return canDropInBucket(group.bucket, task, getTodayString());
         // Grouping by file: any other file is a valid destination, as long as it
         // already holds a task to anchor the insert on.
-        return group.tasks.length > 0;
+        return group.items.length > 0;
     };
 
     const sortable = useSortableRows({
@@ -269,36 +310,20 @@ export const TaskList: FC<TaskListProps> = ({ tasks, groupMode = 'none', reorder
         disabled: !reorderable,
     });
 
-    if (tasks.length === 0) {
-        return (
-            <div
-                className="zenith-tasks-empty"
-                style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}
-            >
-                <ClipboardList
-                    size={48}
-                    strokeWidth={1}
-                    style={{ opacity: 0.5, marginBottom: '16px' }}
-                />
-                <div style={{ fontSize: '1.1rem', fontWeight: 500, color: 'var(--text-normal)' }}>
-                    {t('tasks.empty')}
-                </div>
-                <div style={{ fontSize: '0.9rem', marginTop: '8px' }}>{t('tasks.emptyHint')}</div>
-            </div>
-        );
-    }
+    if (items.length === 0) return <>{empty}</>;
 
     const draggedRow = rows.find((r) => r.key === sortable.dragKey);
     const activeZone = sortable.dropTarget?.kind === 'zone' ? sortable.dropTarget.zone : undefined;
 
     return (
-        <div className={groupMode === 'none' ? undefined : 'zenith-task-list-grouped'}>
+        <div className={`zenith-tlist ${groupMode === 'none' ? 'is-flat' : 'is-grouped'}`}>
             {groups.map((group) => (
                 <TaskGroup
                     key={group.id}
                     group={group}
                     sortable={sortable}
                     reorderable={reorderable}
+                    grouped={groupMode === 'smart'}
                     /* An empty group is rendered only while a drag is in flight,
                        and only if it would accept what's being dragged. */
                     droppable={!!draggedRow && zoneDroppable(group.id, draggedRow)}

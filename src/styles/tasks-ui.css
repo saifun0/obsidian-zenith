@@ -19,20 +19,80 @@
     cursor: pointer;
     transition: background 0.15s ease, transform 0.1s ease;
 }
-.zenith-status__btn:hover { background: var(--background-modifier-hover) !important; }
-.zenith-status__btn:active { transform: scale(0.92); }
+.zenith-status__btn:active { transform: scale(0.9); }
+.zenith-status__btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--interactive-accent) !important; }
 
-/* Rounded-square checkbox (iOS-style): outline when empty, filled + white glyph
-   otherwise. Colours (per status) come inline from STATUS_COLOR. */
+/* The ink circle (taskStatusUi.tsx). It says its status by shape and takes the
+   colour of the text around it: across a list, the one colour left over is a
+   deadline that has passed. Obsidian's own variables, not --zenith-*, because
+   the status menu portals out of .zenith-root. */
 .zenith-status__box {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    border: 2px solid var(--text-muted, #9a9a9a);
-    border-radius: 30%;
+    display: block;
     flex-shrink: 0;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    overflow: visible;
+    color: var(--text-muted);
+}
+.zenith-status__ring {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    transition: stroke 0.15s ease;
+}
+.zenith-status__half { fill: currentColor; }
+.zenith-status__slash {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+}
+.zenith-status__fill { fill: currentColor; }
+.zenith-status__tick,
+.zenith-status__ghost {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.zenith-status__tick { stroke: var(--background-primary); }
+/* What a click will do, faintly, under the pointer. */
+.zenith-status__ghost {
+    stroke: currentColor;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.zenith-status__btn:hover .zenith-status__ghost { opacity: 0.4; }
+.zenith-status__btn:hover .zenith-status__box.is-todo { color: var(--text-normal); }
+
+.zenith-status__box.is-in-progress { color: var(--text-normal); }
+.zenith-status__box.is-done { color: var(--text-faint); }
+.zenith-status__box.is-cancelled { color: var(--text-faint); }
+
+/* The moment of closing: the ink spreads from the middle and the tick is
+   drawn after it. Only on the click that closed it, never on a list that
+   merely loads with finished tasks in it. */
+.zenith-status__box.is-inked .zenith-status__fill {
+    transform-origin: 10px 10px;
+    animation: zenith-ink-fill 0.24s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+.zenith-status__box.is-inked .zenith-status__tick {
+    stroke-dasharray: 14;
+    stroke-dashoffset: 14;
+    animation: zenith-ink-tick 0.2s 0.18s ease-out forwards;
+}
+.zenith-status__box.is-inked { color: var(--text-muted); }
+@keyframes zenith-ink-fill {
+    from { transform: scale(0.35); opacity: 0.4; }
+    to { transform: scale(1); opacity: 1; }
+}
+@keyframes zenith-ink-tick {
+    to { stroke-dashoffset: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .zenith-status__box.is-inked .zenith-status__fill,
+    .zenith-status__box.is-inked .zenith-status__tick {
+        animation: none;
+        stroke-dashoffset: 0;
+    }
 }
 /* The menu itself is `.zenith-pop` in ui.css now — it was this block, and six
    more like it in five other stylesheets. */
@@ -271,33 +331,397 @@ button.zenith-subtask__action {
 /* Tuck each trunk under its parent's checkbox so the branch clearly stems from
    it. Top level reaches back under the task's 28px checkbox (+12px gap +6px
    inset); nested levels nudge to the 22px subtask checkbox centre. */
-.zenith-task-item__content > .zenith-subtasks { margin-left: -30px; }
 .zenith-subtask-group > .zenith-subtasks { margin: 0 0 0 5px; }
 .zenith-subtask--nested-add { padding-left: 18px; }
 .zenith-subtask--nested-add:hover { background: transparent; }
 
-/* ── Editor modal bits not covered by the shared dialog ── */
+/* ── Tag chips ──────────────────────────────────── */
+/* A tag, and the ✕ that takes it away. The ✕ is a button, and Obsidian gives
+   every button a height of its own (--input-height) and a filled, shadowed
+   face; left alone, that swelled the ✕ into a grey bubble that stretched the
+   whole chip. Every part of it is reset here, at a weight that wins. */
 .zenith-tagchips { display: flex; flex-wrap: wrap; gap: 6px; }
 .zenith-tagchip {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 3px 6px 3px 9px;
+    gap: 1px;
+    height: 24px;
+    padding: 0 3px 0 9px;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--interactive-accent) 16%, transparent);
+    background: color-mix(in srgb, var(--text-normal) 8%, transparent);
     color: var(--text-normal);
-    font-size: 0.8rem;
+    font-size: 0.82rem;
+    line-height: 1;
+    white-space: nowrap;
 }
-.zenith-tagchip button {
+.zenith-tagchip__text {
+    padding-right: 2px;
+}
+.zenith-tagchip button.zenith-tagchip__remove {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 18px;
+    height: 18px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-faint);
+    cursor: pointer;
+}
+.zenith-tagchip button.zenith-tagchip__remove:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+.zenith-tagchip button.zenith-tagchip__remove:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
+/* ── The task, opened as a page (TaskEditorModal) ── */
+.zenith-tsheet {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 6px;
+}
+.zenith-tsheet__kicker {
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 0.86rem;
+    color: var(--text-faint);
+}
+.zenith-dialog textarea.zenith-tsheet__title {
+    width: 100%;
+    margin: -8px 0 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    resize: none;
+    overflow: hidden;
+    field-sizing: content;
+    min-height: 1.3em;
+    font-family: var(--zenith-font-ink);
+    font-size: 1.6rem;
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--text-normal);
+}
+.zenith-dialog textarea.zenith-tsheet__title::placeholder {
+    color: var(--text-faint);
+}
+.zenith-dialog textarea.zenith-tsheet__title:focus {
+    box-shadow: none;
+}
+
+/* The property line: what the task is, each word its own control. */
+.zenith-tsheet__props {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 6px;
+    font-size: 0.88rem;
+}
+.zenith-tsheet__sep {
+    color: var(--text-faint);
+}
+.zenith-dialog button.zenith-tsheet__prop {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: auto;
+    min-height: 0;
+    margin: 0 -4px;
+    padding: 2px 4px;
+    border: none;
+    border-radius: 5px;
+    background: none;
+    box-shadow: none;
+    font: inherit;
+    color: var(--text-normal);
+    cursor: pointer;
+}
+.zenith-dialog button.zenith-tsheet__prop:hover,
+.zenith-dialog button.zenith-tsheet__prop.is-open {
+    background: var(--background-modifier-hover);
+}
+.zenith-dialog button.zenith-tsheet__prop.is-open {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+.zenith-dialog button.zenith-tsheet__prop.is-unset {
+    color: var(--text-faint);
+    margin-left: 4px;
+}
+.zenith-dialog button.zenith-tsheet__prop.is-unset:hover {
+    color: var(--text-muted);
+}
+.zenith-dialog button.zenith-tsheet__prop.is-danger {
+    color: var(--color-red, #e5534b);
+}
+
+/* The one question opened from the line, under it. */
+.zenith-tsheet__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--text-normal) 4%, transparent);
+    animation: zenith-fade-in 0.16s ease both;
+}
+.zenith-tsheet__choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+}
+.zenith-dialog button.zenith-tsheet__choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: auto;
+    min-height: 0;
+    padding: 2px 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    font-size: 0.86rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 4px;
+}
+.zenith-dialog button.zenith-tsheet__choice:hover {
+    color: var(--text-normal);
+}
+.zenith-dialog button.zenith-tsheet__choice.is-on {
+    color: var(--text-normal);
+    text-decoration-color: currentColor;
+}
+.zenith-tsheet__prio.is-p-high,
+.zenith-tsheet__prio.is-p-urgent { font-weight: 600; }
+.zenith-tsheet__prio.is-p-urgent { color: var(--color-red, #e5534b); }
+.zenith-tsheet__prio.is-p-low { color: var(--text-faint); }
+.zenith-tsheet__fields {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.zenith-tsheet__field { width: 170px; }
+.zenith-tsheet__field.is-time { width: 110px; }
+.zenith-tsheet__field.is-wide { width: 100%; }
+.zenith-tsheet__dash { color: var(--text-faint); }
+
+/* Tags, and the field a new one is typed into — inline, like the words. */
+.zenith-tsheet__tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    cursor: text;
+}
+.zenith-dialog input.zenith-tsheet__tag-input {
+    flex: 1 1 120px;
+    min-width: 100px;
+    height: 24px;
+    padding: 0 2px;
     border: none;
     background: transparent;
-    cursor: pointer;
-    color: var(--text-muted);
-    padding: 1px;
-    border-radius: 50%;
+    box-shadow: none;
+    font-size: 0.86rem;
 }
-.zenith-tagchip button:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+.zenith-dialog input.zenith-tsheet__tag-input:focus { box-shadow: none; }
+.zenith-tsheet__suggest {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 14px;
+    margin-top: -6px;
+}
+.zenith-dialog button.zenith-tsheet__suggest-item {
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    font-size: 0.8rem;
+    color: var(--text-faint);
+    cursor: pointer;
+}
+.zenith-dialog button.zenith-tsheet__suggest-item:hover { color: var(--text-normal); }
+
+/* The note: written in the planner's hand, on the page, with no box. */
+.zenith-dialog textarea.zenith-tsheet__note {
+    width: 100%;
+    min-height: 72px;
+    padding: 12px 0 0;
+    border: none;
+    border-top: 1px solid color-mix(in srgb, var(--background-modifier-border) 70%, transparent);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    resize: vertical;
+    field-sizing: content;
+    font-family: var(--zenith-font-ink);
+    font-size: 1.02rem;
+    line-height: 1.55;
+    color: var(--text-normal);
+}
+.zenith-dialog textarea.zenith-tsheet__note::placeholder {
+    font-style: italic;
+    color: var(--text-faint);
+}
+.zenith-dialog textarea.zenith-tsheet__note:focus { box-shadow: none; }
+
+.zenith-tsheet__section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.zenith-tsheet__heading {
+    margin: 0;
+    font-family: var(--zenith-font-ink);
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+.zenith-tsheet__tree {
+    padding-left: 4px;
+}
+.zenith-tsheet__sub {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 30px;
+}
+.zenith-tsheet__sub .zenith-status__box { color: var(--text-faint); }
+.zenith-dialog input.zenith-tsheet__sub-input {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-bottom: 1px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: 0.9rem;
+}
+.zenith-dialog input.zenith-tsheet__sub-input:focus {
+    box-shadow: none;
+    border-bottom-color: var(--background-modifier-border);
+}
+.zenith-dialog button.zenith-tsheet__sub-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    box-shadow: none;
+    color: var(--text-faint);
+    cursor: pointer;
+}
+.zenith-dialog button.zenith-tsheet__sub-remove:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+.zenith-dialog button.zenith-tsheet__add {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 6px;
+    height: auto;
+    min-height: 0;
+    padding: 2px 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    font-size: 0.84rem;
+    color: var(--text-faint);
+    cursor: pointer;
+}
+.zenith-dialog button.zenith-tsheet__add:hover { color: var(--text-normal); }
+
+/* Attachments, in the sheet's voice: a heading in the planner's hand, the
+   attachments as quiet lines, and the four ways to add one as words. */
+.zenith-tsheet .zenith-field__label {
+    margin: 0;
+    font-family: var(--zenith-font-ink);
+    font-size: 1rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-muted);
+}
+.zenith-tsheet .zenith-attach__row {
+    border: none;
+    padding: 4px 8px;
+    background: color-mix(in srgb, var(--text-normal) 4%, transparent);
+}
+.zenith-tsheet .zenith-attach__icon[class*='is-'] { color: var(--text-muted); }
+.zenith-tsheet .zenith-attach__add { gap: 4px 16px; }
+.zenith-dialog .zenith-tsheet button.zenith-add-row.zenith-attach__btn {
+    height: auto;
+    min-height: 0;
+    padding: 2px 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    font-size: 0.84rem;
+    color: var(--text-faint);
+}
+.zenith-dialog .zenith-tsheet button.zenith-add-row.zenith-attach__btn:hover {
+    color: var(--text-normal);
+}
+
+/* The footer: a quiet hint, "Cancel" as a word, "Save" in ink. */
+.zenith-tsheet-dialog .zenith-dialog__footer {
+    align-items: center;
+}
+.zenith-tsheet__keys {
+    margin-right: auto;
+    font-size: 0.76rem;
+    color: var(--text-faint);
+}
+.zenith-dialog button.zenith-tsheet__cancel {
+    height: auto;
+    min-height: 0;
+    padding: 6px 8px;
+    border: none;
+    background: none;
+    box-shadow: none;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+.zenith-dialog button.zenith-tsheet__cancel:hover { color: var(--text-normal); }
+.zenith-dialog button.zenith-btn--primary.zenith-tsheet__save {
+    background: var(--text-normal);
+    color: var(--background-primary);
+    border-color: transparent;
+}
+.zenith-dialog button.zenith-btn--primary.zenith-tsheet__save:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--text-normal) 86%, var(--background-primary));
+}
+.zenith-dialog button.zenith-btn--primary.zenith-tsheet__save:disabled {
+    background: color-mix(in srgb, var(--text-normal) 30%, transparent);
+}
+@media (pointer: coarse) {
+    .zenith-tsheet__keys { display: none; }
+}
 
 .zenith-autocomplete { position: relative; }
 .zenith-autocomplete__menu {
@@ -429,79 +853,211 @@ button.zenith-add-row {
 }
 
 
-/* ── Statistics ─────────────────────────────────── */
-/* The library's statistics (`.zenith-cstats`, content.css) lend their shapes:
-   figures, a status bar, bars for tags. What is the tasks' own is below. */
-.zenith-taskstats {
-    padding-bottom: var(--zenith-space-lg);
+/* ── Statistics, as a report ────────────────────── */
+/* A paragraph with its figures in italic, then a line of ink, a list with
+   dotted leaders and a heatmap in the same ink. It takes the list's place in
+   the tasks view, and lines up with its titles. */
+.zenith-trep {
+    padding-left: var(--zenith-tcolumn, 0px);
+    padding-bottom: 8px;
+    animation: zenith-fade-in var(--zenith-transition-slow);
 }
-/* The segmented control — here the range, and in settings its radio rows. */
-.zenith-seg {
-    display: inline-flex;
-    gap: 2px;
-    padding: 3px;
-    border-radius: 9px;
-    background: var(--background-modifier-form-field);
+.zenith-ink-figure {
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-variant-numeric: oldstyle-nums;
 }
-button.zenith-seg__btn {
-    padding: 4px 12px;
+
+.zenith-trep__range {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    font-size: 0.86rem;
+}
+.zenith-trep__sep { color: var(--text-faint); }
+.zenith-root button.zenith-trep__range-item {
+    height: auto;
+    padding: 0;
     border: none;
-    background: transparent;
-    color: var(--text-muted);
-    border-radius: 7px;
-    cursor: pointer;
-    font-size: 0.82rem;
+    background: none;
     box-shadow: none;
-}
-.zenith-seg__btn.is-active {
-    background: var(--background-primary);
-    color: var(--text-normal);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-.zenith-taskstats__range {
-    align-self: flex-start;
-    margin-bottom: var(--zenith-space-sm);
-}
-.zenith-taskstats__of {
+    font: inherit;
     color: var(--text-faint);
-    font-size: 0.9rem;
-    font-weight: 500;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 5px;
 }
-.zenith-cstats__figure-value.is-danger {
-    color: var(--zenith-danger, #e5534b);
+.zenith-root button.zenith-trep__range-item:hover { color: var(--text-muted); }
+.zenith-root button.zenith-trep__range-item.is-on {
+    color: var(--text-normal);
+    text-decoration-color: currentColor;
 }
-.zenith-taskstats__line {
-    margin: 8px 0 0;
+
+.zenith-trep__lead {
+    max-width: 36em;
+    margin: 22px 0 0;
+    font-family: var(--zenith-font-ink);
+    font-size: 1.45rem;
+    line-height: 1.35;
+    color: var(--text-normal);
+    text-wrap: pretty;
+}
+.zenith-trep__lead .zenith-ink-figure {
+    font-size: 1.08em;
+}
+.zenith-trep__lead-rest {
     color: var(--text-muted);
-    font-size: 0.8rem;
 }
-.zenith-taskstats__tag-fill {
-    background: color-mix(in srgb, var(--interactive-accent) 75%, transparent);
+.zenith-trep__lead .is-danger {
+    color: var(--color-red, #e5534b);
+}
+.zenith-trep__line {
+    margin: 10px 0 0;
+    font-size: 0.84rem;
+    color: var(--text-faint);
+}
+
+.zenith-trep__section {
+    margin-top: 30px;
+}
+.zenith-trep__title {
+    margin: 0 0 10px;
+    font-family: var(--zenith-font-ink);
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+/* The statuses, as one line of ink in four shades. */
+.zenith-trep__stack {
+    display: flex;
+    gap: 2px;
+    height: 4px;
+}
+.zenith-trep__stack > span {
+    min-width: 2px;
+    border-radius: 2px;
+}
+.zenith-trep__stack > .is-done { background: var(--text-normal); }
+.zenith-trep__stack > .is-in-progress { background: var(--text-muted); }
+.zenith-trep__stack > .is-todo { background: color-mix(in srgb, var(--text-faint) 55%, transparent); }
+.zenith-trep__stack > .is-cancelled {
+    background: repeating-linear-gradient(
+        -45deg,
+        var(--text-faint) 0 1px,
+        transparent 1px 4px
+    );
+}
+.zenith-trep__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    margin-top: 10px;
+    font-size: 0.84rem;
+    color: var(--text-muted);
+}
+.zenith-trep__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.zenith-trep__legend-item .zenith-ink-figure {
+    color: var(--text-normal);
+}
+
+/* Tags: the name, a dotted leader, the count — and under each, a hairline as
+   long as its share. */
+.zenith-trep__tags {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 30em;
+}
+.zenith-trep__tag {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 4px 0 6px;
+    font-size: 0.88rem;
+    color: var(--text-normal);
+}
+.zenith-trep__tag-leader {
+    flex: 1;
+    min-width: 12px;
+    border-bottom: 1px dotted color-mix(in srgb, var(--text-faint) 70%, transparent);
+    transform: translateY(-4px);
+}
+.zenith-trep__tag .zenith-ink-figure {
+    color: var(--text-muted);
+}
+.zenith-trep__tag-share {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--text-muted);
+    opacity: 0.6;
 }
 
 /* The newest week at the right edge, as many before it as fit — never a
-   scroll that opens on the empty middle of the year. */
-.zenith-heatmap { display: flex; gap: 3px; justify-content: flex-end; overflow: hidden; }
-.zenith-heatmap__col { display: flex; flex-direction: column; gap: 3px; }
+   scroll that opens on the empty middle of the year. The same ink, deeper as
+   more got done. */
+.zenith-heatmap {
+    display: flex;
+    gap: 3px;
+    justify-content: flex-end;
+    overflow: hidden;
+    padding-top: 2px;
+}
+.zenith-heatmap__col {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.zenith-heatmap__month {
+    height: 14px;
+    width: 11px;
+    overflow: visible;
+    white-space: nowrap;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 0.74rem;
+    line-height: 1;
+    color: var(--text-faint);
+}
 .zenith-heatmap__cell {
     width: 11px;
     height: 11px;
     border-radius: 3px;
-    background: color-mix(in srgb, var(--text-muted) 16%, transparent);
+    background: color-mix(in srgb, var(--text-faint) 14%, transparent);
 }
-.zenith-heatmap__cell--l1 { background: color-mix(in srgb, var(--zenith-success, #3fb950) 35%, transparent); }
-.zenith-heatmap__cell--l2 { background: color-mix(in srgb, var(--zenith-success, #3fb950) 55%, transparent); }
-.zenith-heatmap__cell--l3 { background: color-mix(in srgb, var(--zenith-success, #3fb950) 78%, transparent); }
-.zenith-heatmap__cell--l4 { background: var(--zenith-success, #3fb950); }
+.zenith-heatmap__cell--l1 { background: color-mix(in srgb, var(--text-normal) 24%, transparent); }
+.zenith-heatmap__cell--l2 { background: color-mix(in srgb, var(--text-normal) 44%, transparent); }
+.zenith-heatmap__cell--l3 { background: color-mix(in srgb, var(--text-normal) 66%, transparent); }
+.zenith-heatmap__cell--l4 { background: var(--text-normal); }
+
+@container zenith-tasks (max-width: 560px) {
+    .zenith-trep {
+        padding-left: 0;
+    }
+    .zenith-trep__lead {
+        font-size: 1.2rem;
+    }
+}
 
 /* ══════════════════════════════════════════════════════════
-   Tasks — dashboard widget
+   Tasks — dashboard widget, as a page of a diary
 
-   Hierarchy is carried by type size and rhythm: there is not one border,
-   pill or filled box inside the card. One typeface throughout — numbers in
-   tabular figures, so a column of dates still lines up.
+   A sentence in the planner's hand, the list's own rows, and the day's
+   progress as one line of ink. No border, pill or filled box inside the
+   card; the one colour is a deadline that has passed.
    ══════════════════════════════════════════════════════════ */
 .zenith-tw {
+    --zenith-twmargin: 48px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -510,22 +1066,20 @@ button.zenith-seg__btn {
     /* The card must never scroll: whatever doesn't fit is counted into the
        "+N more" link by the layout, not left hanging over the edge. */
     overflow: hidden;
-    font-variant-numeric: tabular-nums;
 }
-.zenith-tw--lg { gap: 10px; }
+.zenith-tw--lg { gap: 10px; --zenith-twmargin: 50px; }
+.zenith-tw--sm { --zenith-twmargin: 48px; }
 
-/* The checkbox is the row's left edge — no button padding around it, so the
+/* The checkbox is a fixed column — no button padding around it, so the
    indent of a subtask is a measured offset rather than an accident. */
 .zenith-tw .zenith-status__btn {
     width: auto;
     height: auto;
     padding: 0 !important;
-    border-radius: 5px;
+    border-radius: 50%;
 }
 
-/* ── Heading ─────────────────────────────────────── */
-/* A sentence assembled from the data ("2 overdue · today 1 · active 6"),
-   sharing a baseline so the number and the words beside it sit on one line. */
+/* ── The sentence ────────────────────────────────── */
 .zenith-tw__head {
     display: flex;
     align-items: baseline;
@@ -533,52 +1087,29 @@ button.zenith-seg__btn {
     gap: 12px;
     flex: 0 0 auto;
 }
-.zenith-tw__head-line {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
+.zenith-tw__say {
+    margin: 0;
     min-width: 0;
-}
-.zenith-tw__say { white-space: nowrap; }
-
-.zenith-tw__say.is-big {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1;
+    font-family: var(--zenith-font-ink);
+    font-size: 18px;
+    line-height: 1.25;
     color: var(--zenith-text-normal);
-}
-.zenith-tw--md .zenith-tw__say.is-big { font-size: 24px; }
-.zenith-tw--lg .zenith-tw__say.is-big { font-size: 26px; }
-
-.zenith-tw__say.is-strong {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--zenith-text-normal);
-}
-.zenith-tw--lg .zenith-tw__say.is-strong { font-size: 15px; }
-
-.zenith-tw__say.is-mid {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--zenith-text-normal);
-}
-
-.zenith-tw__say.is-faint {
-    font-size: 12px;
-    color: var(--zenith-text-faint);
     overflow: hidden;
+    white-space: nowrap;
     text-overflow: ellipsis;
 }
-.zenith-tw__say.is-sep { font-size: 11px; color: var(--zenith-text-faint); }
-.zenith-tw__say.is-danger { color: var(--zenith-danger, #e5534b); }
-/* Colour only — keeps the weight and size of whatever it sits with. */
-.zenith-tw__say.is-dim { color: var(--zenith-text-faint); }
+.zenith-tw--lg .zenith-tw__say { font-size: 21px; }
+.zenith-tw__say.is-quiet { color: var(--zenith-text-muted); font-style: italic; }
+.zenith-tw__say .is-danger { color: var(--color-red, #e5534b); }
+.zenith-tw__figure {
+    font-style: italic;
+    font-variant-numeric: oldstyle-nums;
+}
 
-/* ── List ────────────────────────────────────────── */
+/* ── Groups ──────────────────────────────────────── */
 /* The list is the part that gives: everything else on the card has a fixed
    height, and a row clipped at the bottom is one the "+N more" link already
-   counted, where a strip pushed past the edge would be the whole strip. */
+   counted. */
 .zenith-tw__body,
 .zenith-tw__groups {
     display: flex;
@@ -594,42 +1125,65 @@ button.zenith-seg__btn {
     flex: 0 0 auto;
 }
 .zenith-tw__group-head {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: var(--zenith-twmargin) 1fr;
+    column-gap: 10px;
+    align-items: baseline;
     height: 20px;
     flex: 0 0 auto;
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--zenith-text-muted);
 }
 .zenith-tw__group-count {
+    text-align: right;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 12px;
+    font-variant-numeric: oldstyle-nums;
     color: var(--zenith-text-faint);
-    font-weight: 500;
+}
+.zenith-tw__group-label {
+    font-family: var(--zenith-font-ink);
+    font-size: 14px;
+    color: var(--zenith-text-muted);
 }
 
 /* ── Rows ────────────────────────────────────────── */
 .zenith-tw__row {
-    display: flex;
+    display: grid;
+    grid-template-columns: var(--zenith-twmargin) auto minmax(0, 1fr) auto;
+    column-gap: 10px;
     align-items: center;
-    gap: 10px;
     flex: 0 0 auto;
-    border-radius: 5px;
-    transition: background-color var(--zenith-transition-fast);
+    border-radius: 6px;
 }
-.zenith-tw__row:hover { background-color: var(--zenith-bg-hover); }
+.zenith-tw__row:hover { background-color: color-mix(in srgb, var(--zenith-bg-hover) 70%, transparent); }
 
-/* A subtask's checkbox stands at the left edge of its parent's title, so the
-   nesting reads as an indented paragraph rather than a second column. */
-.zenith-tw__row--sub { gap: 9px; padding-left: 26px; }
+.zenith-tw__margin {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: right;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 12px;
+    font-variant-numeric: oldstyle-nums;
+    color: var(--zenith-text-muted);
+}
+.zenith-tw--lg .zenith-tw__margin { font-size: 12.5px; }
+.zenith-tw__margin.is-overdue { color: var(--color-red, #e5534b); }
+.zenith-tw__margin.is-today { color: var(--zenith-text-normal); }
+
+/* A subtask's circle stands under its parent's title. */
+.zenith-tw__row--sub {
+    grid-template-columns: var(--zenith-twmargin) auto minmax(0, 1fr);
+    padding-left: 26px;
+}
 .zenith-tw--lg .zenith-tw__row--sub { padding-left: 27px; }
-.zenith-tw__row--more { padding-left: 48px; }
-.zenith-tw--lg .zenith-tw__row--more { padding-left: 49px; }
+.zenith-tw__row--more {
+    display: flex;
+    padding-left: calc(var(--zenith-twmargin) + 46px);
+}
 
 .zenith-tw__title {
-    flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
     white-space: nowrap;
@@ -640,98 +1194,144 @@ button.zenith-seg__btn {
     cursor: pointer;
 }
 .zenith-tw--lg .zenith-tw__title { font-size: 14px; }
+.zenith-tw__title.is-p-high,
+.zenith-tw__title.is-p-urgent { font-weight: 600; }
+.zenith-tw__title.is-p-low { color: var(--zenith-text-muted); }
 .zenith-tw__title.is-sub { font-size: 12.5px; color: var(--zenith-text-muted); }
-.zenith-tw__title.is-struck {
+
+/* The ink, as in the list: drawn through a task as it closes. */
+.zenith-tw__ink {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 58%;
+    background-size: 0 1px;
+}
+.zenith-tw__title.is-struck { color: var(--zenith-text-faint); }
+.zenith-tw__title.is-struck .zenith-tw__ink { background-size: 100% 1px; }
+.zenith-tw__row.is-closing .zenith-tw__title {
     color: var(--zenith-text-faint);
-    text-decoration: line-through;
+    font-weight: 400;
+    transition: color 0.3s 0.12s ease;
+}
+.zenith-tw__row.is-closing .zenith-tw__ink {
+    animation: zenith-strike 0.34s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.zenith-tw__row.is-leaving {
+    pointer-events: none;
+    animation: zenith-fade-out 0.26s ease-in forwards;
+}
+@keyframes zenith-fade-out {
+    to { opacity: 0; }
+}
+.zenith-root button.zenith-tw__undo {
+    height: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    font: inherit;
+    color: var(--zenith-text-normal);
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    cursor: pointer;
 }
 
-/* Tags, the repeat and the subtask tally — which is also what opens them. */
+/* Tags and the subtask progress — which is also what opens them. */
 .zenith-tw__info {
-    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
     color: var(--zenith-text-faint);
     white-space: nowrap;
 }
-.zenith-tw__info.is-toggle { cursor: pointer; }
-.zenith-tw__info.is-toggle:hover,
-.zenith-tw__info.is-open { color: var(--zenith-text-muted); }
-
-/* One right edge of fixed width: dates line up without a table. */
-.zenith-tw__due {
-    flex: 0 0 auto;
-    width: 62px;
-    text-align: right;
-    font-size: 11.5px;
+.zenith-root button.zenith-tw__fold {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: auto;
+    padding: 1px 4px;
+    margin: 0 -4px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    box-shadow: none;
+    font: inherit;
     color: var(--zenith-text-muted);
+    cursor: pointer;
 }
-.zenith-tw__due.is-overdue,
-.zenith-tw__due.is-today {
-    color: var(--zenith-danger, #e5534b);
-    font-weight: 600;
+.zenith-root button.zenith-tw__fold:hover,
+.zenith-root button.zenith-tw__fold.is-open {
+    color: var(--zenith-text-normal);
+    background: var(--zenith-bg-hover);
 }
-.zenith-tw__due.is-soon { color: var(--zenith-text-normal); }
-.zenith-tw__due.is-past { color: var(--zenith-text-faint); }
 
 /* ── Links ───────────────────────────────────────── */
-/* The ghost button from ui.css, flush so it lines up with the text above it. */
 .zenith-root button.zenith-tw__link {
     flex: 0 0 auto;
-}
-.zenith-root button.zenith-tw__foot {
-    align-self: flex-start;
-    margin-top: 2px;
-}
-/* Inside the list, the row is the target and its height is set by the fitting
-   maths, so the button does not get to have a height of its own. */
-.zenith-root .zenith-tw__row--more .zenith-tw__link {
+    height: auto;
     min-height: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    font-size: 12px;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+}
+.zenith-root button.zenith-tw__link:hover {
+    color: var(--zenith-text-normal);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.zenith-root button.zenith-tw__more {
+    align-self: flex-start;
+    margin-left: calc(var(--zenith-twmargin) + 10px);
 }
 
-/* ── Figures (md, lg) ────────────────────────────── */
-/* Active, overdue, closed today — and the way to the whole list. Pinned to
-   the bottom so the list above can breathe. */
-.zenith-tw__stats {
-    display: flex;
-    align-items: flex-end;
-    flex: 0 0 auto;
-    margin-top: auto;
-    padding-top: 10px;
-    border-top: 1px solid var(--zenith-border);
-}
-.zenith-tw__figures {
-    display: flex;
-    align-items: flex-end;
-    /* `gap` is set inline from FIGURE_GAP, which the fitting maths counts. */
-    flex: 1 1 auto;
-    min-width: 0;
-}
-.zenith-tw__figures > .zenith-tw__link {
-    margin-left: auto;
-}
-.zenith-tw__figure {
+/* ── The day's progress (md, lg) ─────────────────── */
+/* One line of ink along the bottom: what today asked for, and how much of it
+   is done. Pinned to the bottom so the list above can breathe. */
+.zenith-tw__foot {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
+    gap: 8px;
     flex: 0 0 auto;
+    margin-top: auto;
+    padding-top: 8px;
 }
-.zenith-tw__figure-num {
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1.1;
-    color: var(--zenith-text-normal);
+.zenith-tw__progress {
+    position: relative;
+    height: 2px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--zenith-text-faint) 30%, transparent);
+    overflow: hidden;
 }
-.zenith-tw__figure-num.is-danger { color: var(--zenith-danger, #e5534b); }
-.zenith-tw__figure-num.is-faint { color: var(--zenith-text-faint); }
-/* What got finished is the one figure worth a colour of its own. */
-.zenith-tw__figure-num.is-done { color: var(--zenith-success, #3fb950); }
-/* One line: a label that wraps makes the strip taller, and every pixel it
-   takes is a row the list above cannot have. A figure there is no width for
-   is dropped whole by `fitFigures` instead. */
-.zenith-tw__figure-lab {
-    font-size: 11px;
-    line-height: 1.2;
-    color: var(--zenith-text-faint);
+.zenith-tw__progress-ink {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 2px;
+    background: var(--zenith-text-normal);
+    transition: width 0.5s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.zenith-tw__foot-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+.zenith-tw__foot-say {
+    min-width: 0;
+    overflow: hidden;
     white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: var(--zenith-font-ink);
+    font-size: 13px;
+    color: var(--zenith-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-tw__row.is-closing .zenith-tw__ink { animation: none; background-size: 100% 1px; }
+    .zenith-tw__progress-ink { transition: none; }
 }

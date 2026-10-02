@@ -12,8 +12,8 @@ import type { WidgetSize } from '../../dashboard/grid/gridTypes';
  *
  * `sm` is the three most urgent tasks and nothing else. `md` and `lg` are the
  * same composition at two sizes: labelled groups — due now, in progress, up
- * next — over a strip of three figures, `md` stopping at five tasks. Subtasks
- * stay folded behind their tally everywhere, and one task at a time opens.
+ * next — over the day's progress, `md` stopping at five tasks. Subtasks stay
+ * folded behind their tally everywhere, and one task at a time opens.
  */
 
 /** Row heights and spacing, in px, per preset. */
@@ -30,7 +30,7 @@ export interface Metrics {
     /** A group label with the gap that follows it. */
     label: number;
     foot: number;
-    /** The strip of figures along the bottom; none on `sm`. */
+    /** The day's progress along the bottom; none on `sm`. */
     stats: number;
     /** Checkbox edge. */
     box: number;
@@ -46,42 +46,15 @@ export const METRICS: Record<WidgetSize, Metrics> = {
     lg: { task: 34, sub: 26, more: 22, gap: 3, gapExpanded: 3, area: 10, head: 28, label: 24, foot: 17, stats: 44, box: 17, tags: true, cap: Infinity },
 };
 
-/** Gap between two figures. */
-export const FIGURE_GAP = 22;
-
 /**
- * Figures of the bottom strip, in the order they are given up when the card is
- * too narrow to hold them all: what the heading already says goes first, and
- * what the day produced — said nowhere else — stays longest.
+ * The day's progress, for the ink line along the bottom of the card: what was
+ * closed today out of what today asked for — closed today, plus what is still
+ * due today or already late. Null on a day that asked for nothing.
  */
-export const FIGURE_DROP_ORDER = ['active', 'overdue', 'done'] as const;
-
-/**
- * Which figures fit the width there is.
- *
- * Widths are measured from what the browser actually drew rather than guessed
- * from the label text: they depend on the theme's font and on the language, and
- * a guess that is wrong by a few px clips the last figure. An unmeasured figure
- * counts as zero and is kept, so a first pass shows everything and the pass
- * after it is exact.
- */
-export function fitFigures(
-    keys: string[],
-    widths: Record<string, number>,
-    available: number,
-    gap: number = FIGURE_GAP
-): string[] {
-    const total = (ks: string[]): number => {
-        const known = ks.filter((k) => widths[k] !== undefined);
-        return known.reduce((n, k) => n + widths[k], 0) + gap * Math.max(0, known.length - 1);
-    };
-
-    let kept = [...keys];
-    for (const key of FIGURE_DROP_ORDER) {
-        if (total(kept) <= available) break;
-        kept = kept.filter((k) => k !== key);
-    }
-    return kept;
+export function dayProgress(split: Split): { done: number; total: number } | null {
+    const done = split.doneToday;
+    const total = done + split.burning.length;
+    return total > 0 ? { done, total } : null;
 }
 
 /** Subtasks previewed per task before the rest collapse into a link. */

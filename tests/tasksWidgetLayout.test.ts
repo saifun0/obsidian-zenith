@@ -5,9 +5,7 @@ import type { WidgetSize } from '../src/modules/dashboard/grid/gridTypes';
 import {
     METRICS,
     NOMINAL_H,
-    FIGURE_GAP,
-    FIGURE_DROP_ORDER,
-    fitFigures,
+    dayProgress,
     planWidget,
     splitTasks,
     type Line,
@@ -304,38 +302,22 @@ describe('an empty day', () => {
     });
 });
 
-describe('the three figures in a narrow card', () => {
-    const WIDTHS: Record<string, number> = { active: 62, overdue: 74, done: 90, link: 84 };
-    const ALL = ['active', 'overdue', 'done', 'link'];
-    const spanOf = (keys: string[]): number =>
-        keys.reduce((n, k) => n + WIDTHS[k], 0) + FIGURE_GAP * Math.max(0, keys.length - 1);
-
-    it('keeps every figure when there is room', () => {
-        expect(fitFigures(ALL, WIDTHS, spanOf(ALL))).toEqual(ALL);
+describe('the day’s progress along the bottom', () => {
+    it('counts what was closed today out of what today asked for', () => {
+        const split = splitTasks(
+            [
+                task('late', { dueDate: '2026-08-05' }),
+                task('today', { dueDate: TODAY }),
+                task('done', { status: 'done', doneDate: TODAY }),
+                task('later', { dueDate: '2026-09-20' }),
+            ],
+            TODAY
+        );
+        expect(dayProgress(split)).toEqual({ done: 1, total: 3 });
     });
 
-    it('gives up what the heading already says first', () => {
-        expect(fitFigures(ALL, WIDTHS, spanOf(ALL) - 1)).toEqual(['overdue', 'done', 'link']);
-        expect(fitFigures(ALL, WIDTHS, spanOf(['done', 'link']))).toEqual(['done', 'link']);
-    });
-
-    it('keeps what the day produced longest — it is said nowhere else', () => {
-        expect(FIGURE_DROP_ORDER.at(-1)).toBe('done');
-    });
-
-    it('never returns more than the width allows', () => {
-        for (const available of [400, 300, 200, 120, 40, 0]) {
-            const kept = fitFigures(ALL, WIDTHS, available);
-            if (kept.length > 1) expect(spanOf(kept)).toBeLessThanOrEqual(available);
-        }
-    });
-
-    it('falls back to the link alone rather than clipping', () => {
-        expect(fitFigures(ALL, WIDTHS, 30)).toEqual(['link']);
-    });
-
-    it('keeps an unmeasured figure, so the first pass shows everything', () => {
-        expect(fitFigures(ALL, {}, 0)).toEqual(ALL);
+    it('says nothing on a day that asked for nothing', () => {
+        expect(dayProgress(splitTasks([task('later', { dueDate: '2026-09-20' })], TODAY))).toBeNull();
     });
 });
 

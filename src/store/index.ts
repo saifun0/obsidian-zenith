@@ -52,6 +52,7 @@ export function resetZenithStore(): void {
     s.loadSettings({}); // settings → defaults
     s.setTasks([]);
     s.setTasksLoading(false);
+    s.setTaskReorderMode(false);
     s.setContentItems([]);
     s.setContentLoading(false);
     s.setProjects([]);

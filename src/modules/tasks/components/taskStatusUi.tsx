@@ -1,11 +1,17 @@
-import React, { type FC } from 'react';
-import { Check, Minus, X } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import React, { useEffect, useRef, useState, type FC } from 'react';
 import { TASK_STATUSES } from '../../../core/constants';
 import type { TaskStatus } from '../../../core/constants';
 import { useTranslation } from '../../../core/i18n';
+import { useLongPress } from '../../../core/useLongPress';
 import { Popover, usePopover } from '../../../components/shared';
 
+/**
+ * A colour per status, for the places that chart statuses side by side.
+ *
+ * Not for the checkbox: that says its status by shape, in the colour of the
+ * text around it, so that across a list the only colour left is a deadline
+ * that has passed.
+ */
 export const STATUS_COLOR: Record<TaskStatus, string> = {
     todo: 'var(--zenith-text-muted)',
     'in-progress': 'var(--zenith-info, #4c9be8)',
@@ -26,39 +32,53 @@ export const STATUS_I18N: Record<TaskStatus, string> = {
     cancelled: 'status.cancelled',
 };
 
-/** White glyph drawn inside the filled checkbox for each non-empty status. */
-const STATUS_GLYPH: Record<TaskStatus, LucideIcon | null> = {
-    todo: null,
-    'in-progress': Minus,
-    done: Check,
-    cancelled: X,
-};
+const isClosed = (status: TaskStatus) => status === 'done' || status === 'cancelled';
+
+/** How long the fill of a just-completed circle takes, in ms. Matches tasks-ui.css. */
+const INK_MS = 420;
 
 /**
- * A rounded-square checkbox: an outline when empty, or filled in the status
- * colour with a white glyph (check / minus / cross) otherwise.
+ * The checkbox, drawn as an ink circle: an empty ring to do, half filled once
+ * started, filled with the tick cut out of it when done, struck through when
+ * given up. Monochrome on purpose — see `STATUS_COLOR`.
+ *
+ * The tick is cut out in the page's own colour rather than drawn in white, so
+ * a filled circle on a light theme does not turn into a black button.
  */
-export const StatusBox: FC<{ status: TaskStatus; size?: number }> = ({ status, size = 18 }) => {
-    const Glyph = STATUS_GLYPH[status];
-    const filled = status !== 'todo';
-    const color = STATUS_COLOR[status];
-    return (
-        <span
-            className={`zenith-status__box ${filled ? 'is-filled' : ''}`}
-            style={{
-                width: size,
-                height: size,
-                background: filled ? color : 'transparent',
-                // Native --text-muted (with a hex fallback) so the outline is
-                // visible even in the status menu, which portals outside
-                // .zenith-root where --zenith-* vars aren't defined.
-                borderColor: filled ? color : 'var(--text-muted, #9a9a9a)',
-            }}
-        >
-            {Glyph && <Glyph size={Math.round(size * 0.68)} strokeWidth={3} color="#fff" />}
-        </span>
-    );
-};
+export const StatusBox: FC<{ status: TaskStatus; size?: number; inked?: boolean }> = ({
+    status,
+    size = 18,
+    inked = false,
+}) => (
+    <svg
+        className={`zenith-status__box is-${status}${inked ? ' is-inked' : ''}`}
+        width={size}
+        height={size}
+        viewBox="0 0 20 20"
+        aria-hidden="true"
+    >
+        {status === 'done' ? (
+            <>
+                <circle className="zenith-status__fill" cx="10" cy="10" r="9" />
+                <path className="zenith-status__tick" d="M6.2 10.3l2.6 2.6 5-5.4" />
+            </>
+        ) : (
+            <>
+                <circle className="zenith-status__ring" cx="10" cy="10" r="8.25" />
+                {status === 'in-progress' && (
+                    <path className="zenith-status__half" d="M10 4.6a5.4 5.4 0 0 0 0 10.8z" />
+                )}
+                {status === 'cancelled' && (
+                    <path className="zenith-status__slash" d="M5.6 14.4l8.8-8.8" />
+                )}
+                {status === 'todo' && (
+                    // What a click will do, shown faintly under the pointer.
+                    <path className="zenith-status__ghost" d="M6.2 10.3l2.6 2.6 5-5.4" />
+                )}
+            </>
+        )}
+    </svg>
+);
 
 interface StatusControlProps {
     status: TaskStatus;
@@ -70,14 +90,43 @@ const MENU_WIDTH = 180;
 const MENU_HEIGHT = 170;
 
 /**
- * A status icon button that opens a small menu to pick one of the four.
+ * The checkbox of every task the plugin draws.
  *
- * The positioning, the portal and the three ways of dismissing it all live in
- * `Popover` now; this file is down to what is actually about a task status.
+ * A click closes the task, and a second click opens it again — that is nearly
+ * every click there is, and it used to cost two: the circle opened a menu of
+ * the four statuses, and "done" had to be picked out of it each time. The menu
+ * is still there, a right-click or a long press away, for "in progress" and
+ * "cancelled".
  */
 export const TaskStatusControl: FC<StatusControlProps> = ({ status, onChange, size = 18 }) => {
     const t = useTranslation();
     const pop = usePopover();
+    const [inked, setInked] = useState(false);
+    const inkTimer = useRef(0);
+    useEffect(() => () => window.clearTimeout(inkTimer.current), []);
+
+    const press = useLongPress(
+        () => pop.setOpen(true),
+        (e) => {
+            e.preventDefault();
+            pop.setOpen(true);
+        }
+    );
+
+    const closed = isClosed(status);
+
+    const toggle = (e: React.MouseEvent) => {
+        // The row behind the circle opens the editor on a click; this one is ours.
+        e.stopPropagation();
+        if (press.swallowClick()) return;
+        const next: TaskStatus = closed ? 'todo' : 'done';
+        if (next === 'done') {
+            setInked(true);
+            window.clearTimeout(inkTimer.current);
+            inkTimer.current = window.setTimeout(() => setInked(false), INK_MS);
+        }
+        onChange(next);
+    };
 
     return (
         <div className="zenith-status">
@@ -85,11 +134,20 @@ export const TaskStatusControl: FC<StatusControlProps> = ({ status, onChange, si
                 {...pop.anchorProps}
                 type="button"
                 className="zenith-status__btn"
-                onClick={pop.toggle}
-                aria-label={t(STATUS_I18N[status])}
-                title={t(STATUS_I18N[status])}
+                onClick={toggle}
+                onPointerDown={press.onPointerDown}
+                onPointerMove={press.onPointerMove}
+                onPointerUp={press.onPointerUp}
+                onPointerCancel={press.onPointerCancel}
+                onContextMenu={(e) => {
+                    // The row has a menu of its own on the same gesture.
+                    e.stopPropagation();
+                    press.onContextMenu(e);
+                }}
+                aria-label={t(closed ? 'status.reopen' : 'status.complete')}
+                title={`${t(STATUS_I18N[status])} · ${t('status.menuHint')}`}
             >
-                <StatusBox status={status} size={size} />
+                <StatusBox status={status} size={size} inked={inked} />
             </button>
             <Popover
                 anchor={pop.anchor}
