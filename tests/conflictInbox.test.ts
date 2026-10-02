@@ -22,6 +22,9 @@ function fakeFs(files: Record<string, string>): ModuleFs {
                 : null,
         readBinary: async () => new ArrayBuffer(0),
         writeBinary: async () => undefined,
+        trashFile: async (p) => {
+            delete files[p];
+        },
         walk: async () => Object.keys(files),
     };
 }

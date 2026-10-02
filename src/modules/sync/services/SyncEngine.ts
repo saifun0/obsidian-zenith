@@ -299,6 +299,7 @@ export class SyncEngine {
             case 'remote_is_created_then_pull':
             case 'remote_is_modified_then_pull':
             case 'conflict_created_then_keep_remote':
+                await this.expectLocalAsPlanned(item);
                 return this.pull(item.key);
 
             case 'conflict_created_then_smart_merge':
@@ -313,16 +314,60 @@ export class SyncEngine {
             }
 
             case 'local_is_deleted_thus_also_delete_remote':
+                await this.expectRemoteAsPlanned(item);
                 await this.remote.remove(item.key);
                 return null;
 
             case 'remote_is_deleted_thus_also_delete_local':
-                await this.fs.removeFile(this.localPath(item.key));
+                await this.expectLocalAsPlanned(item);
+                // To the trash, not gone: a deletion that arrived from another
+                // device is the one the user did not make here, and the one
+                // they are most likely to want back.
+                await this.fs.trashFile(this.localPath(item.key));
                 return null;
 
             default:
                 return null;
         }
+    }
+
+    /**
+     * Refuse to overwrite or remove a local file the plan did not see.
+     *
+     * A plan describes the vault at the moment it was made, and it may be
+     * carried out minutes later — a preview read before Apply was pressed, or
+     * an automatic run that spent a while listing a large remote. A note edited
+     * in that gap is not the note the plan decided about, and pulling over it
+     * or deleting it would throw the edit away. So the file is checked against
+     * what the plan saw, and a difference stops this one item: it stays
+     * unsettled, and the next run plans it again from what is actually there.
+     */
+    private async expectLocalAsPlanned(item: SyncPlanItem): Promise<void> {
+        const stat = await this.fs.stat(this.localPath(item.key));
+        const planned = item.local;
+        const unchanged = stat
+            ? stat.type === 'file' &&
+              !!planned &&
+              stat.size === planned.size &&
+              stat.mtime === planned.mtimeCli
+            : !planned;
+        if (!unchanged) {
+            throw new Error('Changed on this device since the plan was made; left for the next run.');
+        }
+    }
+
+    /**
+     * The same check for a deletion on the server: another device may have
+     * written a new version of the file since the listing, and removing that
+     * would delete its edit, not the file this device let go of. One `stat`,
+     * paid only by deletions.
+     */
+    private async expectRemoteAsPlanned(item: SyncPlanItem): Promise<void> {
+        const now = await this.remote.stat(item.key);
+        // Already gone is the outcome the deletion wanted.
+        if (!now) return;
+        if (item.remote && sameRemoteVersion(item.remote, now)) return;
+        throw new Error('Changed on the server since the plan was made; left for the next run.');
     }
 
     /**
@@ -339,8 +384,13 @@ export class SyncEngine {
         merges: MergeOutcomeReport[]
     ): Promise<PrevSyncRecord | null> {
         const path = this.localPath(item.key);
-        const localText = decodeText(await this.fs.readBinary(path));
+        // The server first, the disk second. The download is the slow part, and
+        // the local copy read before it would be however old the download took
+        // to arrive by the time the merge overwrites it — long enough to type
+        // into. Read last, it is the note as it stands, and nothing awaits
+        // between reading it and writing the merge back.
         const remoteText = decodeText(await this.remote.readBinary(item.key));
+        const localText = decodeText(await this.fs.readBinary(path));
 
         const keepBoth = async (reason: string): Promise<PrevSyncRecord | null> => {
             merges.push({ key: item.key, outcome: 'kept_both', reason, notes: [] });
@@ -474,6 +524,9 @@ export class SyncEngine {
     }
 
     private localPath(key: string): string {
+        // The excluder already keeps such keys out of every plan; this is the
+        // last door, so that no path to a write can be added later that skips it.
+        if (!isSafeKey(key)) throw new Error(`Refused an unsafe path from the server: "${key}".`);
         const root = trimSlashes(this.opts.localRoot);
         return root ? `${root}/${key}` : key;
     }
@@ -587,32 +640,87 @@ export function buildExcluder(opts: ExcluderOptions): (key: string) => boolean {
         opts.carrySettings && pluginRel
             ? CARRIED_SETTINGS.map((part) => `${pluginRel}/sync/${part}`)
             : [];
-    const userPrefixes = opts.userExcludes.map(trimSlashes).filter(Boolean);
+    // Everything below compares in lower case. Windows and macOS treat
+    // `.OBSIDIAN` as `.obsidian`, and so does Dropbox, so a rule that a change of
+    // case walks around is no rule at all — the server only has to spell the
+    // folder differently to write into it.
+    const lower = (paths: string[]) => paths.map((p) => p.toLowerCase());
+    const ownPrefixes = lower(ownState);
+    const userPrefixes = lower(opts.userExcludes.map(trimSlashes).filter(Boolean));
 
     const configRel = relativeTo(opts.localRoot, opts.configDir);
+    const configPrefix =
+        !opts.includeConfigDir && configRel !== null && configRel !== ''
+            ? configRel.toLowerCase()
+            : null;
+
+    const under = (key: string, prefix: string) => key === prefix || key.startsWith(`${prefix}/`);
 
     return (key: string): boolean => {
-        if (!key) return true;
+        if (!key || !isSafeKey(key)) return true;
+
+        const folded = key.toLowerCase();
+        if (folded.split('/').some((segment) => ALWAYS_SKIPPED.has(segment))) return true;
 
         // Under a carried folder only the user's own exclusions still apply.
-        if (carried.some((dir) => key === dir || key.startsWith(`${dir}/`))) {
-            return userPrefixes.some((prefix) => key === prefix || key.startsWith(`${prefix}/`));
+        // Matched in its exact case, unlike the rest: the exception is for the
+        // files settings sync writes, and a variant spelling is not one of
+        // them — it falls through to the rule for our own state below.
+        if (carried.some((dir) => under(key, dir))) {
+            return userPrefixes.some((prefix) => under(folded, prefix));
         }
 
-        for (const own of ownState) {
-            if (key === own || key.startsWith(`${own}/`)) return true;
-        }
-
-        if (!opts.includeConfigDir && configRel !== null && configRel !== '') {
-            if (key === configRel || key.startsWith(`${configRel}/`)) return true;
-        }
-
-        for (const prefix of userPrefixes) {
-            if (key === prefix || key.startsWith(`${prefix}/`)) return true;
-        }
-
-        return false;
+        if (ownPrefixes.some((own) => under(folded, own))) return true;
+        if (configPrefix !== null && under(folded, configPrefix)) return true;
+        return userPrefixes.some((prefix) => under(folded, prefix));
     };
+}
+
+/**
+ * Names skipped wherever they appear, whatever the settings say. Lower case.
+ *
+ * `.git` above all: a repository carried file by file between devices — its
+ * index, its lock files, packs caught half-written — is a corrupted repository,
+ * and the Obsidian Git plugin keeps one at the root of a great many vaults.
+ * `.trash` is where Obsidian, and this engine, put what was deleted; carrying it
+ * would hand every device a copy of everything removed on any of them. The
+ * rest is what operating systems and other sync tools leave in the folders they
+ * touch, which is nobody's note.
+ */
+const ALWAYS_SKIPPED: ReadonlySet<string> = new Set([
+    '.git',
+    '.trash',
+    '.stfolder',
+    '.stversions',
+    '.ds_store',
+    'thumbs.db',
+    'desktop.ini',
+]);
+
+/**
+ * Whether a key may become a path in the vault.
+ *
+ * Keys come from the server as well as from the disk, and a server is not to
+ * be trusted with where a file lands. A WebDAV href can decode to
+ * `a/../.obsidian/plugins/x/main.js`, and an S3 key can be any string at all;
+ * such a key starts with none of the prefixes the excluder knows, walks past
+ * every one of them, and puts code in a plugin folder for Obsidian to run at
+ * the next start. So a key passes only when every segment is an ordinary name.
+ *
+ * Deliberately narrow: what is refused is what can move a path somewhere else,
+ * not what is merely unusual in a file name.
+ */
+export function isSafeKey(key: string): boolean {
+    if (!key || key.startsWith('/')) return false;
+    // A separator on Windows, and with it a second way to write `..`.
+    if (key.includes('\\')) return false;
+    // eslint-disable-next-line no-control-regex -- control characters are exactly what is being looked for.
+    if (/[\u0000-\u001f\u007f]/.test(key)) return false;
+
+    const segments = key.split('/');
+    // `C:` as the first segment is a drive, not a folder.
+    if (/^[a-zA-Z]:$/.test(segments[0])) return false;
+    return segments.every((segment) => segment !== '' && segment !== '.' && segment !== '..');
 }
 
 /**
@@ -646,6 +754,22 @@ export function settingsOwner(opts: {
 }
 
 // ── Helpers ──────────────────────────────────────────
+
+/**
+ * Is this the same version of a file on the server as the one listed earlier?
+ *
+ * By etag when both sides have one, which every backend here reports in its
+ * listing and in a `stat` alike. Without one, by size, with the server's clock
+ * consulted only when both readings carry it: OneDrive's listing leaves that
+ * time out, and a check that reads a missing time as a change would refuse the
+ * same deletion on every run, for ever.
+ */
+function sameRemoteVersion(listed: FileEntity, now: FileEntity): boolean {
+    if (listed.etag && now.etag) return listed.etag === now.etag;
+    if (listed.size !== now.size) return false;
+    if (!listed.mtimeSvr || !now.mtimeSvr) return true;
+    return Math.abs(listed.mtimeSvr - now.mtimeSvr) <= MTIME_TOLERANCE_MS;
+}
 
 /**
  * Which side a tie goes to, by the client timestamps the plan already gathered.

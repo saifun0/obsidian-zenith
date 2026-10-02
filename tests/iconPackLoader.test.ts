@@ -51,6 +51,9 @@ function fakeFs(files: Record<string, string>): ModuleFs {
         writeBinary: async () => {
             throw new Error('icon packs are read as text');
         },
+        trashFile: async () => {
+            throw new Error('loading icon packs deletes nothing');
+        },
         walk: async (path) => Object.keys(files).filter((f) => f === path || f.startsWith(`${path}/`)),
     };
 }
