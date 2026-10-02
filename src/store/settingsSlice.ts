@@ -952,194 +952,203 @@ export const createSettingsSlice: ZenithSliceCreator<SettingsSlice> = (set) => (
             settings: { ...state.settings, ...partial },
         })),
 
-    loadSettings: (rawSaved) =>
-        set(() => {
-            const saved = stripUndefined(rawSaved);
-            const merged: ZenithSettings = { ...DEFAULT_SETTINGS, ...saved };
-            for (const key of RETIRED_KEYS)
-                delete (merged as unknown as Record<string, unknown>)[key];
-
-            // Nested objects need their own merge: a config written before a
-            // field existed would otherwise replace the whole default with a
-            // partial object, leaving that field undefined. Driven by a list so
-            // a future object-valued setting is covered by construction.
-            merged.dashboardGrid = normalizeGridConfig(saved.dashboardGrid);
-            // Saved arrangements come back from a file the user can edit, so
-            // they are re-checked rather than trusted; a preset the check
-            // discards also loses its claim to being the active one.
-            merged.dashboardPresets = normalizePresets(saved.dashboardPresets);
-            merged.activeTimer = normalizeSession(saved.activeTimer);
-            merged.profiles = normalizeStoredProfiles(saved.profiles);
-            merged.navigatorPanelButtons = normalizePanelButtons(saved.navigatorPanelButtons);
-            merged.navigatorOrder = Array.isArray(saved.navigatorOrder)
-                ? saved.navigatorOrder.filter((id): id is string => typeof id === 'string')
-                : [];
-            if (!merged.dashboardPresets.some((p) => p.id === merged.dashboardPresetId)) {
-                merged.dashboardPresetId = '';
-            }
-            for (const key of NESTED_KEYS) {
-                Object.assign(merged, {
-                    [key]: { ...DEFAULT_SETTINGS[key], ...(saved[key] ?? {}) },
-                });
-            }
-
-            // No version means a config written before versioning existed, so
-            // the five sentinel-based migrations below still apply to it — they
-            // are deliberately left exactly as written. Anything newer skips
-            // them and takes ordered `from < N` migrations instead.
-            const from = saved.settingsVersion ?? 1;
-            merged.settingsVersion = CURRENT_SETTINGS_VERSION;
-            if (from <= 1) applyLegacyMigrations(saved, merged);
-
-            // ── v2 → v3 ──
-            // The navigation launcher arrived as its own module. Switch it on
-            // once, so an existing dashboard gets the new widget rather than a
-            // built-in module the user never sees.
-            if (from < 3 && !merged.activeModuleIds.includes('navigator')) {
-                merged.activeModuleIds = [...merged.activeModuleIds, 'navigator'];
-            }
-
-            // ── v3 → v4 ──
-            // The prayer tracker arrived. Same reasoning as above: a built-in
-            // module nobody can see is a module nobody switches on.
-            if (from < 4 && !merged.activeModuleIds.includes('prayer')) {
-                merged.activeModuleIds = [...merged.activeModuleIds, 'prayer'];
-            }
-
-            // ── v4 → v5 ──
-            // Cross-device sync arrived. Switched on for existing configs
-            // because it exists to fix a bug they already have: until now the
-            // last device to save overwrote every setting the others had
-            // changed, and nobody opted into that.
-            if (from < 5 && !merged.activeModuleIds.includes('sync')) {
-                merged.activeModuleIds = [...merged.activeModuleIds, 'sync'];
-            }
-
-            // ── v5 → v6 ──
-            // Location became one plugin-wide setting. Whichever module had a
-            // place set is promoted to it, and that module's own copy is
-            // cleared — left behind it would be an override that shadows the
-            // global one for ever, so changing the city in the obvious place
-            // would silently do nothing.
-            if (from < 6 && !merged.location) {
-                const adopted = merged.weatherPlace ?? merged.prayerPlace;
-                if (adopted) {
-                    merged.location = adopted;
-                    if (merged.weatherPlace === adopted) merged.weatherPlace = null;
-                    if (merged.prayerPlace === adopted) merged.prayerPlace = null;
-                }
-            }
-
-            // ── v6 → v7 ──
-            // The picture widget arrived as its own module. Switched on for the
-            // same reason the navigator was — a built-in module nobody can see
-            // is a module nobody switches on — and it costs an existing board
-            // nothing, because it only adds an entry to the widget gallery and
-            // shows nothing at all until a picture is chosen for it.
-            if (from < 7 && !merged.activeModuleIds.includes('picture')) {
-                merged.activeModuleIds = [...merged.activeModuleIds, 'picture'];
-            }
-
-            // ── v7 → v8 ──
-            // The canvas module is gone, and its id has to leave the active
-            // list rather than sit there inertly: `canvas` was never a reserved
-            // id, so a module that later took it would start up on
-            // its own, never having been switched on. Its three settings are
-            // left where they are, like any other key we no longer read — see
-            // the merge above: forgetting them would cost the user their layout
-            // choices if they ever went back to a build that still has it.
-            if (from < 8) {
-                merged.activeModuleIds = merged.activeModuleIds.filter((id) => id !== 'canvas');
-            }
-
-            // ── v8 → v9 ──
-            // Features became switches. Everything a config written before
-            // then had, it keeps: each feature on by default is pinned on, so
-            // no later change to a default can take it away. An empty object
-            // is not a config anybody wrote — it is a fresh install or a reset
-            // — and gets the defaults instead.
-            if (from < 9 && Object.keys(saved).length > 0) {
-                merged.features = pinnedFeatures(merged.features);
-            }
-
-            // ── v9 → v10 ──
-            // Profiles arrived. A config written before them keeps a snapshot
-            // of itself, so that whatever profile is tried first, "as it was"
-            // is one click away — and it never sees the first-run choice of a
-            // template, which is for people starting from nothing.
-            if (from < 10 && Object.keys(saved).length > 0) {
-                merged.profilesOnboarded = true;
-                if (!merged.profiles.some((p) => p.id === BEFORE_PROFILES_ID)) {
-                    merged.profiles = [
-                        ...merged.profiles,
-                        beforeProfilesSnapshot(merged, getTodayString()),
-                    ];
-                }
-            }
-
-            // ── v10 → v11 ──
-            // The content library stopped going online: no auto-fill, no
-            // covers downloaded into the vault. Unlike the canvas settings
-            // above, there is nothing here to go back to — the switch and each
-            // type's catalogue name only described network access that is gone
-            // — so both are dropped rather than carried in data.json, and in
-            // every profile saved from now on, for ever.
-            if (from < 11) {
-                Reflect.deleteProperty(merged, 'cacheCovers');
-                merged.contentTypes = merged.contentTypes.map((type) => {
-                    if (!('provider' in type)) return type;
-                    const copy: Record<string, unknown> = { ...type };
-                    delete copy.provider;
-                    return copy as unknown as ContentTypeConfig;
-                });
-            }
-
-            // ── v11 → v12 ──
-            // The prayer view started asking for a method and madhab instead
-            // of assuming the Russian muftiate's and a Hanafi asr. Someone who
-            // already changed either made the choice themselves and is not
-            // asked again; someone still on both defaults may never have
-            // known there was a choice, which is the case the question is for.
-            if (from < 12 && Object.keys(saved).length > 0) {
-                merged.prayerMethodChosen =
-                    merged.prayerMethod !== 'russia' || merged.prayerAsrMadhab !== 'hanafi';
-            }
-
-            // ── v12 → v13 ──
-            // Search arrived. Switched on for the reason the navigator and the
-            // picture were — a built-in module nobody can see is a module
-            // nobody switches on — and it changes nothing until it is opened.
-            if (from < 13 && !merged.activeModuleIds.includes('search')) {
-                merged.activeModuleIds = [...merged.activeModuleIds, 'search'];
-            }
-
-            // ── v13 → v14 ──
-            // The editor arrived, with styled code blocks. On for existing
-            // configs as well: it is what the update brings, and it steps
-            // aside by itself where Code Styler already does the job.
-            if (from < 14 && !merged.activeModuleIds.includes('editor')) {
-                merged.activeModuleIds = [...merged.activeModuleIds, 'editor'];
-            }
-
-            // ── v14 → v15 ──
-            // Shows, games, music and "other" became off by default. A library
-            // that has been in use keeps them: its built-in types are written
-            // out as they were, all on, so nothing it holds drops out of sight.
-            if (from < 15 && Object.keys(saved).length > 0 && merged.contentTypes.length === 0) {
-                merged.contentTypes = DEFAULT_CONTENT_TYPES.map((type) => ({
-                    ...type,
-                    fields: [...type.fields],
-                    hidden: false,
-                }));
-            }
-
-            return { settings: merged };
-        }),
+    loadSettings: (rawSaved) => set(() => ({ settings: normalizeSettings(rawSaved) })),
 
     setAvailableModules: (modules) => set(() => ({ availableModules: modules })),
 
     setLoadedModules: (moduleIds) => set(() => ({ loadedModuleIds: moduleIds })),
 });
+
+/**
+ * A stored config as a complete, current one: defaults filled in, nested
+ * objects merged, stored values re-checked, and every migration since the
+ * version it was written at applied.
+ *
+ * Pure, so a config can be read without becoming the store's: `loadSettings`
+ * is this plus the store, and reading a `data.json` another device wrote is
+ * this alone — see `onExternalSettingsChange`.
+ */
+export function normalizeSettings(rawSaved: Partial<ZenithSettings>): ZenithSettings {
+    const saved = stripUndefined(rawSaved);
+    const merged: ZenithSettings = { ...DEFAULT_SETTINGS, ...saved };
+    for (const key of RETIRED_KEYS)
+        delete (merged as unknown as Record<string, unknown>)[key];
+
+    // Nested objects need their own merge: a config written before a
+    // field existed would otherwise replace the whole default with a
+    // partial object, leaving that field undefined. Driven by a list so
+    // a future object-valued setting is covered by construction.
+    merged.dashboardGrid = normalizeGridConfig(saved.dashboardGrid);
+    // Saved arrangements come back from a file the user can edit, so
+    // they are re-checked rather than trusted; a preset the check
+    // discards also loses its claim to being the active one.
+    merged.dashboardPresets = normalizePresets(saved.dashboardPresets);
+    merged.activeTimer = normalizeSession(saved.activeTimer);
+    merged.profiles = normalizeStoredProfiles(saved.profiles);
+    merged.navigatorPanelButtons = normalizePanelButtons(saved.navigatorPanelButtons);
+    merged.navigatorOrder = Array.isArray(saved.navigatorOrder)
+        ? saved.navigatorOrder.filter((id): id is string => typeof id === 'string')
+        : [];
+    if (!merged.dashboardPresets.some((p) => p.id === merged.dashboardPresetId)) {
+        merged.dashboardPresetId = '';
+    }
+    for (const key of NESTED_KEYS) {
+        Object.assign(merged, {
+            [key]: { ...DEFAULT_SETTINGS[key], ...(saved[key] ?? {}) },
+        });
+    }
+
+    // No version means a config written before versioning existed, so
+    // the five sentinel-based migrations below still apply to it — they
+    // are deliberately left exactly as written. Anything newer skips
+    // them and takes ordered `from < N` migrations instead.
+    const from = saved.settingsVersion ?? 1;
+    merged.settingsVersion = CURRENT_SETTINGS_VERSION;
+    if (from <= 1) applyLegacyMigrations(saved, merged);
+
+    // ── v2 → v3 ──
+    // The navigation launcher arrived as its own module. Switch it on
+    // once, so an existing dashboard gets the new widget rather than a
+    // built-in module the user never sees.
+    if (from < 3 && !merged.activeModuleIds.includes('navigator')) {
+        merged.activeModuleIds = [...merged.activeModuleIds, 'navigator'];
+    }
+
+    // ── v3 → v4 ──
+    // The prayer tracker arrived. Same reasoning as above: a built-in
+    // module nobody can see is a module nobody switches on.
+    if (from < 4 && !merged.activeModuleIds.includes('prayer')) {
+        merged.activeModuleIds = [...merged.activeModuleIds, 'prayer'];
+    }
+
+    // ── v4 → v5 ──
+    // Cross-device sync arrived. Switched on for existing configs
+    // because it exists to fix a bug they already have: until now the
+    // last device to save overwrote every setting the others had
+    // changed, and nobody opted into that.
+    if (from < 5 && !merged.activeModuleIds.includes('sync')) {
+        merged.activeModuleIds = [...merged.activeModuleIds, 'sync'];
+    }
+
+    // ── v5 → v6 ──
+    // Location became one plugin-wide setting. Whichever module had a
+    // place set is promoted to it, and that module's own copy is
+    // cleared — left behind it would be an override that shadows the
+    // global one for ever, so changing the city in the obvious place
+    // would silently do nothing.
+    if (from < 6 && !merged.location) {
+        const adopted = merged.weatherPlace ?? merged.prayerPlace;
+        if (adopted) {
+            merged.location = adopted;
+            if (merged.weatherPlace === adopted) merged.weatherPlace = null;
+            if (merged.prayerPlace === adopted) merged.prayerPlace = null;
+        }
+    }
+
+    // ── v6 → v7 ──
+    // The picture widget arrived as its own module. Switched on for the
+    // same reason the navigator was — a built-in module nobody can see
+    // is a module nobody switches on — and it costs an existing board
+    // nothing, because it only adds an entry to the widget gallery and
+    // shows nothing at all until a picture is chosen for it.
+    if (from < 7 && !merged.activeModuleIds.includes('picture')) {
+        merged.activeModuleIds = [...merged.activeModuleIds, 'picture'];
+    }
+
+    // ── v7 → v8 ──
+    // The canvas module is gone, and its id has to leave the active
+    // list rather than sit there inertly: `canvas` was never a reserved
+    // id, so a module that later took it would start up on
+    // its own, never having been switched on. Its three settings are
+    // left where they are, like any other key we no longer read — see
+    // the merge above: forgetting them would cost the user their layout
+    // choices if they ever went back to a build that still has it.
+    if (from < 8) {
+        merged.activeModuleIds = merged.activeModuleIds.filter((id) => id !== 'canvas');
+    }
+
+    // ── v8 → v9 ──
+    // Features became switches. Everything a config written before
+    // then had, it keeps: each feature on by default is pinned on, so
+    // no later change to a default can take it away. An empty object
+    // is not a config anybody wrote — it is a fresh install or a reset
+    // — and gets the defaults instead.
+    if (from < 9 && Object.keys(saved).length > 0) {
+        merged.features = pinnedFeatures(merged.features);
+    }
+
+    // ── v9 → v10 ──
+    // Profiles arrived. A config written before them keeps a snapshot
+    // of itself, so that whatever profile is tried first, "as it was"
+    // is one click away — and it never sees the first-run choice of a
+    // template, which is for people starting from nothing.
+    if (from < 10 && Object.keys(saved).length > 0) {
+        merged.profilesOnboarded = true;
+        if (!merged.profiles.some((p) => p.id === BEFORE_PROFILES_ID)) {
+            merged.profiles = [
+                ...merged.profiles,
+                beforeProfilesSnapshot(merged, getTodayString()),
+            ];
+        }
+    }
+
+    // ── v10 → v11 ──
+    // The content library stopped going online: no auto-fill, no
+    // covers downloaded into the vault. Unlike the canvas settings
+    // above, there is nothing here to go back to — the switch and each
+    // type's catalogue name only described network access that is gone
+    // — so both are dropped rather than carried in data.json, and in
+    // every profile saved from now on, for ever.
+    if (from < 11) {
+        Reflect.deleteProperty(merged, 'cacheCovers');
+        merged.contentTypes = merged.contentTypes.map((type) => {
+            if (!('provider' in type)) return type;
+            const copy: Record<string, unknown> = { ...type };
+            delete copy.provider;
+            return copy as unknown as ContentTypeConfig;
+        });
+    }
+
+    // ── v11 → v12 ──
+    // The prayer view started asking for a method and madhab instead
+    // of assuming the Russian muftiate's and a Hanafi asr. Someone who
+    // already changed either made the choice themselves and is not
+    // asked again; someone still on both defaults may never have
+    // known there was a choice, which is the case the question is for.
+    if (from < 12 && Object.keys(saved).length > 0) {
+        merged.prayerMethodChosen =
+            merged.prayerMethod !== 'russia' || merged.prayerAsrMadhab !== 'hanafi';
+    }
+
+    // ── v12 → v13 ──
+    // Search arrived. Switched on for the reason the navigator and the
+    // picture were — a built-in module nobody can see is a module
+    // nobody switches on — and it changes nothing until it is opened.
+    if (from < 13 && !merged.activeModuleIds.includes('search')) {
+        merged.activeModuleIds = [...merged.activeModuleIds, 'search'];
+    }
+
+    // ── v13 → v14 ──
+    // The editor arrived, with styled code blocks. On for existing
+    // configs as well: it is what the update brings, and it steps
+    // aside by itself where Code Styler already does the job.
+    if (from < 14 && !merged.activeModuleIds.includes('editor')) {
+        merged.activeModuleIds = [...merged.activeModuleIds, 'editor'];
+    }
+
+    // ── v14 → v15 ──
+    // Shows, games, music and "other" became off by default. A library
+    // that has been in use keeps them: its built-in types are written
+    // out as they were, all on, so nothing it holds drops out of sight.
+    if (from < 15 && Object.keys(saved).length > 0 && merged.contentTypes.length === 0) {
+        merged.contentTypes = DEFAULT_CONTENT_TYPES.map((type) => ({
+            ...type,
+            fields: [...type.fields],
+            hidden: false,
+        }));
+    }
+    return merged;
+}
 
 /**
  * Migrations for a config written before settings were versioned.

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
     CATCH_UP_MS,
     MAX_SLEEP_MS,
+    PERSIST_EVERY_MS,
     Scheduler,
     type EventSource,
     type SourceEvent,
@@ -19,6 +20,7 @@ const T0 = Date.UTC(2026, 8, 23, 12, 0, 0);
 function harness(watermark: number | null) {
     let now = T0;
     let saved = watermark;
+    let saves = 0;
     let seq = 0;
     const timers = new Map<number, { fn: () => void; at: number }>();
 
@@ -30,7 +32,10 @@ function harness(watermark: number | null) {
         },
         clearTimer: (id) => void timers.delete(id),
         loadWatermark: () => saved,
-        saveWatermark: (at) => void (saved = at),
+        saveWatermark: (at) => {
+            saved = at;
+            saves++;
+        },
     });
 
     const nextTimer = () =>
@@ -45,6 +50,9 @@ function harness(watermark: number | null) {
         },
         get watermark() {
             return saved;
+        },
+        get saves() {
+            return saves;
         },
         timerDelay: () => {
             const t = nextTimer();
@@ -251,5 +259,57 @@ describe('the scheduler', () => {
         h.scheduler.stop();
         h.advance(HOUR);
         expect(s.told).toEqual([]);
+    });
+});
+
+describe('storing the watermark', () => {
+    // It lives in data.json, and a reschedule follows every change to the task
+    // list. Storing it on each one rewrote the settings file after every edit.
+
+    it('does not store it on every reschedule', () => {
+        const h = harness(T0 - HOUR);
+        h.scheduler.register(source('a', []));
+        h.scheduler.start();
+        const before = h.saves;
+
+        for (let i = 0; i < 20; i++) {
+            h.sleep(10_000);
+            h.scheduler.reschedule();
+        }
+
+        expect(h.saves).toBe(before);
+    });
+
+    it('stores it at once when something was delivered', () => {
+        const h = harness(T0);
+        const s = source('a', [{ key: 'x', at: T0 + MIN }]);
+        h.scheduler.register(s);
+        h.scheduler.start();
+
+        h.advance(MIN);
+        expect(s.told).toHaveLength(1);
+        expect(h.watermark).toBe(T0 + MIN);
+    });
+
+    it('catches up once it has trailed long enough', () => {
+        const h = harness(T0);
+        h.scheduler.register(source('a', []));
+        h.scheduler.start();
+
+        h.sleep(PERSIST_EVERY_MS);
+        h.scheduler.reschedule();
+        expect(h.watermark).toBe(T0 + PERSIST_EVERY_MS);
+    });
+
+    it('stores what it put off when it stops', () => {
+        const h = harness(T0);
+        h.scheduler.register(source('a', []));
+        h.scheduler.start();
+        h.sleep(MIN);
+        h.scheduler.reschedule();
+        expect(h.watermark).toBe(T0);
+
+        h.scheduler.stop();
+        expect(h.watermark).toBe(T0 + MIN);
     });
 });
