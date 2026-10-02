@@ -32,7 +32,7 @@ export function useBranchAnchors(rowRef: RefObject<HTMLElement | null>): void {
                 // hangs off the task row itself.
                 const anchor = parent?.classList.contains('zenith-subtask-group')
                     ? parent.querySelector<HTMLElement>(':scope > .zenith-subtask .zenith-status__btn')
-                    : row.querySelector<HTMLElement>(':scope > .zenith-status > .zenith-status__btn');
+                    : row.querySelector<HTMLElement>('.zenith-trow__line > .zenith-status > .zenith-status__btn');
                 if (!anchor) return;
 
                 const rise = list.getBoundingClientRect().top - anchor.getBoundingClientRect().bottom;

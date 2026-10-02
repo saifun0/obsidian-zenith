@@ -7,6 +7,7 @@ import type { DashboardWidgetDefinition } from '../widgets';
 import { prettifyWidgetId, widgetLabel } from '../widgets';
 import { BUNDLE_MAX_PIPS, type WidgetBundle } from '../grid/bundleTypes';
 import { useCrossFade } from '../../../components/shared/useCrossFade';
+import { claimSwipes } from '../../../core/useSwipeActions';
 
 /** Horizontal travel that counts as a swipe rather than a tap. */
 const SWIPE_THRESHOLD_PX = 40;
@@ -104,6 +105,16 @@ export const BundleCard: FC<BundleCardProps> = ({
     });
 
     const swipeStart = useRef<{ x: number; y: number } | null>(null);
+
+    // A swipe across the card flips it, and Obsidian would also take that
+    // swipe to open a sidebar. Claimed touch by touch, so one starting at the
+    // very edge of the screen still reaches the sidebar. See `claimSwipes`.
+    const rootRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const el = rootRef.current;
+        if (!el || editing) return;
+        return claimSwipes(el);
+    }, [editing]);
 
     const onPointerDown = (e: React.PointerEvent) => {
         // Arranging owns the pointer — there that gesture is a drag, not a swipe.
@@ -206,6 +217,7 @@ export const BundleCard: FC<BundleCardProps> = ({
 
     return (
         <div
+            ref={rootRef}
             className="zenith-bundle"
             role="group"
             aria-roledescription={t('dashboard.bundle.role')}

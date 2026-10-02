@@ -61,32 +61,89 @@ occurrence was added, rather than ending the series quietly. A
 file may also declare **defaults** via YAML frontmatter (`priority`, `due`, `tags`); inline
 markers on a line override them, and editing a task doesn't copy them onto the line.
 
-The Tasks view lists each task as a **line**: its checkbox (a status picker), the title,
-and under it one quiet line — the deadline (red when overdue, orange today), a repeat, a
-flag for high or urgent priority, the subtask tally, two tags, time spent, a paperclip —
-and the first line of its note. **A tap opens the editor** (status, priority, tags with
-autocomplete, due/start/scheduled dates, recurrence, subtasks). **Right-click, or a long
-press on a phone,** opens the rest: status, add a subtask, start the timer, open in file,
-delete. On a desktop the timer and **⋯** come up when you point at a row; nothing sits
-under the rows as buttons.
+The Tasks view is laid out like a page of a planner. At the top, **the day**, and under it
+one line — *42 active · 19 in progress · 62 done* — which is also how the page is turned:
+each figure shows its tasks, the one shown is underlined, and a second click goes back to
+everything. Two marks on the right: **⌕** for search and **⋯** for the rest (statistics, the
+calendar, the order, the grouping, refresh).
 
-Subtasks and attachments **fold** behind the tally (or the paperclip) and stay as you left
+Each task is one **line** in a grid:
+
+| Column | What it holds |
+| --- | --- |
+| **Margin** | The day, in italic — under *Today* just the hour, within the week the weekday, further out the date; red once it has passed. ↻ when the task repeats. |
+| **!** | An urgent task, in red. High priority sets the title heavier; low, quieter. |
+| **Circle** | ○ to do, ◐ in progress, ● done, ⊘ cancelled — said by shape, not colour. |
+| **Title** | And under it, in italic, the first line of its note. |
+| **Right** | Two tags, how far its subtasks are (an arc and *2/5*), a paperclip. |
+
+**A click on the circle closes the task** (a second click opens it again). The ink is drawn
+through the title, and the task stays where it was for a couple of seconds with **undo** in
+the margin, then folds away into *Done*. Undo puts the note back exactly as it was — the ✅
+stamp, and the next occurrence a recurring task inserted — as long as nothing has written to
+the note since. All four statuses are behind a **right-click, or a long press**, on the
+circle.
+
+**A click on the title opens the editor.** A right-click or a long press on the row opens
+everything else: the statuses, *Move to today / tomorrow*, *Remove the date*, add a subtask,
+the timer, open in file, delete. On a desktop the timer, **⋯** and the drag handle come up
+over the right edge when you point at a row.
+
+**On a phone, a row swipes:** to the right to close it, to the left to move it to tomorrow.
+The swipe is the row's only when it starts away from the very edge of the screen — from the
+edge it still opens Obsidian's sidebars. The drag handles stay hidden there until
+**⋯ → Put in order by hand**.
+
+**Writing a task** happens on the line above the list, as on paper: type it and press
+<kbd>Enter</kbd>; the line is ready for the next. With natural input on (see below) the date
+it reads shows up in the margin as you type — click it to keep those words in the title
+instead. <kbd>Shift</kbd>+<kbd>Enter</kbd> opens the full editor with what you typed.
+
+**Search** (⌕, or <kbd>/</kbd>) reads more than words: `#work` keeps tasks tagged so (or
+under it, like `#work/zenith`), `!high` one priority and `!` / `!!` / `!!!` a priority or
+above, and `overdue`, `today`, `week`, `no date` narrow by deadline — in any of the plugin's
+languages (`просрочено`, `без даты`…). The tags in use and these words are offered under the
+field.
+
+**The groups** read like a diary: *Overdue*, *Today*, *Tomorrow*, *Next seven days*,
+*Later*, *No date*, then *Done* and *Cancelled*, which start folded. A group's name folds it;
+an empty one is not drawn. On the *Done* page the finished tasks read as a log, the latest
+first.
+
+**The keyboard**, while the list has focus: <kbd>↑</kbd>/<kbd>↓</kbd> move between tasks,
+<kbd>Space</kbd> closes the one in focus, <kbd>Enter</kbd> opens it, <kbd>N</kbd> goes to the
+writing line, <kbd>/</kbd> to search, <kbd>Esc</kbd> clears the search.
+
+Subtasks and attachments **fold** behind their arc (or the paperclip) and stay as you left
 them on this device. A subtask is a thinner line; a tap opens its own editor, and its menu
-is behind the same gesture. The groups — *Overdue*, *Today*, *Later*, *Done*, *Cancelled* —
-fold from their header too, and *Done* and *Cancelled* start folded. On a phone the tabs
-keep to one line and scroll sideways.
+is behind the same gesture.
 
-The chart button swaps the list for the **statistics**: four figures (done, in progress,
-overdue, progress), a line with the active days, the streak and how deadlines are kept,
-the statuses as one bar, the tags as bars, and the year of completions — as many recent
-weeks as the width holds, the newest at the right edge. The filter bar can narrow by
-deadline — including **no date**, which is where forgotten tasks accumulate. New tasks created from the UI or the
-**“Quick add task”** command go into today's daily note when the Journal module's task
-capture is on (the default — see [Journal](journal.md)), and to `Zenith Inbox.md` otherwise.
+**The editor** opens the task as a page: its title large, and under it one line of what it
+is — *○ To do · Oct 31, 15:00 · High · ↻ every week · Zenith* — where each word is the
+control for itself: a click opens just that question under the line. What is not set waits
+at the end of the line as *+ due*, *+ repeat*, *+ start*… Then the tags (type and press
+<kbd>Enter</kbd>, a space or a comma; <kbd>Backspace</kbd> in the empty field takes the last
+one back), the note, the subtasks — ticked and added straight into the note while you edit —
+and the attachments. <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd> saves; closing with
+changes asks first.
+
+**⋯ → Statistics** swaps the list for a short **report**: what the period amounted to, in a
+sentence — *In the past year, 62 of 104 closed — 60%. 19 in progress, 7 overdue.* — the
+active days, the streak and how deadlines are kept, the statuses as one line of ink, the tags
+with dotted leaders, and the year of completions with its months named — as many recent
+weeks as the width holds, the newest at the right edge. New tasks go into today's daily note
+when the Journal module's task capture is on (the default — see [Journal](journal.md)), and
+to `Zenith Inbox.md` otherwise.
+
+**On the dashboard**, the tasks card is the same page, smaller: a sentence — *1 overdue,
+2 for today* — the tasks in the list's own rows, grouped as *Today*, *In progress* and
+*Up next*, and along the bottom the day's progress as one line of ink: what was closed today
+out of what today asked for. The card never scrolls; what does not fit is counted in its
+*+N more* link.
 
 > Dates are compared in your **local** timezone, so “Today” / “Overdue” are always correct.
 
-<a id="natural-input"></a>**Natural input.** In quick add, the title can carry the rest: *Call mom tomorrow at 6pm !*
+<a id="natural-input"></a>**Natural input.** In quick add and on the list's writing line, the title can carry the rest: *Call mom tomorrow at 6pm !*
 becomes the task *Call mom*, due tomorrow at 18:00, priority 🔼. Every piece that was
 understood shows as a chip under the field, and × on a chip keeps those words in the title
 instead. What is read, in English, Russian and Chinese:
@@ -108,25 +165,25 @@ understood looks half understood, and nothing is dropped. `#tags` are the task's
 syntax and stay in the title; typing `#` offers the tags already in use. Switch it off under
 **Tasks → Features → Natural input**.
 
-**Drag and drop.** In manual order every task and subtask row has a grip — on a desktop
-when you point at the row, on a phone always. A task
-carries its whole subtree, and lands with the indentation of whatever it's dropped next
-to — so dragging a subtask beside a top-level task promotes it, and dropping a task inside
-another one's children nests it. Dropping a task into its *own* subtree is refused; it
-would take its children along and orphan them.
+**Drag and drop.** In manual order every task and subtask row has a handle — on a desktop
+when you point at the row, on a phone in *Put in order by hand*. A task carries its whole
+subtree, and lands with the indentation of whatever it's dropped next to — so dragging a
+subtask beside a top-level task promotes it, and dropping a task inside another one's
+children nests it. Dropping a task into its *own* subtree is refused; it would take its
+children along and orphan them.
 
 What a drop means depends on where it lands:
 
 | Drop | Effect |
 | --- | --- |
 | Within a group | Reorders the lines in the file |
-| Onto another **smart bucket** | Edits the task until it belongs there: *Today* sets the due date, *Later* clears it, *Done* / *Cancelled* set the status. Dropping a completed task into an active bucket reopens it. |
+| Onto another **smart group** | Edits the task until it belongs there: *Today* and *Tomorrow* set the due date, *Next seven days* sets it to the last day of the week ahead, *No date* clears it, *Done* / *Cancelled* set the status. Dropping a finished task into an active group reopens it. |
 | Onto another **file group** | Moves the task into that file |
-| **Overdue** | Refused — a deadline in the past isn't something you can schedule into |
+| **Overdue**, **Later** | Refused — a deadline in the past isn't something you can schedule into, and no single day is what *later* means |
 
-Empty buckets appear as drop targets only while a drag they'd accept is in flight.
-Reordering needs **Sort: Manual**, since every other sort derives the order from the task
-data and a dragged row would snap straight back. The grip is also focusable: press
+Empty groups appear as drop targets only while a drag they'd accept is in flight.
+Reordering needs **Order: Manual**, since every other order derives from the task data and a
+dragged row would snap straight back. The handle is also focusable: press
 <kbd>↑</kbd>/<kbd>↓</kbd> to move a row without a pointer.
 
 ## Capture from links

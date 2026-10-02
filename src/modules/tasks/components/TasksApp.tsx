@@ -1,57 +1,33 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, type FC } from 'react';
-import {
-    RotateCw,
-    Plus,
-    CheckSquare,
-    SlidersHorizontal,
-    BarChart3,
-    CalendarDays,
-} from 'lucide-react';
+import { Menu, Platform } from 'obsidian';
+import { MoreHorizontal, RotateCw, Search } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { useFeature } from '../../../core/useFeature';
-import { TASK_TABS, PRIORITIES } from '../../../core/constants';
+import { TASK_TABS } from '../../../core/constants';
 import { getTodayString } from '../../../core/dateUtils';
-import { queryTasks, type DueFilter } from '../services/taskFilter';
-import type { Priority } from '../../../core/constants';
-import { Tabs } from '../../../components/shared/Tabs';
-import { IconButton } from '../../../components/shared/IconButton';
-import { Popover, usePopover } from '../../../components/shared';
+import { queryTasks } from '../services/taskFilter';
+import { isFiltering, parseSearch } from '../services/taskSearch';
 import { SearchField } from '../../../components/ui/fields';
 import { TaskList } from './TaskList';
-import { TaskFilters } from './TaskFilters';
 import { TaskStats } from './TaskStats';
 import { TaskEditorModal } from './TaskEditorModal';
+import { TaskQuickLine, type TaskDraft } from './TaskQuickLine';
 
-/** The filters panel: five controls in a column, plus its own padding. */
-const FILTERS_W = 250;
-const FILTERS_H = 300;
-
-// ── Filter Types ─────────────────────────────────────
+// ── View state ───────────────────────────────────────
 
 export interface TaskFilterState {
-    priority: Priority | 'all';
-    tag: string;
     /** `manual` = file order; the only mode where drag-to-reorder sticks. */
     sort: 'manual' | 'dueDate' | 'priority' | 'created';
-    /** Grouping used on the "All" tab: date buckets, by source file, or flat. */
+    /** Grouping: the diary's smart groups, by source file, or flat. */
     group: 'smart' | 'file' | 'none';
-    /** Deadline filter, including "no date at all". */
-    due: DueFilter;
 }
 
-const DEFAULT_FILTERS: TaskFilterState = {
-    priority: 'all',
-    tag: '',
-    sort: 'manual',
-    group: 'smart',
-    due: 'all',
-};
+const DEFAULT_FILTERS: TaskFilterState = { sort: 'manual', group: 'smart' };
 
 const SORTS: TaskFilterState['sort'][] = ['manual', 'dueDate', 'priority', 'created'];
 const GROUPS: TaskFilterState['group'][] = ['smart', 'file', 'none'];
-const DUES: DueFilter[] = ['all', 'overdue', 'today', 'week', 'none'];
 
 /**
  * The groupings that are switched on. "None" is always there: it is the
@@ -62,51 +38,70 @@ export function groupModes(smart: boolean, file: boolean): TaskFilterState['grou
 }
 
 /** Narrow the untrusted strings that come back from `data.json`. */
-function restoreFilters(saved: {
-    priority: string;
-    tag: string;
-    sort: string;
-    group: string;
-    due?: string;
-}): TaskFilterState {
+function restoreFilters(saved: { sort: string; group: string }): TaskFilterState {
     return {
-        priority: PRIORITIES.includes(saved.priority as Priority)
-            ? (saved.priority as Priority)
-            : 'all',
-        tag: typeof saved.tag === 'string' ? saved.tag : '',
         sort: SORTS.includes(saved.sort as TaskFilterState['sort'])
             ? (saved.sort as TaskFilterState['sort'])
             : DEFAULT_FILTERS.sort,
         group: GROUPS.includes(saved.group as TaskFilterState['group'])
             ? (saved.group as TaskFilterState['group'])
             : DEFAULT_FILTERS.group,
-        due: DUES.includes(saved.due as DueFilter) ? (saved.due as DueFilter) : DEFAULT_FILTERS.due,
     };
 }
 
+type Tab = (typeof TASK_TABS)[number]['id'];
+
+/** "Thursday, 2 October" in the interface's language, capitalised as a heading is. */
+function dayHeading(locale: string): string {
+    const text = new Date().toLocaleDateString(locale, {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+    });
+    return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
+}
+
+/** What the keyboard is typing into, which the list's own keys must leave alone. */
+const isTyping = (el: EventTarget | null) =>
+    el instanceof HTMLElement &&
+    (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+
 // ── Component ────────────────────────────────────────
 
+/**
+ * The tasks view, as a page of a planner.
+ *
+ * At the top, the day, and under it one line of what is on the page — "42
+ * active · 19 in progress · 62 done" — which is also how the page is turned:
+ * each figure shows its tasks, and the one shown is underlined. Search and
+ * everything else wait behind two quiet marks on the right. Then a line to
+ * write the next task on, and the tasks themselves.
+ *
+ * It replaced a title, five icon buttons, four pill tabs with counters, a
+ * search box that took a line whether it was used or not, and a panel of five
+ * dropdowns.
+ */
 export const TasksApp: FC = () => {
     const { plugin } = useApp();
     const t = useTranslation();
     const tasks = useZenithStore((s) => s.tasks);
     const tasksLoading = useZenithStore((s) => s.tasksLoading);
     const calendarOn = useZenithStore((s) => s.loadedModuleIds).includes('tasks-calendar');
+    const reorderMode = useZenithStore((s) => s.taskReorderMode);
+    const setReorderMode = useZenithStore((s) => s.setTaskReorderMode);
     const statsOn = useFeature('tasks.stats');
     const dragOn = useFeature('tasks.dragDrop');
     const smartOn = useFeature('tasks.smartGroups');
     const fileOn = useFeature('tasks.fileGroups');
     const groups = useMemo(() => groupModes(smartOn, fileOn), [smartOn, fileOn]);
 
-    const openCalendar = () => void plugin.moduleManager.get('tasks-calendar')?.activateView();
-
     // Restored from settings; read once via getState because this component
     // writes that slice and would otherwise re-render on its own save.
     const saved = useRef(useZenithStore.getState().settings.taskView).current;
     const updateSettings = useZenithStore((s) => s.updateSettings);
 
-    const [activeTab, setActiveTab] = useState(() =>
-        TASK_TABS.some((t) => t.id === saved.tab) ? saved.tab : 'all'
+    const [tab, setTab] = useState<Tab>(() =>
+        TASK_TABS.some((x) => x.id === saved.tab) ? (saved.tab as Tab) : 'all'
     );
     const [filters, setFilters] = useState<TaskFilterState>(() => restoreFilters(saved));
 
@@ -114,201 +109,374 @@ export const TasksApp: FC = () => {
         // Spread over what is there: the list keeps its open tasks and folded
         // groups in the same slice, and they are not this effect's to reset.
         const view = useZenithStore.getState().settings.taskView;
-        updateSettings({ taskView: { ...view, tab: activeTab, ...filters } });
-    }, [activeTab, filters, updateSettings]);
+        updateSettings({ taskView: { ...view, tab, ...filters } });
+    }, [tab, filters, updateSettings]);
+
     const [search, setSearch] = useState('');
-    const [showCreate, setShowCreate] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchFocus, setSearchFocus] = useState(false);
     const [showStats, setShowStats] = useState(false);
-    const filterPop = usePopover<HTMLDivElement>();
+    const [draft, setDraft] = useState<TaskDraft | null>(null);
+    const rootRef = useRef<HTMLDivElement>(null);
+    const quickRef = useRef<HTMLInputElement>(null);
+    const searchBoxRef = useRef<HTMLDivElement>(null);
 
-    // ── Refresh from vault (the DataService keeps the store live already;
-    //    this is the explicit force-reload behind the Refresh button) ──
+    // Leaving the view leaves reordering too: it is a mode, not a setting.
+    useEffect(() => () => setReorderMode(false), [setReorderMode]);
 
-    const loadTasks = useCallback(async () => {
-        await plugin.dataService.reloadTasks();
-    }, [plugin]);
+    const query = useMemo(() => parseSearch(search), [search]);
+    const filtering = isFiltering(query);
 
-    // ── Filter + sort tasks ──────────────────────────
+    // ── The list ─────────────────────────────────────
 
-    const filteredTasks = useMemo(
-        () =>
-            queryTasks(tasks, {
-                tab: activeTab,
-                priority: filters.priority,
-                tag: filters.tag,
-                search,
-                sort: filters.sort,
-                due: filters.due,
-                today: getTodayString(),
-            }),
-        [tasks, activeTab, filters, search]
-    );
-
-    // ── Tabs with counts ─────────────────────────────
-
-    const tabsWithCounts = useMemo(() => {
-        return TASK_TABS.map((tab) => {
-            let count = 0;
-            switch (tab.id) {
-                case 'all':
-                    count = tasks.length;
-                    break;
-                case 'active':
-                    count = tasks.filter(
-                        (t) => t.status === 'todo' || t.status === 'in-progress'
-                    ).length;
-                    break;
-                case 'in-progress':
-                    count = tasks.filter((t) => t.status === 'in-progress').length;
-                    break;
-                case 'done':
-                    count = tasks.filter((t) => t.status === 'done').length;
-                    break;
-            }
-            return { id: tab.id, label: t(`tasks.tab.${tab.i18n}`), count };
+    const shown = useMemo(() => {
+        const list = queryTasks(tasks, {
+            tab,
+            priority: query.priority ?? 'all',
+            minPriority: query.minPriority,
+            tag: '',
+            tags: query.tags,
+            search: query.text,
+            sort: filters.sort,
+            due: query.due,
+            today: getTodayString(),
         });
-        // `t` included: it is memoised per locale, so this recomputes only
-        // when the language actually changes — which is precisely when a tab
-        // labelled "Сегодня" must stop saying "Today".
-    }, [tasks, t]);
+        // What is finished reads as a log: the latest first.
+        if (tab === 'done') {
+            list.sort((a, b) => (b.doneDate ?? '').localeCompare(a.doneDate ?? ''));
+        }
+        return list;
+    }, [tasks, tab, query, filters.sort]);
 
-    // ── All existing tags (for autocomplete) ─────────
+    const groupMode: TaskFilterState['group'] =
+        tab === 'done' || !groups.includes(filters.group) ? 'none' : filters.group;
 
-    const allTags = useMemo(() => {
-        const tagSet = new Set<string>();
-        tasks.forEach((t) => t.tags.forEach((tag) => tagSet.add(tag)));
-        return Array.from(tagSet).sort();
+    // ── The line under the day ───────────────────────
+
+    const counts = useMemo(() => {
+        let active = 0;
+        let doing = 0;
+        let done = 0;
+        for (const task of tasks) {
+            if (task.status === 'todo' || task.status === 'in-progress') active++;
+            if (task.status === 'in-progress') doing++;
+            if (task.status === 'done') done++;
+        }
+        return { active, doing, done };
     }, [tasks]);
+
+    const tally: Array<{ id: Tab; text: string }> = [
+        { id: 'active', text: t.plural('tasks.tally.active', counts.active) },
+        { id: 'in-progress', text: t('tasks.tally.doing', { count: counts.doing }) },
+        { id: 'done', text: t('tasks.tally.done', { count: counts.done }) },
+    ];
+
+    // ── All existing tags, by use ────────────────────
+
+    const topTags = useMemo(() => {
+        const counted = new Map<string, number>();
+        for (const task of tasks)
+            for (const tag of task.tags) counted.set(tag, (counted.get(tag) ?? 0) + 1);
+        return [...counted.entries()].sort((a, b) => b[1] - a[1]).map(([tag]) => tag);
+    }, [tasks]);
+
+    const suggestions = useMemo(() => {
+        const has = (token: string) =>
+            search.toLocaleLowerCase().split(/\s+/).includes(token.toLocaleLowerCase());
+        return [
+            ...topTags.slice(0, 5).map((tag) => `#${tag}`),
+            `!${t('priority.high').toLocaleLowerCase()}`,
+            t('tasks.search.kw.overdue'),
+            t('tasks.search.kw.nodate'),
+        ].filter((token) => !has(token));
+    }, [topTags, search, t]);
+
+    const addToken = (token: string) => {
+        setSearch((prev) => `${prev.trim() ? `${prev.trim()} ` : ''}${token} `);
+        searchBoxRef.current?.querySelector('input')?.focus();
+    };
+
+    const openSearch = () => {
+        setShowStats(false);
+        setSearchOpen(true);
+        window.setTimeout(() => searchBoxRef.current?.querySelector('input')?.focus(), 0);
+    };
+
+    const closeSearch = () => {
+        setSearch('');
+        setSearchOpen(false);
+    };
+
+    // ── The menu behind ⋯ ────────────────────────────
+
+    const reload = useCallback(() => plugin.dataService.reloadTasks(), [plugin]);
+
+    const openMenu = (e: React.MouseEvent) => {
+        const menu = new Menu();
+        if (statsOn) {
+            menu.addItem((item) =>
+                item
+                    .setTitle(t('common.statistics'))
+                    .setIcon('bar-chart-3')
+                    .setChecked(showStats)
+                    .onClick(() => setShowStats((v) => !v))
+            );
+        }
+        if (calendarOn) {
+            menu.addItem((item) =>
+                item
+                    .setTitle(t('tasks.openCalendar'))
+                    .setIcon('calendar-days')
+                    .onClick(() => void plugin.moduleManager.get('tasks-calendar')?.activateView())
+            );
+        }
+        menu.addSeparator();
+        menu.addItem((item) => item.setTitle(t('tasks.view.sort')).setIsLabel(true));
+        for (const sort of ['manual', 'dueDate', 'priority', 'created'] as const) {
+            menu.addItem((item) =>
+                item
+                    .setTitle(t(`tasks.sort.${sort}`))
+                    .setChecked(filters.sort === sort)
+                    .onClick(() => setFilters((f) => ({ ...f, sort })))
+            );
+        }
+        if (groups.length > 1) {
+            menu.addSeparator();
+            menu.addItem((item) => item.setTitle(t('tasks.view.group')).setIsLabel(true));
+            for (const group of groups) {
+                menu.addItem((item) =>
+                    item
+                        .setTitle(t(`tasks.group.${group}`))
+                        .setChecked(filters.group === group)
+                        .onClick(() => setFilters((f) => ({ ...f, group })))
+                );
+            }
+        }
+        // On a touch screen the handles stay hidden until asked for: there a
+        // row swipes, and a handle on every row read as clutter.
+        if (dragOn && Platform.isMobile && filters.sort === 'manual') {
+            menu.addSeparator();
+            menu.addItem((item) =>
+                item
+                    .setTitle(t(reorderMode ? 'tasks.view.reorderDone' : 'tasks.view.reorder'))
+                    .setIcon('grip-vertical')
+                    .onClick(() => setReorderMode(!reorderMode))
+            );
+        }
+        menu.addSeparator();
+        menu.addItem((item) =>
+            item
+                .setTitle(t('common.refresh'))
+                .setIcon('rotate-cw')
+                .setDisabled(tasksLoading)
+                .onClick(() => void reload())
+        );
+        menu.showAtMouseEvent(e.nativeEvent);
+    };
+
+    // ── The keyboard, while focus is in this view ────
+
+    const onKeyDown = (e: React.KeyboardEvent) => {
+        if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+        // React hands this view the keys of a dialog it opened too — the editor
+        // is portalled out of the view but not out of its component tree.
+        if (!(e.target instanceof Node) || !rootRef.current?.contains(e.target)) return;
+        if (isTyping(e.target)) return;
+        const heads = Array.from(
+            rootRef.current?.querySelectorAll<HTMLElement>('[data-task-head]') ?? []
+        ).filter((el) => el.tabIndex >= 0);
+        const at = heads.indexOf(document.activeElement as HTMLElement);
+
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            if (heads.length === 0) return;
+            e.preventDefault();
+            const step = e.key === 'ArrowDown' ? 1 : -1;
+            const next =
+                at === -1
+                    ? step > 0
+                        ? 0
+                        : heads.length - 1
+                    : Math.max(0, Math.min(heads.length - 1, at + step));
+            heads[next].focus();
+            heads[next].scrollIntoView({ block: 'nearest' });
+        } else if (e.code === 'KeyN' && !e.shiftKey) {
+            e.preventDefault();
+            setShowStats(false);
+            window.setTimeout(() => quickRef.current?.focus(), 0);
+        } else if (e.code === 'Slash' || e.key === '/') {
+            e.preventDefault();
+            openSearch();
+        } else if (e.key === 'Escape' && searchOpen) {
+            e.preventDefault();
+            closeSearch();
+        }
+    };
 
     // ── Render ───────────────────────────────────────
 
-    return (
-        <div className="zenith-tasks">
-            <div className="zenith-tasks-header-wrapper">
-                {/* Header */}
-                <div className="zenith-tasks-header">
-                    <div className="zenith-tasks-header-left">
-                        <CheckSquare size={22} className="zenith-tasks-header-icon" />
-                        <h2 className="zenith-tasks-title">{t('tasks.title')}</h2>
-                    </div>
-                    <div className="zenith-tasks-header-actions">
-                        {/* Only offered while the calendar module is on — a
-                            button that opens nothing is worse than no button. */}
-                        {calendarOn && (
-                            <IconButton
-                                icon={CalendarDays}
-                                tooltip={t('tasks.openCalendar')}
-                                onClick={openCalendar}
-                                variant="ghost"
-                                size="md"
-                            />
-                        )}
-                        {statsOn && (
-                            <IconButton
-                                icon={BarChart3}
-                                tooltip={t('common.statistics')}
-                                onClick={() => setShowStats((v) => !v)}
-                                variant={showStats ? 'default' : 'ghost'}
-                                size="md"
-                            />
-                        )}
-                        <div ref={filterPop.anchorProps.ref}>
-                            <IconButton
-                                icon={SlidersHorizontal}
-                                tooltip={t('tasks.filter.sort')}
-                                onClick={() => filterPop.setOpen(!filterPop.open)}
-                                variant={
-                                    filterPop.open ||
-                                    filters.tag ||
-                                    filters.priority !== 'all' ||
-                                    filters.due !== 'all'
-                                        ? 'default'
-                                        : 'ghost'
-                                }
-                                size="md"
-                            />
-                        </div>
-                        {/* The panel used to sit inside that div, positioned
-                            absolutely — so it was clipped by the header strip
-                            and had no way to be dismissed but a click outside. */}
-                        <Popover
-                            anchor={filterPop.anchor}
-                            open={filterPop.open}
-                            onClose={filterPop.close}
-                            width={FILTERS_W}
-                            height={FILTERS_H}
-                            align="end"
-                            role="dialog"
-                            label={t('tasks.filter.sort')}
-                            className="zenith-task-filters-popover"
-                        >
-                            <TaskFilters
-                                filters={filters}
-                                onFilterChange={setFilters}
-                                allTags={allTags}
-                                groups={groups}
-                            />
-                        </Popover>
-                        <IconButton
-                            icon={Plus}
-                            tooltip={t('tasks.addTask')}
-                            onClick={() => setShowCreate(true)}
-                            variant="default"
-                            size="md"
-                        />
-                        <IconButton
-                            icon={RotateCw}
-                            tooltip={t('common.refresh')}
-                            onClick={() => void loadTasks()}
-                            disabled={tasksLoading}
-                            variant="ghost"
-                            size="md"
-                        />
-                    </div>
-                </div>
+    const statsShown = statsOn && showStats;
 
-                {/* The tabs and the search narrow the list; the statistics
-                    take its place and count everything, so they go with it. */}
-                {!(statsOn && showStats) && (
-                    <>
-                        <Tabs tabs={tabsWithCounts} activeTab={activeTab} onTabChange={setActiveTab} />
-                        <SearchField
+    const empty =
+        tasks.length === 0 ? (
+            <div className="zenith-tempty">
+                <p className="zenith-tempty__lead">{t('tasks.empty.fresh')}</p>
+                <p className="zenith-tempty__hint">{t('tasks.empty.freshHint')}</p>
+            </div>
+        ) : (
+            <div className="zenith-tempty">
+                <p className="zenith-tempty__lead">
+                    {tab === 'done' && !filtering
+                        ? t('tasks.empty.doneNone')
+                        : t('tasks.empty.none')}
+                </p>
+                {filtering && <p className="zenith-tempty__hint">{t('tasks.empty.noneHint')}</p>}
+            </div>
+        );
+
+    return (
+        <div className="zenith-tasks" ref={rootRef} tabIndex={-1} onKeyDown={onKeyDown}>
+            {/* The page inside the scroller: the scroller is the container the
+                layout asks how wide it is, and a container cannot restyle itself. */}
+            <div className="zenith-tasks__page">
+                <header className="zenith-tasks-head">
+                    <div className="zenith-tasks-head__top">
+                        <h2 className="zenith-tasks-head__day">{dayHeading(t.locale)}</h2>
+                        <div className="zenith-tasks-head__actions">
+                            <button
+                                type="button"
+                                className={`zenith-tasks-head__btn ${searchOpen ? 'is-on' : ''}`}
+                                aria-label={t('tasks.searchOpen')}
+                                title={`${t('tasks.searchOpen')} (/)`}
+                                aria-pressed={searchOpen}
+                                onClick={() => (searchOpen ? closeSearch() : openSearch())}
+                            >
+                                <Search size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                className="zenith-tasks-head__btn"
+                                aria-label={t('tasks.view.menu')}
+                                title={t('tasks.view.menu')}
+                                onClick={openMenu}
+                            >
+                                <MoreHorizontal size={17} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <nav className="zenith-tasks-tally" aria-label={t('tasks.title')}>
+                        {tally.map((item, i) => (
+                            <React.Fragment key={item.id}>
+                                {i > 0 && (
+                                    <span className="zenith-tasks-tally__sep" aria-hidden="true">
+                                        ·
+                                    </span>
+                                )}
+                                <button
+                                    type="button"
+                                    className={`zenith-tasks-tally__item ${tab === item.id && !statsShown ? 'is-on' : ''}`}
+                                    aria-pressed={tab === item.id}
+                                    title={tab === item.id ? t('tasks.tally.all') : undefined}
+                                    onClick={() => {
+                                        setShowStats(false);
+                                        setTab((cur) => (cur === item.id ? 'all' : item.id));
+                                    }}
+                                >
+                                    {item.text}
+                                </button>
+                            </React.Fragment>
+                        ))}
+                        {tasksLoading && (
+                            <RotateCw size={12} className="zenith-spin zenith-tasks-tally__busy" />
+                        )}
+                    </nav>
+
+                    {searchOpen && !statsShown && (
+                        <div
                             className="zenith-tasks-search"
-                            value={search}
-                            onChange={setSearch}
-                            placeholder={t('tasks.searchPlaceholder')}
-                        />
+                            ref={searchBoxRef}
+                            onFocus={() => setSearchFocus(true)}
+                            onBlur={(e) => {
+                                if (!e.currentTarget.contains(e.relatedTarget))
+                                    setSearchFocus(false);
+                            }}
+                        >
+                            <SearchField
+                                value={search}
+                                onChange={setSearch}
+                                placeholder={t('tasks.searchHint')}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Escape') {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        closeSearch();
+                                        rootRef.current?.focus();
+                                    }
+                                }}
+                                aria-label={t('tasks.searchOpen')}
+                            />
+                            <div
+                                className={`zenith-tasks-search__chips ${searchFocus || !search ? 'is-shown' : ''}`}
+                            >
+                                {suggestions.map((token) => (
+                                    <button
+                                        key={token}
+                                        type="button"
+                                        className="zenith-tasks-search__chip"
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => addToken(token)}
+                                    >
+                                        {token}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </header>
+
+                {statsShown ? (
+                    <TaskStats tasks={tasks} />
+                ) : (
+                    <>
+                        {tab !== 'done' && <TaskQuickLine ref={quickRef} onExpand={setDraft} />}
+                        {reorderMode && (
+                            <button
+                                type="button"
+                                className="zenith-tasks-reorder"
+                                onClick={() => setReorderMode(false)}
+                            >
+                                {t('tasks.view.reorderDone')}
+                            </button>
+                        )}
+                        {tasksLoading && tasks.length === 0 ? (
+                            <div className="zenith-tasks-loading">
+                                <RotateCw size={16} className="zenith-spin" />
+                                <span>{t('tasks.loading')}</span>
+                            </div>
+                        ) : (
+                            <TaskList
+                                tasks={shown}
+                                groupMode={groupMode}
+                                sort={filters.sort}
+                                reorderable={
+                                    dragOn &&
+                                    filters.sort === 'manual' &&
+                                    (!Platform.isMobile || reorderMode)
+                                }
+                                empty={empty}
+                            />
+                        )}
                     </>
                 )}
+
+                {draft && (
+                    <TaskEditorModal
+                        initial={draft}
+                        onClose={() => setDraft(null)}
+                        onSaved={reload}
+                    />
+                )}
             </div>
-
-            {/* The statistics take the list's place, as the library's do: over
-                a long list they were a panel you scrolled past to reach it. */}
-            {statsOn && showStats ? (
-                <TaskStats tasks={tasks} />
-            ) : tasksLoading ? (
-                <div className="zenith-tasks-loading">
-                    <RotateCw size={20} className="zenith-spin" />
-                    <span>{t('tasks.loading')}</span>
-                </div>
-            ) : (
-                <TaskList
-                    tasks={filteredTasks}
-                    // A saved grouping whose feature has since been switched
-                    // off is kept for when it comes back, and not drawn.
-                    groupMode={
-                        activeTab === 'all' && groups.includes(filters.group)
-                            ? filters.group
-                            : 'none'
-                    }
-                    reorderable={dragOn && filters.sort === 'manual'}
-                />
-            )}
-
-            {/* Create modal */}
-            {showCreate && (
-                <TaskEditorModal onClose={() => setShowCreate(false)} onSaved={loadTasks} />
-            )}
         </div>
     );
 };

@@ -22,8 +22,13 @@ export interface MenuLine {
     timerMinutes?: number;
 }
 
+/** Where "move to" in the menu can put a task. */
+export type ScheduleTarget = 'today' | 'tomorrow' | 'nodate';
+
 export interface MenuActions {
     onStatus?: (status: TaskStatus) => void;
+    /** Move the deadline; left out for a finished line. */
+    onSchedule?: (to: ScheduleTarget) => void;
     onAddSubtask?: () => void;
     /** Offer the timer; left out for a finished line or with the feature off. */
     timer?: boolean;
@@ -56,6 +61,19 @@ export function showLineMenu(
                     .setChecked(line.status === status)
                     .onClick(() => actions.onStatus?.(status))
             );
+        }
+        menu.addSeparator();
+    }
+
+    if (actions.onSchedule) {
+        const schedule = actions.onSchedule;
+        const targets: Array<[ScheduleTarget, string, string]> = [
+            ['today', 'tasks.menu.today', 'calendar-check'],
+            ['tomorrow', 'tasks.menu.tomorrow', 'sunrise'],
+            ['nodate', 'tasks.menu.nodate', 'calendar-x'],
+        ];
+        for (const [to, key, icon] of targets) {
+            menu.addItem((item) => item.setTitle(t(key)).setIcon(icon).onClick(() => schedule(to)));
         }
         menu.addSeparator();
     }

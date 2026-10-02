@@ -2,6 +2,7 @@ import type { Task } from '../../../store/taskSlice';
 import { PRIORITY_WEIGHT } from '../../../core/constants';
 import type { Priority } from '../../../core/constants';
 import { shiftIsoDate } from './taskFormat';
+import { tagMatches } from './taskSearch';
 
 export { PRIORITY_WEIGHT };
 
@@ -33,7 +34,11 @@ export interface TaskQuery {
     /** Active tab: 'all' | 'active' | 'in-progress' | 'done'. */
     tab: string;
     priority: Priority | 'all';
+    /** This priority or above; see `parseSearch`. */
+    minPriority?: Priority;
     tag: string;
+    /** Tags that must all be on the task, each as `#work` matches. See `tagMatches`. */
+    tags?: string[];
     search: string;
     /** `manual` = the order the lines sit in their files (what drag-and-drop edits). */
     sort: 'manual' | 'dueDate' | 'priority' | 'created';
@@ -75,6 +80,11 @@ export function queryTasks(tasks: Task[], q: TaskQuery): Task[] {
         result = result.filter((t) => t.priority === q.priority);
     }
 
+    if (q.minPriority) {
+        const floor = PRIORITY_WEIGHT[q.minPriority];
+        result = result.filter((t) => PRIORITY_WEIGHT[t.priority] >= floor);
+    }
+
     // ── Due date ──
     if (q.due && q.due !== 'all') {
         result = result.filter((t) => matchesDue(t.dueDate, q.due as DueFilter, q.today));
@@ -84,6 +94,11 @@ export function queryTasks(tasks: Task[], q: TaskQuery): Task[] {
     if (q.tag) {
         const tagLower = q.tag.toLowerCase();
         result = result.filter((t) => t.tags.some((tag) => tag.toLowerCase().includes(tagLower)));
+    }
+
+    if (q.tags?.length) {
+        const wanted = q.tags;
+        result = result.filter((t) => wanted.every((w) => t.tags.some((tag) => tagMatches(tag, w))));
     }
 
     // ── Text search (title or tags) ──
@@ -97,8 +112,15 @@ export function queryTasks(tasks: Task[], q: TaskQuery): Task[] {
     }
 
     // ── Sort ──
-    result.sort((a, b) => {
-        switch (q.sort) {
+    result.sort(compareTasks(q.sort));
+
+    return result;
+}
+
+/** The order a sort mode puts two tasks in. */
+export function compareTasks(sort: TaskQuery['sort']): (a: Task, b: Task) => number {
+    return (a, b) => {
+        switch (sort) {
             // File order — the only mode where dragging a task can visibly move
             // it, since every other mode derives the order from task data.
             case 'manual':
@@ -115,7 +137,5 @@ export function queryTasks(tasks: Task[], q: TaskQuery): Task[] {
             default:
                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         }
-    });
-
-    return result;
+    };
 }

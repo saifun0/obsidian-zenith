@@ -70,6 +70,8 @@ const cssContext = await esbuild.context({
     entryPoints: [resolve(__dirname, "src/styles/main.css")],
     bundle: true,
     outfile: resolve(outputDir, "styles.css"),
+    // The bundled typeface goes inside the stylesheet: see src/styles/fonts.css.
+    loader: { ".woff2": "dataurl" },
     logLevel: "info",
     minify: prod,
 });

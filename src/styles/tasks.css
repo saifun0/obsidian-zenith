@@ -1,437 +1,808 @@
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   Zenith — Tasks Module Styles (Redesign)
+   Zenith — Tasks, as a page of a planner
+
+   One column of type on the page's own colour. The day is set in Spectral;
+   so are the dates in the margin, a group's name and a note — the planner's
+   hand. Everything else is the theme's text. There is one colour on the page,
+   and it means a deadline has passed.
+
+   The grid every line shares, from the left:
+     margin   — the date, right-aligned against the circle (--zenith-tmargin)
+     mark     — "!" when a task is urgent
+     circle   — the checkbox (taskStatusUi.tsx)
+     head     — the title, and a note under it
+     side     — tags, subtask progress, a paperclip; actions on hover
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-/* ── Tasks Container ────────────────────────────── */
+/* ── The page ───────────────────────────────────── */
 .zenith-tasks {
     /* Plus what a phone's chrome covers (base.css): this list scrolls itself. */
-    padding: calc(var(--zenith-space-md) + var(--zenith-inset-top, 0px)) var(--zenith-space-lg)
-        calc(var(--zenith-space-md) + var(--zenith-inset-bottom, 0px));
-    max-width: 900px;
+    padding: calc(var(--zenith-space-lg) + var(--zenith-inset-top, 0px)) var(--zenith-space-lg)
+        calc(var(--zenith-space-xl, 32px) + var(--zenith-inset-bottom, 0px));
+    max-width: 860px;
     margin: 0 auto;
-    animation: zenith-fade-in var(--zenith-transition-slow);
     position: relative;
     height: 100%;
     overflow-y: auto;
+    outline: none;
+    /* Rows adapt to the pane, not to the screen: this list is as likely to be
+       in a narrow sidebar on a desktop as on a phone. */
+    container-type: inline-size;
+    container-name: zenith-tasks;
+    animation: zenith-fade-in var(--zenith-transition-slow);
 }
 
-/* ── Sticky Header & Tabs ───────────────────────── */
-/* `.zenith-tasks` scrolls itself, and a sticky box stops inside its scroller's
-   padding — which already holds the phone's inset. Taken back off, so the header
-   stops right under Obsidian's rather than an inset lower, over the list. */
-.zenith-tasks-header-wrapper {
-    position: sticky;
-    top: calc(
-        var(--zenith-sticky-top, 0px) - var(--zenith-inset-top, 0px) - var(--zenith-space-md)
-    );
-    z-index: 10;
-    background: var(--background-primary);
-    padding-top: var(--zenith-space-sm);
-    padding-bottom: var(--zenith-space-sm);
-    margin-bottom: var(--zenith-space-md);
-    border-bottom: 1px solid var(--background-modifier-border);
+/* On a phone the margin column is the left edge's whitespace already. */
+@media (max-width: 600px) {
+    .zenith-tasks {
+        padding-left: 8px;
+        padding-right: 14px;
+    }
 }
 
-.zenith-tasks-header {
+/* The grid's measures, on the page so the narrow layouts below can change them. */
+.zenith-tasks__page {
+    --zenith-tmargin: 74px;
+    --zenith-tmark: 10px;
+    --zenith-tcircle: 28px;
+    --zenith-tgap: 8px;
+    /* Where a title begins, for everything that lines up with titles. */
+    --zenith-tcolumn: calc(var(--zenith-tmargin) + var(--zenith-tmark) + var(--zenith-tcircle) + 2 * var(--zenith-tgap));
+}
+
+/* ── The day, and the line under it ─────────────── */
+.zenith-tasks-head {
+    /* The day sits over the titles, not over the margin. */
+    padding-left: var(--zenith-tcolumn);
+    margin-bottom: 22px;
+}
+
+.zenith-tasks-head__top {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
-    margin-bottom: var(--zenith-space-sm);
-}
-
-.zenith-tasks-header-left {
-    display: flex;
-    align-items: center;
-    gap: var(--zenith-space-sm);
-}
-
-.zenith-tasks-title {
-    margin: 0;
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: var(--text-normal);
-}
-
-.zenith-tasks-header-actions {
-    display: flex;
-    gap: var(--zenith-space-xs);
-    align-items: center;
-}
-
-/* ── Filter Popover ─────────────────────────────── */
-/* The surface is `.zenith-pop`; this is only its padding and the fields inside. */
-.zenith-task-filters-popover {
-    padding: 14px;
     gap: 12px;
 }
 
-.zenith-task-filters-popover .zenith-task-filters__select,
-.zenith-task-filters-popover .zenith-task-filters__input {
-    width: 100%;
+.zenith-tasks-head__day {
+    margin: 0;
+    font-family: var(--zenith-font-ink);
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.012em;
+    color: var(--text-normal);
+    text-wrap: balance;
 }
 
-/* ── Group Headers ──────────────────────────────── */
-/* A header is the group's fold: a chevron, the name, how many, and a rule to
-   the right edge. The list remembers which groups were folded. */
-.zenith-root button.zenith-task-group-header {
+.zenith-tasks-head__actions {
     display: flex;
+    gap: 2px;
+    align-self: center;
+}
+
+.zenith-root button.zenith-tasks-head__btn {
+    display: inline-flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 7px;
-    width: 100%;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    transition: color var(--zenith-transition-fast), background var(--zenith-transition-fast);
+}
+.zenith-root button.zenith-tasks-head__btn:hover,
+.zenith-root button.zenith-tasks-head__btn.is-on {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+/* "42 active · 19 in progress · 62 done" — and how the page is turned. */
+.zenith-tasks-tally {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    margin-top: 6px;
+    font-size: 0.86rem;
+    font-variant-numeric: tabular-nums;
+}
+.zenith-tasks-tally__sep {
+    color: var(--text-faint);
+}
+.zenith-root button.zenith-tasks-tally__item {
     height: auto;
-    margin: 18px 0 4px 0;
-    padding: 4px 2px;
+    padding: 0;
     border: none;
     background: none;
     box-shadow: none;
-    color: var(--text-muted);
-    font-size: 0.76rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    text-align: left;
+    color: var(--text-faint);
+    font: inherit;
     cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 5px;
+    transition: color var(--zenith-transition-fast), text-decoration-color var(--zenith-transition-fast);
+}
+.zenith-root button.zenith-tasks-tally__item:hover {
+    color: var(--text-muted);
+}
+.zenith-root button.zenith-tasks-tally__item.is-on {
+    color: var(--text-normal);
+    text-decoration-color: currentColor;
+}
+.zenith-root button.zenith-tasks-tally__item:focus-visible {
+    outline: none;
+    border-radius: 3px;
+    box-shadow: 0 0 0 2px var(--zenith-accent);
+}
+.zenith-tasks-tally__busy {
+    color: var(--text-faint);
+    align-self: center;
 }
 
-.zenith-root button.zenith-task-group-header:hover {
+/* ── Search ─────────────────────────────────────── */
+/* The field is `SearchField`; this places it, and the words it understands
+   under it — as words, not pills: they are things to type. */
+.zenith-tasks-search {
+    margin-top: 14px;
+}
+.zenith-tasks-search__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 14px;
+    margin-top: 8px;
+    min-height: 1.3em;
+    visibility: hidden;
+}
+.zenith-tasks-search__chips.is-shown {
+    visibility: visible;
+}
+.zenith-root button.zenith-tasks-search__chip {
+    height: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--text-faint);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.zenith-root button.zenith-tasks-search__chip:hover {
     color: var(--text-normal);
 }
 
-.zenith-task-group:first-child > button.zenith-task-group-header {
-    margin-top: 4px;
-}
-
-.zenith-task-group-header::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--background-modifier-border);
-    opacity: 0.5;
-}
-
-.zenith-task-group-header__chevron {
-    flex: none;
-    transition: transform var(--zenith-transition-fast);
-}
-
-.zenith-task-group-header.is-open .zenith-task-group-header__chevron {
-    transform: rotate(90deg);
-}
-
-.zenith-task-group-header__count {
-    color: var(--text-faint);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
-}
-
-/* ── Task List ──────────────────────────────────── */
-.zenith-task-list {
-    display: flex;
-    flex-direction: column;
-    padding-bottom: 6px;
-    /* Rows adapt to the pane, not to the screen: this list is just as likely to
-       be in a narrow sidebar on a desktop as on a phone. */
-    container-type: inline-size;
-    container-name: zenith-tasks;
+/* While the touch screen's handles are out: the way back, in plain words. */
+.zenith-root button.zenith-tasks-reorder {
+    display: block;
+    height: auto;
+    margin: 0 0 10px var(--zenith-tcolumn);
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--text-normal);
+    font-size: 0.84rem;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
 }
 
 .zenith-tasks-loading {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    color: var(--text-muted);
-    padding: 40px 0;
-}
-
-/* ── Task Row ───────────────────────────────────── */
-/* A line, not a card: no fill, no border, one hairline between tasks. What a
-   task is takes a line or two; what can be done to it waits behind a tap or a
-   right-click (taskMenu.ts). */
-.zenith-task-item {
-    display: flex;
-    align-items: flex-start;
     gap: 10px;
-    padding: 7px 4px;
-    border-radius: var(--zenith-radius-md);
-    position: relative;
-    transition: background-color var(--zenith-transition-fast);
+    padding: 32px 0 0 var(--zenith-tcolumn);
+    color: var(--text-faint);
+    font-size: 0.86rem;
 }
 
-/* The hairline starts where the text does, and is straight: drawn on the
-   rounded row itself it bent round the corners. */
-.zenith-task-item + .zenith-task-item::before {
+/* An empty page says what to do next. */
+.zenith-tempty {
+    padding: 28px 0 0 var(--zenith-tcolumn);
+}
+.zenith-tempty__lead {
+    margin: 0;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--text-muted);
+}
+.zenith-tempty__hint {
+    margin: 4px 0 0;
+    font-size: 0.84rem;
+    color: var(--text-faint);
+}
+
+/* ── Groups ─────────────────────────────────────── */
+/* A group is a page of the diary: its name in the planner's hand, the count
+   in the margin over the dates. Whitespace, not a rule, keeps groups apart. */
+.zenith-tgroup {
+    position: relative;
+    border-radius: 10px;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+.zenith-tgroup + .zenith-tgroup {
+    margin-top: 18px;
+}
+
+.zenith-root button.zenith-tgroup__head {
+    display: grid;
+    grid-template-columns: var(--zenith-tmargin) 1fr auto;
+    column-gap: calc(var(--zenith-tmark) + var(--zenith-tcircle) + 2 * var(--zenith-tgap));
+    align-items: baseline;
+    width: 100%;
+    height: auto;
+    margin: 0 0 4px;
+    padding: 4px 0;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    box-shadow: none;
+    text-align: left;
+    cursor: pointer;
+}
+.zenith-tgroup__count {
+    padding-right: 2px;
+    text-align: right;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 0.9rem;
+    font-variant-numeric: oldstyle-nums;
+    color: var(--text-faint);
+}
+.zenith-tgroup__title {
+    font-family: var(--zenith-font-ink);
+    font-size: 1.12rem;
+    font-weight: 400;
+    letter-spacing: 0.002em;
+    color: var(--text-normal);
+}
+.zenith-tgroup__fold {
+    font-size: 0.78rem;
+    color: var(--text-faint);
+}
+.zenith-root button.zenith-tgroup__head:hover .zenith-tgroup__fold,
+.zenith-root button.zenith-tgroup__head:hover .zenith-tgroup__count {
+    color: var(--text-muted);
+}
+.zenith-root button.zenith-tgroup__head:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--zenith-accent);
+}
+/* What has slipped carries the page's one colour — in its name only. */
+.zenith-tgroup.is-overdue .zenith-tgroup__title {
+    color: var(--color-red, #e5534b);
+}
+/* What is finished is the past: quieter, and folded by default. */
+.zenith-tgroup.is-done .zenith-tgroup__title,
+.zenith-tgroup.is-cancelled .zenith-tgroup__title {
+    color: var(--text-muted);
+}
+.zenith-tgroup__head.is-folded .zenith-tgroup__title {
+    color: var(--text-muted);
+}
+
+/* ── Rows ───────────────────────────────────────── */
+.zenith-trow {
+    position: relative;
+    /* Vertical scrolling stays the browser's; sideways is the row's swipe. */
+    touch-action: pan-y;
+}
+
+.zenith-trow__sheet {
+    position: relative;
+    background: var(--background-primary);
+    will-change: transform;
+}
+
+.zenith-trow__line {
+    display: grid;
+    grid-template-columns: var(--zenith-tmargin) var(--zenith-tmark) var(--zenith-tcircle) minmax(0, 1fr) auto;
+    column-gap: var(--zenith-tgap);
+    align-items: start;
+    min-height: 36px;
+    padding: 4px 0;
+}
+.zenith-trow__line > .zenith-status {
+    margin-top: 0;
+}
+
+/* The hover is drawn behind the titles only; the margin stays paper. */
+.zenith-trow__sheet::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 42px;
-    right: 4px;
+    bottom: 0;
+    left: calc(var(--zenith-tmargin) + var(--zenith-tmark) + var(--zenith-tgap));
+    right: -6px;
+    border-radius: 8px;
+    background: var(--zenith-thover);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--zenith-transition-fast);
+}
+.zenith-trow:not(.is-closing):hover > .zenith-trow__sheet::before,
+.zenith-trow:not(.is-closing):focus-within > .zenith-trow__sheet::before {
+    opacity: 1;
+}
+.zenith-trow__line,
+.zenith-trow__details {
+    position: relative;
+}
+.zenith-trow__line > .zenith-trow__actions {
+    z-index: 1;
+}
+
+/* A hairline between tasks, from the title column only. */
+.zenith-trow + .zenith-trow > .zenith-trow__sheet::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: var(--zenith-tcolumn);
+    right: 0;
     height: 1px;
-    background: color-mix(in srgb, var(--background-modifier-border) 60%, transparent);
+    background: color-mix(in srgb, var(--background-modifier-border) 55%, transparent);
 }
 
-.zenith-task-item:hover {
-    background-color: color-mix(in srgb, var(--background-modifier-hover) 55%, transparent);
-}
-
-.zenith-task-item__content {
-    flex: 1;
+/* The margin: the date in the planner's italic, right against the circle. */
+.zenith-trow__margin {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 3px;
     min-width: 0;
+    padding-top: 6px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 0.86rem;
+    line-height: 1.2;
+    font-variant-numeric: oldstyle-nums;
+    color: var(--text-muted);
+}
+.zenith-trow__margin.is-overdue {
+    color: var(--color-red, #e5534b);
+}
+.zenith-trow__margin.is-today {
+    color: var(--text-normal);
+}
+.zenith-trow__margin.is-closed {
+    color: var(--text-faint);
+}
+.zenith-trow__repeat {
+    font-style: normal;
+    font-size: 0.82em;
+    color: var(--text-faint);
+}
+
+/* "!" — urgent, in the page's one colour. */
+.zenith-trow__mark {
+    padding-top: 5px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    color: var(--color-red, #e5534b);
+}
+
+/* The part a tap opens the editor from — the title, and a note. */
+.zenith-trow__head {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding-top: 3px;
-}
-
-/* The part a tap opens the editor from — the title, the meta, the note. */
-.zenith-task-item__head {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    gap: 1px;
     min-width: 0;
+    padding-top: 4px;
     cursor: pointer;
     outline: none;
 }
-
-.zenith-task-item__head:focus-visible {
+.zenith-trow__head:focus-visible {
     border-radius: 4px;
     box-shadow: 0 0 0 2px var(--zenith-accent);
 }
 
-.zenith-task-item__title {
-    font-size: 0.92rem;
-    line-height: 1.35;
+.zenith-trow__title {
+    font-size: 0.94rem;
+    line-height: 1.4;
     color: var(--text-normal);
     overflow-wrap: anywhere;
 }
-
-.zenith-task-item__title.is-dimmed {
+/* Importance is loudness: the title set heavier, never a flag. */
+.zenith-trow__title.is-p-high,
+.zenith-trow__title.is-p-urgent {
+    font-weight: 600;
+}
+.zenith-trow__title.is-p-low {
     color: var(--text-muted);
-    text-decoration: line-through;
 }
 
-.zenith-task-item--dimmed {
-    opacity: 0.65;
+/* The ink a closed task is struck with: drawn left to right when it closes,
+   and simply there on a task that was already finished. */
+.zenith-trow__ink {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 58%;
+    background-size: 0 1px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+.zenith-trow.is-dimmed .zenith-trow__title,
+.zenith-trow.is-closing .zenith-trow__title {
+    color: var(--text-faint);
+    font-weight: 400;
+}
+.zenith-trow.is-dimmed .zenith-trow__ink {
+    background-size: 100% 1px;
+}
+.zenith-trow.is-closing .zenith-trow__ink {
+    animation: zenith-strike 0.34s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.zenith-trow.is-closing .zenith-trow__title {
+    transition: color 0.3s 0.12s ease;
+}
+@keyframes zenith-strike {
+    from { background-size: 0 1px; }
+    to { background-size: 100% 1px; }
 }
 
-/* The first line of the task's note: a reminder of what it is, never the note. */
-.zenith-task-item__note {
+/* Then it folds away into its group. */
+.zenith-trow.is-leaving {
     overflow: hidden;
-    color: var(--text-muted);
-    font-size: 0.8rem;
+    pointer-events: none;
+    animation: zenith-row-leave 0.26s ease-in forwards;
+}
+@keyframes zenith-row-leave {
+    from { max-height: 64px; opacity: 1; }
+    to { max-height: 0; opacity: 0; }
+}
+
+/* "undo", where the date was, while the moment lasts. */
+.zenith-root button.zenith-trow__undo {
+    height: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    font: inherit;
+    color: var(--text-normal);
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    animation: zenith-fade-in 0.2s ease both;
+}
+.zenith-root button.zenith-trow__undo:hover {
+    text-decoration-style: solid;
+}
+
+/* The first line of the task's note, in the planner's italic: a reminder of
+   what it is, never the note. */
+.zenith-trow__note {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 0.86rem;
     line-height: 1.35;
+    color: var(--text-faint);
+}
+
+/* ── The quiet right-hand side ──────────────────── */
+.zenith-trow__side {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 28px;
+    padding-left: 6px;
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-faint);
+}
+.zenith-trow__tags {
+    max-width: 180px;
+    overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
-
-/* ── Meta line ──────────────────────────────────── */
-/* Plain text in one small size: the deadline, a repeat, a raised priority, the
-   subtasks, two tags, the time spent, a paperclip. No pills — six coloured
-   capsules under every title were the loudest thing on the page. */
-.zenith-tmeta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 2px 10px;
-    color: var(--text-faint);
-    font-size: 0.74rem;
-    line-height: 1.4;
-    font-variant-numeric: tabular-nums;
+.zenith-trow__spent {
+    white-space: nowrap;
 }
 
-.zenith-tmeta:empty {
-    display: none;
-}
-
-.zenith-tmeta__due,
-.zenith-tmeta__spent,
-.zenith-tmeta__icon {
+/* The subtask progress and the paperclip are the fold's handles. */
+.zenith-root button.zenith-trow__fold {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-}
-
-.zenith-tmeta__due {
-    color: var(--text-muted);
-}
-
-.zenith-tmeta__due.is-overdue {
-    color: var(--color-red, #e5534b);
-    font-weight: 600;
-}
-
-.zenith-tmeta__due.is-today {
-    color: var(--color-orange, #e0913b);
-    font-weight: 600;
-}
-
-.zenith-tmeta__flag.is-high {
-    color: var(--zenith-priority-high, #f59e0b);
-}
-
-.zenith-tmeta__flag.is-urgent {
-    color: var(--zenith-priority-urgent, #ef4444);
-}
-
-.zenith-tmeta__tag {
-    color: color-mix(in srgb, var(--interactive-accent) 65%, var(--text-muted));
-}
-
-/* The subtask tally and the paperclip are the fold's handles. */
-.zenith-root button.zenith-tmeta__subs,
-.zenith-root button.zenith-tmeta__clip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 3px;
+    gap: 5px;
     height: auto;
-    margin: 0 -4px;
-    padding: 1px 4px;
+    margin: 0 -5px;
+    padding: 2px 5px;
     border: none;
-    border-radius: 4px;
+    border-radius: 5px;
     background: none;
     box-shadow: none;
     color: var(--text-muted);
     font: inherit;
     cursor: pointer;
 }
-
-.zenith-root button.zenith-tmeta__subs:hover,
-.zenith-root button.zenith-tmeta__clip:hover {
+.zenith-root button.zenith-trow__fold:hover,
+.zenith-root button.zenith-trow__fold[aria-expanded='true'] {
     background: var(--background-modifier-hover);
     color: var(--text-normal);
 }
-
-.zenith-root button.zenith-tmeta__subs.is-complete {
-    color: var(--zenith-success, #3fb950);
+.zenith-root button.zenith-trow__fold.is-complete {
+    color: var(--text-faint);
 }
 
-.zenith-tmeta__chevron {
-    transition: transform var(--zenith-transition-fast);
+.zenith-arc {
+    flex: none;
+    overflow: visible;
+}
+.zenith-arc__track {
+    fill: none;
+    stroke: color-mix(in srgb, currentColor 30%, transparent);
+    stroke-width: 1.6;
+}
+.zenith-arc__done {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.3s ease;
 }
 
-.zenith-task-item.is-open .zenith-tmeta__chevron {
-    transform: rotate(180deg);
+/* Hover actions — the timer and "⋯", and the handle in manual order — come
+   up over the right edge, on the row's own hover colour, and take no room
+   from the row while they are away. A running timer is in the row itself. */
+.zenith-trow {
+    --zenith-thover: color-mix(in srgb, var(--background-modifier-hover) 55%, transparent);
 }
-
-/* ── Right side ─────────────────────────────────── */
-.zenith-task-item__side {
+.zenith-trow__actions {
+    position: absolute;
+    top: 4px;
+    right: -6px;
     display: flex;
     align-items: center;
     gap: 2px;
-    flex-shrink: 0;
-    min-height: 28px;
+    padding: 0 4px 0 22px;
+    border-radius: 0 8px 8px 0;
+    background:
+        linear-gradient(to right, transparent, var(--zenith-thover) 22px),
+        linear-gradient(to right, transparent, var(--background-primary) 22px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
 }
-
-.zenith-task-item__closed {
-    color: var(--text-faint);
-    font-size: 0.74rem;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
+.zenith-trow:not(.is-closing):hover .zenith-trow__actions,
+.zenith-trow:not(.is-closing):focus-within .zenith-trow__actions,
+.zenith-trow.is-dragging .zenith-trow__actions {
+    opacity: 1;
+    pointer-events: auto;
 }
-
-/* ── Task Form ──────────────────────────────────── */
-/* ── Search bar ─────────────────────────────────── */
-/* The field itself is `SearchField` and the shared skin; this only places it. */
-.zenith-tasks-search {
-    margin-top: 12px;
-}
-
-/* ── Row actions ────────────────────────────────── */
-/* On a desktop two things come up on hover — the timer and "⋯" — and nothing
-   else: the rest is in the menu. A running timer never hides. */
-button.zenith-task-item__action {
+.zenith-root button.zenith-trow__action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 26px;
     height: 26px;
     padding: 0;
-    border-radius: 6px;
     border: none;
+    border-radius: 6px;
     background: transparent;
     box-shadow: none;
     color: var(--text-muted);
     cursor: pointer;
 }
-
-button.zenith-task-item__action:hover {
+.zenith-root button.zenith-trow__action:hover {
     background: var(--background-modifier-hover);
     color: var(--text-normal);
 }
 
-.zenith-task-item__side > .zenith-timer:not(.is-running),
-.zenith-task-item__more,
-.zenith-task-item__side > .zenith-drag-handle {
-    opacity: 0;
-    transition: opacity 0.12s ease;
+/* What the task is made of, opened: under the title, the branch growing out
+   of the circle. */
+.zenith-trow__details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 0 8px calc(var(--zenith-tmargin) + var(--zenith-tmark) + 2 * var(--zenith-tgap));
+}
+.zenith-trow__details > .zenith-attachments {
+    padding-left: calc(var(--zenith-tcircle) + var(--zenith-tgap));
+}
+.zenith-trow__details > .zenith-subtasks {
+    margin-left: 8px;
 }
 
-.zenith-task-item:hover > .zenith-task-item__side > *,
-.zenith-task-item:focus-within > .zenith-task-item__side > * {
+/* ── The line to write on ───────────────────────── */
+.zenith-tquick {
+    margin-bottom: 14px;
+}
+.zenith-tquick .zenith-trow__line {
+    align-items: center;
+}
+.zenith-tquick .zenith-trow__margin {
+    padding-top: 0;
+    /* "завтра 18:00" may be longer than the margin; it runs out into the page. */
+    overflow: visible;
+}
+.zenith-tquick > .zenith-trow__sheet::before {
+    display: none;
+}
+.zenith-tquick .zenith-trow__mark {
+    padding-top: 0;
+}
+.zenith-tquick__circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--zenith-tcircle);
+    height: 28px;
+    opacity: 0.55;
+}
+.zenith-tquick__circle .zenith-status__box {
+    color: var(--text-faint);
+}
+.zenith-tquick.is-typing .zenith-tquick__circle {
     opacity: 1;
 }
+.zenith-root input.zenith-tquick__input {
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: 0.94rem;
+    color: var(--text-normal);
+}
+.zenith-root input.zenith-tquick__input:focus {
+    box-shadow: none;
+    outline: none;
+}
+.zenith-root input.zenith-tquick__input::placeholder {
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    color: var(--text-faint);
+    opacity: 1;
+}
+.zenith-root input.zenith-tquick__input.is-p-high,
+.zenith-root input.zenith-tquick__input.is-p-urgent {
+    font-weight: 600;
+}
+/* The line's own rule, like the ruled line of a page: darker while written on. */
+.zenith-tquick .zenith-trow__sheet::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: var(--zenith-tcolumn);
+    right: 0;
+    height: 1px;
+    background: color-mix(in srgb, var(--background-modifier-border) 70%, transparent);
+    transition: background var(--zenith-transition-fast);
+}
+.zenith-tquick:focus-within .zenith-trow__sheet::after {
+    background: var(--text-faint);
+}
+.zenith-tquick__hint {
+    padding-left: 8px;
+    white-space: nowrap;
+    font-size: 0.74rem;
+    color: var(--text-faint);
+}
+/* What the phrase was read as, in the margin where the row will show it. */
+.zenith-root button.zenith-tquick__read {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    height: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    font: inherit;
+    color: var(--text-normal);
+    cursor: pointer;
+    animation: zenith-fade-in 0.18s ease both;
+}
+.zenith-root button.zenith-tquick__read:hover {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
 
-/* ── Drag to reorder ─────────────────────────────────
-   The handle is there only while the list is in manual order — the one order
+/* ── Swiping a row (touch) ──────────────────────── */
+/* What the swipe will do, under the row: in the page's ink, filling in once
+   lifting the finger would do it — the same ink as the circle's. */
+.zenith-trow__under {
+    position: absolute;
+    inset: 0 0 0 var(--zenith-tmargin);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--text-normal) 7%, transparent);
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.zenith-trow.is-pulling-right > .zenith-trow__under,
+.zenith-trow.is-pulling-left > .zenith-trow__under {
+    opacity: 1;
+}
+.zenith-trow.is-pulling-right .zenith-trow__under-later,
+.zenith-trow.is-pulling-left .zenith-trow__under-done {
+    visibility: hidden;
+}
+.zenith-trow.is-armed > .zenith-trow__under {
+    background: var(--text-normal);
+    color: var(--background-primary);
+}
+
+/* ── Dragging ───────────────────────────────────── */
+/* The handle is there only while the list is in manual order — the one order
    a drag can keep. */
 .zenith-drag-handle {
     cursor: grab;
     touch-action: none;
 }
-
 .zenith-drag-handle:active {
     cursor: grabbing;
 }
-
-.zenith-task-item.is-dragging,
+.zenith-trow.is-dragging,
 .zenith-subtask.is-dragging {
     opacity: 0.45;
 }
+/* Drop indicator, as an ink line along the edge the row would land on. */
+.zenith-trow.is-drop-before > .zenith-trow__sheet { box-shadow: inset 0 2px 0 0 var(--text-normal); }
+.zenith-trow.is-drop-after > .zenith-trow__sheet { box-shadow: inset 0 -2px 0 0 var(--text-normal); }
+.zenith-subtask.is-drop-before { box-shadow: inset 0 2px 0 0 var(--text-normal); }
+.zenith-subtask.is-drop-after { box-shadow: inset 0 -2px 0 0 var(--text-normal); }
 
-.zenith-task-item.is-dragging > .zenith-task-item__side > * {
-    opacity: 1;
+/* A whole group is a drop target, not just its rows: that's what lets a drop
+   land on the heading or in the gaps, and what makes an *empty* group
+   reachable at all. */
+.zenith-tgroup.is-drop-zone {
+    background: color-mix(in srgb, var(--text-normal) 4%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-normal) 30%, transparent);
 }
-
-/* Drop indicator, as an inset shadow along the edge the row would land on. */
-.zenith-task-item.is-drop-before { box-shadow: inset 0 3px 0 0 var(--zenith-accent); }
-.zenith-task-item.is-drop-after { box-shadow: inset 0 -3px 0 0 var(--zenith-accent); }
-.zenith-subtask.is-drop-before { box-shadow: inset 0 2px 0 0 var(--zenith-accent); }
-.zenith-subtask.is-drop-after { box-shadow: inset 0 -2px 0 0 var(--zenith-accent); }
-
-/* ── Group drop zones ────────────────────────────────
-   A whole group is a drop target, not just its rows: that's what lets a drop
-   land on the header or in the gaps, and what makes an *empty* bucket
-   reachable at all — with only row targets you could never drop into "Today"
-   when nothing was due today. */
-.zenith-task-group {
-    border-radius: 10px;
-    transition: background 0.15s ease, box-shadow 0.15s ease;
-}
-
-.zenith-task-group.is-drop-zone {
-    background: color-mix(in srgb, var(--zenith-accent) 8%, transparent);
-    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--zenith-accent) 45%, transparent);
-}
-
-/* Stand-in for an empty bucket, rendered only while a drag it would accept is
-   in flight — so the resting list still hides buckets with nothing in them. */
-.zenith-task-group__placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 0 8px;
-    padding: 14px;
-    border: 1.5px dashed var(--background-modifier-border);
+/* Stand-in for an empty group, rendered only while a drag it would accept is
+   in flight — so the resting list still hides groups with nothing in them. */
+.zenith-tgroup__placeholder {
+    margin: 0 0 6px var(--zenith-tcolumn);
+    padding: 12px 14px;
+    border: 1px dashed var(--background-modifier-border);
     border-radius: 8px;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 0.86rem;
     color: var(--text-muted);
-    font-size: 0.82rem;
+}
+.zenith-tgroup.is-drop-zone .zenith-tgroup__placeholder {
+    border-color: var(--text-muted);
+    color: var(--text-normal);
 }
 
-.zenith-task-group.is-drop-zone .zenith-task-group__placeholder {
-    border-color: var(--zenith-accent);
-    color: var(--text-normal);
+@media (prefers-reduced-motion: reduce) {
+    .zenith-trow.is-closing .zenith-trow__ink {
+        animation: none;
+        background-size: 100% 1px;
+    }
+    .zenith-trow.is-leaving {
+        animation-duration: 0.01s;
+    }
 }
 
 /* ── Attachments under a task ───────────────────── */
@@ -715,9 +1086,25 @@ button.zenith-lightbox__btn {
    Narrow panes and touch
    ══════════════════════════════════════════════════════════ */
 @container zenith-tasks (max-width: 560px) {
-    .zenith-task-item {
-        gap: 8px;
-        padding: 8px 2px;
+    .zenith-tasks__page {
+        --zenith-tmargin: 48px;
+        --zenith-tmark: 6px;
+        --zenith-tgap: 6px;
+    }
+    .zenith-tasks-head__day {
+        font-size: 1.4rem;
+    }
+    .zenith-tasks-tally {
+        font-size: 0.82rem;
+    }
+    .zenith-trow__margin {
+        font-size: 0.8rem;
+    }
+    /* The tags give way first: the title is what the row is for. */
+    .zenith-trow__tags,
+    .zenith-trow__spent,
+    .zenith-tquick__hint {
+        display: none;
     }
 
     /* Shallower indents: four levels of 18px is most of a phone's width. */
@@ -746,43 +1133,73 @@ button.zenith-lightbox__btn {
     }
 }
 
+/* So narrow that a margin costs a title its words — a sidebar dragged thin:
+   the day goes back under the title, as the one quiet line it used to be. */
+@container zenith-tasks (max-width: 300px) {
+    .zenith-tasks__page {
+        --zenith-tmargin: 0px;
+        --zenith-tmark: 0px;
+    }
+    .zenith-trow__line {
+        grid-template-columns: var(--zenith-tcircle) minmax(0, 1fr) auto;
+        grid-template-areas: 'circle head side' '. margin margin';
+    }
+    .zenith-trow__line > .zenith-status { grid-area: circle; }
+    .zenith-trow__head { grid-area: head; }
+    .zenith-trow__side { grid-area: side; }
+    .zenith-trow__margin {
+        grid-area: margin;
+        justify-content: flex-start;
+        padding-top: 0;
+    }
+    .zenith-trow__margin:empty { display: none; }
+    .zenith-trow__mark { display: none; }
+    .zenith-root button.zenith-tgroup__head {
+        grid-template-columns: auto 1fr auto;
+        column-gap: 8px;
+    }
+    .zenith-tgroup__count { order: 2; }
+    .zenith-tgroup__title { order: 1; }
+    .zenith-tgroup__fold { order: 3; }
+}
+
 /* Touch: nothing hovers, so nothing waits for it. The menu is a long press
-   away, and an idle timer starts from there too; what is left in the row is
-   the handle, in manual order, and a timer that is running. */
+   away and an idle timer starts from there too; the row swipes; and the
+   handles come out only when asked to (⋯ → Put in order by hand). */
 @media (pointer: coarse) {
-    .zenith-task-item__more,
-    .zenith-task-item__side > .zenith-timer:not(.is-running),
-    .zenith-subtask .zenith-timer:not(.is-running) {
+    .zenith-trow__more,
+    .zenith-trow__actions > .zenith-timer,
+    .zenith-subtask .zenith-timer:not(.is-running),
+    .zenith-tquick__hint {
         display: none;
     }
-    /* Qualified by the row: tasks-ui.css, loaded after this file, hides the
-       subtask grip until hover at the same weight. */
-    .zenith-task-item__side > .zenith-drag-handle,
-    .zenith-task-item .zenith-subtask .zenith-drag-handle {
+    .zenith-trow:not(.is-reordering) .zenith-trow__actions {
+        display: none;
+    }
+    .zenith-trow__line {
+        min-height: 44px;
+        padding: 6px 0;
+    }
+    .zenith-trow:hover > .zenith-trow__sheet::before {
+        opacity: 0;
+    }
+    /* In reorder mode the handles are what the rows are for. */
+    .zenith-trow.is-reordering .zenith-trow__actions {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .zenith-trow.is-reordering .zenith-subtask .zenith-drag-handle {
         opacity: 1;
     }
     /* A long press is the menu, not a text selection with a callout. */
-    .zenith-task-item__head,
+    .zenith-trow__head,
     .zenith-subtask__title {
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         user-select: none;
     }
-    button.zenith-task-item__action {
-        width: 32px;
-        height: 32px;
+    .zenith-root button.zenith-trow__action {
+        width: 34px;
+        height: 34px;
     }
-}
-
-/* The tabs stay one line on a narrow pane and scroll sideways. */
-.zenith-tasks .zenith-tabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-.zenith-tasks .zenith-tabs::-webkit-scrollbar {
-    display: none;
-}
-.zenith-tasks .zenith-tabs button.zenith-tabs__tab {
-    flex: none;
 }

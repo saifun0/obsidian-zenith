@@ -227,6 +227,41 @@ export class TaskWriter {
     }
 
     /**
+     * {@link setStatusInFile}, and a way to take it back.
+     *
+     * The undo puts the whole note back exactly as it was — the stamp, the
+     * next occurrence a recurring task inserted, a `🏁 delete` line that went —
+     * but only while the note is still exactly what this write left. Anything
+     * written since, by hand or by sync, and the undo refuses rather than
+     * overwrite it.
+     */
+    async setStatusUndoable(
+        filePath: string,
+        lineNumber: number,
+        status: TaskStatus,
+        expectedTitle: string
+    ): Promise<{ ok: boolean; undo?: () => Promise<boolean> }> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return { ok: false };
+        const before = await this.app.vault.read(file);
+        const ok = await this.setStatusInFile(filePath, lineNumber, status, expectedTitle);
+        if (!ok) return { ok };
+        const after = await this.app.vault.read(file);
+        return {
+            ok,
+            undo: async () => {
+                let restored = false;
+                await this.app.vault.process(file, (current) => {
+                    if (current !== after) return current;
+                    restored = true;
+                    return before;
+                });
+                return restored;
+            },
+        };
+    }
+
+    /**
      * Write a new task.
      *
      * Without a `target` it goes to the default inbox file inside the tasks

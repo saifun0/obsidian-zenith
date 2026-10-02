@@ -1,7 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { FileUp, Layers, Minus, Plus, X } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
-import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { CONTENT_STATUSES, PRIORITIES, TASK_STATUSES } from '../../../core/constants';
 import type { ContentStatus } from '../../../core/constants';
@@ -14,8 +13,6 @@ import {
 } from '../../../components/ui/fields';
 import { AttachmentField } from '../../../modules/tasks/components/AttachmentField';
 import { QuickAddForm } from '../../../modules/tasks/components/QuickAddForm';
-import { TaskFilters } from '../../../modules/tasks/components/TaskFilters';
-import type { TaskFilterState } from '../../../modules/tasks/components/TasksApp';
 import type { TaskAttachment } from '../../../modules/tasks/services/taskDetails';
 import { ProgressControl } from '../../../modules/content/components/ProgressControl';
 import type { ProgressValue } from '../../../modules/content/services/progress';
@@ -350,8 +347,10 @@ const TagField: React.FC = () => {
                 <div className="zenith-tagchips">
                     {tags.map((tag) => (
                         <span key={tag} className="zenith-tagchip">
-                            #{tag}
+                            <span className="zenith-tagchip__text">#{tag}</span>
                             <button
+                                type="button"
+                                className="zenith-tagchip__remove"
                                 onClick={() => setTags(tags.filter((x) => x !== tag))}
                                 aria-label={t('common.remove')}
                             >
@@ -571,19 +570,6 @@ const DialogFields: React.FC = () => {
 
 const SearchFields: React.FC = () => {
     const t = useTranslation();
-    const tasks = useZenithStore((s) => s.tasks);
-    const allTags = useMemo(() => {
-        const seen = new Set(tasks.flatMap((task) => task.tags));
-        return seen.size > 0 ? [...seen].sort() : ['errand', 'home', 'work'];
-    }, [tasks]);
-
-    const [filters, setFilters] = useState<TaskFilterState>({
-        priority: 'all',
-        tag: '',
-        sort: 'manual',
-        group: 'smart',
-        due: 'all',
-    });
     const [tasksQuery, setTasksQuery] = useState('');
     const [libraryQuery, setLibraryQuery] = useState('');
     const [projectsQuery, setProjectsQuery] = useState('');
@@ -649,16 +635,6 @@ const SearchFields: React.FC = () => {
                         placeholder={t('dashboard.widgets.searchPlaceholder')}
                     />
                 </RootScope>
-            </Demo>
-            <Demo label="TaskFilters" source="TasksApp · zenith-task-filters-popover" wide>
-                <PopScope className="zenith-task-filters-popover">
-                    <TaskFilters
-                        filters={filters}
-                        onFilterChange={setFilters}
-                        allTags={allTags}
-                        groups={['smart', 'file', 'none']}
-                    />
-                </PopScope>
             </Demo>
         </Section>
     );

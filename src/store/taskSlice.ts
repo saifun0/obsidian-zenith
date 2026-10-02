@@ -84,6 +84,14 @@ export interface TaskSlice {
     setTaskStatus: (id: string, status: TaskStatus) => void;
     removeTask: (id: string) => void;
     setTasksLoading: (loading: boolean) => void;
+    /**
+     * The task list is being put in order by hand. On a touch screen the
+     * handles to drag by are hidden until this is asked for: a row swipes,
+     * and a handle on every row read as clutter. Not saved — it is a mode,
+     * not a preference.
+     */
+    taskReorderMode: boolean;
+    setTaskReorderMode: (on: boolean) => void;
 }
 
 export const createTaskSlice: ZenithSliceCreator<TaskSlice> = (set) => ({
@@ -121,4 +129,7 @@ export const createTaskSlice: ZenithSliceCreator<TaskSlice> = (set) => ({
         })),
 
     setTasksLoading: (loading) => set(() => ({ tasksLoading: loading })),
+
+    taskReorderMode: false,
+    setTaskReorderMode: (on) => set(() => ({ taskReorderMode: on })),
 });

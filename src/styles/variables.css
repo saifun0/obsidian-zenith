@@ -41,6 +41,8 @@
     --zenith-font: var(--font-text);
     --zenith-font-mono: var(--font-monospace);
     --zenith-font-serif: "Newsreader", "Georgia", "Times New Roman", serif;
+    /* The planner's hand: dates in the margin, the day, a note. fonts.css. */
+    --zenith-font-ink: "Zenith Spectral", "Georgia", "Times New Roman", serif;
 
     /* ── Shadows ────────────────────────────────── */
     --zenith-shadow-xs: 0 2px 8px rgba(0, 0, 0, 0.03);
