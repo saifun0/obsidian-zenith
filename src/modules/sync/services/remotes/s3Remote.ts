@@ -1,8 +1,8 @@
-import { requestUrl } from 'obsidian';
 import { fnv1a } from '../../../../core/hash';
 import type { FileEntity } from '../../fileSyncTypes';
 import { EMPTY_SHA256, sha256Hex, signRequest } from './sigv4';
 import type { ConnectionResult, S3Config, SyncRemote } from './types';
+import { obsidianHttp, withRetry, type Http, type HttpDeps } from './http';
 
 /**
  * S3 backend, spoken directly over the REST API.
@@ -37,8 +37,14 @@ export class S3Remote implements SyncRemote {
     readonly id: string;
 
     private readonly prefix: string;
+    /** Retried on 429 and 5xx, like every backend — see `withRetry`. */
+    private readonly http: Http;
 
-    constructor(private readonly config: S3Config) {
+    constructor(
+        private readonly config: S3Config,
+        deps: HttpDeps = {}
+    ) {
+        this.http = withRetry(deps.http ?? obsidianHttp, deps.retry);
         this.prefix = trimSlashes(config.prefix);
         // Keyed on where the data actually is. Repointing at another bucket has
         // to invalidate the previous-sync record, or it would licence deletions
@@ -226,12 +232,13 @@ export class S3Remote implements SyncRemote {
                   .join('&')}`
             : '';
 
-        return requestUrl({
+        // Statuses are read rather than thrown on: 404 is an ordinary answer
+        // here, and an exception would lose the code and the error body. A
+        // retry resends the same signed request, which SigV4 accepts for
+        // fifteen minutes — far longer than any backoff here waits.
+        return this.http({
             url: `${origin}/${encodePath(fullPath)}${qs}`,
             method,
-            // Statuses are read rather than thrown on: 404 is an ordinary answer
-            // here, and an exception would lose the code and the error body.
-            throw: false,
             headers: signed.headers,
             body,
         });

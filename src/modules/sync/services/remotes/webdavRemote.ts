@@ -1,7 +1,7 @@
-import { requestUrl } from 'obsidian';
 import { fnv1a } from '../../../../core/hash';
 import type { FileEntity } from '../../fileSyncTypes';
 import type { ConnectionResult, SyncRemote, WebdavConfig } from './types';
+import { obsidianHttp, withRetry, type Http, type HttpDeps } from './http';
 
 /**
  * WebDAV backend.
@@ -34,8 +34,14 @@ export class WebdavRemote implements SyncRemote {
     private readonly base: string;
     private readonly root: string;
     private readonly auth: string;
+    /** Retried on 429 and 5xx, like every backend — see `withRetry`. */
+    private readonly http: Http;
 
-    constructor(private readonly config: WebdavConfig) {
+    constructor(
+        private readonly config: WebdavConfig,
+        deps: HttpDeps = {}
+    ) {
+        this.http = withRetry(deps.http ?? obsidianHttp, deps.retry);
         this.base = stripTrailingSlash(config.url);
         this.root = trimSlashes(config.remoteDir);
         // Keyed on address and account, not on a name: pointing at a different
@@ -199,12 +205,11 @@ export class WebdavRemote implements SyncRemote {
         url: string,
         extra: { headers?: Record<string, string>; body?: string | ArrayBuffer } = {}
     ) {
-        return requestUrl({
+        // Statuses are inspected rather than thrown on: 404 and 405 are
+        // ordinary answers here, and `obsidianHttp` never throws on one.
+        return this.http({
             url,
             method,
-            // Statuses are inspected rather than thrown on: 404 and 405 are
-            // ordinary answers here, and an exception would lose the code.
-            throw: false,
             headers: {
                 Authorization: this.auth,
                 ...(extra.body && method !== 'PUT' ? { 'Content-Type': 'application/xml' } : {}),
