@@ -963,6 +963,10 @@ const EN: Dict = {
     'tasks.editor.scheduled': 'Scheduled',
     'tasks.editor.recurrence': 'Recurrence',
     'tasks.editor.recurrencePlaceholder': 'daily, weekly, monthly, every 3 days…',
+    'tasks.editor.recurrenceUnread':
+        'Zenith does not understand this rule, so the task will not repeat when finished here.',
+    'tasks.recurrence.unread':
+        'Done. The repeat rule “{rule}” is not one Zenith understands, so no next occurrence was added.',
     'tasks.editor.notes': 'Notes',
     'tasks.editor.editSubtask': 'Edit subtask',
     'tasks.image.openLink': 'Open the link',
@@ -2646,6 +2650,10 @@ const RU: Dict = {
     'tasks.editor.scheduled': 'Запланировано',
     'tasks.editor.recurrence': 'Повтор',
     'tasks.editor.recurrencePlaceholder': 'daily, weekly, monthly, every 3 days…',
+    'tasks.editor.recurrenceUnread':
+        'Zenith не понимает это правило, и при выполнении здесь задача не повторится.',
+    'tasks.recurrence.unread':
+        'Выполнено. Правило повтора «{rule}» Zenith не понимает, поэтому следующее повторение не добавлено.',
     'tasks.editor.notes': 'Описание',
     'tasks.editor.editSubtask': 'Правка подзадачи',
     'tasks.image.openLink': 'Открыть ссылку',

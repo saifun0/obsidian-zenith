@@ -32,7 +32,7 @@ the popular *Tasks* plugin convention):
 | `🛫 YYYY-MM-DD` | Start date |
 | `⏳ YYYY-MM-DD` | Scheduled date |
 | `✅ YYYY-MM-DD` | Completion date (stamped automatically when marked done) |
-| `🔁 <rule>` | Recurrence (`daily`, `weekly`, `monthly`, `every N days`…) |
+| `🔁 <rule>` | Recurrence, in the Tasks plugin's words — see [below](#repeat-rules) |
 | `⏰ HH:MM` / `⏰ HH:MM-HH:MM` | Time of day, optionally with an end — what puts the task on the calendar's hour grid |
 | `⏱ 1h25m` | Time already spent (kept by the task timer) |
 | `⏲ 45m` | Countdown the timer was last set to — also the planned length on the hour grid |
@@ -48,7 +48,16 @@ Completing a **recurring** task stamps its ✅ date and inserts the next occurre
 with its dates advanced. The new occurrence keeps the line as it was, minus what belonged to
 the finished one: the ✅ stamp, the time spent, the `🆔`, `⛔` and block link (a copy would
 break whatever points at them); a `➕` becomes today. A task marked `🏁 delete` is removed
-once done — a recurring one leaves its next occurrence, with the description under it. A
+once done — a recurring one leaves its next occurrence, with the description under it.
+
+<a id="repeat-rules"></a>The rules Zenith reads are the Tasks plugin's: `every day`, `every 3 days`,
+`every other week`, `daily`/`weekly`/`monthly`/`yearly`, `every weekday`, `every monday`,
+`every week on Tuesday, Friday`, `every 2 weeks on Monday`, `every month on the 15th`,
+`every month on the last`, `every month on the 2nd Tuesday`, `every month on the last Friday`,
+and any of them with `when done` to count from the day it was finished. A month without the
+day comes back on its last day — the 31st of January repeats on the 28th of February. A rule
+Zenith cannot read is said so in the editor, and finishing such a task says that no next
+occurrence was added, rather than ending the series quietly. A
 file may also declare **defaults** via YAML frontmatter (`priority`, `due`, `tags`); inline
 markers on a line override them, and editing a task doesn't copy them onto the line.
 

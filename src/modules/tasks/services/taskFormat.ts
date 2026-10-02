@@ -735,34 +735,8 @@ export function shiftIsoDate(date: string, days: number): string {
  */
 export { daysBetweenIso } from '../../../core/dateUtils';
 
-/** Parse a recurrence rule into a function that advances a date. Returns null if unrecognized. */
-export function nextRecurrenceDate(rule: string, from: string): string | null {
-    const base = new Date(`${from}T00:00:00`);
-    if (Number.isNaN(base.getTime())) return null;
-
-    const r = rule
-        .toLowerCase()
-        .trim()
-        .replace(/^every\s+/, '');
-    let days = 0;
-    let months = 0;
-
-    if (/^(day|daily|1 day)$/.test(r)) days = 1;
-    else if (/^(week|weekly|1 week)$/.test(r)) days = 7;
-    else if (/^(month|monthly|1 month)$/.test(r)) months = 1;
-    else if (/^(year|yearly|annually|1 year)$/.test(r)) months = 12;
-    else {
-        const m = r.match(/^(\d+)\s*(day|week|month|year)s?$/);
-        if (!m) return null;
-        const n = parseInt(m[1], 10);
-        if (m[2] === 'day') days = n;
-        else if (m[2] === 'week') days = n * 7;
-        else if (m[2] === 'month') months = n;
-        else months = n * 12;
-    }
-
-    if (months) base.setMonth(base.getMonth() + months);
-    if (days) base.setDate(base.getDate() + days);
-
-    return localIso(base);
-}
+/**
+ * The next date a recurrence rule lands on. Lives in `recurrence.ts`; exported
+ * here as well because this is where callers have always found it.
+ */
+export { nextRecurrenceDate, isRecurrenceUnderstood } from './recurrence';

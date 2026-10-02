@@ -783,6 +783,8 @@ export const ZH: Record<string, string> = {
     'tasks.editor.scheduled': '计划',
     'tasks.editor.recurrence': '重复',
     'tasks.editor.recurrencePlaceholder': 'daily、weekly、monthly、every 3 days…',
+    'tasks.editor.recurrenceUnread': 'Zenith 无法理解此规则，在此完成后任务不会重复。',
+    'tasks.recurrence.unread': '已完成。Zenith 无法理解重复规则“{rule}”，因此未添加下一次。',
     'tasks.editor.notes': '备注',
     'tasks.editor.editSubtask': '编辑子任务',
     'tasks.image.openLink': '打开链接',
