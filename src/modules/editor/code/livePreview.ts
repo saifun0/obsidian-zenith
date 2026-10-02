@@ -6,6 +6,7 @@ import {
     type EditorState,
     type Extension,
     type Range,
+    type Transaction,
 } from '@codemirror/state';
 import {
     Decoration,
@@ -84,8 +85,24 @@ export function codeBlockExtension(options: CodeBlockOptions): Extension {
         update(value, tr) {
             let flipped = value.flipped;
             if (tr.docChanged) flipped = flipped.map((pos) => tr.changes.mapPos(pos));
+            let toggled = false;
             for (const effect of tr.effects) {
-                if (effect.is(toggleFold)) flipped = flip(flipped, effect.value);
+                if (effect.is(toggleFold)) {
+                    flipped = flip(flipped, effect.value);
+                    toggled = true;
+                }
+            }
+            // Typing inside a line that is not a fence moves blocks along but
+            // cannot make or break one, so what was built is carried rather
+            // than built again — no rescan of the note on every keystroke.
+            if (
+                tr.docChanged &&
+                !toggled &&
+                value.live &&
+                isLive(tr.state) &&
+                editsStayWithinLines(tr)
+            ) {
+                return carry(value, tr, flipped);
             }
             if (tr.selection && !tr.docChanged) {
                 const heads = tr.state.selection.ranges.map((r) => r.head);
@@ -130,6 +147,54 @@ export function codeBlockExtension(options: CodeBlockOptions): Extension {
     );
 
     return [field, fences, atomic];
+}
+
+/**
+ * Whether every change in this edit stays inside one line that is not a fence.
+ *
+ * That is what makes an edit unable to move a block's boundaries: no line is
+ * added or removed, so every line keeps its number, and no fence — nor the
+ * frontmatter's first or closing line, inside which fences do not count —
+ * appears, disappears or changes. Anything else is built again from the note.
+ */
+export function editsStayWithinLines(tr: Transaction): boolean {
+    let ok = true;
+    const before = tr.startState.doc;
+    const after = tr.state.doc;
+    tr.changes.iterChanges((fromA, toA, fromB, _toB, inserted) => {
+        if (!ok) return;
+        const old = before.lineAt(fromA);
+        if (inserted.lines > 1 || toA > old.to || old.number === 1) {
+            ok = false;
+            return;
+        }
+        if (isBoundary(old.text) || isBoundary(after.lineAt(fromB).text)) ok = false;
+    });
+    return ok;
+}
+
+/** A line that could open or close a block, or close the frontmatter. */
+const BOUNDARY = /^\s*(?:`{3,}|~{3,}|---\s*$)/;
+
+function isBoundary(text: string): boolean {
+    return BOUNDARY.test(text);
+}
+
+/** What was built, moved along by an edit that `editsStayWithinLines` let through. */
+function carry(value: LiveState, tr: Transaction, flipped: readonly number[]): LiveState {
+    return {
+        live: value.live,
+        blocks: value.blocks.map((block) => ({
+            ...block,
+            from: tr.changes.mapPos(block.from),
+            // To the right: an unclosed block ends where the note does, and text
+            // typed at the very end is still inside it.
+            to: tr.changes.mapPos(block.to, 1),
+        })),
+        decorations: value.decorations.map(tr.changes),
+        folds: value.folds.map(tr.changes),
+        flipped,
+    };
 }
 
 function flip(list: readonly number[], pos: number): readonly number[] {
