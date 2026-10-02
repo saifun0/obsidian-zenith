@@ -102,3 +102,38 @@ describe('ContentWriter — keys it does not own', () => {
         expect(fm).not.toHaveProperty('favorite');
     });
 });
+
+describe('ContentWriter — a new note’s frontmatter', () => {
+    const create = async (input: Partial<Parameters<ContentWriter['createItem']>[1]>) => {
+        const { app, created } = fakeApp({});
+        await new ContentWriter(app).createItem('Content', {
+            title: 'Untitled',
+            type: 'book',
+            status: 'backlog',
+            rating: 0,
+            tags: [],
+            ...input,
+        });
+        return Object.values(created)[0];
+    };
+
+    it('quotes a title YAML would read as something else', async () => {
+        // A book called 1984 must not come back as the number 1984.
+        expect(await create({ title: '1984' })).toContain('title: "1984"');
+        expect(await create({ title: 'True' })).toContain('title: "True"');
+        const note = await create({ title: 'null', creator: '2001-09-11' });
+        expect(note).toContain('title: "null"\n');
+        expect(note).toContain('creator: "2001-09-11"\n');
+    });
+
+    it('leaves ordinary titles bare', async () => {
+        expect(await create({ title: 'Dune' })).toContain('title: Dune\n');
+        expect(await create({ title: '1984 (novel)' })).toContain('title: 1984 (novel)\n');
+    });
+
+    it('keeps a line break from ending the value early', async () => {
+        const note = await create({ title: 'Two\nlines' });
+        expect(note).toContain('title: "Two\\nlines"');
+        expect(note.split('\n').filter((l) => l.startsWith('title:'))).toHaveLength(1);
+    });
+});

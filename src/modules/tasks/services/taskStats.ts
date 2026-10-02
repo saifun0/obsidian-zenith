@@ -65,7 +65,9 @@ function rangeStart(range: StatsRange, today: string): string | null {
     if (range === 'week') d.setDate(d.getDate() - 7);
     else if (range === 'month') d.setMonth(d.getMonth() - 1);
     else d.setFullYear(d.getFullYear() - 1);
-    return d.toISOString().slice(0, 10);
+    // The local day, as everything here counts in. `toISOString` gave the UTC
+    // one, a day early anywhere east of Greenwich: a "week" of eight days.
+    return iso(d);
 }
 
 function iso(d: Date): string {

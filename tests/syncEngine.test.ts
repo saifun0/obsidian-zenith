@@ -651,6 +651,36 @@ describe('apply', () => {
     });
 });
 
+// ── Servers that ignore case ─────────────────────────
+
+describe('a server that ignores case', () => {
+    it('sees a folder spelled differently as the same folder, not a delete and a create', async () => {
+        const files: Record<string, FakeFile> = { 'Notes/a.md': { data: 'x', mtime: 1_000 } };
+        const remoteState: FakeRemoteState = { objects: {}, calls: [] };
+        const fs = fakeFs(files);
+        const prevStore = new PrevSyncStore(fs, paths);
+        const inner = fakeRemote(remoteState);
+        const engine = new SyncEngine(fs, { ...inner, caseInsensitive: true }, prevStore, 'devA', ENGINE_OPTS);
+        await engine.apply(await engine.plan(), { force: true });
+
+        // Dropbox now lists the folder the way it was first made.
+        remoteState.objects['notes/a.md'] = remoteState.objects['Notes/a.md'];
+        delete remoteState.objects['Notes/a.md'];
+
+        const plan = await engine.plan();
+        expect(plan.items.map((i) => [i.key, i.decision])).toEqual([['Notes/a.md', 'equal']]);
+    });
+
+    it('leaves a case-sensitive server’s two spellings as two files', async () => {
+        const { engine } = makeEngine(
+            { 'Notes/a.md': { data: 'x', mtime: 1 } },
+            { objects: { 'notes/a.md': { data: 'y', mtimeSvr: 1 } }, calls: [] }
+        );
+        const keys = (await engine.plan()).items.map((i) => i.key).sort();
+        expect(keys).toEqual(['Notes/a.md', 'notes/a.md']);
+    });
+});
+
 // ── A plan carried out after the vault moved on ──────
 
 describe('a plan that went stale before it was applied', () => {

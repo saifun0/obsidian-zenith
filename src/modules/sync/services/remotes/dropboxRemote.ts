@@ -54,6 +54,7 @@ export interface DropboxDeps {
 
 export class DropboxRemote implements SyncRemote {
     readonly kind = 'dropbox' as const;
+    readonly caseInsensitive = true;
     /** Dropbox refuses a name longer than this. */
     readonly nameLimit = 255;
     readonly id: string;

@@ -13,13 +13,16 @@ export const mediaTranslations: TranslationTable = {
     en: {
         'module.media.name': 'Media Banner',
         'module.media.desc': 'Show a GIF or image above the file explorer, with an easy picker.',
+        'media.banner.empty': 'Add banner image',
     },
     ru: {
         'module.media.name': 'Медиа-баннер',
         'module.media.desc': 'GIF или картинка над проводником файлов, с удобным выбором.',
+        'media.banner.empty': 'Добавить баннер',
     },
     zh: {
         'module.media.name': '横幅图片',
         'module.media.desc': '在文件列表上方显示 GIF 或图片，并提供便捷的选择器。',
+        'media.banner.empty': '添加横幅图片',
     },
 };

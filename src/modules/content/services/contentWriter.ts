@@ -4,6 +4,13 @@ import { getTodayString } from '../../../core/dateUtils';
 import type { ContentDates } from './contentDates';
 import { transitionFor, type Transition } from './readings';
 
+/**
+ * A bare scalar YAML would read as something other than a string: null, a
+ * boolean (in either YAML version's spelling), a number in any base, or a date.
+ */
+const IMPLICIT_SCALAR =
+    /^(?:~|null|true|false|yes|no|on|off|y|n|[-+]?(?:\.\d+|\d[\d_]*(?:\.\d*)?)(?:e[-+]?\d+)?|0x[\da-f]+|0o[0-7]+|0b[01]+|[-+]?\.(?:inf|nan)|\d{4}-\d{1,2}-\d{1,2}(?:[t ].*)?)$/i;
+
 export interface NewContentInput {
     title: string;
     type: string;
@@ -170,14 +177,35 @@ export class ContentWriter {
         return fm.join('\n');
     }
 
-    /** Quote a YAML scalar if it contains characters that need it. */
+    /**
+     * A string as a YAML scalar that reads back as the same string.
+     *
+     * Quoted when it holds anything YAML treats as structure, and also when,
+     * left bare, it would read back as something else: `1984` is a number,
+     * `true` and `no` are booleans, `null` and `~` are nothing, `2024-01-02`
+     * is a date. A title is never any of those, and a book called "1984" that
+     * comes back as a number is a book the library cannot find by name. A line
+     * break is escaped rather than written, since a bare one ends the value.
+     */
     private yamlString(value: string): string {
         const v = value.trim();
-        // Leading indicators (`-`, `?`) and anything YAML treats as structure.
-        if (v === '' || /^[-?]\s|^[-?]$/.test(v) || /[:#[\]{},"'&*!|>%@`]/.test(v)) {
-            return `"${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
-        }
-        return v;
+        const quote =
+            v === '' ||
+            /^[-?]\s|^[-?]$/.test(v) ||
+            /[:#[\]{},"'&*!|>%@`\\]/.test(v) ||
+            // eslint-disable-next-line no-control-regex -- control characters are what is being looked for.
+            /[\u0000-\u001f\u007f]/.test(v) ||
+            IMPLICIT_SCALAR.test(v);
+        if (!quote) return v;
+        const escaped = v
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t')
+            // eslint-disable-next-line no-control-regex -- see above.
+            .replace(/[\u0000-\u001f\u007f]/g, (c) => `\\x${c.charCodeAt(0).toString(16).padStart(2, '0')}`);
+        return `"${escaped}"`;
     }
 
     private sanitizeFileName(name: string): string {

@@ -466,7 +466,7 @@ export default class ZenithPlugin extends Plugin {
         if (target) {
             void target.activateView();
         } else {
-            new Notice('Zenith: no active modules to open. Enable one in settings.');
+            new Notice(translateNow('notice.noActiveModules'));
         }
     }
 

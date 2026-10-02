@@ -142,11 +142,12 @@ export class SyncEngine {
      * Work out what a run would do. Reads both sides; writes nothing.
      */
     async plan(now = Date.now()): Promise<SyncPlan> {
-        const [local, remote, prev] = await Promise.all([
+        const [local, listed, prev] = await Promise.all([
             this.listLocal(),
             this.remote.list(),
             this.prevStore.read(this.deviceId, this.remote.id),
         ]);
+        const remote = this.remote.caseInsensitive ? alignCase(listed, local, prev) : listed;
 
         return buildSyncPlan(local, remote, prev, {
             conflictAction: this.opts.conflictAction,
@@ -174,11 +175,12 @@ export class SyncEngine {
      * "what changed" quietly becomes "delete the other side".
      */
     async forcePlan(direction: ForceDirection, now = Date.now()): Promise<SyncPlan> {
-        const [local, remote, prev] = await Promise.all([
+        const [local, listed, prev] = await Promise.all([
             this.listLocal(),
             this.remote.list(),
             this.prevStore.read(this.deviceId, this.remote.id),
         ]);
+        const remote = this.remote.caseInsensitive ? alignCase(listed, local, prev) : listed;
 
         return buildForcedPlan(local, remote, prev, direction, {
             conflictAction: this.opts.conflictAction,
@@ -756,6 +758,30 @@ export function settingsOwner(opts: {
 }
 
 // ── Helpers ──────────────────────────────────────────
+
+/**
+ * Remote keys in the spelling this device already uses, where only case differs.
+ *
+ * On a server that ignores case, `Notes/a.md` and `notes/a.md` are one file,
+ * and Dropbox in particular may list a file under a folder spelled the way it
+ * was first created rather than the way it is now. Compared as written, the
+ * two spellings are two paths: a "remote file deleted" for one, a "new remote
+ * file" for the other, and a deletion planned on the strength of a rename
+ * nobody made. The local spelling wins, then the one the last run recorded.
+ */
+export function alignCase(
+    remote: FileEntity[],
+    local: FileEntity[],
+    prev: PrevSyncRecord[]
+): FileEntity[] {
+    const known = new Map<string, string>();
+    for (const record of prev) known.set(record.key.toLowerCase(), record.key);
+    for (const entity of local) known.set(entity.key.toLowerCase(), entity.key);
+    return remote.map((entity) => {
+        const key = known.get(entity.key.toLowerCase());
+        return key && key !== entity.key ? { ...entity, key } : entity;
+    });
+}
 
 /**
  * Is this the same version of a file on the server as the one listed earlier?

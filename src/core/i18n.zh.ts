@@ -233,6 +233,7 @@ export const ZH: Record<string, string> = {
     'notice.taskTitleRequired': 'Zenith：任务需要标题。',
     'notice.taskAdded': 'Zenith：任务已添加。',
     'notice.taskAddFailed': 'Zenith：无法添加任务。请检查任务文件夹路径。',
+    'notice.noActiveModules': 'Zenith：没有已开启的模块。请在设置中开启一个。',
     'notice.defaultModuleInactive': 'Zenith：默认模块“{id}”已关闭——改为打开“{name}”。',
     'checkboxCard.settings': '{name} 设置',
     'settings.about.debug': '调试工具',

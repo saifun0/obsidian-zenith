@@ -50,6 +50,7 @@ export const CHUNK_SIZE = 5 * 1024 * 1024;
 
 export class OneDriveRemote implements SyncRemote {
     readonly kind = 'onedrive' as const;
+    readonly caseInsensitive = true;
     /** OneDrive refuses a name longer than this. */
     readonly nameLimit = 255;
     readonly id: string;

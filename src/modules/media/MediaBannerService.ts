@@ -3,6 +3,7 @@ import { useZenithStore } from '../../store';
 import { resolveMediaSrc } from './mediaService';
 import { MediaPickerModal } from './MediaPickerModal';
 import type ZenithPlugin from '../../main';
+import { translateNow } from '../../core/i18n';
 
 /**
  * MediaBannerService — renders the selected image/GIF as a banner at the top of
@@ -105,7 +106,7 @@ export class MediaBannerService {
             banner.addClass('zenith-media-banner--empty');
             const icon = banner.createSpan('zenith-media-banner__empty-icon');
             setIcon(icon, 'image-plus');
-            banner.createSpan({ cls: 'zenith-media-banner__empty-text', text: 'Add banner image' });
+            banner.createSpan({ cls: 'zenith-media-banner__empty-text', text: translateNow('media.banner.empty') });
         }
     }
 

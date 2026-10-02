@@ -68,13 +68,16 @@ export function applyTemplate(
     return template
         // The day's question, or nothing: a literal `{{prompt}}` left in a
         // note is worse than an empty line.
-        .replace(/\{\{\s*prompt\s*\}\}/g, prompt)
+        // Functions, not strings, for everything typed by a person: in a
+        // replacement string `$&` and `$1` mean the match, so a question that
+        // mentioned a price came out with `{{prompt}}` spliced into it.
+        .replace(/\{\{\s*prompt\s*\}\}/g, () => prompt)
         .replace(/\{\{\s*date\s*:\s*([^}]+?)\s*\}\}/g, (_m, fmt: string) =>
             formatJournalDate(isoToDate(date), fmt)
         )
-        .replace(/\{\{\s*date\s*\}\}/g, date)
+        .replace(/\{\{\s*date\s*\}\}/g, () => date)
         .replace(/\{\{\s*time\s*\}\}/g, `${pad(now.getHours())}:${pad(now.getMinutes())}`)
-        .replace(/\{\{\s*title\s*\}\}/g, title);
+        .replace(/\{\{\s*title\s*\}\}/g, () => title);
 }
 
 /**
