@@ -1,5 +1,6 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 /**
  * Zenith ESLint — the type-aware pass.
@@ -79,6 +80,25 @@ export default tseslint.config(
                 atob: 'readonly',
                 performance: 'readonly',
             },
+        },
+    },
+    {
+        // The same two hook rules as the everyday config. Without the plugin
+        // registered here, every `eslint-disable-next-line react-hooks/…` in
+        // the source was itself reported as an error — a rule that could not
+        // be found — and buried the findings this pass exists for.
+        files: ['src/**/*.{ts,tsx}'],
+        plugins: { 'react-hooks': reactHooks },
+        rules: {
+            'react-hooks/rules-of-hooks': 'error',
+            'react-hooks/exhaustive-deps': 'warn',
+            // As in the everyday config: a leading underscore is a name kept
+            // on purpose — a parameter a signature requires, a prop taken out
+            // of a spread.
+            '@typescript-eslint/no-unused-vars': [
+                'warn',
+                { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+            ],
         },
     }
 );
