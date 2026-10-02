@@ -137,7 +137,7 @@ export class TaskParser {
      */
     private async collectItems(file: TFile): Promise<RawItem[]> {
         const content = await this.vaultService.readFileContent(file);
-        const lines = content.split('\n');
+        const lines = content.split(/\r?\n/);
         const listItems = this.vaultService.getMetadata(file)?.listItems;
         const cacheItems = listItems?.filter((li) => li.task !== undefined) ?? [];
         const fileCount = lines.reduce((n, line) => (CHECKBOX_ANY_RE.test(line) ? n + 1 : n), 0);

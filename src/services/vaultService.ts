@@ -216,7 +216,7 @@ export class VaultService {
         indent: number;
         lineNumber: number;
     }> {
-        const lines = content.split('\n');
+        const lines = content.split(/\r?\n/);
         const checkboxes: Array<{
             text: string;
             statusChar: string;
