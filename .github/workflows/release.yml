@@ -1,0 +1,100 @@
+# Publishes a release from main, when asked to and never on its own.
+#
+# Run it from the Actions tab (or the API) once the version bump is on main.
+# It checks that the version asked for is the one in manifest.json, runs the
+# types and the tests, builds, and publishes the same set of files a release
+# has always had:
+#
+#   main.js, manifest.json, styles.css   what Obsidian downloads
+#   zenith-<version>.zip                 the plugin folder, to unzip into plugins/
+#   zenith-demo-vault-<version>.zip      the demo vault with this build in it
+#
+# The demo vault is carried forward: the previous release's vault, with this
+# build put in place of the one it had. When the vault itself should change,
+# attach a new one to the release by hand afterwards.
+
+name: Release
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: 'Version to release, exactly as in manifest.json (e.g. 0.2.12)'
+                required: true
+            notes:
+                description: 'Release notes, in Markdown'
+                required: true
+
+permissions:
+    contents: write
+
+concurrency:
+    group: release
+    cancel-in-progress: false
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        env:
+            VERSION: ${{ inputs.version }}
+            GH_TOKEN: ${{ github.token }}
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+
+            - name: The version asked for is the one being built
+              run: |
+                  node -e '
+                    const v = process.env.VERSION;
+                    const manifest = require("./manifest.json");
+                    const versions = require("./versions.json");
+                    if (manifest.version !== v) throw new Error(`manifest.json is at ${manifest.version}, not ${v}`);
+                    if (require("./package.json").version !== v) throw new Error(`package.json is not at ${v}`);
+                    if (!(v in versions)) throw new Error(`versions.json has no entry for ${v}`);
+                  '
+                  if gh release view "$VERSION" >/dev/null 2>&1; then
+                      echo "A release $VERSION already exists." >&2
+                      exit 1
+                  fi
+
+            - run: npm ci
+
+            - name: Types and tests
+              run: |
+                  npx tsc --noEmit
+                  npm test
+
+            - name: Build
+              run: node esbuild.config.mjs production
+
+            - name: Package the plugin folder
+              run: |
+                  mkdir -p out/zenith
+                  cp dist/main.js dist/manifest.json dist/styles.css out/zenith/
+                  (cd out && zip -q -r -X -D "../zenith-$VERSION.zip" zenith)
+
+            - name: Carry the demo vault forward with this build
+              run: |
+                  previous=$(gh release view --json tagName --jq .tagName)
+                  gh release download "$previous" --pattern 'zenith-demo-vault-*.zip' --dir previous
+                  unzip -q previous/*.zip -d demo
+                  plugin=demo/zenith-demo-vault/.obsidian/plugins/zenith
+                  test -d "$plugin"
+                  cp dist/main.js dist/manifest.json dist/styles.css "$plugin/"
+                  (cd demo && zip -q -r -X -D "../zenith-demo-vault-$VERSION.zip" zenith-demo-vault)
+
+            - name: Publish
+              env:
+                  NOTES: ${{ inputs.notes }}
+              run: |
+                  printf '%s\n' "$NOTES" > notes.md
+                  gh release create "$VERSION" \
+                      --target "$GITHUB_SHA" \
+                      --title "Zenith $VERSION" \
+                      --notes-file notes.md \
+                      dist/main.js dist/manifest.json dist/styles.css \
+                      "zenith-$VERSION.zip" "zenith-demo-vault-$VERSION.zip"

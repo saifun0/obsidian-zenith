@@ -52,8 +52,8 @@ npm run format         # prettier --write
 
 `.github/workflows/ci.yml` запускается на каждый пуш в `main` и на каждый pull request: `tsc`,
 `npm run lint`, `npm run lint:obsidian`, `npm test` и продакшен-сборка, чьи `main.js`,
-`manifest.json` и `styles.css` сохраняются как артефакт прогона. Ничего не релизит — релизы
-по-прежнему делаются вручную.
+`manifest.json` и `styles.css` сохраняются как артефакт прогона. Ничего не релизит — об этом
+ниже.
 
 Большинство тестов идёт в Node. Тест, которому нужен настоящий DOM — `MutationObserver`,
 рендер React, — говорит об этом первой строкой: `// @vitest-environment happy-dom`.
@@ -67,3 +67,10 @@ npm run version-bump -- 0.2.0        # конкретная версия
 npm run version-bump -- minor        # или ключевое слово semver: patch|minor|major
 npm run version-bump -- 0.2.0 1.4.0  # заодно задать новый minAppVersion
 ```
+
+Затем закоммитить подъём версии как `Release <версия>`, довести его до `main` и запустить
+workflow **Release** (Actions → Release → Run workflow), указав версию и заметки к релизу. Он
+откажется от версии, которая не совпадает с `manifest.json`, проверит типы и тесты, соберёт
+плагин и опубликует `main.js`, `manifest.json`, `styles.css`, `zenith-<версия>.zip` и
+`zenith-demo-vault-<версия>.zip` — демо-хранилище прошлого релиза с новой сборкой внутри.
+Если демо-хранилище само должно измениться, его прикладывают к релизу вручную после.
