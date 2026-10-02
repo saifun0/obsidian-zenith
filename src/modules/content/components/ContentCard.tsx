@@ -13,6 +13,7 @@ import { formatProgress, progressPercent, shortUnit } from '../services/progress
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
 import { useContentMenu } from './useContentMenu';
 import { ItemHeart } from './FavoriteHeart';
+import { cssUrl } from '../../../core/imageSource';
 
 interface ContentCardProps {
     item: ContentItem;
@@ -133,7 +134,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
                 className="zenith-poster__art"
                 style={
                     coverUrl
-                        ? { backgroundImage: `url("${coverUrl}")` }
+                        ? { backgroundImage: cssUrl(coverUrl) }
                         : { background: `linear-gradient(160deg, ${type.color}44, ${type.color}18)` }
                 }
             >

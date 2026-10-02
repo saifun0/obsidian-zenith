@@ -22,6 +22,7 @@ import { useContentTypes } from '../useContentTypes';
 import { FavoriteHeart } from './FavoriteHeart';
 import { useFeature } from '../../../core/useFeature';
 import { seriesNames } from './seriesPrompt';
+import { cssUrl } from '../../../core/imageSource';
 
 interface ContentFormProps {
     onCancel: () => void;
@@ -316,7 +317,7 @@ export const ContentForm: FC<ContentFormProps> = ({ onCancel, onCreated, initial
                                     className="zenith-cform__cover-art"
                                     style={
                                         coverPreview
-                                            ? { backgroundImage: `url("${coverPreview}")` }
+                                            ? { backgroundImage: cssUrl(coverPreview) }
                                             : { background: `${typeCfg.color}24`, color: typeCfg.color }
                                     }
                                 >

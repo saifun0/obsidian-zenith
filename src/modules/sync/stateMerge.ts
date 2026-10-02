@@ -190,6 +190,9 @@ function mergeRecord(
     const keys = new Set([...Object.keys(local), ...Object.keys(remote)]);
 
     for (const k of keys) {
+        // Read from another device's file, so not trusted to be a name: as a
+        // key this would set the result's prototype rather than an entry.
+        if (k === '__proto__') continue;
         const inLocal = Object.prototype.hasOwnProperty.call(local, k);
         const inRemote = Object.prototype.hasOwnProperty.call(remote, k);
         const inBase = !!base && Object.prototype.hasOwnProperty.call(base, k);

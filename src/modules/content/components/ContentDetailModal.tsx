@@ -26,6 +26,7 @@ import { StarRating } from '../../../components/shared/StarRating';
 import { ProgressControl } from './ProgressControl';
 import { ItemHeart } from './FavoriteHeart';
 import { STATUS_ORDER, statusLabel } from '../contentLabels';
+import { cssUrl } from '../../../core/imageSource';
 
 interface ContentDetailModalProps {
     item: ContentItem;
@@ -245,7 +246,7 @@ export const ContentDetailModal: React.FC<ContentDetailModalProps> = ({ item, ty
                 className="zenith-content-modal__poster"
                 style={
                     coverUrl
-                        ? { backgroundImage: `url("${coverUrl}")` }
+                        ? { backgroundImage: cssUrl(coverUrl) }
                         : { background: `linear-gradient(160deg, ${type.color}44, ${type.color}18)` }
                 }
             >
