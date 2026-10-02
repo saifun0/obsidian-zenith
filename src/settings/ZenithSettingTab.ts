@@ -5,6 +5,17 @@ import ZenithPlugin from '../main';
 import { AppContext } from '../context/AppContext';
 import { SettingsApp } from './components/SettingsApp';
 
+/**
+ * The settings tab: one React app, mounted into the pane.
+ *
+ * Not the declarative `getSettingDefinitions()` of Obsidian 1.13. When that
+ * returns anything, Obsidian draws the whole tab from it and never calls
+ * `display()` — so adopting it would mean replacing this app (profiles, the
+ * module list, icon packs, the sync dialogs, the debug tools) with what the
+ * declarative controls can describe, not adding search to it. The cost of
+ * staying is that these settings do not appear in Obsidian’s settings search,
+ * and the `prefer-setting-definitions` lint warning, which may not be silenced.
+ */
 export class ZenithSettingTab extends PluginSettingTab {
     plugin: ZenithPlugin;
     private reactRoot: Root | null = null;

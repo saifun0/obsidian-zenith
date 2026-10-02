@@ -45,6 +45,19 @@ unsupported APIs, command naming, settings headings, and the typescript-eslint t
 rules it bundles. The community directory's review is built on it. It type-checks the whole
 project, so it takes about half a minute, and it is not part of `npm run build`.
 
+`npm run lint:types` is a wider type-aware pass, for reading rather than gating: its
+`require-await` findings are async methods that satisfy an interface, and are left on view.
+
+## Checks on GitHub
+
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request: `tsc`,
+`npm run lint`, `npm run lint:obsidian`, `npm test` and a production build, whose `main.js`,
+`manifest.json` and `styles.css` are kept as the run's artifact. It does not release anything —
+releases are still made by hand.
+
+Most tests run in Node. A test that needs a real DOM — a `MutationObserver`, a React render —
+says so in its first line with `// @vitest-environment happy-dom`.
+
 ## Versioning
 
 Bump the version everywhere (manifest, `package.json`, `versions.json`) with:
