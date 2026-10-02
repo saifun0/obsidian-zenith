@@ -61,3 +61,14 @@ describe('applyTemplate — {{prompt}}', () => {
         expect(applyTemplate('> {{ prompt }}', '2026-09-24', 'x')).toBe('> ');
     });
 });
+
+describe('applyTemplate — text taken as written', () => {
+    it('does not read $& or $1 in a question or a title as the match', () => {
+        // In a replacement string these mean "what was matched"; a question
+        // about money came out with `{{prompt}}` spliced into it.
+        expect(applyTemplate('> {{prompt}}', '2026-09-24', 'x', 'Spent $& or $1?')).toBe(
+            '> Spent $& or $1?'
+        );
+        expect(applyTemplate('# {{title}}', '2026-09-24', 'Cost $$ day', '')).toBe('# Cost $$ day');
+    });
+});

@@ -56,6 +56,17 @@ export class DataService {
     private readonly dirtyProjects = new Set<string>();
     private readonly flushDebounced: Debounced;
 
+    /**
+     * Which full reload of each collection is the latest.
+     *
+     * A reload is a few hundred awaits long, and a folder setting typed one
+     * letter at a time starts one per letter. They finish in whatever order
+     * the disk allows, and without this the last to FINISH won rather than the
+     * last asked for — "Tasks" typed, then a letter deleted, could leave the
+     * list showing what "Tasks" held under a setting that now says "Task".
+     */
+    private readonly generation = { tasks: 0, content: 0, journal: 0, projects: 0 };
+
     constructor(private readonly plugin: ZenithPlugin) {
         this.taskParser = new TaskParser(plugin.app);
         this.contentParser = new ContentParser(plugin.app);
@@ -111,15 +122,17 @@ export class DataService {
 
     async reloadTasks(): Promise<void> {
         const store = useZenithStore.getState();
+        const run = ++this.generation.tasks;
         store.setTasksLoading(true);
         try {
             const tasks = await this.taskParser.parseFolders(this.taskFolders());
+            if (run !== this.generation.tasks) return;
             useZenithStore.getState().setTasks(tasks);
             this.dirtyTasks.clear();
         } catch (err) {
             console.error('Zenith: Failed to parse tasks:', err);
         } finally {
-            useZenithStore.getState().setTasksLoading(false);
+            if (run === this.generation.tasks) useZenithStore.getState().setTasksLoading(false);
         }
     }
 
@@ -127,34 +140,41 @@ export class DataService {
         const store = useZenithStore.getState();
         const { projectsFolderPath, activeModuleIds } = store.settings;
         if (!activeModuleIds.includes('projects') || !projectsFolderPath?.trim()) {
+            // Also outdates a reload still running from before the switch.
+            this.generation.projects++;
             store.setProjects([]);
+            store.setProjectsLoading(false);
             return;
         }
+        const run = ++this.generation.projects;
         store.setProjectsLoading(true);
         try {
             const allTasks = store.tasks;
             const projects = await this.projectParser.parseProjects(projectsFolderPath, allTasks);
+            if (run !== this.generation.projects) return;
             useZenithStore.getState().setProjects(projects);
             this.dirtyProjects.clear();
         } catch (err) {
             console.error('Zenith: Failed to parse projects:', err);
         } finally {
-            useZenithStore.getState().setProjectsLoading(false);
+            if (run === this.generation.projects) useZenithStore.getState().setProjectsLoading(false);
         }
     }
 
     async reloadJournal(): Promise<void> {
         const store = useZenithStore.getState();
         const { journalFolderPath, journalDateFormat } = store.settings;
+        const run = ++this.generation.journal;
         store.setJournalLoading(true);
         try {
             const entries = await this.journalParser.parseJournal(journalFolderPath, journalDateFormat);
+            if (run !== this.generation.journal) return;
             useZenithStore.getState().setJournalEntries(entries);
             this.dirtyJournal.clear();
         } catch (err) {
             console.error('Zenith: Failed to parse the journal:', err);
         } finally {
-            useZenithStore.getState().setJournalLoading(false);
+            if (run === this.generation.journal) useZenithStore.getState().setJournalLoading(false);
         }
     }
 
@@ -169,30 +189,23 @@ export class DataService {
      * hold tasks just the same.
      */
     private taskFolders(): string[] {
-        const { tasksFolderPath, journalFolderPath, projectsFolderPath, activeModuleIds } =
-            useZenithStore.getState().settings;
-        const folders = [tasksFolderPath];
-        if (activeModuleIds.includes('journal') && journalFolderPath.trim()) {
-            folders.push(journalFolderPath);
-        }
-        if (activeModuleIds.includes('projects') && projectsFolderPath?.trim()) {
-            folders.push(projectsFolderPath);
-        }
-        return folders;
+        return taskSourceFolders(useZenithStore.getState().settings);
     }
 
     async reloadContent(): Promise<void> {
         const store = useZenithStore.getState();
         const folder = store.settings.contentFolderPath;
+        const run = ++this.generation.content;
         store.setContentLoading(true);
         try {
             const items = await this.contentParser.parseContent(folder);
+            if (run !== this.generation.content) return;
             useZenithStore.getState().setContentItems(items);
             this.dirtyContent.clear();
         } catch (err) {
             console.error('Zenith: Failed to parse content:', err);
         } finally {
-            useZenithStore.getState().setContentLoading(false);
+            if (run === this.generation.content) useZenithStore.getState().setContentLoading(false);
         }
     }
 
@@ -318,4 +331,30 @@ export class DataService {
         if (!f) return true; // vault root configured → everything matches
         return path === f || path.startsWith(`${f}/`);
     }
+}
+
+/**
+ * Every folder tasks are read from, for the full parse and the watcher alike.
+ *
+ * An empty path is no folder. The full parse always skipped one, but the
+ * watcher took an empty tasks folder for the whole vault — so with the setting
+ * cleared, tasks from any note that happened to be edited appeared in the
+ * list, and vanished again at the next full reload.
+ */
+export function taskSourceFolders(
+    settings: Pick<
+        ZenithSettings,
+        'tasksFolderPath' | 'journalFolderPath' | 'projectsFolderPath' | 'activeModuleIds'
+    >
+): string[] {
+    const { tasksFolderPath, journalFolderPath, projectsFolderPath, activeModuleIds } = settings;
+    const folders: string[] = [];
+    if (tasksFolderPath.trim()) folders.push(tasksFolderPath);
+    if (activeModuleIds.includes('journal') && journalFolderPath.trim()) {
+        folders.push(journalFolderPath);
+    }
+    if (activeModuleIds.includes('projects') && projectsFolderPath?.trim()) {
+        folders.push(projectsFolderPath);
+    }
+    return folders;
 }

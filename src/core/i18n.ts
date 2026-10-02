@@ -326,6 +326,7 @@ const EN: Dict = {
     'notice.taskTitleRequired': 'Zenith: a task needs a title.',
     'notice.taskAdded': 'Zenith: task added.',
     'notice.taskAddFailed': 'Zenith: could not add the task. Check the tasks folder path.',
+    'notice.noActiveModules': 'Zenith: no modules are on. Switch one on in settings.',
     'notice.defaultModuleInactive':
         'Zenith: the default module “{id}” is switched off — opening “{name}” instead.',
 
@@ -2011,6 +2012,7 @@ const RU: Dict = {
     'notice.taskTitleRequired': 'Zenith: у задачи должно быть название.',
     'notice.taskAdded': 'Zenith: задача добавлена.',
     'notice.taskAddFailed': 'Zenith: не удалось добавить задачу. Проверьте путь к папке задач.',
+    'notice.noActiveModules': 'Zenith: нет включённых модулей. Включите хотя бы один в настройках.',
     'notice.defaultModuleInactive':
         'Zenith: модуль по умолчанию «{id}» выключен — открываем «{name}».',
 

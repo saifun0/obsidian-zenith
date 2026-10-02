@@ -101,6 +101,13 @@ export interface SyncRemote {
     readonly nameLimit?: number;
 
     /**
+     * Paths that differ only in case are one path here. Dropbox and OneDrive
+     * work that way, and Dropbox does not reliably report a folder in the
+     * casing it was made with — see `alignCase`.
+     */
+    readonly caseInsensitive?: boolean;
+
+    /**
      * Whether this path can be stored here at all. Absent means always.
      *
      * Asked before planning rather than discovered on upload, because the

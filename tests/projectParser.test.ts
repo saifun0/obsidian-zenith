@@ -3,7 +3,7 @@ import {
     normalizeProjectStatus,
     normalizeProjectPriority,
     filterTasksForProject,
-    ProjectParser,
+    projectFromFrontmatter,
 } from '../src/modules/projects/services/projectParser';
 import { computeProjectStats } from '../src/modules/projects/services/projectStats';
 import type { Task } from '../src/store/taskSlice';
@@ -102,21 +102,28 @@ describe('computeProjectStats', () => {
     });
 });
 
-describe('ProjectParser', () => {
-    it('parses project file content and frontmatter', () => {
-        const content = `---
-title: Project Zenith Demo
-status: in-progress
-priority: high
-due: 2026-12-31
-tags:
-  - zenith
-  - dev
----
-# Overview
-This is a test project.
-`;
-        const project = ProjectParser.parse('20 Projects/Project Zenith Demo.md', content, 12345);
+describe('projectFromFrontmatter', () => {
+    const file = (name: string) => ({
+        path: `20 Projects/${name}.md`,
+        name: `${name}.md`,
+        basename: name,
+        mtime: 12345,
+    });
+
+    it('reads a project from its properties', () => {
+        // As Obsidian's YAML parser hands them over: the date unquoted, the
+        // tags a list.
+        const project = projectFromFrontmatter(
+            {
+                title: 'Project Zenith Demo',
+                status: 'in-progress',
+                priority: 'high',
+                due: '2026-12-31',
+                tags: ['zenith', 'dev'],
+            },
+            file('Project Zenith Demo'),
+            []
+        );
         expect(project.id).toBe('20 Projects/Project Zenith Demo.md');
         expect(project.title).toBe('Project Zenith Demo');
         expect(project.status).toBe('in-progress');
@@ -125,16 +132,22 @@ This is a test project.
         // surfaced under the one name the object now carries.
         expect(project.targetDate).toBe('2026-12-31');
         expect(project.tags).toEqual(['zenith', 'dev']);
+        expect(project.mtime).toBe(12345);
     });
 
     it('falls back to basename when title is absent in frontmatter', () => {
-        const content = `---
-status: active
----
-Content here.
-`;
-        const project = ProjectParser.parse('20 Projects/Alpha.md', content, 12345);
-        expect(project.title).toBe('Alpha');
+        expect(projectFromFrontmatter({ status: 'active' }, file('Alpha'), []).title).toBe('Alpha');
+    });
+
+    it('takes what a hand-rolled reader missed: a quoted title with a colon, a single tag', () => {
+        const project = projectFromFrontmatter(
+            { title: 'Phase 2: launch', tags: 'solo', color: ' #ff0000 ' },
+            file('Launch'),
+            []
+        );
+        expect(project.title).toBe('Phase 2: launch');
+        expect(project.tags).toEqual(['solo']);
+        expect(project.color).toBe('#ff0000');
     });
 });
 

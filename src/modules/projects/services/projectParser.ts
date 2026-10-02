@@ -117,87 +117,6 @@ export class ProjectParser {
         this.vaultService = new VaultService(app);
     }
 
-    static parse(filePath: string, content: string, mtime = 0, allTasks: Task[] = []): Project {
-        const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-        const fm: Record<string, unknown> = {};
-        if (fmMatch) {
-            const lines = fmMatch[1].split(/\r?\n/);
-            let currentKey = '';
-            for (const line of lines) {
-                const listMatch = line.match(/^\s*-\s+(.+)$/);
-                if (listMatch && currentKey) {
-                    const arr = (fm[currentKey] as unknown[]) || [];
-                    arr.push(listMatch[1].trim().replace(/^['"]|['"]$/g, ''));
-                    fm[currentKey] = arr;
-                    continue;
-                }
-                const kvMatch = line.match(/^([a-zA-Z0-9_-]+)\s*:\s*(.*)$/);
-                if (kvMatch) {
-                    currentKey = kvMatch[1].trim();
-                    const rawVal = kvMatch[2].trim();
-                    if (!rawVal) {
-                        fm[currentKey] = [];
-                    } else if (rawVal.startsWith('[') && rawVal.endsWith(']')) {
-                        fm[currentKey] = rawVal
-                            .slice(1, -1)
-                            .split(',')
-                            .map((s) => s.trim().replace(/^['"]|['"]$/g, ''));
-                    } else {
-                        fm[currentKey] = rawVal.replace(/^['"]|['"]$/g, '');
-                    }
-                }
-            }
-        }
-        const fileName = filePath.split('/').pop() || filePath;
-        const base = fileName.replace(/\.md$/i, '');
-        const title = (typeof fm.title === 'string' && fm.title.trim()) || base;
-        const status = normalizeProjectStatus(fm.status);
-        const priority = normalizeProjectPriority(fm.priority);
-        const due =
-            typeof fm.due === 'string'
-                ? fm.due.trim()
-                : typeof fm.targetDate === 'string'
-                  ? fm.targetDate.trim()
-                  : undefined;
-        let tags: string[] = [];
-        if (Array.isArray(fm.tags)) {
-            tags = fm.tags.map(String);
-        } else if (typeof fm.tags === 'string') {
-            tags = [fm.tags];
-        }
-        let taskTags: string[] = [];
-        if (Array.isArray(fm.taskTags)) {
-            taskTags = fm.taskTags.map(String);
-        } else if (typeof fm.taskTags === 'string') {
-            taskTags = [fm.taskTags];
-        }
-
-        // The project is built before its tasks are found, because finding
-        // them is a question asked OF the project — see `filterTasksForProject`,
-        // which needs the title, the path and the claimed tags together.
-        const project: Project = {
-            id: filePath,
-            filePath,
-            fileName,
-            title,
-            status,
-            priority,
-            targetDate: due,
-            tags,
-            taskTags,
-            description: typeof fm.description === 'string' ? fm.description : undefined,
-            color: typeof fm.color === 'string' ? fm.color : undefined,
-            icon: typeof fm.icon === 'string' ? fm.icon : undefined,
-            mtime,
-            tasks: [],
-            stats: computeProjectStats([], due),
-        };
-
-        project.tasks = filterTasksForProject(project, allTasks);
-        project.stats = computeProjectStats(project.tasks, due);
-        return project;
-    }
-
     async parseProjects(folderPath: string, allTasks: Task[]): Promise<Project[]> {
         const files = this.vaultService.getMarkdownFiles(folderPath);
         const projects: Project[] = [];
@@ -210,38 +129,58 @@ export class ProjectParser {
 
     async parseFile(file: TFile, allTasks: Task[]): Promise<Project | null> {
         const fm = await this.vaultService.getFrontmatter(file);
-        const title = (typeof fm.title === 'string' && fm.title.trim()) || file.basename;
-        const status = normalizeProjectStatus(fm.status);
-        const priority = normalizeProjectPriority(fm.priority);
-        const startDate = toIsoDate(fm.startDate ?? fm.start);
-        const targetDate = toIsoDate(fm.targetDate ?? fm.target ?? fm.dueDate ?? fm.due);
-        const tags = toStringArray(fm.tags);
-        const taskTags = toStringArray(fm.taskTags);
-        const description = typeof fm.description === 'string' ? fm.description.trim() : undefined;
-        const color = typeof fm.color === 'string' ? fm.color.trim() : undefined;
-        const icon = typeof fm.icon === 'string' ? fm.icon.trim() : undefined;
-
-        const project: Project = {
-            id: file.path,
-            filePath: file.path,
-            fileName: file.name,
-            title,
-            status,
-            priority,
-            startDate,
-            targetDate,
-            tags,
-            taskTags,
-            description,
-            color,
-            icon,
-            mtime: file.stat?.mtime ?? 0,
-            tasks: [],
-            stats: computeProjectStats([], targetDate),
-        };
-
-        project.tasks = filterTasksForProject(project, allTasks);
-        project.stats = computeProjectStats(project.tasks, targetDate);
-        return project;
+        return projectFromFrontmatter(
+            fm,
+            { path: file.path, name: file.name, basename: file.basename, mtime: file.stat?.mtime ?? 0 },
+            allTasks
+        );
     }
+}
+
+/**
+ * A project from its note's properties, as Obsidian parsed them.
+ *
+ * The one way a project is read. There used to be a second, with a YAML
+ * reader of its own that knew only flat `key: value` lines and lists — it was
+ * what the tests exercised, while notes went through this one, so the tests
+ * could pass while the plugin read a note differently.
+ */
+export function projectFromFrontmatter(
+    fm: Record<string, unknown>,
+    file: { path: string; name: string; basename: string; mtime: number },
+    allTasks: Task[]
+): Project {
+    const title = (typeof fm.title === 'string' && fm.title.trim()) || file.basename;
+    const status = normalizeProjectStatus(fm.status);
+    const priority = normalizeProjectPriority(fm.priority);
+    const startDate = toIsoDate(fm.startDate ?? fm.start);
+    const targetDate = toIsoDate(fm.targetDate ?? fm.target ?? fm.dueDate ?? fm.due);
+    const tags = toStringArray(fm.tags);
+    const taskTags = toStringArray(fm.taskTags);
+    const description = typeof fm.description === 'string' ? fm.description.trim() : undefined;
+    const color = typeof fm.color === 'string' ? fm.color.trim() : undefined;
+    const icon = typeof fm.icon === 'string' ? fm.icon.trim() : undefined;
+
+    const project: Project = {
+        id: file.path,
+        filePath: file.path,
+        fileName: file.name,
+        title,
+        status,
+        priority,
+        startDate,
+        targetDate,
+        tags,
+        taskTags,
+        description,
+        color,
+        icon,
+        mtime: file.mtime,
+        tasks: [],
+        stats: computeProjectStats([], targetDate),
+    };
+
+    project.tasks = filterTasksForProject(project, allTasks);
+    project.stats = computeProjectStats(project.tasks, targetDate);
+    return project;
 }
