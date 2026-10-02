@@ -97,6 +97,15 @@ export const Platform = { isMobile: false, isMobileApp: false, isIosApp: false, 
 
 export function setIcon(): void {}
 
+/** Icons by name, for tests that render one. Empty unless a test fills it. */
+export const mockIcons = new Map<string, () => SVGSVGElement>();
+export function getIcon(name: string): SVGSVGElement | null {
+    return mockIcons.get(name)?.() ?? null;
+}
+export function getIconIds(): string[] {
+    return [...mockIcons.keys()];
+}
+
 /** Obsidian's interface language. English unless a test sets `mockLanguage.value`. */
 export const mockLanguage = { value: 'en' };
 export function getLanguage(): string {

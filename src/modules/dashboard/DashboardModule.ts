@@ -106,7 +106,7 @@ export class DashboardModule extends BaseModule {
                 id: 'dashboard.lifeWeeks',
                 title: 'Life in weeks',
                 titleKey: 'widget.lifeWeeks',
-                icon: 'grid-3x3',
+                icon: 'grid',
                 description: 'A life as a grid of weeks, the lived ones filled in.',
                 sizes: ['sm', 'md', 'lg'],
                 defaultSize: 'md',

@@ -54,6 +54,10 @@ const jsContext = await esbuild.context({
     target: "es2018",
     logLevel: "info",
     sourcemap: prod ? false : "inline",
+    // Half the size to parse at every start, which a phone notices. Names are
+    // kept: React and the error console report components by them.
+    minify: prod,
+    keepNames: true,
     treeShaking: true,
     define: {
         "process.env.NODE_ENV": prod ? '"production"' : '"development"',
