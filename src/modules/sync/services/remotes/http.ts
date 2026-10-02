@@ -38,6 +38,12 @@ export interface HttpResponse {
 
 export type Http = (req: HttpRequest) => Promise<HttpResponse>;
 
+/** What a backend's network can be swapped for, in tests and nowhere else. */
+export interface HttpDeps {
+    http?: Http;
+    retry?: Partial<RetryOptions>;
+}
+
 /**
  * `requestUrl`, not `fetch`.
  *

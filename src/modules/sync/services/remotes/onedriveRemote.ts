@@ -1,4 +1,3 @@
-import { requestUrl } from 'obsidian';
 import { fnv1a } from '../../../../core/hash';
 import type { FileEntity } from '../../fileSyncTypes';
 import {
@@ -10,6 +9,7 @@ import {
 } from './oauth';
 import { OAuthSession, postForm, safeJson, type TokenStore } from './oauthSession';
 import type { ConnectionResult, OneDriveConfig, SyncRemote } from './types';
+import { obsidianHttp, withRetry, type Http, type HttpDeps } from './http';
 
 /**
  * OneDrive, over Microsoft Graph.
@@ -56,8 +56,20 @@ export class OneDriveRemote implements SyncRemote {
 
     private readonly root: string;
     private readonly session: OAuthSession;
+    /**
+     * Retried on 429 and 5xx. Graph throttles a busy drive with 429 and a
+     * `Retry-After`, and a run of a few hundred files meets that often enough
+     * that failing each throttled file would make large syncs unreliable.
+     */
+    private readonly http: Http;
 
-    constructor(config: OneDriveConfig, store: TokenStore, post: PostForm = postForm) {
+    constructor(
+        config: OneDriveConfig,
+        store: TokenStore,
+        post: PostForm = postForm,
+        deps: HttpDeps = {}
+    ) {
+        this.http = withRetry(deps.http ?? obsidianHttp, deps.retry);
         this.root = (config.folder ?? '').replace(/^\/+|\/+$/g, '');
         this.id = `onedrive-${fnv1a(`${config.clientId}|${this.root}`)}`;
         this.session = new OAuthSession(
@@ -251,10 +263,9 @@ export class OneDriveRemote implements SyncRemote {
 
         let last: ReturnType<typeof parseItem> = null;
         for (const range of chunkRanges(data.byteLength, CHUNK_SIZE)) {
-            const res = await requestUrl({
+            const res = await this.http({
                 url: uploadUrl,
                 method: 'PUT',
-                throw: false,
                 headers: {
                     'Content-Length': String(range.end - range.start + 1),
                     'Content-Range': `bytes ${range.start}-${range.end}/${data.byteLength}`,
@@ -306,12 +317,11 @@ export class OneDriveRemote implements SyncRemote {
         headers: Record<string, string> = {}
     ) {
         const isBinary = body instanceof ArrayBuffer;
-        return requestUrl({
+        // The status is read rather than thrown on: 404 is an ordinary answer
+        // here, and Graph's error body names the real problem.
+        return this.http({
             url,
             method,
-            // The status is read rather than thrown on: 404 is an ordinary
-            // answer here, and Graph's error body names the real problem.
-            throw: false,
             headers: {
                 Authorization: `Bearer ${await this.session.accessToken()}`,
                 ...(body !== undefined && !isBinary ? { 'Content-Type': 'application/json' } : {}),
