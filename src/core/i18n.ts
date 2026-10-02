@@ -1693,6 +1693,9 @@ const EN: Dict = {
     'sync.decision.conflict_created_then_smart_merge': 'conflict — reconcile',
     'sync.decision.skipped_too_large': 'skipped, too large',
     'sync.decision.skipped_excluded': 'skipped, out of scope',
+    'sync.decision.skipped_name_too_long': 'skipped, name too long once encrypted',
+    'sync.files.namesTooLong':
+        'Not synced, names too long once encrypted ({count}): {names}. Shorten them to bring them back.',
     'sync.settings.enabled': 'Sync settings between devices',
     'sync.settings.enabled.desc':
         'Merges settings field by field instead of letting the last device to save overwrite everything.',
@@ -3378,6 +3381,9 @@ const RU: Dict = {
     'sync.decision.conflict_created_then_smart_merge': 'конфликт — свести',
     'sync.decision.skipped_too_large': 'пропущен, слишком большой',
     'sync.decision.skipped_excluded': 'пропущен, вне области',
+    'sync.decision.skipped_name_too_long': 'пропущен, имя слишком длинное для шифрования',
+    'sync.files.namesTooLong':
+        'Не синхронизируются, имя слишком длинное после шифрования ({count}): {names}. Сократите названия, чтобы вернуть их в синхронизацию.',
     'sync.settings.enabled': 'Синхронизировать настройки между устройствами',
     'sync.settings.enabled.desc':
         'Сливает настройки по полям вместо того, чтобы последнее сохранившее устройство затирало всё разом.',

@@ -1,3 +1,5 @@
+import { Notice } from 'obsidian';
+import { translateNow } from '../../../core/i18n';
 import { vaultModuleFs } from '../../../core/moduleFs';
 import { useZenithStore } from '../../../store';
 import type { ForceDirection, SyncPlan } from '../fileSyncTypes';
@@ -76,6 +78,8 @@ const EMPTY_STATUS: FileSyncStatus = {
 export class FileSyncService {
     private status: FileSyncStatus = { ...EMPTY_STATUS };
     private listeners = new Set<(status: FileSyncStatus) => void>();
+    /** The set of too-long names last announced, so a set is told about once. */
+    private longNames = '';
 
     constructor(
         private readonly plugin: ZenithPlugin,
@@ -149,11 +153,41 @@ export class FileSyncService {
                 ...(plan.actionable === 0 ? { checkedAt: Date.now() } : {}),
             });
             this.remember();
+            this.announceLongNames(plan);
             return plan;
         } catch (err) {
             this.patch({ running: false, error: describe(err) });
             return null;
         }
+    }
+
+    /**
+     * Name the files a plan set aside because their names do not fit.
+     *
+     * Skipped files appear nowhere else — the review lists what will move, and
+     * an automatic run with nothing else to do shows nothing at all — so
+     * without this a note with a long title would simply never sync, silently.
+     * Said once per set of names, not once per run: the same set comes back
+     * every few minutes until somebody renames something.
+     */
+    private announceLongNames(plan: SyncPlan): void {
+        const keys = plan.items
+            .filter((item) => item.decision === 'skipped_name_too_long')
+            .map((item) => item.key);
+        const signature = keys.join('\n');
+        if (signature === this.longNames) return;
+        this.longNames = signature;
+        if (keys.length === 0) return;
+
+        const names = keys.slice(0, 3).map((key) => key.split('/').pop() ?? key);
+        if (keys.length > 3) names.push('…');
+        new Notice(
+            translateNow('sync.files.namesTooLong', {
+                count: String(keys.length),
+                names: names.join(', '),
+            }),
+            15_000
+        );
     }
 
     /**

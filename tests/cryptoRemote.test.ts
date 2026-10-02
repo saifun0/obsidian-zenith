@@ -1,6 +1,11 @@
 import { beforeAll, describe, it, expect } from 'vitest';
 import { CryptoRemote } from '../src/modules/sync/services/crypto/cryptoRemote';
-import { MARKER_KEY } from '../src/modules/sync/services/crypto/vaultCrypto';
+import {
+    encryptedNameLength,
+    encryptPath,
+    MARKER_KEY,
+    newMarker,
+} from '../src/modules/sync/services/crypto/vaultCrypto';
 import type { FileEntity } from '../src/modules/sync/fileSyncTypes';
 import type { SyncRemote } from '../src/modules/sync/services/remotes/types';
 
@@ -285,5 +290,29 @@ describe('two devices claiming the same empty folder', () => {
             /Another device set this remote folder up/
         );
         expect((await winner.list()).map((e) => e.key)).toEqual(['theirs.md']);
+    });
+});
+
+describe('names too long to store once encrypted', () => {
+    it('knows the encrypted length of a name without encrypting it', async () => {
+        const { keys } = await newMarker(PASSWORD, 1000);
+        for (const name of ['a.md', 'Заметки', 'Ж'.repeat(64) + '.md', '😀 emoji.md', 'x'.repeat(200)]) {
+            const encrypted = await encryptPath(keys, name);
+            expect(encryptedNameLength(name), name).toBe(encrypted.length);
+        }
+    });
+
+    it('measures every folder and file in a path against the server limit', () => {
+        const remote = new CryptoRemote({ ...fakeRemote(), nameLimit: 255 }, PASSWORD);
+        expect(remote.keyFits('Заметки/Короткая.md')).toBe(true);
+        // About 64 characters of Cyrillic is where 255 runs out.
+        expect(remote.keyFits(`Заметки/${'Ж'.repeat(60)}.md`)).toBe(true);
+        expect(remote.keyFits(`Заметки/${'Ж'.repeat(66)}.md`)).toBe(false);
+        expect(remote.keyFits(`${'Ж'.repeat(66)}/a.md`)).toBe(false);
+    });
+
+    it('lets everything through on a server with no limit to plan around', () => {
+        const remote = new CryptoRemote(fakeRemote(), PASSWORD);
+        expect(remote.keyFits(`${'Ж'.repeat(200)}.md`)).toBe(true);
     });
 });

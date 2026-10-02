@@ -1411,6 +1411,8 @@ export const ZH: Record<string, string> = {
     'sync.decision.conflict_created_then_smart_merge': '冲突——合并',
     'sync.decision.skipped_too_large': '跳过，文件过大',
     'sync.decision.skipped_excluded': '跳过，不在范围内',
+    'sync.decision.skipped_name_too_long': '跳过，加密后名称过长',
+    'sync.files.namesTooLong': '未同步：加密后名称过长（{count}）：{names}。缩短名称即可恢复同步。',
     'sync.settings.enabled': '在设备之间同步设置',
     'sync.settings.enabled.desc': '逐项合并设置，而不是让最后保存的设备覆盖一切。',
     'sync.settings.pollSeconds': '检查更改的间隔',

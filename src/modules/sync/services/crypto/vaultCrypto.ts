@@ -308,6 +308,21 @@ export async function encryptPath(keys: VaultKeys, path: string): Promise<string
 }
 
 /**
+ * How long one encrypted name comes out, from the length of the name inside.
+ *
+ * Exact without encrypting anything: the nonce and the tag are fixed sizes, and
+ * base32 turns every five bits into one character. It is worth knowing in
+ * advance because the growth is steep — a name gains 28 bytes and then a fifth
+ * again — and a remote that caps names at 255 characters takes about 130 bytes
+ * of the original: 60-odd characters of Cyrillic, which a note title reaches
+ * easily.
+ */
+export function encryptedNameLength(segment: string): number {
+    const bytes = new TextEncoder().encode(segment).length;
+    return Math.ceil(((NONCE_BYTES + bytes + TAG_BYTES) * 8) / 5);
+}
+
+/**
  * Turn a remote path back into a vault path, or null when it is not one of ours.
  *
  * Null rather than throwing: a listing may legitimately contain the marker

@@ -222,6 +222,14 @@ function guard(
         return { ...base, decision: 'skipped_excluded', reason: 'outside the configured scope' };
     }
 
+    if (opts.nameFits && !opts.nameFits(base.key)) {
+        return {
+            ...base,
+            decision: 'skipped_name_too_long',
+            reason: 'a name too long for the server once encrypted',
+        };
+    }
+
     if (opts.maxFileSize > 0) {
         const biggest = Math.max(base.local?.size ?? 0, base.remote?.size ?? 0);
         if (biggest > opts.maxFileSize) {
@@ -523,6 +531,7 @@ function tally(items: SyncPlanItem[]): SyncPlanStats {
                 stats.conflict++;
                 break;
             case 'skipped_too_large':
+            case 'skipped_name_too_long':
             case 'skipped_excluded':
                 stats.skipped++;
                 break;
