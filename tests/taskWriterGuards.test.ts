@@ -373,3 +373,45 @@ describe('taking back a task that was just added', () => {
         expect(store.text).toBe('- [x] Buy milk ✅ 2026-09-24\n');
     });
 });
+
+describe('a note written with Windows line endings', () => {
+    // The same note, as Notepad, OneDrive or git with autocrlf leave it.
+    const CRLF_NOTE = NOTE.replace(/\n/g, '\r\n');
+
+    it('ticks a task off, and keeps the file in its own line endings', async () => {
+        const { app, store } = fakeApp('Day.md', CRLF_NOTE);
+
+        const ok = await new TaskWriter(app).setStatusInFile('Day.md', 3, 'done', 'Buy milk');
+
+        expect(ok).toBe(true);
+        expect(store.text).toMatch(/- \[x\] Buy milk/);
+        expect(store.text.split('\r\n').length).toBe(CRLF_NOTE.split('\r\n').length);
+        expect(store.text.replace(/\r\n/g, '')).not.toContain('\n');
+    });
+
+    it('edits and deletes, which also used to quietly do nothing', async () => {
+        const edited = fakeApp('Day.md', CRLF_NOTE);
+        expect(
+            await new TaskWriter(edited.app).updateTaskInFile(
+                'Day.md',
+                4,
+                { title: 'Call the plumber again' },
+                'Call the plumber'
+            )
+        ).toBe(true);
+        expect(edited.store.text).toContain('Call the plumber again\r\n');
+
+        const deleted = fakeApp('Day.md', CRLF_NOTE);
+        expect(
+            await new TaskWriter(deleted.app).deleteTaskInFile('Day.md', 4, 'Call the plumber')
+        ).toBe(true);
+        expect(deleted.store.text).not.toContain('Call the plumber');
+        expect(deleted.store.text).toContain('- [ ] File the tax return\r\n');
+    });
+
+    it('leaves the file byte for byte alone when the edit is refused', async () => {
+        const { app, store } = fakeApp('Day.md', CRLF_NOTE);
+        await new TaskWriter(app).setStatusInFile('Day.md', 3, 'done', 'Not this task');
+        expect(store.text).toBe(CRLF_NOTE);
+    });
+});

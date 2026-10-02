@@ -102,6 +102,17 @@ function recurrenceRollover(body: string, prefix: string, today: string): string
     })}`;
 }
 
+/**
+ * Whether a note is written with Windows line endings: more of its line breaks
+ * are `\r\n` than bare `\n`. A mixed file keeps whichever it mostly has.
+ */
+function usesCrlf(text: string): boolean {
+    const crlf = text.match(/\r\n/g)?.length ?? 0;
+    if (crlf === 0) return false;
+    const all = text.match(/\n/g)?.length ?? 0;
+    return crlf >= all - crlf;
+}
+
 /** Where {@link TaskWriter.addTask} put a task: enough to take it back. */
 export interface AddedTask {
     filePath: string;
@@ -111,6 +122,31 @@ export interface AddedTask {
 
 export class TaskWriter {
     constructor(private readonly app: App) {}
+
+    /**
+     * `vault.process`, with the file's line endings handled once for every edit.
+     *
+     * Everything below splits on `\n` and matches lines with `$`, which a line
+     * ending in `\r` never satisfies — so in a note written on Windows (or
+     * checked out by git with autocrlf) the tasks were listed but nothing done
+     * to them took: ticking one off, editing it, deleting it all quietly came
+     * back false. The edits see the text with plain `\n`, and the file gets its
+     * own endings back. An edit that changes nothing leaves the file alone.
+     */
+    private process(file: TFile, edit: (data: string) => string): Promise<string> {
+        return this.app.vault.process(file, (data) => {
+            const crlf = usesCrlf(data);
+            const plain = crlf ? data.replace(/\r\n/g, '\n') : data;
+            const edited = edit(plain);
+            if (edited === plain) return data;
+            return crlf ? edited.replace(/\r?\n/g, '\r\n') : edited;
+        });
+    }
+
+    /** A read for line work: the text with plain `\n`, whatever the file uses. */
+    private async read(file: TFile): Promise<string> {
+        return (await this.app.vault.read(file)).replace(/\r\n/g, '\n');
+    }
 
     /**
      * Set a task's 4-state status.
@@ -136,7 +172,7 @@ export class TaskWriter {
         let ok = false;
         /** A repeat rule this engine cannot read, met while completing the task. */
         let unreadRule: string | null = null;
-        await this.app.vault.process(file, (data) => {
+        await this.process(file, (data) => {
             const lines = data.split('\n');
             const idx = lineNumber - 1;
             if (idx < 0 || idx >= lines.length) return data;
@@ -216,7 +252,7 @@ export class TaskWriter {
         if (target) {
             const file = this.app.vault.getAbstractFileByPath(target.filePath);
             if (file instanceof TFile) {
-                await this.app.vault.process(file, (data) => {
+                await this.process(file, (data) => {
                     const placed = target.heading
                         ? insertUnderHeading(data.split('\n'), target.heading, block.split('\n'))
                         : null;
@@ -241,7 +277,7 @@ export class TaskWriter {
             return { filePath, line };
         }
 
-        await this.app.vault.process(file, (data) => appendBlock(data, block));
+        await this.process(file, (data) => appendBlock(data, block));
         return { filePath, line };
     }
 
@@ -257,7 +293,7 @@ export class TaskWriter {
         const file = this.app.vault.getAbstractFileByPath(added.filePath);
         if (!(file instanceof TFile)) return false;
         let ok = false;
-        await this.app.vault.process(file, (data) => {
+        await this.process(file, (data) => {
             const lines = data.split('\n');
             const idx = lines.map((l) => l.trimEnd()).lastIndexOf(added.line.trimEnd());
             if (idx < 0) return data;
@@ -306,7 +342,7 @@ export class TaskWriter {
         if (!(file instanceof TFile)) return false;
 
         let ok = false;
-        await this.app.vault.process(file, (data) => {
+        await this.process(file, (data) => {
             const lines = data.split('\n');
             const idx = lineNumber - 1;
             if (idx < 0 || idx >= lines.length) return data;
@@ -342,7 +378,7 @@ export class TaskWriter {
         if (!(file instanceof TFile)) return false;
 
         let ok = false;
-        await this.app.vault.process(file, (data) => {
+        await this.process(file, (data) => {
             const lines = data.split('\n');
             const idx = lineNumber - 1;
             if (idx < 0 || idx >= lines.length) return data;
@@ -367,7 +403,7 @@ export class TaskWriter {
     async readLineBody(filePath: string, lineNumber: number): Promise<string | null> {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return null;
-        const data = await this.app.vault.read(file);
+        const data = await this.read(file);
         const m = (data.split('\n')[lineNumber - 1] ?? '').match(CHECKBOX_PARTS_RE);
         return m ? m[3] : null;
     }
@@ -413,7 +449,7 @@ export class TaskWriter {
         if (!(file instanceof TFile)) return false;
 
         let ok = false;
-        await this.app.vault.process(file, (data) => {
+        await this.process(file, (data) => {
             const lines = data.split('\n');
             const idx = lineNumber - 1;
             if (idx < 0 || idx >= lines.length) return data;
@@ -449,7 +485,7 @@ export class TaskWriter {
         if (!clean) return false;
 
         let ok = false;
-        await this.app.vault.process(file, (data) => {
+        await this.process(file, (data) => {
             const lines = data.split('\n');
             const idx = parentLineNumber - 1;
             if (idx < 0 || idx >= lines.length) return data;
@@ -497,7 +533,7 @@ export class TaskWriter {
 
         if (sourcePath === targetPath) {
             let ok = false;
-            await this.app.vault.process(source, (data) => {
+            await this.process(source, (data) => {
                 const result = moveBlock(data.split('\n'), sourceLine, targetLine, position);
                 if (!result) return data;
                 ok = true;
@@ -507,12 +543,12 @@ export class TaskWriter {
         }
 
         // Cross-file: capture the block before touching either file.
-        const sourceData = await this.app.vault.read(source);
+        const sourceData = await this.read(source);
         const lifted = extractBlock(sourceData.split('\n'), sourceLine);
         if (!lifted) return false;
 
         let inserted = false;
-        await this.app.vault.process(target, (data) => {
+        await this.process(target, (data) => {
             const next = insertBlock(data.split('\n'), lifted.block, targetLine, position);
             if (!next) return data;
             inserted = true;
@@ -523,7 +559,7 @@ export class TaskWriter {
         // Re-derive the block from the current source content: an outside edit
         // between the read above and here would make the cached indices wrong.
         let removed = false;
-        await this.app.vault.process(source, (data) => {
+        await this.process(source, (data) => {
             const cut = extractBlock(data.split('\n'), sourceLine);
             if (!cut || cut.block.join('\n') !== lifted.block.join('\n')) return data;
             removed = true;
