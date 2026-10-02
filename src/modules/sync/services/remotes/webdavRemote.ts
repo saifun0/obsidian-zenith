@@ -27,6 +27,8 @@ const DAV_NS = 'DAV:';
 
 export class WebdavRemote implements SyncRemote {
     readonly kind = 'webdav' as const;
+    /** What the filesystems behind WebDAV servers allow. */
+    readonly nameLimit = 255;
     readonly id: string;
 
     private readonly base: string;

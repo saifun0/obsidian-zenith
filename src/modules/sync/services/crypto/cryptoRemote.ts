@@ -5,6 +5,7 @@ import {
     decryptContent,
     decryptPath,
     encryptContent,
+    encryptedNameLength,
     encryptPath,
     keysForMarker,
     markerAccepts,
@@ -59,6 +60,7 @@ const KEY_CACHE = new Map<string, Promise<VaultKeys>>();
 export class CryptoRemote implements SyncRemote {
     readonly kind: RemoteKind;
     readonly id: string;
+    readonly nameLimit?: number;
 
     private keys: Promise<VaultKeys> | null = null;
 
@@ -81,6 +83,7 @@ export class CryptoRemote implements SyncRemote {
         private readonly password: string
     ) {
         this.kind = inner.kind;
+        this.nameLimit = inner.nameLimit;
         // The previous-sync record has to be invalidated by turning encryption
         // on, and by changing the password — after either, every file on the
         // remote sits at a path this device has never seen, and a record saying
@@ -93,6 +96,20 @@ export class CryptoRemote implements SyncRemote {
         // already read — and because the engine excludes both from sync, so
         // neither leaves the device.
         this.id = `${inner.id}-enc-${fnv1a(`${password}|${inner.id}`)}`;
+    }
+
+    /**
+     * Whether every name in this path still fits once encrypted.
+     *
+     * The server's limit applies to what it is handed, and what it is handed
+     * is the encrypted name — about twice the bytes of a short one. Measured,
+     * not tried: the length is known without the key, so the plan can set the
+     * file aside and say why instead of failing its upload on every run.
+     */
+    keyFits(key: string): boolean {
+        const limit = this.inner.nameLimit;
+        if (!limit) return true;
+        return key.split('/').every((segment) => encryptedNameLength(segment) <= limit);
     }
 
     async checkConnection(): Promise<ConnectionResult> {

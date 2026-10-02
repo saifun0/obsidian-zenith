@@ -53,6 +53,12 @@ export type SyncDecision =
     | 'conflict_created_then_smart_merge'
     /** Over the size limit — left completely alone, on both sides. */
     | 'skipped_too_large'
+    /**
+     * A name the server cannot store once encrypted — see `SyncRemote.keyFits`.
+     * Left alone like an oversized file, and announced, since only renaming
+     * it brings it back into the sync.
+     */
+    | 'skipped_name_too_long'
     /** Outside the configured scope, or a file the engine owns. */
     | 'skipped_excluded';
 
@@ -215,6 +221,8 @@ export interface PlanOptions {
     mtimeToleranceMs: number;
     /** Paths the engine must never touch. Returns true to skip. */
     isExcluded: (key: string) => boolean;
+    /** Whether the remote can store this path at all. Everything fits when absent. */
+    nameFits?: (key: string) => boolean;
     /**
      * Whether `smart` may be attempted for this path.
      *

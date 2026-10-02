@@ -536,6 +536,28 @@ describe('plan', () => {
         expect(Object.keys(files).filter((k) => !k.includes('/sync/prev/'))).toEqual(['ok.md']);
     });
 
+    it('sets aside a file whose name the server cannot store, and names why', async () => {
+        const files: Record<string, FakeFile> = {
+            'short.md': { data: 'x', mtime: 1 },
+            'a very long title.md': { data: 'y', mtime: 1 },
+        };
+        const fs = fakeFs(files);
+        const remote: SyncRemote = {
+            ...fakeRemote({ objects: {}, calls: [] }),
+            keyFits: (key) => !key.includes('long'),
+        };
+        const engine = new SyncEngine(fs, remote, new PrevSyncStore(fs, paths), 'devA', ENGINE_OPTS);
+
+        const plan = await engine.plan();
+        const byKey = Object.fromEntries(plan.items.map((i) => [i.key, i.decision]));
+        expect(byKey['short.md']).toBe('local_is_created_then_push');
+        expect(byKey['a very long title.md']).toBe('skipped_name_too_long');
+        expect(plan.stats.skipped).toBe(1);
+
+        await engine.apply(plan, { force: true });
+        expect(files['a very long title.md']).toBeDefined();
+    });
+
     it('flags the very first run for review', async () => {
         const { engine } = makeEngine({ 'a.md': { data: 'x', mtime: 1 } }, { objects: {}, calls: [] });
         const plan = await engine.plan();

@@ -93,6 +93,22 @@ export interface SyncRemote {
      */
     readonly id: string;
 
+    /**
+     * The longest single name — one folder or file, not the whole path — the
+     * server stores, in characters. Absent where there is no such limit worth
+     * planning around (S3 keys are limited only as a whole).
+     */
+    readonly nameLimit?: number;
+
+    /**
+     * Whether this path can be stored here at all. Absent means always.
+     *
+     * Asked before planning rather than discovered on upload, because the
+     * answer does not change between runs: a name that does not fit fails the
+     * same way every time, and is better skipped and named than retried.
+     */
+    keyFits?(key: string): boolean;
+
     checkConnection(): Promise<ConnectionResult>;
 
     /** Every file under the configured folder. Folders are not returned. */

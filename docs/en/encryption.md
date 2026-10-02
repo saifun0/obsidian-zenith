@@ -76,6 +76,14 @@ segment = base32( nonce[12] || AES-256-GCM(nameKey, nonce, segment, aad = parent
 Base32 rather than base64 because Dropbox compares paths case-insensitively, and two names
 differing only in case would silently collide.
 
+### How long a name can be
+
+A segment grows by 28 bytes and then by a fifth again, and WebDAV, Dropbox and OneDrive
+store at most 255 characters per name. That leaves about 130 bytes of the original: some 125
+Latin characters, or about 64 of Cyrillic, which take two bytes each. A note or folder with a
+longer name is left out of the sync — the plan says so, and a notice names it — until it is
+renamed. S3 has no such limit per name, so there nothing is left out.
+
 ## What the server still learns
 
 Not the contents, and not the names. It does see how many files there are, roughly how large
