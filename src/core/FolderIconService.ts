@@ -3,6 +3,7 @@ import { useZenithStore } from '../store';
 import { IconPickerModal } from './IconPickerModal';
 import { remapIconPaths, pruneIconPaths } from './iconPaths';
 import { applyIcon } from './icons/applyIcon';
+import { iconRegistry } from './icons';
 import type ZenithPlugin from '../main';
 import { featureEnabled } from './features';
 
@@ -18,7 +19,8 @@ import { featureEnabled } from './features';
  */
 export class FolderIconService {
     private observers: MutationObserver[] = [];
-    private scheduled = false;
+    /** The pending `decorate`, so unloading can call it off. */
+    private timer: number | null = null;
 
     constructor(private readonly plugin: ZenithPlugin) {}
 
@@ -76,7 +78,13 @@ export class FolderIconService {
             )
         );
 
+        // And when a pack arrives or changes: the same id can start to mean a
+        // different picture, and nothing in the explorer would say so.
+        this.plugin.register(iconRegistry.subscribe(() => this.scheduleDecorate()));
+
         this.plugin.register(() => {
+            if (this.timer !== null) window.clearTimeout(this.timer);
+            this.timer = null;
             this.detachObservers();
             this.removeAllInjected();
         });
@@ -106,10 +114,9 @@ export class FolderIconService {
     // ── Decoration ──────────────────────────────────────────────────────────
 
     private scheduleDecorate(): void {
-        if (this.scheduled) return;
-        this.scheduled = true;
-        window.setTimeout(() => {
-            this.scheduled = false;
+        if (this.timer !== null) return;
+        this.timer = window.setTimeout(() => {
+            this.timer = null;
             this.decorate();
         }, 50);
     }
@@ -121,23 +128,41 @@ export class FolderIconService {
             .filter((el): el is HTMLElement => !!el);
     }
 
+    /**
+     * Bring every title in the explorer in line with the icon map.
+     *
+     * Only the titles that are wrong are touched, and that is the whole point.
+     * The explorer is watched for changes so icons survive its re-renders, and
+     * this method's own edits are changes too: when it redrew every icon on
+     * every pass, each pass woke the observer, which scheduled the next one —
+     * twenty redraws a second for as long as one icon was assigned. Each icon
+     * carries what it was drawn from, so a title already showing the right one
+     * is left exactly as it is, and a quiet explorer stays quiet.
+     */
     private decorate(): void {
         if (!this.enabled) return;
         const icons = this.icons;
+        // Part of what was drawn: a pack loaded later changes what an id looks
+        // like without changing the id.
+        const revision = iconRegistry.getRevision();
         for (const container of this.explorerContainers()) {
             const titles = container.querySelectorAll<HTMLElement>(
                 '.nav-folder-title, .nav-file-title'
             );
             titles.forEach((titleEl) => {
-                // Clear any icon we previously injected.
-                titleEl.querySelector('.zenith-nav-icon')?.remove();
-                titleEl.removeClass('zenith-has-icon');
-
                 const path = titleEl.getAttribute('data-path');
                 const iconId = path ? icons[path] : undefined;
-                if (!iconId) return;
+                const wanted = iconId ? `${iconId}|${revision}` : null;
+                const drawn = titleEl.querySelector<HTMLElement>('.zenith-nav-icon');
+
+                if (drawn ? drawn.dataset.zenithIcon === wanted : wanted === null) return;
+
+                drawn?.remove();
+                titleEl.removeClass('zenith-has-icon');
+                if (!iconId || !wanted) return;
 
                 const iconEl = createSpan({ cls: 'zenith-nav-icon' });
+                iconEl.dataset.zenithIcon = wanted;
                 applyIcon(iconEl, iconId);
                 const content = titleEl.querySelector(
                     '.nav-folder-title-content, .nav-file-title-content'
