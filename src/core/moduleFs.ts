@@ -32,6 +32,12 @@ export interface ModuleFs {
     readBinary(path: string): Promise<ArrayBuffer>;
     writeBinary(path: string, data: ArrayBuffer): Promise<void>;
     /**
+     * Delete recoverably: the system trash where there is one, the vault's own
+     * `.trash` folder otherwise. For deletions the user did not make on this
+     * device — the ones arriving from somewhere else. A missing file is fine.
+     */
+    trashFile(path: string): Promise<void>;
+    /**
      * Every FILE at or below `path`, as vault-relative paths. Folders are not
      * returned — they are implied by the files inside them, and an empty folder
      * carries no user data worth syncing.
@@ -98,6 +104,14 @@ export function vaultModuleFs(adapter: DataAdapter): ModuleFs {
         stat: (path) => adapter.stat(path),
         readBinary: (path) => adapter.readBinary(path),
         writeBinary: (path, data) => adapter.writeBinary(path, data),
+
+        async trashFile(path) {
+            if (!(await adapter.exists(path))) return;
+            // `false` means the platform has no system trash, or it is switched
+            // off — mobile, mostly. The vault's own trash works everywhere.
+            if (await adapter.trashSystem(path)) return;
+            await adapter.trashLocal(path);
+        },
 
         async walk(path) {
             const out: string[] = [];

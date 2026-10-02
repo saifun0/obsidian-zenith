@@ -3,6 +3,7 @@ import type { ModuleFs } from '../src/core/moduleFs';
 import {
     SyncEngine,
     buildExcluder,
+    isSafeKey,
     remoteBytesAfter,
     settingsOwner,
 } from '../src/modules/sync/services/SyncEngine';
@@ -18,7 +19,8 @@ interface FakeFile {
     mtime: number;
 }
 
-function fakeFs(files: Record<string, FakeFile>): ModuleFs {
+/** `trash` collects what `trashFile` moved there, in order. */
+function fakeFs(files: Record<string, FakeFile>, trash: string[] = []): ModuleFs {
     const under = (path: string) =>
         Object.keys(files).filter((f) => path === '/' || f === path || f.startsWith(`${path}/`));
 
@@ -47,6 +49,11 @@ function fakeFs(files: Record<string, FakeFile>): ModuleFs {
         readBinary: async (path) => new TextEncoder().encode(files[path]?.data ?? '').buffer,
         writeBinary: async (path, data) => {
             files[path] = { data: new TextDecoder().decode(data), mtime: files[path]?.mtime ?? 0 };
+        },
+        trashFile: async (path) => {
+            if (!Object.hasOwn(files, path)) return;
+            delete files[path];
+            trash.push(path);
         },
         walk: async (path) => under(path),
     };
@@ -131,13 +138,14 @@ function makeEngine(
     remoteState: FakeRemoteState,
     optsPatch: Partial<typeof ENGINE_OPTS> = {}
 ) {
-    const fs = fakeFs(files);
+    const trash: string[] = [];
+    const fs = fakeFs(files, trash);
     const prevStore = new PrevSyncStore(fs, paths);
     const engine = new SyncEngine(fs, fakeRemote(remoteState), prevStore, 'devA', {
         ...ENGINE_OPTS,
         ...optsPatch,
     });
-    return { engine, fs, prevStore };
+    return { engine, fs, prevStore, trash };
 }
 
 // ── Exclusions ───────────────────────────────────────
@@ -207,6 +215,86 @@ describe('buildExcluder', () => {
         // so nothing there can be reached in the first place.
         const ex = buildExcluder({ ...base, localRoot: 'Notes' });
         expect(ex('a.md')).toBe(false);
+    });
+
+    it('refuses a path that climbs past the rules or out of the vault', () => {
+        // Each of these could come back from a server — a WebDAV href decodes
+        // to whatever it likes, an S3 key is any string — and none of them
+        // starts with a prefix the rules above know.
+        const ex = buildExcluder({ ...base, includeConfigDir: true });
+        for (const key of [
+            'a/../.obsidian/plugins/evil/main.js',
+            '../outside.md',
+            'Notes/../../outside.md',
+            '/etc/passwd',
+            'a\\..\\..\\outside.md',
+            './a.md',
+            'a//b.md',
+            'a/',
+            'C:/Windows/evil.dll',
+            'line\nbreak.md',
+            'nul\u0000.md',
+        ]) {
+            expect(ex(key), key).toBe(true);
+        }
+    });
+
+    it('leaves names that only look unusual alone', () => {
+        const ex = buildExcluder(base);
+        for (const key of ['..notes.md', 'Notes/v1.2/a.md', 'A: a list.md', 'Ёлка/запись.md']) {
+            expect(ex(key), key).toBe(false);
+        }
+    });
+
+    it('is not walked around by spelling a folder in another case', () => {
+        // Windows, macOS and Dropbox all take `.OBSIDIAN` for `.obsidian`.
+        const ex = buildExcluder(base);
+        expect(ex('.OBSIDIAN/plugins/evil/main.js')).toBe(true);
+        expect(ex('.Obsidian/workspace.json')).toBe(true);
+
+        const open = buildExcluder({ ...base, includeConfigDir: true });
+        expect(open('.obsidian/plugins/ZENITH/data.json')).toBe(true);
+        expect(open('.Obsidian/Plugins/Zenith/sync/prev/devA/r.json')).toBe(true);
+
+        const user = buildExcluder({ ...base, userExcludes: ['Archive'] });
+        expect(user('archive/old.md')).toBe(true);
+    });
+
+    it('never carries a repository, the trash, or what other tools leave behind', () => {
+        for (const includeConfigDir of [false, true]) {
+            const ex = buildExcluder({ ...base, includeConfigDir });
+            for (const key of [
+                '.git/config',
+                '.git/objects/ab/cdef',
+                'Projects/site/.git/HEAD',
+                '.trash/old note.md',
+                '.stfolder',
+                '.stversions/a~20260101.md',
+                'Photos/.DS_Store',
+                'Photos/Thumbs.db',
+                'desktop.ini',
+            ]) {
+                expect(ex(key), key).toBe(true);
+            }
+            // Only those exact names: a file that merely mentions one goes.
+            expect(ex('.gitignore')).toBe(false);
+            expect(ex('Notes/git.md')).toBe(false);
+            expect(ex('trash.md')).toBe(false);
+        }
+    });
+});
+
+describe('isSafeKey', () => {
+    it('accepts ordinary nested paths', () => {
+        expect(isSafeKey('a.md')).toBe(true);
+        expect(isSafeKey('10 Tasks/Inbox.md')).toBe(true);
+        expect(isSafeKey('.obsidian/workspace.json')).toBe(true);
+    });
+
+    it('refuses anything that could move a path elsewhere', () => {
+        for (const key of ['', '..', '.', 'a/..', 'a/./b', '/a', 'a\\b', 'D:', 'a\u0007b']) {
+            expect(isSafeKey(key), JSON.stringify(key)).toBe(false);
+        }
     });
 });
 
@@ -295,6 +383,14 @@ describe('carrying settings sync', () => {
     it('carries nothing when settings sync is off', () => {
         const ex = buildExcluder({ ...base, carrySettings: false });
         expect(ex('.obsidian/plugins/zenith/sync/outbox/devA.json')).toBe(true);
+    });
+
+    it('carries only the spelling settings sync writes, not a variant of it', () => {
+        // The exception is for our own outboxes. A differently cased copy is not
+        // one, and it lands on the rule for our own state instead.
+        const ex = buildExcluder(base);
+        expect(ex('.OBSIDIAN/plugins/zenith/sync/outbox/devB.json')).toBe(true);
+        expect(ex('.obsidian/plugins/zenith/sync/outbox/../local/devA.json')).toBe(true);
     });
 
     it('knows each file by the device that writes it', () => {
@@ -418,6 +514,28 @@ describe('plan', () => {
         expect(plan.stats.pull).toBe(0);
     });
 
+    it('never writes a path a server tried to steer outside the rules', async () => {
+        // What a hostile or broken WebDAV server can hand back: a key that
+        // decodes to a climb into the plugins folder.
+        const files: Record<string, FakeFile> = {};
+        const { engine } = makeEngine(files, {
+            objects: {
+                'a/../.obsidian/plugins/evil/main.js': { data: 'alert(1)', mtimeSvr: 9 },
+                '../outside.md': { data: 'x', mtimeSvr: 9 },
+                'ok.md': { data: 'fine', mtimeSvr: 9 },
+            },
+            calls: [],
+        });
+
+        const plan = await engine.plan();
+        const byKey = Object.fromEntries(plan.items.map((i) => [i.key, i.decision]));
+        expect(byKey['a/../.obsidian/plugins/evil/main.js']).toBe('skipped_excluded');
+        expect(byKey['../outside.md']).toBe('skipped_excluded');
+
+        await engine.apply(plan, { force: true });
+        expect(Object.keys(files).filter((k) => !k.includes('/sync/prev/'))).toEqual(['ok.md']);
+    });
+
     it('flags the very first run for review', async () => {
         const { engine } = makeEngine({ 'a.md': { data: 'x', mtime: 1 } }, { objects: {}, calls: [] });
         const plan = await engine.plan();
@@ -508,6 +626,106 @@ describe('apply', () => {
 
         expect(byKey['a.md']).toBe('equal');
         expect(byKey['b.md']).toBe('local_is_created_then_push');
+    });
+});
+
+// ── A plan carried out after the vault moved on ──────
+
+describe('a plan that went stale before it was applied', () => {
+    /** One note, already synced once, so both sides have a previous record. */
+    async function synced(text = 'v1') {
+        const files: Record<string, FakeFile> = { 'a.md': { data: text, mtime: 1_000 } };
+        const remoteState: FakeRemoteState = { objects: {}, calls: [] };
+        const made = makeEngine(files, remoteState);
+        await made.engine.apply(await made.engine.plan(), { force: true });
+        remoteState.calls = [];
+        return { ...made, files, remoteState };
+    }
+
+    it('does not pull over a note edited after the plan was made', async () => {
+        const { engine, files, remoteState } = await synced();
+        remoteState.objects['a.md'] = { data: 'v2 from the phone', mtimeSvr: 900_000 };
+
+        const plan = await engine.plan();
+        expect(plan.items[0].decision).toBe('remote_is_modified_then_pull');
+
+        // Typed into between the preview and Apply.
+        files['a.md'] = { data: 'v1, and a thought', mtime: 2_000 };
+        const result = await engine.apply(plan, { force: true });
+
+        expect(result.failed).toHaveLength(1);
+        expect(result.failed[0].error).toMatch(/since the plan was made/);
+        expect(files['a.md'].data).toBe('v1, and a thought');
+
+        // Next time round both sides have moved, which is a conflict to settle,
+        // not a download to make.
+        const next = await engine.plan();
+        expect(next.items[0].decision).toMatch(/^conflict_/);
+    });
+
+    it('does not pull over a note created after the plan was made', async () => {
+        const files: Record<string, FakeFile> = {};
+        const { engine } = makeEngine(files, {
+            objects: { 'b.md': { data: 'from the server', mtimeSvr: 9 } },
+            calls: [],
+        });
+
+        const plan = await engine.plan();
+        files['b.md'] = { data: 'written here meanwhile', mtime: 5 };
+        const result = await engine.apply(plan, { force: true });
+
+        expect(result.failed.map((f) => f.key)).toEqual(['b.md']);
+        expect(files['b.md'].data).toBe('written here meanwhile');
+    });
+
+    it('moves a note deleted on another device to the trash rather than out of existence', async () => {
+        const { engine, files, remoteState, trash } = await synced();
+        delete remoteState.objects['a.md'];
+
+        const plan = await engine.plan();
+        expect(plan.items[0].decision).toBe('remote_is_deleted_thus_also_delete_local');
+        await engine.apply(plan, { force: true });
+
+        expect(files['a.md']).toBeUndefined();
+        expect(trash).toEqual(['a.md']);
+    });
+
+    it('does not delete a note edited after the plan was made', async () => {
+        const { engine, files, remoteState, trash } = await synced();
+        delete remoteState.objects['a.md'];
+
+        const plan = await engine.plan();
+        files['a.md'] = { data: 'still wanted', mtime: 2_000 };
+        const result = await engine.apply(plan, { force: true });
+
+        expect(result.failed.map((f) => f.key)).toEqual(['a.md']);
+        expect(files['a.md'].data).toBe('still wanted');
+        expect(trash).toEqual([]);
+    });
+
+    it('does not delete a newer version another device uploaded after the plan', async () => {
+        const { engine, files, remoteState } = await synced();
+        delete files['a.md'];
+
+        const plan = await engine.plan();
+        expect(plan.items[0].decision).toBe('local_is_deleted_thus_also_delete_remote');
+
+        remoteState.objects['a.md'] = { data: 'rewritten on the laptop', mtimeSvr: 950_000 };
+        const result = await engine.apply(plan, { force: true });
+
+        expect(result.failed.map((f) => f.key)).toEqual(['a.md']);
+        expect(remoteState.objects['a.md'].data).toBe('rewritten on the laptop');
+        expect(remoteState.calls.filter((c) => c.startsWith('remove:'))).toEqual([]);
+    });
+
+    it('still deletes on the server when nothing moved', async () => {
+        const { engine, files, remoteState } = await synced();
+        delete files['a.md'];
+
+        const result = await engine.apply(await engine.plan(), { force: true });
+
+        expect(result.failed).toEqual([]);
+        expect(remoteState.objects['a.md']).toBeUndefined();
     });
 });
 
@@ -623,6 +841,42 @@ describe('smart conflicts', () => {
         const copy = Object.keys(files).find((k) => k.includes('.conflict-'));
         expect(copy).toBeDefined();
         expect(files[copy as string].data).toContain('I stayed in and read.');
+    });
+
+    it('keeps what was typed while the server copy was still downloading', async () => {
+        const files: Record<string, FakeFile> = {
+            'day.md': { data: '---\nmood: 4\n---\n\n- [x] Walk\n', mtime: 5_000 },
+        };
+        const remoteState: FakeRemoteState = {
+            objects: { 'day.md': { data: '---\nfajr: ontime\n---\n\n- [ ] Walk\n', mtimeSvr: 9_000 } },
+            calls: [],
+        };
+        const fs = fakeFs(files);
+        const prevStore = new PrevSyncStore(fs, paths);
+        await seedPrev(prevStore);
+
+        const remote = fakeRemote(remoteState);
+        const slow: SyncRemote = {
+            ...remote,
+            // The download is the slow part of a merge; the user keeps writing.
+            readBinary: async (key) => {
+                files['day.md'] = {
+                    data: '---\nmood: 4\n---\n\n- [x] Walk\n- [ ] Typed during the download\n',
+                    mtime: 6_000,
+                };
+                return remote.readBinary(key);
+            },
+        };
+        const engine = new SyncEngine(fs, slow, prevStore, 'devA', {
+            ...ENGINE_OPTS,
+            conflictAction: 'smart',
+        });
+
+        const result = await engine.apply(await engine.plan(), { force: true });
+
+        expect(result.merges[0]?.outcome).toBe('merged');
+        expect(files['day.md'].data).toContain('Typed during the download');
+        expect(files['day.md'].data).toContain('fajr: ontime');
     });
 
     it('settles to equal on the next run, so a merge does not repeat forever', async () => {

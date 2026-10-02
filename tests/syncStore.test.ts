@@ -39,6 +39,9 @@ function fakeFs(files: Record<string, string>): ModuleFs {
                 : null,
         readBinary: async () => new ArrayBuffer(0),
         writeBinary: async () => undefined,
+        trashFile: async (path) => {
+            delete files[path];
+        },
         walk: async (path) => under(path),
     };
 }
