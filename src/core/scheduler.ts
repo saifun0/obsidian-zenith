@@ -52,6 +52,19 @@ export const LATE_MS = 5 * 60_000;
  */
 export const CATCH_UP_MS = 3 * 86_400_000;
 
+/**
+ * How stale the stored watermark may get while nothing is delivered.
+ *
+ * Every reschedule moves the watermark, and a reschedule follows every change
+ * to the task list — so storing it each time rewrote `data.json` after every
+ * edit to a note with a task in it, which on a phone is a disk write per
+ * keystroke pause and under Obsidian Sync a settings file that never stops
+ * changing. A delivery is stored at once, and so is a stop; in between, the
+ * stored value may trail by this much, which costs at most a reminder set in
+ * that stretch for a moment already past turning up after a restart as missed.
+ */
+export const PERSIST_EVERY_MS = 10 * 60_000;
+
 /** How far ahead the next event is looked for. */
 export const LOOKAHEAD_MS = 2 * 86_400_000;
 
@@ -76,6 +89,8 @@ export class Scheduler {
     private timer: number | null = null;
     private running = false;
     private watermark = 0;
+    /** The watermark as last handed to `saveWatermark`. */
+    private stored = 0;
     /** When the armed timer ought to go off. Past it, the timer is overdue. */
     private expected = Infinity;
     /** Delivering: a source re-aiming from inside `deliver` waits for the run to finish. */
@@ -115,10 +130,14 @@ export class Scheduler {
         // waiting for the clock to catch up would miss everything meanwhile.
         this.watermark =
             stored === null || stored > now ? now : Math.max(stored, now - CATCH_UP_MS);
+        this.stored = stored ?? 0;
         this.run();
     }
 
     stop(): void {
+        // What was put off to spare the disk is owed now: the next start reads
+        // this to know what it missed.
+        if (this.running) this.persist();
         this.running = false;
         this.expected = Infinity;
         this.clear();
@@ -144,10 +163,17 @@ export class Scheduler {
         this.arm();
     }
 
-    private advance(now: number): void {
+    /** Move the watermark; store it if something was delivered, or when it is due. */
+    private advance(now: number, delivered = false): void {
         if (now <= this.watermark) return;
         this.watermark = now;
-        this.host.saveWatermark(now);
+        if (delivered || now - this.stored >= PERSIST_EVERY_MS) this.persist();
+    }
+
+    private persist(): void {
+        if (this.watermark === this.stored) return;
+        this.stored = this.watermark;
+        this.host.saveWatermark(this.watermark);
     }
 
     private clear(): void {
@@ -178,7 +204,7 @@ export class Scheduler {
                 }
             }
             this.delivering = false;
-            this.advance(now);
+            this.advance(now, due.length > 0);
         }
         this.arm();
     }

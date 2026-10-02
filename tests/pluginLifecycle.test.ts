@@ -78,8 +78,19 @@ describe('plugin teardown', () => {
     it('disposes its subscriptions before saving', () => {
         const body = methodBody('onunload');
         const disposed = body.indexOf('this.disposers.forEach');
-        const saved = body.indexOf('this.saveData');
+        const saved = body.indexOf('this.persistData.run()');
         expect(disposed).toBeGreaterThan(-1);
         expect(saved).toBeGreaterThan(disposed);
+    });
+
+    /**
+     * A close with nothing new to say used to rewrite data.json anyway, which
+     * under Obsidian Sync is a settings file every device keeps handing back.
+     * Only a save still pending in the debounce is made.
+     */
+    it('writes data.json on the way out only when something is waiting to be saved', () => {
+        const body = methodBody('onunload');
+        expect(body).not.toContain('this.saveData(');
+        expect(body).not.toContain('persistData.cancel()');
     });
 });

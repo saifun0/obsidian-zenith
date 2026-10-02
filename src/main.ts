@@ -22,6 +22,7 @@ import { SyncModule } from './modules/sync/SyncModule';
 import { SearchModule } from './modules/search/SearchModule';
 import { EditorModule } from './modules/editor/EditorModule';
 import { useZenithStore, resetZenithStore } from './store';
+import { externalSettingsPatch } from './core/externalSettings';
 import type { SettingsSyncService } from './modules/sync/services/settingsSync';
 import type { FileSyncService } from './modules/sync/services/fileSync';
 import type { FileSyncAuto } from './modules/sync/services/fileSyncAuto';
@@ -381,14 +382,43 @@ export default class ZenithPlugin extends Plugin {
         this.disposers.forEach((d) => d());
         this.disposers = [];
 
-        // Started rather than awaited: the data is already assembled, and the
-        // write either lands or the process is going away regardless.
-        this.persistData.cancel();
-        void this.saveData(this.pluginData);
+        // Only a write still waiting in the debounce is made, started rather
+        // than awaited: the data is already assembled, and the write either
+        // lands or the process is going away regardless. Writing every time
+        // — even with nothing new — touched data.json on every close, and
+        // under Obsidian Sync that is a settings file each device keeps
+        // handing back to the others.
+        this.persistData.run();
 
         // Nothing below depends on this finishing any more, which is what
         // makes it safe to let go of.
         void this.moduleManager.unloadAll();
+    }
+
+    /**
+     * `data.json` was replaced from outside — Obsidian Sync, iCloud, another
+     * program — while Zenith was running.
+     *
+     * Without this the copy in memory simply won, and the next save wrote it
+     * back over whatever had arrived. What arrives is another device's file,
+     * though, so it is not adopted wholesale either: only the settings that
+     * are meant to travel are taken from it, the way settings sync would take
+     * them, and everything this device keeps to itself — layout, which modules
+     * run here, credentials, the notification history — stays as it is.
+     *
+     * When settings sync is running it owns that question, with timestamps a
+     * whole-file copy does not carry, so it is asked to look instead.
+     */
+    async onExternalSettingsChange(): Promise<void> {
+        if (this.settingsSync?.getStatus().enabled) {
+            void this.settingsSync.pull();
+            return;
+        }
+        const patch = externalSettingsPatch(
+            useZenithStore.getState().settings,
+            await this.loadData()
+        );
+        if (Object.keys(patch).length > 0) useZenithStore.getState().updateSettings(patch);
     }
 
     /**
