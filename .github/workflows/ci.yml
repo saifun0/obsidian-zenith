@@ -1,0 +1,54 @@
+# Checks every push to main and every pull request: the same commands a
+# contributor runs locally (docs/en/development.md), so a red run here is
+# something `npm test` would have said too.
+#
+# It builds, but does not release. Releases are made by hand — they carry a
+# zip, a demo vault and notes written for them — and an automatic one would
+# race that. The build is kept as an artifact for whoever wants to try it.
+
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+
+permissions:
+    contents: read
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+
+            - run: npm ci
+
+            - name: Types
+              run: npx tsc --noEmit
+
+            - name: Lint
+              run: npm run lint
+
+            - name: Lint against Obsidian's API
+              run: npm run lint:obsidian
+
+            - name: Tests
+              run: npm test
+
+            - name: Production build
+              run: node esbuild.config.mjs production
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: zenith-${{ github.sha }}
+                  path: |
+                      dist/main.js
+                      dist/manifest.json
+                      dist/styles.css
+                  if-no-files-found: error
