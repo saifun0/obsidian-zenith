@@ -23,6 +23,7 @@ import { SearchModule } from './modules/search/SearchModule';
 import { EditorModule } from './modules/editor/EditorModule';
 import { useZenithStore, resetZenithStore } from './store';
 import { externalSettingsPatch } from './core/externalSettings';
+import { SecretVault, secretBackend, vaultSecretScope } from './core/secrets';
 import type { SettingsSyncService } from './modules/sync/services/settingsSync';
 import type { FileSyncService } from './modules/sync/services/fileSync';
 import type { FileSyncAuto } from './modules/sync/services/fileSyncAuto';
@@ -59,6 +60,12 @@ export default class ZenithPlugin extends Plugin {
     scheduler!: Scheduler;
     /** Where reminders are recorded and shown — see `core/notifications`. */
     notifications!: NotificationCenter;
+
+    /**
+     * Credentials kept out of `data.json` where Obsidian allows it — see
+     * `core/secrets`. Created on load, before the settings are read.
+     */
+    secrets!: SecretVault;
 
     /** What each icon pack contributed, and what it couldn't. For settings. */
     iconPackReports: IconPackReport[] = [];
@@ -158,8 +165,17 @@ export default class ZenithPlugin extends Plugin {
 
         // ── Restore persisted settings ───────────────
         this.pluginData = ((await this.loadData()) as Record<string, unknown> | null) ?? {};
+        const backend = secretBackend(this.app);
+        this.secrets = new SecretVault(backend, backend ? vaultSecretScope(this.app) : '');
         if (this.pluginData.settings) {
-            useZenithStore.getState().loadSettings(this.pluginData.settings);
+            const { settings, migrated } = this.secrets.fromDisk(this.pluginData.settings);
+            useZenithStore.getState().loadSettings(settings);
+            // Credentials found in the file have just moved to the secret
+            // store; the file is written again without them.
+            if (migrated) {
+                this.pluginData.settings = this.secrets.toDisk(useZenithStore.getState().settings);
+                this.persistData();
+            }
         }
         // Beside the settings, not inside them: a notification happened on
         // this device, and is nobody's setting.
@@ -301,7 +317,7 @@ export default class ZenithPlugin extends Plugin {
             useZenithStore.subscribe(
                 (state) => state.settings,
                 (settings) => {
-                    this.pluginData.settings = settings;
+                    this.pluginData.settings = this.secrets.toDisk(settings);
                     this.persistData();
                 }
             )

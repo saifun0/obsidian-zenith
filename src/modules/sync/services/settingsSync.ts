@@ -379,7 +379,9 @@ export class SettingsSyncService {
             const value = settings[key];
             if (value !== undefined) values[key] = value;
         }
-        await this.store.writeLocal(this.registry.id, values);
+        // Credentials included only where Obsidian has nowhere better for them:
+        // this file is in the vault, and travels with it.
+        await this.store.writeLocal(this.registry.id, this.plugin.secrets.withoutSecrets(values));
     }
 
     // ── In ───────────────────────────────────────────

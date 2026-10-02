@@ -19,7 +19,7 @@ export function externalSettingsPatch(
     const incoming = raw && typeof raw === 'object' ? (raw as { settings?: unknown }).settings : null;
     if (!incoming || typeof incoming !== 'object') return {};
 
-    const theirs = normalizeSettings(incoming as Partial<ZenithSettings>);
+    const theirs = normalizeSettings(incoming);
     const patch: Partial<ZenithSettings> = {};
     for (const key of SHARED_KEYS) {
         if (!deepEqual(theirs[key], ours[key])) Object.assign(patch, { [key]: theirs[key] });

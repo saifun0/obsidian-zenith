@@ -97,6 +97,17 @@ export const Platform = { isMobile: false, isMobileApp: false, isIosApp: false, 
 
 export function setIcon(): void {}
 
+/** Which Obsidian the tests pretend to be. Set it to test a version check. */
+export const mockApiVersion = { value: '1.8.7' };
+export function requireApiVersion(version: string): boolean {
+    const parse = (v: string) => v.split('.').map(Number);
+    const [have, want] = [parse(mockApiVersion.value), parse(version)];
+    for (let i = 0; i < 3; i++) {
+        if ((have[i] ?? 0) !== (want[i] ?? 0)) return (have[i] ?? 0) > (want[i] ?? 0);
+    }
+    return true;
+}
+
 /** Icons by name, for tests that render one. Empty unless a test fills it. */
 export const mockIcons = new Map<string, () => SVGSVGElement>();
 export function getIcon(name: string): SVGSVGElement | null {
