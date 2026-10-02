@@ -1593,7 +1593,9 @@ const EN: Dict = {
     'sync.settings.user': 'Username',
     'sync.settings.password': 'Password',
     'sync.settings.password.note':
-        'Stored in plain text in this plugin’s data file, like every Obsidian plugin credential — the app gives plugins no keychain. Use an app password rather than your main one.',
+        'On Obsidian 1.11.4 and later it is kept in the app’s secret storage on this device, not in the vault. On older versions it sits in this plugin’s data file in plain text. Either way, use an app password rather than your main one.',
+    'sync.settings.plainHttp':
+        'This address is plain http to the internet: the password, and the notes unless encryption is on, travel unencrypted. Use https.',
     'sync.settings.remoteDir': 'Folder on the server',
     'sync.settings.remoteDir.desc':
         'Where this vault lives on the server. Created on the first upload.',
@@ -1609,7 +1611,7 @@ const EN: Dict = {
     'sync.settings.encryptPassword.required':
         'Encryption is on but no password is set, so nothing will sync until there is one.',
     'sync.settings.encryptPassword.note':
-        'Stored in data.json in plain text, like every credential here — Obsidian offers plugins no keychain. Unlike the others, there is no copy of it anywhere else: lose it and the notes on the server cannot be read by anyone, including you.',
+        'Kept in Obsidian’s secret storage on this device (1.11.4 and later), or in data.json in plain text on older versions. Unlike the other credentials, there is no copy of it anywhere else: lose it and the notes on the server cannot be read by anyone, including you.',
     'sync.settings.scope': 'What gets synced',
     'sync.settings.localRoot': 'Folder to sync',
     'sync.settings.includeConfig': 'Carry Obsidian settings too',
@@ -3283,7 +3285,9 @@ const RU: Dict = {
     'sync.settings.user': 'Пользователь',
     'sync.settings.password': 'Пароль',
     'sync.settings.password.note':
-        'Хранится открытым текстом в файле данных плагина, как любой пароль в плагинах Obsidian — приложение не даёт плагинам доступа к связке ключей. Заведите отдельный пароль приложения, не основной.',
+        'В Obsidian 1.11.4 и новее хранится в защищённом хранилище приложения на этом устройстве, а не в хранилище заметок. В более старых версиях — открытым текстом в файле данных плагина. В любом случае заведите отдельный пароль приложения, не основной.',
+    'sync.settings.plainHttp':
+        'Это адрес по открытому http в интернет: пароль, а без шифрования и заметки, передаются незашифрованными. Используйте https.',
     'sync.settings.remoteDir': 'Папка на сервере',
     'sync.settings.remoteDir.desc':
         'Где на сервере лежит этот волт. Создаётся при первой загрузке.',
@@ -3299,7 +3303,7 @@ const RU: Dict = {
     'sync.settings.encryptPassword.required':
         'Шифрование включено, но пароль не задан — пока его нет, ничего синхронизироваться не будет.',
     'sync.settings.encryptPassword.note':
-        'Хранится в data.json открытым текстом, как и любой другой пароль здесь — связки ключей Obsidian плагинам не даёт. В отличие от остальных, копии этого пароля нет больше нигде: потеряете — заметки на сервере не прочитает никто, включая вас.',
+        'Хранится в защищённом хранилище Obsidian на этом устройстве (с версии 1.11.4), на более старых версиях — в data.json открытым текстом. В отличие от остальных паролей, копии этого нет больше нигде: потеряете — заметки на сервере не прочитает никто, включая вас.',
     'sync.settings.scope': 'Что синхронизируется',
     'sync.settings.localRoot': 'Папка для синхронизации',
     'sync.settings.includeConfig': 'Возить и настройки Obsidian',

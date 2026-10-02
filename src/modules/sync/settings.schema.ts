@@ -2,6 +2,7 @@ import { coreSchema } from '../../settings/schema/types';
 import { SyncSettingsPanel } from './components/SyncSettingsPanel';
 import { HAS_SHIPPED_DROPBOX, HAS_SHIPPED_ONEDRIVE } from './services/remotes/appIds';
 import { scalarText } from '../../core/scalarText';
+import { isPlainHttpToInternet } from './services/remotes/plainHttp';
 
 /**
  * Sync settings, as data.
@@ -141,6 +142,8 @@ export const syncSettingsSchema = coreSchema({
                     descKey: 'sync.settings.url.desc',
                     default: '',
                     placeholder: 'https://host/remote.php/dav/files/me',
+                    validate: (value) =>
+                        isPlainHttpToInternet(scalarText(value)) ? 'sync.settings.plainHttp' : null,
                     monospace: true,
                     layout: 'stack',
                     showIf: (v) => v.syncFilesEnabled === true && v.syncRemoteKind === 'webdav',
@@ -180,6 +183,8 @@ export const syncSettingsSchema = coreSchema({
                     descKey: 'sync.settings.s3Endpoint.desc',
                     default: '',
                     placeholder: 'https://s3.eu-central-1.amazonaws.com',
+                    validate: (value) =>
+                        isPlainHttpToInternet(scalarText(value)) ? 'sync.settings.plainHttp' : null,
                     monospace: true,
                     layout: 'stack',
                     showIf: (v) => v.syncFilesEnabled === true && v.syncRemoteKind === 's3',

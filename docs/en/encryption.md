@@ -11,9 +11,10 @@ Encrypted sync needs a folder of its own. Encrypted and plain files cannot share
 pointing it at a folder that already holds notes is refused rather than mixed into.
 
 **Losing the password loses the notes.** There is no copy of it on the server; that is the
-whole point. It sits in `data.json` in plain text like every other credential here —
-Obsidian offers plugins no keychain — so back it up the way you back up anything else you
-cannot regenerate.
+whole point. On Obsidian 1.11.4 and later it is kept, with the other sync credentials, in the
+app's secret storage on the device rather than in the vault; on older versions it sits in
+`data.json` in plain text. Either way it exists only on your devices, so back it up the way
+you back up anything else you cannot regenerate.
 
 ## The format
 
