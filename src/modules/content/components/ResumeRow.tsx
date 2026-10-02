@@ -12,6 +12,7 @@ import { bumpProgress } from '../services/contentActions';
 import { formatProgress, progressPercent } from '../services/progress';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
 import { useContentMenu } from './useContentMenu';
+import { cssUrl } from '../../../core/imageSource';
 
 interface ResumeRowProps {
     item: ContentItem;
@@ -103,7 +104,7 @@ export const ResumeRow: React.FC<ResumeRowProps> = ({
                 className="zenith-resume__art"
                 style={
                     coverUrl
-                        ? { backgroundImage: `url("${coverUrl}")` }
+                        ? { backgroundImage: cssUrl(coverUrl) }
                         : { background: `linear-gradient(160deg, ${type.color}44, ${type.color}18)` }
                 }
             >

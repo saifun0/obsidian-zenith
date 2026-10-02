@@ -68,6 +68,16 @@ export const SALT_BYTES = 16;
 export const DEFAULT_ITERATIONS = 600_000;
 
 /**
+ * The most a marker may ask for.
+ *
+ * The count is read from the remote, and a device does what it says: a
+ * marker asking for ten billion rounds is an afternoon of a phone at full
+ * tilt before anything is reported. Fifty times today's default leaves room
+ * to raise it for years.
+ */
+export const MAX_ITERATIONS = 30_000_000;
+
+/**
  * Where the salt lives on the remote.
  *
  * Deliberately readable, deliberately not secret: a salt is not a secret, and
@@ -443,6 +453,11 @@ export async function keysForMarker(password: string, marker: CryptoMarker): Pro
     if (marker.version > VERSION) {
         throw new Error(
             'This remote was encrypted by a newer version of Zenith. Update before syncing with it.'
+        );
+    }
+    if (!Number.isInteger(marker.iterations) || marker.iterations > MAX_ITERATIONS) {
+        throw new Error(
+            `The encryption marker on this remote asks for ${marker.iterations} rounds of key stretching, which is not a value Zenith writes. Restore the marker from a backup.`
         );
     }
     return deriveKeys(password, salt, marker.iterations);

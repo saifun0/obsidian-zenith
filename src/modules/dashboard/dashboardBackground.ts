@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { IMAGE_EXTENSIONS, SAFE_IMAGE_SCHEME, isImagePath } from '../../core/imageSource';
+import { IMAGE_EXTENSIONS, cssUrl, isImagePath } from '../../core/imageSource';
 
 /**
  * The dashboard's wallpaper, as data.
@@ -26,32 +26,9 @@ export const DASHBOARD_BG_FITS: readonly DashboardBgFit[] = ['cover', 'contain',
 // everything that already asks the wallpaper.
 export { IMAGE_EXTENSIONS, isImagePath };
 
-/** Characters that could end the `url("` early, plus the whitespace CSS folds. */
-const CSS_URL_UNSAFE = /["'()\\\s]/g;
-
-/**
- * A settings string as a CSS `url()`, or empty when it cannot be one.
- *
- * Two things are going on. The scheme check is the real guard: an address that
- * is not one of the kinds above never reaches the stylesheet at all. The
- * escaping is the belt to it — the value cannot close the `url("` and open a
- * declaration of its own, whatever the string was trying to do.
- *
- * Only the dangerous characters are encoded, deliberately. Running the whole
- * address through `encodeURI` was the first attempt and it is wrong: that
- * escapes `%` as well, so Obsidian's own resource path — which arrives already
- * percent-encoded — came back with every `%20` turned into `%2520`, and the
- * picture simply did not load.
- */
-export function cssUrl(raw: string): string {
-    const url = raw.trim();
-    if (!url || !SAFE_IMAGE_SCHEME.test(url)) return '';
-    const safe = url.replace(
-        CSS_URL_UNSAFE,
-        (c) => `%${c.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase()}`
-    );
-    return `url("${safe}")`;
-}
+// The CSS form of an address lives in core beside the scheme check it relies
+// on, and is re-exported here for everything that already asks the wallpaper.
+export { cssUrl };
 
 export interface DashboardBgSettings {
     dashboardBgSource: DashboardBgSource;

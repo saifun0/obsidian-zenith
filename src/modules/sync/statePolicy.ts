@@ -317,6 +317,43 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
 
 export type SettingsKey = keyof ZenithSettings;
 
+/**
+ * Features each device decides for itself, although `features` as a whole
+ * travels.
+ *
+ * `tasks.uriCapture` lets any web page add tasks through an `obsidian://`
+ * link. Switching that on is a decision about one machine — the phone the
+ * shortcuts run on — and travelling with the rest of `features` it opened the
+ * same door on every device the vault reaches, none of which asked for it.
+ */
+export const DEVICE_FEATURES: readonly string[] = ['tasks.uriCapture'];
+
+/**
+ * A shared setting as it goes into the outbox: `features` without the ones
+ * each device keeps. Everything else as it is.
+ */
+export function shareableValue(key: SettingsKey, value: unknown): unknown {
+    if (key !== 'features' || !value || typeof value !== 'object') return value;
+    const out: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+    for (const id of DEVICE_FEATURES) delete out[id];
+    return out;
+}
+
+/**
+ * A shared setting as it arrives, with this device's own parts put back —
+ * whatever another device, or an older version of Zenith, sent for them.
+ */
+export function withDeviceParts(key: SettingsKey, incoming: unknown, local: unknown): unknown {
+    if (key !== 'features' || !incoming || typeof incoming !== 'object') return incoming;
+    const out: Record<string, unknown> = { ...(incoming as Record<string, unknown>) };
+    const mine = local && typeof local === 'object' ? (local as Record<string, unknown>) : {};
+    for (const id of DEVICE_FEATURES) {
+        if (Object.prototype.hasOwnProperty.call(mine, id)) out[id] = mine[id];
+        else delete out[id];
+    }
+    return out;
+}
+
 const ALL_KEYS = Object.keys(STATE_POLICY) as SettingsKey[];
 
 function keysWithScope(scope: SyncScope): SettingsKey[] {

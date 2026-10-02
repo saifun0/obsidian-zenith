@@ -2,7 +2,13 @@ import { debounce } from 'obsidian';
 import { useZenithStore } from '../../../store';
 import { vaultModuleFs } from '../../../core/moduleFs';
 import { encode, next as nextStamp, parse, receive, zero, compare, type Hlc } from '../hlc';
-import { DEVICE_KEYS, SHARED_KEYS, type SettingsKey } from '../statePolicy';
+import {
+    DEVICE_KEYS,
+    SHARED_KEYS,
+    shareableValue,
+    withDeviceParts,
+    type SettingsKey,
+} from '../statePolicy';
 import {
     deepEqual,
     emptyState,
@@ -226,10 +232,10 @@ export class SettingsSyncService {
         const now = Date.now();
 
         for (const key of SHARED_KEYS) {
-            const value = settings[key];
-            if (value === undefined) continue;
+            if (settings[key] === undefined) continue;
+            const value = shareableValue(key, settings[key]);
             values[key] = value;
-            if (!deepEqual(value, this.published.values[key])) moved.push(key);
+            if (!deepEqual(value, shareableValue(key, this.published.values[key]))) moved.push(key);
         }
 
         for (const key of moved) {
@@ -284,7 +290,11 @@ export class SettingsSyncService {
         const settings = useZenithStore.getState().settings;
         const dirty = SHARED_KEYS.some(
             (key) =>
-                settings[key] !== undefined && !deepEqual(settings[key], this.published.values[key])
+                settings[key] !== undefined &&
+                !deepEqual(
+                    shareableValue(key, settings[key]),
+                    shareableValue(key, this.published.values[key])
+                )
         );
         if (!dirty) return;
         this.publishDebounced.cancel();
@@ -311,8 +321,9 @@ export class SettingsSyncService {
             // way to write arbitrary settings.
             if (!SHARED_KEYS.includes(key as SettingsKey)) continue;
             if (value === undefined) continue;
-            if (deepEqual(value, settings[key as SettingsKey])) continue;
-            patch[key] = value;
+            const restored = withDeviceParts(key as SettingsKey, value, settings[key as SettingsKey]);
+            if (deepEqual(restored, settings[key as SettingsKey])) continue;
+            patch[key] = restored;
         }
         if (Object.keys(patch).length === 0) return false;
 
@@ -473,8 +484,8 @@ export class SettingsSyncService {
         const before: Record<string, unknown> = {};
 
         for (const key of changed) {
-            const value = merged.values[key];
-            if (value === undefined) continue;
+            if (merged.values[key] === undefined) continue;
+            const value = withDeviceParts(key, merged.values[key], settings[key]);
             if (deepEqual(value, settings[key])) continue;
             patch[key] = value;
             before[key] = settings[key];

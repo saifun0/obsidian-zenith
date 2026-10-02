@@ -91,6 +91,21 @@ const ALLOWED_ATTRS = canonical([
 /** Values that must never appear anywhere, whatever attribute carries them. */
 const DANGEROUS_VALUE = /javascript:|vbscript:|data:text\/html|expression\s*\(|@import/i;
 
+/**
+ * A `url(…)` that points anywhere but inside the icon itself.
+ *
+ * `fill`, `stroke`, `mask`, `clip-path` and `filter` all take one, and
+ * Chromium fetches an outside address in a `mask` the moment the icon is
+ * drawn — the same beacon the `style` check below is there to stop, by
+ * another attribute.
+ */
+function hasOutsideUrl(value: string): boolean {
+    for (const m of value.matchAll(/url\s*\(\s*['"]?\s*([^'")\s]*)/gi)) {
+        if (!m[1].startsWith('#')) return true;
+    }
+    return false;
+}
+
 interface Attr {
     name: string;
     value: string;
@@ -320,6 +335,7 @@ export function sanitizeIconSvg(
             }
             const attrName = ALLOWED_ATTRS.get(name);
             if (!attrName) continue;
+            if (hasOutsideUrl(attr.value)) continue;
 
             if (name === 'id') {
                 parts.push(`id="${escapeAttr(prefixId(prefix, attr.value))}"`);

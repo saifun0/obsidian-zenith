@@ -13,6 +13,7 @@ import { formatProgress, progressPercent, shortUnit } from '../services/progress
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
 import { useContentMenu } from './useContentMenu';
 import { ItemHeart } from './FavoriteHeart';
+import { cssUrl } from '../../../core/imageSource';
 
 interface ContentRowProps {
     item: ContentItem;
@@ -111,7 +112,7 @@ export const ContentRow: React.FC<ContentRowProps> = ({
                 className="zenith-crow__art"
                 style={
                     coverUrl
-                        ? { backgroundImage: `url("${coverUrl}")` }
+                        ? { backgroundImage: cssUrl(coverUrl) }
                         : { background: `${type.color}24`, color: type.color }
                 }
             >

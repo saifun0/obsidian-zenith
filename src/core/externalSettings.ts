@@ -1,5 +1,5 @@
 import { normalizeSettings, type ZenithSettings } from '../store/settingsSlice';
-import { SHARED_KEYS } from '../modules/sync/statePolicy';
+import { SHARED_KEYS, withDeviceParts } from '../modules/sync/statePolicy';
 import { deepEqual } from '../modules/sync/stateMerge';
 
 /**
@@ -22,7 +22,8 @@ export function externalSettingsPatch(
     const theirs = normalizeSettings(incoming);
     const patch: Partial<ZenithSettings> = {};
     for (const key of SHARED_KEYS) {
-        if (!deepEqual(theirs[key], ours[key])) Object.assign(patch, { [key]: theirs[key] });
+        const value = withDeviceParts(key, theirs[key], ours[key]);
+        if (!deepEqual(value, ours[key])) Object.assign(patch, { [key]: value });
     }
     return patch;
 }

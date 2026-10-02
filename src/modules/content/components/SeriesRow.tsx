@@ -6,6 +6,7 @@ import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import { resolveCover } from '../services/coverUrl';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
+import { cssUrl } from '../../../core/imageSource';
 
 /**
  * A series' face: the cover of its first part that has one (or its type's
@@ -27,7 +28,7 @@ export const SeriesArt: React.FC<{
             className={`${className} zenith-stack`}
             style={
                 cover
-                    ? { backgroundImage: `url("${cover}")` }
+                    ? { backgroundImage: cssUrl(cover) }
                     : { background: `linear-gradient(160deg, ${type.color}44, ${type.color}18)`, color: type.color }
             }
         >
