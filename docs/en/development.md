@@ -52,8 +52,8 @@ project, so it takes about half a minute, and it is not part of `npm run build`.
 
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request: `tsc`,
 `npm run lint`, `npm run lint:obsidian`, `npm test` and a production build, whose `main.js`,
-`manifest.json` and `styles.css` are kept as the run's artifact. It does not release anything —
-releases are still made by hand.
+`manifest.json` and `styles.css` are kept as the run's artifact. It does not release anything;
+see below.
 
 Most tests run in Node. A test that needs a real DOM — a `MutationObserver`, a React render —
 says so in its first line with `// @vitest-environment happy-dom`.
@@ -67,3 +67,10 @@ npm run version-bump -- 0.2.0        # explicit version
 npm run version-bump -- minor        # or a semver keyword: patch|minor|major
 npm run version-bump -- 0.2.0 1.4.0  # also set a new minAppVersion
 ```
+
+Then commit the bump as `Release <version>`, get it onto `main`, and run the **Release**
+workflow (Actions → Release → Run workflow) with the version and the notes. It refuses a
+version that is not the one in `manifest.json`, runs the types and the tests, builds, and
+publishes `main.js`, `manifest.json`, `styles.css`, `zenith-<version>.zip` and
+`zenith-demo-vault-<version>.zip` — the previous release's demo vault with the new build in it.
+A demo vault that should itself change is attached to the release by hand afterwards.

@@ -2,9 +2,9 @@
 # contributor runs locally (docs/en/development.md), so a red run here is
 # something `npm test` would have said too.
 #
-# It builds, but does not release. Releases are made by hand — they carry a
-# zip, a demo vault and notes written for them — and an automatic one would
-# race that. The build is kept as an artifact for whoever wants to try it.
+# It builds, but does not release: that is release.yml, run by hand with the
+# version and the notes. The build is kept as an artifact for whoever wants to
+# try it.
 
 name: CI
 
