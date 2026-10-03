@@ -970,7 +970,9 @@
 .zenith-root button.zenith-timer {
     flex-shrink: 0;
 }
-.zenith-subtask .zenith-timer {
+/* Spelled as heavily as the button's own rule above, or its 28px stays and
+   the row grows around it. */
+.zenith-root .zenith-subtask button.zenith-timer {
     height: 22px;
     min-width: 22px;
     padding: 0 4px;
@@ -1269,6 +1271,10 @@ button.zenith-lightbox__btn {
     }
     .zenith-trow.is-reordering .zenith-subtask .zenith-drag-handle {
         opacity: 1;
+    }
+    /* And out of it they keep no room from a subtask's words. */
+    .zenith-trow:not(.is-reordering) .zenith-subtask .zenith-drag-handle {
+        display: none;
     }
     /* A long press is the menu, not a text selection with a callout. */
     .zenith-trow__head,

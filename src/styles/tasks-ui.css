@@ -114,12 +114,23 @@
 }
 .zenith-subtask {
     display: flex;
-    align-items: center;
+    /* A long title wraps, and everything else on the row stays on its first
+       line — where the branch's elbow meets the checkbox. */
+    align-items: flex-start;
     gap: 7px;
     font-size: 0.84rem;
     color: var(--text-normal);
     border-radius: 6px;
     padding: 0 4px 0 0;
+    min-height: 26px;
+}
+/* The 22px controls, centred on that 26px first line. */
+.zenith-subtask > .zenith-status,
+.zenith-subtask > .zenith-timer,
+.zenith-subtask > .zenith-drag-handle {
+    margin-top: 2px;
+}
+.zenith-subtask > .zenith-subtask__time {
     min-height: 26px;
 }
 .zenith-subtask:hover { background: color-mix(in srgb, var(--background-modifier-hover) 60%, transparent); }
@@ -135,14 +146,16 @@
     gap: 8px;
     flex: 1;
     min-width: 0;
+    /* One line of it is the row's 26px exactly. */
+    padding: max(0px, calc((26px - 1.5em) / 2)) 0;
+    line-height: 1.5;
     cursor: pointer;
     outline: none;
 }
+/* Never cut short: a title too long for the line goes on to the next. */
 .zenith-subtask__text {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
 }
 .zenith-subtask__note {
     flex: 1;
@@ -270,7 +283,7 @@ button.zenith-subtask__action {
 .zenith-subtask:focus-within .zenith-drag-handle { opacity: 1; }
 
 /* The field "add subtask" opens. */
-.zenith-subtask--add { display: flex; padding-left: 18px; }
+.zenith-subtask--add { display: flex; align-items: center; padding-left: 18px; }
 .zenith-subtask--add:hover { background: transparent; }
 
 /* ── Recursive tree connectors (├ / └ with rounded elbows) ── */
@@ -332,7 +345,7 @@ button.zenith-subtask__action {
    it. Top level reaches back under the task's 28px checkbox (+12px gap +6px
    inset); nested levels nudge to the 22px subtask checkbox centre. */
 .zenith-subtask-group > .zenith-subtasks { margin: 0 0 0 5px; }
-.zenith-subtask--nested-add { padding-left: 18px; }
+.zenith-subtask--nested-add { align-items: center; padding-left: 18px; }
 .zenith-subtask--nested-add:hover { background: transparent; }
 
 /* ── Tag chips ──────────────────────────────────── */
