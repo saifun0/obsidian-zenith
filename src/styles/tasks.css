@@ -336,9 +336,6 @@
 .zenith-trow__details {
     position: relative;
 }
-.zenith-trow__line > .zenith-trow__actions {
-    z-index: 1;
-}
 
 /* A hairline between tasks, from the title column only. */
 .zenith-trow + .zenith-trow > .zenith-trow__sheet::after {
@@ -497,6 +494,20 @@
 }
 
 /* ── The quiet right-hand side ──────────────────── */
+/* The row's last cell holds two things: what the task quietly carries, and
+   the buttons a hover brings up. The buttons have a place of their own at the
+   edge, kept clear at all times, so a title never re-wraps under the pointer;
+   while they are away, what the task carries rests in that place. */
+.zenith-trow__end {
+    display: flex;
+    align-items: flex-start;
+    /* Where the cell holds nothing, a click is the title's. */
+    pointer-events: none;
+    /* Each button is 26px, 2px apart, and 6px clear of what moved over —
+       and a row with no buttons keeps nothing clear. */
+    --zenith-tact-w: calc(var(--zenith-tact, 0) * 28px + min(var(--zenith-tact, 0), 1) * 4px);
+    --zenith-tslide: 0.24s cubic-bezier(0.22, 0.8, 0.24, 1);
+}
 .zenith-trow__side {
     display: flex;
     align-items: center;
@@ -506,6 +517,17 @@
     font-size: 0.76rem;
     font-variant-numeric: tabular-nums;
     color: var(--text-faint);
+    pointer-events: auto;
+    transition: transform var(--zenith-tslide);
+}
+/* Only where there are buttons to make room for. */
+.zenith-trow__side:not(:last-child) {
+    transform: translateX(var(--zenith-tact-w));
+}
+.zenith-trow:not(.is-closing):hover .zenith-trow__side,
+.zenith-trow:not(.is-closing):focus-within .zenith-trow__side,
+.zenith-trow.is-dragging .zenith-trow__side {
+    transform: none;
 }
 .zenith-trow__tags {
     max-width: 180px;
@@ -560,32 +582,42 @@
 }
 
 /* Hover actions — the timer and "⋯", and the handle in manual order — come
-   up over the right edge, on the row's own hover colour, and take no room
-   from the row while they are away. A running timer is in the row itself. */
+   up at the right edge as the tags and the progress slide over for them,
+   and nothing is ever under them. A running timer is in the row itself. */
 .zenith-trow {
     --zenith-thover: color-mix(in srgb, var(--background-modifier-hover) 55%, transparent);
 }
 .zenith-trow__actions {
-    position: absolute;
-    top: 4px;
-    right: -6px;
+    flex: none;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 2px;
-    padding: 0 4px 0 22px;
-    border-radius: 0 8px 8px 0;
-    background:
-        linear-gradient(to right, transparent, var(--zenith-thover) 22px),
-        linear-gradient(to right, transparent, var(--background-primary) 22px);
+    width: var(--zenith-tact-w);
+    height: 28px;
     opacity: 0;
+    transform: translateX(8px);
     pointer-events: none;
-    transition: opacity 0.12s ease;
+    transition:
+        opacity 0.1s ease,
+        transform var(--zenith-tslide);
 }
 .zenith-trow:not(.is-closing):hover .zenith-trow__actions,
 .zenith-trow:not(.is-closing):focus-within .zenith-trow__actions,
 .zenith-trow.is-dragging .zenith-trow__actions {
     opacity: 1;
+    transform: none;
     pointer-events: auto;
+    /* They arrive a beat after the row has begun to make room. */
+    transition-duration: 0.16s, 0.24s;
+    transition-delay: 0.06s, 0s;
+}
+/* One size for everything that comes up, the timer included. */
+.zenith-root .zenith-trow__actions > button.zenith-timer {
+    width: 26px;
+    min-width: 26px;
+    height: 26px;
+    padding: 0;
 }
 .zenith-root button.zenith-trow__action {
     display: inline-flex;
@@ -802,6 +834,11 @@
     }
     .zenith-trow.is-leaving {
         animation-duration: 0.01s;
+    }
+    /* The buttons still have their place; things just take theirs at once. */
+    .zenith-trow__side,
+    .zenith-trow__actions {
+        transition: none !important;
     }
 }
 
@@ -1106,6 +1143,32 @@ button.zenith-lightbox__btn {
     .zenith-tquick__hint {
         display: none;
     }
+    /* And there is no room to keep clear for the buttons: their place is the
+       end of the title's first line, and what moves over for them takes the
+       words under it out of sight, softly, while the pointer is there. */
+    .zenith-trow__end {
+        margin-left: calc(-1 * var(--zenith-tact-w));
+    }
+    .zenith-trow__side {
+        position: relative;
+        isolation: isolate;
+    }
+    .zenith-trow__side::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 0 -18px;
+        z-index: -1;
+        background:
+            linear-gradient(to right, transparent, var(--zenith-thover) 18px),
+            linear-gradient(to right, transparent, var(--background-primary) 18px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--zenith-transition-fast);
+    }
+    .zenith-trow:not(.is-closing):hover .zenith-trow__side::before,
+    .zenith-trow:not(.is-closing):focus-within .zenith-trow__side::before {
+        opacity: 1;
+    }
 
     /* Shallower indents: four levels of 18px is most of a phone's width. */
     .zenith-subtask-group {
@@ -1146,7 +1209,7 @@ button.zenith-lightbox__btn {
     }
     .zenith-trow__line > .zenith-status { grid-area: circle; }
     .zenith-trow__head { grid-area: head; }
-    .zenith-trow__side { grid-area: side; }
+    .zenith-trow__end { grid-area: side; }
     .zenith-trow__margin {
         grid-area: margin;
         justify-content: flex-start;
@@ -1167,13 +1230,24 @@ button.zenith-lightbox__btn {
    away and an idle timer starts from there too; the row swipes; and the
    handles come out only when asked to (⋯ → Put in order by hand). */
 @media (pointer: coarse) {
-    .zenith-trow__more,
-    .zenith-trow__actions > .zenith-timer,
+    /* Spelled as heavily as the rules that draw these buttons, or they stay. */
+    .zenith-root button.zenith-trow__more,
+    .zenith-root .zenith-trow__actions > button.zenith-timer,
     .zenith-subtask .zenith-timer:not(.is-running),
     .zenith-tquick__hint {
         display: none;
     }
     .zenith-trow:not(.is-reordering) .zenith-trow__actions {
+        display: none;
+    }
+    /* Nothing comes up, so no place is kept for it and nothing moves. */
+    .zenith-trow__side:not(:last-child) {
+        transform: none;
+    }
+    .zenith-trow__end {
+        margin-left: 0;
+    }
+    .zenith-trow__side::before {
         display: none;
     }
     .zenith-trow__line {
@@ -1183,9 +1257,14 @@ button.zenith-lightbox__btn {
     .zenith-trow:hover > .zenith-trow__sheet::before {
         opacity: 0;
     }
-    /* In reorder mode the handles are what the rows are for. */
+    /* In reorder mode the handles are what the rows are for — in the row,
+       beside what it carries. */
     .zenith-trow.is-reordering .zenith-trow__actions {
+        width: auto;
+        height: 34px;
+        padding-left: 4px;
         opacity: 1;
+        transform: none;
         pointer-events: auto;
     }
     .zenith-trow.is-reordering .zenith-subtask .zenith-drag-handle {

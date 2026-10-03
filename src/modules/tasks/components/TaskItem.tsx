@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState, type FC } from 'react';
+import React, { useCallback, useMemo, useRef, useState, type CSSProperties, type FC } from 'react';
 import { Notice } from 'obsidian';
 import { GripVertical, MoreHorizontal, Paperclip } from 'lucide-react';
 import type { Task } from '../../../store/taskSlice';
@@ -268,6 +268,9 @@ export const TaskItem: FC<TaskItemProps> = ({
     const note = active && task.description ? firstLine(task.description) : '';
     const grip = dragOn && reorderable && active;
     const urgent = active && task.priority === 'urgent';
+    const idleTimer = active && timerOn && !timerRunning;
+    // How many buttons the hover brings up — the row keeps that much clear.
+    const actionCount = Number(idleTimer) + Number(active) + Number(grip);
 
     const undo = () =>
         void undoClosing(closing?.key ?? task.id, reload, () => new Notice(t('tasks.undo.failed')));
@@ -372,57 +375,77 @@ export const TaskItem: FC<TaskItemProps> = ({
                             {note && <span className="zenith-trow__note">{note}</span>}
                         </div>
 
-                        <div className="zenith-trow__side" onClick={stop}>
-                            {active && (
-                                <>
-                                    {tags.length > 0 && (
-                                        <span
-                                            className="zenith-trow__tags"
-                                            title={task.tags.map((x) => `#${x}`).join(' ')}
-                                        >
-                                            {tags.map((tag) => `#${tag}`).join(' ')}
-                                            {moreTags > 0 && ` +${moreTags}`}
-                                        </span>
-                                    )}
-                                    {timerOn && task.spentMinutes !== undefined && (
-                                        <span className="zenith-trow__spent">
-                                            {formatDuration(task.spentMinutes)}
-                                        </span>
-                                    )}
-                                    {hasSubs && (
-                                        <button
-                                            type="button"
-                                            className={`zenith-trow__fold ${subs.done === subs.total ? 'is-complete' : ''}`}
-                                            aria-expanded={showDetails}
-                                            aria-label={t('tasks.subtasks.progress', {
-                                                done: subs.done,
-                                                total: subs.total,
-                                            })}
-                                            title={t('tasks.subtasks.progress', {
-                                                done: subs.done,
-                                                total: subs.total,
-                                            })}
-                                            onClick={toggleDetails}
-                                        >
-                                            <ProgressArc done={subs.done} total={subs.total} />
-                                            {subs.done}/{subs.total}
-                                        </button>
-                                    )}
-                                    {attachments.length > 0 && (
-                                        <button
-                                            type="button"
-                                            className="zenith-trow__fold"
-                                            aria-expanded={showDetails}
-                                            title={t('tasks.editor.attachments')}
-                                            onClick={toggleDetails}
-                                        >
-                                            <Paperclip size={12} />
-                                            {attachments.length}
-                                        </button>
-                                    )}
-                                    {/* A running timer is part of the row — a timer you
-                                        cannot see is one you forget. */}
-                                    {timerOn && timerRunning && (
+                        <div
+                            className="zenith-trow__end"
+                            style={{ '--zenith-tact': actionCount } as CSSProperties}
+                        >
+                            <div className="zenith-trow__side" onClick={stop}>
+                                {active && (
+                                    <>
+                                        {tags.length > 0 && (
+                                            <span
+                                                className="zenith-trow__tags"
+                                                title={task.tags.map((x) => `#${x}`).join(' ')}
+                                            >
+                                                {tags.map((tag) => `#${tag}`).join(' ')}
+                                                {moreTags > 0 && ` +${moreTags}`}
+                                            </span>
+                                        )}
+                                        {timerOn && task.spentMinutes !== undefined && (
+                                            <span className="zenith-trow__spent">
+                                                {formatDuration(task.spentMinutes)}
+                                            </span>
+                                        )}
+                                        {hasSubs && (
+                                            <button
+                                                type="button"
+                                                className={`zenith-trow__fold ${subs.done === subs.total ? 'is-complete' : ''}`}
+                                                aria-expanded={showDetails}
+                                                aria-label={t('tasks.subtasks.progress', {
+                                                    done: subs.done,
+                                                    total: subs.total,
+                                                })}
+                                                title={t('tasks.subtasks.progress', {
+                                                    done: subs.done,
+                                                    total: subs.total,
+                                                })}
+                                                onClick={toggleDetails}
+                                            >
+                                                <ProgressArc done={subs.done} total={subs.total} />
+                                                {subs.done}/{subs.total}
+                                            </button>
+                                        )}
+                                        {attachments.length > 0 && (
+                                            <button
+                                                type="button"
+                                                className="zenith-trow__fold"
+                                                aria-expanded={showDetails}
+                                                title={t('tasks.editor.attachments')}
+                                                onClick={toggleDetails}
+                                            >
+                                                <Paperclip size={12} />
+                                                {attachments.length}
+                                            </button>
+                                        )}
+                                        {/* A running timer is part of the row — a timer you
+                                            cannot see is one you forget. */}
+                                        {timerOn && timerRunning && (
+                                            <TaskTimerButton
+                                                filePath={task.filePath}
+                                                lineNumber={task.lineNumber}
+                                                title={task.title}
+                                                timerMinutes={task.timerMinutes}
+                                            />
+                                        )}
+                                    </>
+                                )}
+                            </div>
+
+                            {/* What can be done to it comes up at the right edge on hover,
+                                and what was there moves over for it — see tasks.css. */}
+                            {actionCount > 0 && (
+                                <div className="zenith-trow__actions" onClick={stop}>
+                                    {idleTimer && (
                                         <TaskTimerButton
                                             filePath={task.filePath}
                                             lineNumber={task.lineNumber}
@@ -430,46 +453,31 @@ export const TaskItem: FC<TaskItemProps> = ({
                                             timerMinutes={task.timerMinutes}
                                         />
                                     )}
-                                </>
+                                    {active && (
+                                        <button
+                                            type="button"
+                                            className="zenith-trow__action zenith-trow__more"
+                                            aria-label={t('tasks.menu.more')}
+                                            title={t('tasks.menu.more')}
+                                            onClick={(e) => menu(e.nativeEvent)}
+                                        >
+                                            <MoreHorizontal size={15} />
+                                        </button>
+                                    )}
+                                    {grip && (
+                                        <button
+                                            type="button"
+                                            className="zenith-trow__action zenith-drag-handle"
+                                            aria-label={t('tasks.reorder', { name: task.title })}
+                                            title={t('tasks.reorderHint')}
+                                            {...dragHandleProps}
+                                        >
+                                            <GripVertical size={14} />
+                                        </button>
+                                    )}
+                                </div>
                             )}
                         </div>
-
-                        {/* What can be done to it comes up over the right edge on
-                            hover, and takes no room from the row the rest of the time. */}
-                        {(active || grip) && (
-                            <div className="zenith-trow__actions" onClick={stop}>
-                                {active && timerOn && !timerRunning && (
-                                    <TaskTimerButton
-                                        filePath={task.filePath}
-                                        lineNumber={task.lineNumber}
-                                        title={task.title}
-                                        timerMinutes={task.timerMinutes}
-                                    />
-                                )}
-                                {active && (
-                                    <button
-                                        type="button"
-                                        className="zenith-trow__action zenith-trow__more"
-                                        aria-label={t('tasks.menu.more')}
-                                        title={t('tasks.menu.more')}
-                                        onClick={(e) => menu(e.nativeEvent)}
-                                    >
-                                        <MoreHorizontal size={15} />
-                                    </button>
-                                )}
-                                {grip && (
-                                    <button
-                                        type="button"
-                                        className="zenith-trow__action zenith-drag-handle"
-                                        aria-label={t('tasks.reorder', { name: task.title })}
-                                        title={t('tasks.reorderHint')}
-                                        {...dragHandleProps}
-                                    >
-                                        <GripVertical size={14} />
-                                    </button>
-                                )}
-                            </div>
-                        )}
                     </div>
 
                     {(showDetails && attachments.length > 0) || (subtasksOn && showDetails) ? (
