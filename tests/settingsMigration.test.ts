@@ -357,3 +357,50 @@ describe('loadSettings — v11 → v12: the prayer method is asked, not assumed'
         expect(load({ settingsVersion: 12, prayerMethodChosen: true }).prayerMethodChosen).toBe(true);
     });
 });
+
+describe('loadSettings — v15 → v16: the board is wider by default', () => {
+    const grid = (maxWidth: number) => ({ columns: 4, rowHeight: 120, gap: 16, maxWidth });
+    const desk = (maxWidth: number) =>
+        ({
+            id: 'p1',
+            name: 'Work',
+            savedAt: '2026-10-01T00:00:00.000Z',
+            dashboardLayout: [],
+            dashboardBundles: [],
+            dashboardStackOrder: [],
+            hiddenWidgetIds: [],
+            dashboardGrid: grid(maxWidth),
+        }) as never;
+
+    it('widens a board still on the old default', () => {
+        // Nobody chose 920: it was only where a board started.
+        const s = load({ settingsVersion: 15, dashboardGrid: grid(920) });
+        expect(s.dashboardGrid.maxWidth).toBe(1200);
+    });
+
+    it('leaves a width somebody picked', () => {
+        expect(load({ settingsVersion: 15, dashboardGrid: grid(840) }).dashboardGrid.maxWidth).toBe(
+            840
+        );
+        resetZenithStore();
+        expect(load({ settingsVersion: 15, dashboardGrid: grid(0) }).dashboardGrid.maxWidth).toBe(0);
+    });
+
+    it('widens the saved arrangements with it, so going back to one does not narrow the board', () => {
+        const s = load({
+            settingsVersion: 15,
+            dashboardGrid: grid(920),
+            dashboardPresets: [desk(920)],
+        });
+        expect(s.dashboardPresets[0].dashboardGrid.maxWidth).toBe(1200);
+    });
+
+    it('does not widen a board narrowed after the change', () => {
+        const s = load({ settingsVersion: 16, dashboardGrid: grid(920) });
+        expect(s.dashboardGrid.maxWidth).toBe(920);
+    });
+
+    it('starts a new board at the new default', () => {
+        expect(load({}).dashboardGrid.maxWidth).toBe(1200);
+    });
+});

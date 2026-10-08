@@ -1988,6 +1988,7 @@ export const ZH: Record<string, string> = {
     'feature.dashboard.lifeWeeks.desc': '把你的一生画成周格子的卡片。需要你的出生日期；任何模板都不会自动开启它。',
     'dashboard.startup.homepage': '启动时打开什么由 Homepage 插件决定。若要从仪表盘开始，请在它的设置中添加“Zenith: Open Dashboard”命令。',
     'widget.periodProgress': '进度',
+    'command.refresh-data': '刷新数据',
     'widget.countdowns': '倒计时',
     'widget.lifeWeeks': '人生周历',
     'period.day': '日',

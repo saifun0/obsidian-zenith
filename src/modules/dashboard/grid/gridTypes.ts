@@ -69,8 +69,19 @@ export interface GridConfig {
     maxWidth: number;
 }
 
-/** Default canvas width, matching the CSS fallback in `dashboard.css`. */
-export const CANVAS_WIDTH = 920;
+/**
+ * Default canvas width.
+ *
+ * Wide enough that a board on a desktop pane is the pane's, not a column down
+ * the middle of it; a pane narrower than this simply fills.
+ */
+export const CANVAS_WIDTH = 1200;
+
+/**
+ * What the default was before it was widened. A board still on it never chose
+ * its width, which is how the settings migration tells the two apart.
+ */
+export const LEGACY_CANVAS_WIDTH = 920;
 
 /**
  * Selectable canvas widths, narrowest first, ending in `0` — "full width".

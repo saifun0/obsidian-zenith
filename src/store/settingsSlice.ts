@@ -13,6 +13,8 @@ import {
     normalizeGridConfig,
     type GridConfig,
     type WidgetLayoutItem,
+    CANVAS_WIDTH,
+    LEGACY_CANVAS_WIDTH,
 } from '../modules/dashboard/grid/gridTypes';
 import type { WidgetBundle } from '../modules/dashboard/grid/bundleTypes';
 import { normalizePresets, type DashboardPreset } from '../modules/dashboard/dashboardPresets';
@@ -705,7 +707,7 @@ export interface SettingsSlice {
  * Bump when a migration is added, and gate that migration on the value below.
  * Version 1 is "everything written before versioning existed".
  */
-export const CURRENT_SETTINGS_VERSION = 15;
+export const CURRENT_SETTINGS_VERSION = 16;
 
 /**
  * Object-valued settings that must be merged field-by-field rather than
@@ -1145,6 +1147,23 @@ export function normalizeSettings(rawSaved: Partial<ZenithSettings>): ZenithSett
             ...type,
             fields: [...type.fields],
             hidden: false,
+        }));
+    }
+
+    // ── v15 → v16 ──
+    // The board got wider by default: 920px left half of a desktop pane
+    // empty either side of it. A board still on the old default is
+    // widened with it — nobody chose that number, it was only what a
+    // board started at — and so is every saved arrangement, or going
+    // back to one would narrow the board again. A width that was picked
+    // stays as picked.
+    if (from < 16 && Object.keys(saved).length > 0) {
+        const widen = <T extends { maxWidth: number }>(grid: T): T =>
+            grid.maxWidth === LEGACY_CANVAS_WIDTH ? { ...grid, maxWidth: CANVAS_WIDTH } : grid;
+        merged.dashboardGrid = widen(merged.dashboardGrid);
+        merged.dashboardPresets = merged.dashboardPresets.map((preset) => ({
+            ...preset,
+            dashboardGrid: widen(preset.dashboardGrid),
         }));
     }
     return merged;

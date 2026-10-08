@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Menu } from 'obsidian';
-import { RotateCw, LayoutGrid, Check, LayoutTemplate, Bell } from 'lucide-react';
+import { LayoutGrid, Check, LayoutTemplate, Bell } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
@@ -80,7 +80,6 @@ export const DashboardApp: React.FC = () => {
         if (heading === 'custom') return headingText.trim();
         return '';
     }, [heading, headingText, t]);
-    const [refreshing, setRefreshing] = useState(false);
     const [editing, setEditing] = useState(false);
 
     // Esc is the quickest way out of edit mode.
@@ -186,16 +185,6 @@ export const DashboardApp: React.FC = () => {
         ]
     );
 
-    // Data is kept live by the DataService; Refresh forces an immediate reload.
-    const loadData = useCallback(async () => {
-        setRefreshing(true);
-        try {
-            await plugin.dataService.reloadAll();
-        } finally {
-            setRefreshing(false);
-        }
-    }, [plugin]);
-
     /**
      * The wallpaper.
      *
@@ -242,74 +231,7 @@ export const DashboardApp: React.FC = () => {
                 it carries a scrim the board is read through. `aria-hidden`
                 because it is decoration — a screen reader announcing a
                 photograph would be announcing furniture. */}
-            {bgStyle && (
-                <div className="zenith-dashboard__bg" style={bgStyle} aria-hidden="true" />
-            )}
-
-            {/* Before the board in the DOM, because on a narrow pane it goes
-                back into the flow and belongs above it. On a wide one it is
-                lifted out of the flow entirely — see the stylesheet. */}
-            <div className="zenith-dashboard__railwrap">
-                {/* A rail beside the board rather than a row above it. Above, the
-                buttons owned a full line of the dashboard's width to hold three
-                icons, and pushed the first row of cards down by it; beside it
-                they cost nothing at all — they are out of the flow, so the
-                canvas is centred as if they were not there. */}
-                <div className="zenith-dashboard__rail">
-                    {/* Layouts and arranging are the same errand, so they share one
-                    control; refreshing is a different one and stands apart.
-                    Three identical squares in a row said none of that. */}
-                    <div className="zenith-dashboard__group">
-                        {presetsOn && (
-                            <button
-                                className="zenith-dashboard__action"
-                                onClick={openPresets}
-                                aria-label={t('dashboard.presets')}
-                                title={t('dashboard.presets')}
-                            >
-                                <LayoutTemplate size={16} />
-                            </button>
-                        )}
-                        <button
-                            className={`zenith-dashboard__action ${editing ? 'is-active' : ''}`}
-                            onClick={() => setEditing((v) => !v)}
-                            aria-pressed={editing}
-                            aria-label={
-                                editing ? t('dashboard.doneEditing') : t('dashboard.editLayout')
-                            }
-                            title={editing ? t('dashboard.doneEditing') : t('dashboard.editLayout')}
-                        >
-                            {editing ? <Check size={16} /> : <LayoutGrid size={16} />}
-                        </button>
-                    </div>
-                    {/* Only once there is something in it: a bell over an empty
-                        center is a control that has nothing to say. */}
-                    {bell && (
-                        <button
-                            className="zenith-dashboard__action zenith-dashboard__action--lone zenith-dashboard__bell"
-                            onClick={() => new NotificationCenterModal(plugin).open()}
-                            aria-label={t('notify.title')}
-                            title={t('notify.title')}
-                        >
-                            <Bell size={16} />
-                            {unread > 0 && (
-                                <span className="zenith-dashboard__badge">
-                                    {unread > 99 ? '99+' : unread}
-                                </span>
-                            )}
-                        </button>
-                    )}
-                    <button
-                        className="zenith-dashboard__action zenith-dashboard__action--lone"
-                        onClick={() => void loadData()}
-                        disabled={refreshing}
-                        aria-label={t('common.refresh')}
-                        title={t('common.refresh')}
-                    >
-                        <RotateCw size={16} className={refreshing ? 'zenith-spin' : ''} />
-                    </button>
-                </div>
-            </div>
+            {bgStyle && <div className="zenith-dashboard__bg" style={bgStyle} aria-hidden="true" />}
 
             {/* The canvas width lives here rather than in CSS so the setting
                 can reach it; `none` is how "run to the edges of the pane" is
@@ -318,6 +240,68 @@ export const DashboardApp: React.FC = () => {
                 className="zenith-dashboard__main"
                 style={{ maxWidth: grid.maxWidth > 0 ? grid.maxWidth : 'none' }}
             >
+                {/* First inside the canvas, because on a narrow pane it goes back
+                    into the flow and belongs above the board. On a wide one it is
+                    lifted out of the flow and stands at the board's own right
+                    edge — see the stylesheet. */}
+                <div className="zenith-dashboard__railwrap">
+                    {/* A rail beside the board rather than a row above it. Above, the
+                    buttons owned a full line of the dashboard's width to hold three
+                    icons, and pushed the first row of cards down by it; beside it
+                    they cost nothing at all — they are out of the flow, so the
+                    canvas is centred as if they were not there. Beside the
+                    *board*, not the pane: pinned to the pane's edge they stood
+                    a hand's width away from the cards they arrange. */}
+                    <div className="zenith-dashboard__rail">
+                        {/* Layouts and arranging are the same errand, so they share one
+                        control. Refreshing used to stand under them; the data keeps
+                        itself current, so it is a command now (`refresh-data`)
+                        rather than a quarter of the rail. */}
+                        <div className="zenith-dashboard__group">
+                            {presetsOn && (
+                                <button
+                                    className="zenith-dashboard__action"
+                                    onClick={openPresets}
+                                    aria-label={t('dashboard.presets')}
+                                    title={t('dashboard.presets')}
+                                >
+                                    <LayoutTemplate size={16} />
+                                </button>
+                            )}
+                            <button
+                                className={`zenith-dashboard__action ${editing ? 'is-active' : ''}`}
+                                onClick={() => setEditing((v) => !v)}
+                                aria-pressed={editing}
+                                aria-label={
+                                    editing ? t('dashboard.doneEditing') : t('dashboard.editLayout')
+                                }
+                                title={
+                                    editing ? t('dashboard.doneEditing') : t('dashboard.editLayout')
+                                }
+                            >
+                                {editing ? <Check size={16} /> : <LayoutGrid size={16} />}
+                            </button>
+                        </div>
+                        {/* Only once there is something in it: a bell over an empty
+                            center is a control that has nothing to say. */}
+                        {bell && (
+                            <button
+                                className="zenith-dashboard__action zenith-dashboard__action--lone zenith-dashboard__bell"
+                                onClick={() => new NotificationCenterModal(plugin).open()}
+                                aria-label={t('notify.title')}
+                                title={t('notify.title')}
+                            >
+                                <Bell size={16} />
+                                {unread > 0 && (
+                                    <span className="zenith-dashboard__badge">
+                                        {unread > 99 ? '99+' : unread}
+                                    </span>
+                                )}
+                            </button>
+                        )}
+                    </div>
+                </div>
+
                 {/* Both halves are optional and by default neither is there — a
                 wall of cards says what it is without a caption — so the header
                 is not rendered at all rather than left holding its own

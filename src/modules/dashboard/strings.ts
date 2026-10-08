@@ -21,6 +21,8 @@ export const DASHBOARD_STRINGS: { en: Record<string, string>; ru: Record<string,
         'dashboard.startup.homepage':
             'The Homepage plugin decides what opens at startup. To start on the dashboard, add the “Zenith: Open Dashboard” command in its settings.',
 
+        'command.refresh-data': 'Refresh data',
+
         'widget.periodProgress': 'Progress',
         'widget.countdowns': 'Countdowns',
         'widget.lifeWeeks': 'Life in weeks',
@@ -79,6 +81,8 @@ export const DASHBOARD_STRINGS: { en: Record<string, string>; ru: Record<string,
             'Карточка: жизнь как сетка недель. Нужна дата рождения; ни один шаблон её не включает.',
         'dashboard.startup.homepage':
             'Что открывать при запуске, решает плагин Homepage. Чтобы начинать с дашборда, добавьте в его настройках команду «Zenith: Open Dashboard».',
+
+        'command.refresh-data': 'Обновить данные',
 
         'widget.periodProgress': 'Прогресс',
         'widget.countdowns': 'Отсчёты',

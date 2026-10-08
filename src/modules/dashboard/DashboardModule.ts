@@ -58,6 +58,15 @@ export class DashboardModule extends BaseModule {
             callback: () => this.activateView(),
         });
 
+        // The rail used to carry a button for this. The data keeps itself
+        // current, so reloading it by hand is the rare case — a command, and
+        // through that a line in Search, rather than a control always on screen.
+        this.addCommand({
+            id: 'refresh-data',
+            name: 'Refresh data',
+            callback: () => void this.plugin.dataService.reloadAll(),
+        });
+
         // Ambient widgets owned by the dashboard itself. (Weather lives in its
         // own module — see WeatherModule.)
         this.disposers.push(

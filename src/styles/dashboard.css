@@ -122,18 +122,11 @@
 }
 
 /* The board above its own wallpaper. Each needs a stacking position of its
-   own, or the layer paints over the cards. */
+   own, or the layer paints over the cards. The rail stands inside the canvas,
+   so it is lifted with it. */
 .zenith-dashboard.has-bg .zenith-dashboard__main,
 .zenith-dashboard.has-bg .zenith-dashboard__header {
     position: relative;
-    z-index: 1;
-}
-
-/* The rail is already out of the flow, so it only needs telling which layer it
-   is on. Giving it `position: relative` alongside the two above put it back in
-   the flow and dropped the buttons in the board's top-left corner — its
-   `top`/`right` had nothing left to resolve against. */
-.zenith-dashboard.has-bg .zenith-dashboard__railwrap {
     z-index: 1;
 }
 
@@ -270,21 +263,29 @@ body.is-phone .zenith-dashboard__bg::before {
     background-position: center top;
 }
 
-/* The canvas. Its `max-width` is set inline, from the setting. */
+/* The canvas. Its `max-width` is set inline, from the setting. A containing
+   block always, not only under a wallpaper: the rail is placed against it. */
 .zenith-dashboard__main {
+    position: relative;
     margin: 0 auto;
     min-width: 0;
 }
 
-/* A full-height column pinned to the pane's right edge and taken out of the
-   flow. It exists only so the rail inside it has something to be sticky
-   within — `position: sticky` needs a parent that scrolls past it, and an
-   absolutely positioned element cannot be sticky itself. */
+/* A full-height column standing just outside the board's right edge and taken
+   out of the flow. Outside the *board*, not at the pane's edge: on a wide pane
+   the two are a hand's width apart, and controls that far from what they
+   control read as belonging to the window. The gutter the board keeps either
+   side (`--zenith-dash-gutter`) is exactly this column and its gap, so there
+   is room for it even when the board fills the pane.
+
+   It exists only so the rail inside it has something to be sticky within —
+   `position: sticky` needs a parent that scrolls past it, and an absolutely
+   positioned element cannot be sticky itself. */
 .zenith-dashboard__railwrap {
     position: absolute;
-    top: var(--zenith-dash-pad-top);
-    bottom: var(--zenith-dash-pad-bottom);
-    right: var(--zenith-dash-pad-x);
+    top: 0;
+    bottom: 0;
+    left: calc(100% + var(--zenith-space-md));
     width: var(--zenith-dash-rail-w);
     pointer-events: none;
 }
@@ -416,7 +417,7 @@ body.is-phone .zenith-dashboard__bg::before {
         background var(--zenith-transition-fast);
 }
 
-/* Refreshing is a different errand, so it keeps its own edges. */
+/* A button that is its own errand keeps its own edges. */
 .zenith-dashboard button.zenith-dashboard__action--lone {
     height: 32px;
     border: 1px solid var(--zenith-border);
