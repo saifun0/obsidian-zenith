@@ -1269,11 +1269,13 @@ button.zenith-lightbox__btn {
         transform: none;
         pointer-events: auto;
     }
-    .zenith-trow.is-reordering .zenith-subtask .zenith-drag-handle {
+    /* The subtasks' own, on a class of their own: under a sort the task has
+       no handle and they still do. */
+    .zenith-trow.is-reordering-subs .zenith-subtask .zenith-drag-handle {
         opacity: 1;
     }
     /* And out of it they keep no room from a subtask's words. */
-    .zenith-trow:not(.is-reordering) .zenith-subtask .zenith-drag-handle {
+    .zenith-trow:not(.is-reordering-subs) .zenith-subtask .zenith-drag-handle {
         display: none;
     }
     /* A long press is the menu, not a text selection with a callout. */

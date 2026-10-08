@@ -29,6 +29,8 @@ interface TaskListProps {
      * order, so in any other sort the list would snap straight back.
      */
     reorderable?: boolean;
+    /** Subtasks may be dragged — true under a sort too, which never orders them. */
+    subtasksReorderable?: boolean;
     /** The sort in force, which a task being closed is slotted back by. */
     sort?: TaskQuery['sort'];
     /** Shown when the list is empty — what to do about it, not a mood. */
@@ -161,6 +163,7 @@ export const TaskList: FC<TaskListProps> = ({
     tasks,
     groupMode = 'none',
     reorderable = false,
+    subtasksReorderable = reorderable,
     sort = 'manual',
     empty,
 }) => {
@@ -323,6 +326,7 @@ export const TaskList: FC<TaskListProps> = ({
                     group={group}
                     sortable={sortable}
                     reorderable={reorderable}
+                    subtasksReorderable={subtasksReorderable}
                     grouped={groupMode === 'smart'}
                     /* An empty group is rendered only while a drag is in flight,
                        and only if it would accept what's being dragged. */

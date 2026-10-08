@@ -106,6 +106,12 @@ interface TaskItemProps {
     dropEdge?: 'before' | 'after' | null;
     /** Dragging is only meaningful while the list is in manual (file) order. */
     reorderable?: boolean;
+    /**
+     * The subtasks may be dragged. Apart from `reorderable` because a sort
+     * orders tasks and never subtasks: under one this row has no handle of its
+     * own and the lines beneath it keep theirs.
+     */
+    subtasksReorderable?: boolean;
     /** Under a smart group, which already says the day — see `marginText`. */
     grouped?: boolean;
     /** The moment of being closed, while it lasts. */
@@ -132,6 +138,7 @@ export const TaskItem: FC<TaskItemProps> = ({
     dragging = false,
     dropEdge = null,
     reorderable = false,
+    subtasksReorderable = reorderable,
     grouped = false,
     closing,
 }) => {
@@ -209,7 +216,7 @@ export const TaskItem: FC<TaskItemProps> = ({
     const subtaskSortable = useSortableRows({
         rows: subtaskRows,
         onMove: moveSubtask,
-        disabled: !dragOn || !reorderable,
+        disabled: !dragOn || !subtasksReorderable,
     });
 
     const subs = useMemo(() => countSubtasks(task.subtasks), [task.subtasks]);
@@ -287,6 +294,9 @@ export const TaskItem: FC<TaskItemProps> = ({
                     dropEdge ? `is-drop-${dropEdge}` : '',
                     closing ? `is-closing is-${closing.phase}` : '',
                     reorderMode && grip ? 'is-reordering' : '',
+                    reorderMode && dragOn && subtasksReorderable && active
+                        ? 'is-reordering-subs'
+                        : '',
                     swipe.pulling ? `is-pulling-${swipe.pulling}` : '',
                     swipe.armed ? 'is-armed' : '',
                 ]
@@ -492,7 +502,7 @@ export const TaskItem: FC<TaskItemProps> = ({
                                     subtasks={task.subtasks}
                                     sortable={subtaskSortable}
                                     openAdd={addSignal}
-                                    reorderable={dragOn && reorderable}
+                                    reorderable={dragOn && subtasksReorderable}
                                 />
                             )}
                         </div>

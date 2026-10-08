@@ -11,6 +11,8 @@ interface TaskGroupProps {
     sortable: SortableApi;
     /** False when the current sort derives the order, so dragging is off. */
     reorderable: boolean;
+    /** Subtasks keep the file's order under any sort, so this outlives it. */
+    subtasksReorderable: boolean;
     /** The rows sit under a smart group, which already says the day. */
     grouped: boolean;
     /** This group would accept the row currently being dragged. */
@@ -34,6 +36,7 @@ export const TaskGroup: FC<TaskGroupProps> = ({
     group,
     sortable,
     reorderable,
+    subtasksReorderable,
     grouped,
     droppable,
     zoneActive,
@@ -92,6 +95,7 @@ export const TaskGroup: FC<TaskGroupProps> = ({
                                         : null
                                 }
                                 reorderable={reorderable && !closing}
+                                subtasksReorderable={subtasksReorderable && !closing}
                             />
                         ))}
                     </div>

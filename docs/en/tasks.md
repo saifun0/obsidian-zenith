@@ -165,8 +165,9 @@ understood looks half understood, and nothing is dropped. `#tags` are the task's
 syntax and stay in the title; typing `#` offers the tags already in use. Switch it off under
 **Tasks → Features → Natural input**.
 
-**Drag and drop.** In manual order every task and subtask row has a handle — on a desktop
-when you point at the row, on a phone in *Put in order by hand*. A task carries its whole
+**Drag and drop.** A task row has a handle in manual order, a subtask row under any order
+— on a desktop when you point at the row, on a phone in *Put in order by hand*. A task
+carries its whole
 subtree, and lands with the indentation of whatever it's dropped next to — so dragging a
 subtask beside a top-level task promotes it, and dropping a task inside another one's
 children nests it. Dropping a task into its *own* subtree is refused; it would take its
@@ -182,8 +183,10 @@ What a drop means depends on where it lands:
 | **Overdue**, **Later** | Refused — a deadline in the past isn't something you can schedule into, and no single day is what *later* means |
 
 Empty groups appear as drop targets only while a drag they'd accept is in flight.
-Reordering needs **Order: Manual**, since every other order derives from the task data and a
-dragged row would snap straight back. The handle is also focusable: press
+Reordering tasks needs **Order: Manual**, since every other order derives from the task data
+and a dragged row would snap straight back. Subtasks are never sorted — they stand in the
+order the file has them — so theirs can be changed under any order. The handle is also
+focusable: press
 <kbd>↑</kbd>/<kbd>↓</kbd> to move a row without a pointer.
 
 ## Capture from links

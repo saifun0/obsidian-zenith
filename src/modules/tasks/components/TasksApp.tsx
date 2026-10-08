@@ -3,6 +3,7 @@ import { Menu, Platform } from 'obsidian';
 import { MoreHorizontal, RotateCw, Search } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
+import { reorderScope } from '../services/reorderScope';
 import { useTranslation } from '../../../core/i18n';
 import { useFeature } from '../../../core/useFeature';
 import { TASK_TABS } from '../../../core/constants';
@@ -104,6 +105,12 @@ export const TasksApp: FC = () => {
         TASK_TABS.some((x) => x.id === saved.tab) ? (saved.tab as Tab) : 'all'
     );
     const [filters, setFilters] = useState<TaskFilterState>(() => restoreFilters(saved));
+    const byHand = reorderScope({
+        dragOn,
+        manualSort: filters.sort === 'manual',
+        mobile: Platform.isMobile,
+        reorderMode,
+    });
 
     useEffect(() => {
         // Spread over what is there: the list keeps its open tasks and folded
@@ -253,8 +260,10 @@ export const TasksApp: FC = () => {
             }
         }
         // On a touch screen the handles stay hidden until asked for: there a
-        // row swipes, and a handle on every row read as clutter.
-        if (dragOn && Platform.isMobile && filters.sort === 'manual') {
+        // row swipes, and a handle on every row read as clutter. Offered under
+        // a sort as well — it then brings out the subtasks' handles only, the
+        // tasks' own order being the sort's (see `reorderScope`).
+        if (dragOn && Platform.isMobile) {
             menu.addSeparator();
             menu.addItem((item) =>
                 item
@@ -458,11 +467,8 @@ export const TasksApp: FC = () => {
                                 tasks={shown}
                                 groupMode={groupMode}
                                 sort={filters.sort}
-                                reorderable={
-                                    dragOn &&
-                                    filters.sort === 'manual' &&
-                                    (!Platform.isMobile || reorderMode)
-                                }
+                                reorderable={byHand.tasks}
+                                subtasksReorderable={byHand.subtasks}
                                 empty={empty}
                             />
                         )}
