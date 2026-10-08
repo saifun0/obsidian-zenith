@@ -2,7 +2,7 @@ import React, { useMemo, useState, type FC } from 'react';
 import { Plus, Check, LayoutGrid } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { SearchField } from '../../../components/ui/fields';
-import { sizeDims, type WidgetSize } from '../grid/gridTypes';
+import type { WidgetSize } from '../grid/gridTypes';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import { moduleNameKey } from '../../../core/moduleLabels';
 
@@ -20,8 +20,6 @@ interface AddWidgetSheetProps {
     widgets: AddableWidget[];
     /** Registered widgets already placed — shown as "added". */
     placed: AddableWidget[];
-    /** Live column count, so the footprint preview matches the real grid. */
-    columns: number;
     onAdd: (id: string) => void;
     onRemove: (id: string) => void;
 }
@@ -54,31 +52,9 @@ function groupLabel(key: string, t: Translator): string {
     return t.has(nameKey) ? t(nameKey) : prettyModule(key);
 }
 
-/** A miniature of the widget's footprint on the current grid. */
-const Footprint: FC<{ size: WidgetSize; columns: number }> = ({ size, columns }) => {
-    const { w, h } = sizeDims(size, columns);
-    return (
-        <span
-            className="zenith-add-sheet__footprint"
-            aria-hidden="true"
-            style={{
-                gridTemplateColumns: `repeat(${columns}, 1fr)`,
-                gridTemplateRows: `repeat(${h}, 1fr)`,
-            }}
-        >
-            {Array.from({ length: columns * h }).map((_, i) => (
-                <span
-                    key={i}
-                    className={`zenith-add-sheet__cell ${i % columns < w ? 'is-filled' : ''}`}
-                />
-            ))}
-        </span>
-    );
-};
-
 /**
- * The widget gallery shown under the grid while arranging — the equivalent of
- * the picker you get from a long-press on a phone home screen.
+ * The widget gallery, a section of the arranging panel — the equivalent of the
+ * picker you get from a long-press on a phone home screen.
  *
  * It lists the *whole* catalogue, not just what's missing: with everything
  * placed the panel used to collapse to a single sentence, which read as though
@@ -88,7 +64,6 @@ const Footprint: FC<{ size: WidgetSize; columns: number }> = ({ size, columns })
 export const AddWidgetSheet: FC<AddWidgetSheetProps> = ({
     widgets,
     placed,
-    columns,
     onAdd,
     onRemove,
 }) => {
@@ -137,8 +112,8 @@ export const AddWidgetSheet: FC<AddWidgetSheetProps> = ({
     return (
         <div className="zenith-add-sheet">
             <div className="zenith-add-sheet__head">
+                {/* The count alone: the panel's tab is already the title. */}
                 <div className="zenith-add-sheet__title">
-                    {t('dashboard.widgets')}
                     <span className="zenith-add-sheet__count">
                         {widgets.length > 0
                             ? t('dashboard.widgets.available', { count: widgets.length })
@@ -201,8 +176,6 @@ export const AddWidgetSheet: FC<AddWidgetSheetProps> = ({
                                                 })}
                                         </span>
                                     </span>
-
-                                    <Footprint size={w.defaultSize} columns={columns} />
 
                                     <span className="zenith-add-sheet__action">
                                         {w.added ? <Check size={14} /> : <Plus size={14} />}

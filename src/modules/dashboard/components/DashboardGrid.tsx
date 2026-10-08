@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FC } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, Layers } from 'lucide-react';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
@@ -54,6 +55,7 @@ import { GridWidget } from './GridWidget';
 import { BundleCard } from './BundleCard';
 import { BundleInspector } from './BundleInspector';
 import { AddWidgetSheet, type AddableWidget } from './AddWidgetSheet';
+import { ArrangePanel, type ArrangeTab } from './ArrangePanel';
 import { isCopyId, newCopyId, widgetIdOf } from '../grid/widgetInstances';
 import { withoutWidgetConfig } from '../widgetConfig';
 import { GridSettingsBar } from './GridSettingsBar';
@@ -106,9 +108,18 @@ function stackGeometry(
     return { tops, heights, total: Math.max(0, y - cfg.gap) };
 }
 
+/** The arranging panel, when it is open: where to draw it and which section. */
+export interface ArrangePanelSlot {
+    host: HTMLElement;
+    tab: ArrangeTab;
+    onTab: (tab: ArrangeTab) => void;
+    onClose: () => void;
+}
+
 interface DashboardGridProps {
     editing: boolean;
     onEditingChange: (editing: boolean) => void;
+    panel: ArrangePanelSlot | null;
 }
 
 /**
@@ -124,11 +135,16 @@ interface DashboardGridProps {
  * rewrite the grid arranged on a desktop. Both views position their cards
  * absolutely, which lets the same drag code serve each of them.
  */
-export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange }) => {
+export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange, panel }) => {
     /* One card at a time: two open settings faces would be two panels
        competing for the same attention, and the whole point of putting them
        on the card is that there is only ever one. */
     const [flippedId, setFlippedId] = useState<string | null>(null);
+    /* The card the gallery has just put on the board. It is added wherever
+       there is room, which on a long board is often off screen — so it is
+       brought into view and marked for a moment, rather than left for the
+       user to go and look for. */
+    const [freshId, setFreshId] = useState<string | null>(null);
 
     const t = useTranslation();
     const allRegistered = useDashboardWidgets();
@@ -288,6 +304,17 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
         }
     }, [layout, savedLayout, updateSettings]);
 
+    useEffect(() => {
+        if (!freshId) return;
+        const card = containerRef.current?.querySelector<HTMLElement>(
+            `[data-instance-id="${CSS.escape(freshId)}"]`
+        );
+        card?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        const timer = window.setTimeout(() => setFreshId(null), 1500);
+        return () => window.clearTimeout(timer);
+        // The layout is named so the scroll waits for the card to be on the board.
+    }, [freshId, layout]);
+
     /** Presets for anything the grid can place, bundles included. */
     const presetsFor = useCallback(
         (id: string) =>
@@ -373,6 +400,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                 hiddenWidgetIds: hiddenWidgetIds.filter((h) => h !== target),
                 dashboardLayout: addItem(layout, target, size, cfg.columns),
             });
+            setFreshId(target);
         },
         [hiddenWidgetIds, layout, inBundles, defsById, presetsFor, updateSettings, cfg.columns]
     );
@@ -667,6 +695,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                     editing={editing}
                                     dragging={isDragging}
                                     flipped={flippedId === item.id}
+                                    fresh={freshId === item.id}
                                     onFlip={(on) => setFlippedId(on ? item.id : null)}
                                     dragProps={{
                                         ...drag.getItemProps(item.id),
@@ -756,6 +785,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                 editing={editing}
                                 dragging={isDragging}
                                 flipped={flippedId === item.id}
+                                fresh={freshId === item.id}
                                 onFlip={(on) => setFlippedId(on ? item.id : null)}
                                 dragProps={{
                                     ...drag.getItemProps(item.id),
@@ -795,34 +825,47 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                     })}
             </div>
 
-            {editing && (
-                <GridSettingsBar
-                    config={cfg}
-                    stacked={stacked}
-                    onChange={(next) =>
-                        updateSettings(
-                            // A new column count invalidates every saved x, so
-                            // re-lay the grid in reading order rather than
-                            // letting compaction push widgets downwards.
-                            next.columns === cfg.columns
-                                ? { dashboardGrid: next }
-                                : { dashboardGrid: next, dashboardLayout: repack(layout, next.columns) }
-                        )
-                    }
-                />
-            )}
-
-            {editing && presetsOn && <LayoutPresetsBar />}
-
-            {editing && (
-                <AddWidgetSheet
-                    widgets={addable}
-                    placed={placedWidgets}
-                    columns={cfg.columns}
-                    onAdd={addWidget}
-                    onRemove={removeWidget}
-                />
-            )}
+            {/* The gallery, the grid and the saved arrangements, in the panel
+                beside the board. They were three bars under it — the one place
+                a board being arranged cannot be seen from. */}
+            {editing &&
+                panel &&
+                createPortal(
+                    <ArrangePanel
+                        tab={panel.tab}
+                        onTab={panel.onTab}
+                        onClose={panel.onClose}
+                        widgets={
+                            <AddWidgetSheet
+                                widgets={addable}
+                                placed={placedWidgets}
+                                onAdd={addWidget}
+                                onRemove={removeWidget}
+                            />
+                        }
+                        grid={
+                            <GridSettingsBar
+                                config={cfg}
+                                stacked={stacked}
+                                onChange={(next) =>
+                                    updateSettings(
+                                        // A new column count invalidates every saved x, so
+                                        // re-lay the grid in reading order rather than
+                                        // letting compaction push widgets downwards.
+                                        next.columns === cfg.columns
+                                            ? { dashboardGrid: next }
+                                            : {
+                                                  dashboardGrid: next,
+                                                  dashboardLayout: repack(layout, next.columns),
+                                              }
+                                    )
+                                }
+                            />
+                        }
+                        presets={presetsOn ? <LayoutPresetsBar /> : undefined}
+                    />,
+                    panel.host
+                )}
         </>
     );
 };

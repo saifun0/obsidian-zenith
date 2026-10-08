@@ -717,25 +717,6 @@
     white-space: nowrap;
 }
 
-/* Miniature of the widget's footprint on the *current* grid, so the preview
-   still tells the truth after the column count is changed. */
-.zenith-add-sheet__footprint {
-    display: grid;
-    gap: 1.5px;
-    width: 26px;
-    flex-shrink: 0;
-}
-
-.zenith-add-sheet__cell {
-    aspect-ratio: 1;
-    border-radius: 1px;
-    background: var(--zenith-bg-tertiary);
-}
-
-.zenith-add-sheet__cell.is-filled {
-    background: var(--zenith-accent);
-}
-
 .zenith-add-sheet__action {
     display: inline-flex;
     align-items: center;
@@ -894,4 +875,257 @@
 .zenith-root button.zenith-presets__save:disabled {
     opacity: 0.5;
     cursor: default;
+}
+
+/* ── The arranging panel (.zenith-arrange) ───────────
+   The gallery, the grid's geometry and the saved arrangements, in one panel
+   beside the board. They were three bars under it, which is the one place a
+   board being arranged cannot be seen from.
+
+   Its wrapper is a full-height column at the pane's right edge, out of the
+   flow, and exists for the same reason the rail's does: the panel is sticky,
+   and sticky needs a parent that scrolls past it. */
+.zenith-dashboard__panelwrap {
+    --zenith-arrange-w: 320px;
+    position: absolute;
+    top: var(--zenith-dash-pad-top);
+    bottom: var(--zenith-dash-pad-bottom);
+    right: var(--zenith-dash-pad-x);
+    width: var(--zenith-arrange-w);
+    pointer-events: none;
+    z-index: 6;
+}
+
+/* Where the pane has the width, the board moves over and the two stand side
+   by side. Where it has not, the panel lies over the board's right-hand side
+   instead: squeezing the board to make room would drop it below the width at
+   which it is a grid, and what was being arranged would turn into the phone's
+   one column under the user's hands. The width is the same one the panel
+   opens by itself at (`PANEL_ROOM_PX`). */
+@container zenith-dash (min-width: 1240px) {
+    .zenith-dashboard.has-panel {
+        padding-right: calc(var(--zenith-dash-gutter) + 320px + var(--zenith-space-md));
+    }
+}
+
+.zenith-arrange {
+    position: sticky;
+    top: calc(var(--zenith-dash-pad-y) + var(--zenith-sticky-top, 0px));
+    display: flex;
+    flex-direction: column;
+    max-height: min(680px, calc(100vh - 140px));
+    border: 1px solid var(--zenith-border);
+    border-radius: var(--zenith-radius-lg);
+    background: var(--zenith-bg-secondary);
+    box-shadow: var(--zenith-shadow-md);
+    overflow: hidden;
+    pointer-events: auto;
+    animation: zenith-fade-in var(--zenith-transition) ease both;
+}
+
+/* The same band a card wears, so the panel reads as one of the board's own. */
+.zenith-arrange__head {
+    display: flex;
+    align-items: center;
+    flex: none;
+    gap: var(--zenith-space-sm);
+    box-sizing: border-box;
+    min-height: calc(var(--zenith-widget-head-h) + 8px);
+    padding: 4px var(--zenith-space-sm) 4px var(--zenith-space-sm);
+    border-bottom: 1px solid var(--zenith-border);
+}
+
+.zenith-arrange__tabs {
+    display: flex;
+    flex: 1;
+    gap: 2px;
+    min-width: 0;
+}
+
+.zenith-root button.zenith-arrange__tab {
+    height: 26px;
+    min-width: 0;
+    padding: 0 9px;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-arrange__tab:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-root button.zenith-arrange__tab.is-active {
+    background: color-mix(in srgb, var(--zenith-accent) 14%, transparent);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-root button.zenith-arrange__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+}
+
+.zenith-root button.zenith-arrange__close:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+.zenith-arrange__body {
+    flex: 1;
+    min-height: 0;
+    padding: var(--zenith-space-sm) var(--zenith-space-md) var(--zenith-space-md);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
+/* The three sections were cards of their own, each with a frame and a title.
+   Inside the panel the panel is the frame and the tab is the title. */
+.zenith-arrange .zenith-add-sheet,
+.zenith-arrange .zenith-gridbar,
+.zenith-arrange .zenith-presets {
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    animation: none;
+}
+
+.zenith-arrange .zenith-gridbar__title,
+.zenith-arrange .zenith-presets__title {
+    display: none;
+}
+
+/* The gallery: one column of rows, and the count on a line of its own over the
+   search. The footprint miniature goes — at this width it cost the name its
+   room, and the card lands on the board a moment later anyway. */
+.zenith-arrange .zenith-add-sheet__head {
+    flex-direction: column;
+    align-items: stretch;
+}
+.zenith-arrange .zenith-add-sheet__title {
+    font-size: 0.74rem;
+    text-transform: none;
+    letter-spacing: 0;
+}
+.zenith-arrange .zenith-add-sheet__search {
+    min-width: 0;
+}
+.zenith-arrange .zenith-add-sheet__list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+}
+
+/* The grid: a row per knob, its name on the left and the stepper on the right. */
+.zenith-arrange .zenith-gridbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--zenith-space-sm);
+}
+.zenith-arrange .zenith-gridbar__controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+}
+.zenith-arrange .zenith-gridbar__control {
+    justify-content: space-between;
+}
+.zenith-arrange .zenith-gridbar button.zenith-gridbar__reset {
+    align-self: flex-start;
+}
+
+/* The arrangements: a row each. */
+.zenith-arrange .zenith-presets {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--zenith-space-sm);
+}
+.zenith-arrange .zenith-presets__list {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+}
+.zenith-arrange .zenith-presets__chip {
+    border-radius: var(--zenith-radius-md);
+}
+.zenith-arrange .zenith-root button.zenith-presets__apply,
+.zenith-arrange button.zenith-presets__apply {
+    flex: 1;
+    justify-content: flex-start;
+    max-width: none;
+    min-width: 0;
+}
+.zenith-arrange button.zenith-presets__save {
+    align-self: flex-start;
+}
+
+/* A card that has just been added says where it landed. */
+.zenith-grid__item.is-new .zenith-widget-card,
+.zenith-grid__item.is-new .zenith-bundle__card {
+    animation: zenith-card-arrive 1.4s ease-out both;
+}
+@keyframes zenith-card-arrive {
+    0% { box-shadow: 0 0 0 2px var(--zenith-accent); }
+    60% { box-shadow: 0 0 0 2px var(--zenith-accent); }
+    100% { box-shadow: 0 0 0 2px transparent; }
+}
+
+/* ── On a phone: a sheet from the bottom ─────────────
+   There is no margin beside the board to stand in, so the panel comes up over
+   the lower part of the screen and leaves the top of the board in view. */
+@media (max-width: 560px) {
+    .zenith-dashboard__panelwrap {
+        position: fixed;
+        top: auto;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: auto;
+        z-index: 30;
+    }
+    .zenith-arrange {
+        position: static;
+        max-height: 62vh;
+        padding-bottom: var(--zenith-inset-bottom, 0px);
+        border-width: 1px 0 0;
+        border-radius: var(--zenith-radius-xl) var(--zenith-radius-xl) 0 0;
+    }
+    .zenith-root button.zenith-arrange__tab,
+    .zenith-root button.zenith-arrange__close {
+        height: 34px;
+    }
+    .zenith-root button.zenith-arrange__close {
+        width: 34px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-arrange,
+    .zenith-grid__item.is-new .zenith-widget-card,
+    .zenith-grid__item.is-new .zenith-bundle__card {
+        animation: none;
+    }
 }

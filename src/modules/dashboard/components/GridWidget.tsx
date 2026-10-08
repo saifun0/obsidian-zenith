@@ -26,6 +26,8 @@ interface GridWidgetProps {
     dragProps?: Partial<React.ComponentProps<'div'>>;
     /** Showing its settings instead of itself. */
     flipped?: boolean;
+    /** Just added from the gallery: marked for a moment so it can be found. */
+    fresh?: boolean;
     /** Turn the card over, or back. */
     onFlip?: (flipped: boolean) => void;
     /** Preset the widget is currently rendered at. */
@@ -74,6 +76,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
     dragging = false,
     dragProps,
     flipped = false,
+    fresh = false,
     onFlip,
     size,
     sizes,
@@ -191,9 +194,10 @@ export const GridWidget: FC<GridWidgetProps> = ({
         <div
             className={`zenith-grid__item ${editing ? 'is-editing' : ''} ${
                 dragging ? 'is-dragging' : ''
-            } ${flipped ? 'is-flipped' : ''}`}
+            } ${flipped ? 'is-flipped' : ''} ${fresh ? 'is-new' : ''}`}
             style={style}
             data-widget-id={def.id}
+            data-instance-id={instanceId}
             {...restDragProps}
             {...pointerProps}
         >

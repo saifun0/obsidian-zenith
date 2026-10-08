@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Menu } from 'obsidian';
-import { LayoutGrid, Check, LayoutTemplate, Bell } from 'lucide-react';
+import { LayoutGrid, Check, LayoutTemplate, Bell, Plus } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
@@ -19,6 +19,7 @@ import {
     type LayoutSnapshot,
 } from '../dashboardPresets';
 import { DashboardGrid } from './DashboardGrid';
+import type { ArrangeTab } from './ArrangePanel';
 import { backgroundClasses, backgroundStyle } from '../dashboardBackground';
 
 // ── Helpers ──────────────────────────────────────────
@@ -30,6 +31,15 @@ function greetingKey(hour: number): string {
     if (hour < 18) return 'dashboard.goodAfternoon';
     return 'dashboard.goodEvening';
 }
+
+/**
+ * The narrowest pane the arranging panel opens by itself in.
+ *
+ * Wide enough that the board can move over for the panel and still be a grid.
+ * Narrower than this the panel has to lie over the board's right-hand side, so
+ * it waits to be asked for. The stylesheet makes room at the same width.
+ */
+const PANEL_ROOM_PX = 1240;
 
 /**
  * Weekday apart from the rest, and no year suffix.
@@ -80,7 +90,29 @@ export const DashboardApp: React.FC = () => {
         if (heading === 'custom') return headingText.trim();
         return '';
     }, [heading, headingText, t]);
-    const [editing, setEditing] = useState(false);
+    const [editing, setEditingState] = useState(false);
+
+    /* The arranging panel: the gallery, the grid and the saved arrangements.
+       It is drawn by the grid, which holds everything it shows, into an
+       element of this component's — it has to be placed against the pane, and
+       the grid lives inside the canvas. */
+    const rootRef = useRef<HTMLDivElement>(null);
+    const [panelHost, setPanelHost] = useState<HTMLDivElement | null>(null);
+    const [panelOpen, setPanelOpen] = useState(false);
+    const [panelTab, setPanelTab] = useState<ArrangeTab>('widgets');
+
+    /* Arranging opens the panel with it where there is room for both — the
+       gallery used to be on screen for the whole of edit mode, and on a wide
+       pane it still is. Leaving edit mode always closes it. */
+    const setEditing = useCallback((next: boolean | ((was: boolean) => boolean)) => {
+        setEditingState((was) => {
+            const on = typeof next === 'function' ? next(was) : next;
+            if (on !== was) {
+                setPanelOpen(on && (rootRef.current?.offsetWidth ?? 0) >= PANEL_ROOM_PX);
+            }
+            return on;
+        });
+    }, []);
 
     // Esc is the quickest way out of edit mode.
     useEffect(() => {
@@ -90,7 +122,7 @@ export const DashboardApp: React.FC = () => {
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [editing]);
+    }, [editing, setEditing]);
 
     /**
      * The saved-desks menu.
@@ -225,7 +257,10 @@ export const DashboardApp: React.FC = () => {
     const bgClasses = backgroundClasses(bg, bgStyle !== null);
 
     return (
-        <div className={`zenith-dashboard ${bgClasses}`}>
+        <div
+            ref={rootRef}
+            className={`zenith-dashboard ${bgClasses}${editing && panelOpen ? ' has-panel' : ''}`}
+        >
             {/* The wallpaper, as a layer of its own rather than a background on
                 the board: it has to sit under the cards and over nothing, and
                 it carries a scrim the board is read through. `aria-hidden`
@@ -282,6 +317,21 @@ export const DashboardApp: React.FC = () => {
                                 {editing ? <Check size={16} /> : <LayoutGrid size={16} />}
                             </button>
                         </div>
+                        {/* What arranging needs besides the board: the gallery, the grid,
+                            the saved arrangements. */}
+                        {editing && (
+                            <button
+                                className={`zenith-dashboard__action zenith-dashboard__action--lone ${
+                                    panelOpen ? 'is-active' : ''
+                                }`}
+                                onClick={() => setPanelOpen((v) => !v)}
+                                aria-pressed={panelOpen}
+                                aria-label={t('dashboard.panel')}
+                                title={t('dashboard.panel')}
+                            >
+                                <Plus size={16} />
+                            </button>
+                        )}
                         {/* Only once there is something in it: a bell over an empty
                             center is a control that has nothing to say. */}
                         {bell && (
@@ -318,8 +368,25 @@ export const DashboardApp: React.FC = () => {
                     </header>
                 )}
 
-                <DashboardGrid editing={editing} onEditingChange={setEditing} />
+                <DashboardGrid
+                    editing={editing}
+                    onEditingChange={setEditing}
+                    panel={
+                        panelOpen && panelHost
+                            ? {
+                                  host: panelHost,
+                                  tab: panelTab,
+                                  onTab: setPanelTab,
+                                  onClose: () => setPanelOpen(false),
+                              }
+                            : null
+                    }
+                />
             </div>
+
+            {/* Where the arranging panel is drawn: against the pane, not the
+                canvas, so it has the pane's right-hand margin to stand in. */}
+            <div className="zenith-dashboard__panelwrap" ref={setPanelHost} />
         </div>
     );
 };
