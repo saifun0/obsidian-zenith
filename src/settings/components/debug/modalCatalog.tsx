@@ -13,6 +13,7 @@ import { IconPickerModal } from '../../../core/IconPickerModal';
 import { PromptModal } from '../../../core/PromptModal';
 import { VaultScaffoldModal } from '../../../core/VaultScaffoldModal';
 import { ImagePickerModal } from '../../../components/shared/ImagePickerModal';
+import { VaultFilePickerModal } from '../../../components/shared/VaultFilePickerModal';
 import { QuickAddTaskModal } from '../../../modules/tasks/QuickAddTaskModal';
 import { TaskEditorModal } from '../../../modules/tasks/components/TaskEditorModal';
 import { SubtaskEditorModal } from '../../../modules/tasks/components/SubtaskEditorModal';
@@ -331,6 +332,14 @@ export const MODAL_CATALOG: readonly ModalEntry[] = [
         kind: 'obsidian',
         create: ({ app, report }) =>
             new ImagePickerModal(app, t('settings.vaultImage.search'), report),
+    },
+    {
+        id: 'filePicker',
+        name: 'VaultFilePickerModal',
+        owner: 'core',
+        kind: 'obsidian',
+        create: ({ app, report }) =>
+            new VaultFilePickerModal(app, t('utilities.pick.note'), true, report),
     },
     {
         id: 'scaffold',

@@ -3,7 +3,8 @@ import { Plus, Check, LayoutGrid } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { SearchField } from '../../../components/ui/fields';
 import { sizeDims, type WidgetSize } from '../grid/gridTypes';
-import { useTranslation } from '../../../core/i18n';
+import { useTranslation, type Translator } from '../../../core/i18n';
+import { moduleNameKey } from '../../../core/moduleLabels';
 
 export interface AddableWidget {
     id: string;
@@ -40,6 +41,17 @@ function moduleOf(id: string): string {
 
 function prettyModule(key: string): string {
     return key.charAt(0).toUpperCase() + key.slice(1).replace(/[-_]/g, ' ');
+}
+
+/**
+ * What a group of the gallery is called: the module's own name, in the user's
+ * language. The id made readable is the fallback, not the answer — a module
+ * may be called something its id is not (the id `picture` is Utilities), and
+ * a heading in English over a list in Russian is one list in two languages.
+ */
+function groupLabel(key: string, t: Translator): string {
+    const nameKey = moduleNameKey(key);
+    return t.has(nameKey) ? t(nameKey) : prettyModule(key);
 }
 
 /** A miniature of the widget's footprint on the current grid. */
@@ -112,13 +124,13 @@ export const AddWidgetSheet: FC<AddWidgetSheetProps> = ({
         return [...map.entries()]
             .map(([key, items]) => ({
                 key,
-                label: prettyModule(key),
+                label: groupLabel(key, t),
                 items: [...items].sort(
                     (a, b) => Number(a.added) - Number(b.added) || a.label.localeCompare(b.label)
                 ),
             }))
             .sort((a, b) => a.label.localeCompare(b.label));
-    }, [filtered]);
+    }, [filtered, t]);
 
     const showSearch = all.length > SEARCH_THRESHOLD;
 

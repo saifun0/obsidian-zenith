@@ -26,51 +26,5 @@
     height: 100%;
 }
 
-/* Nothing chosen, or something chosen that cannot be shown. One quiet line —
-   a widget is not the place to explain the settings page. */
-.zenith-picture__note {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin: 0;
-    color: var(--zenith-text-faint);
-    font-size: 0.78rem;
-    text-wrap: pretty;
-}
-
-/* ── Choosing the picture, on the back of the card ──
-   Which picture a card shows belongs to that card, so the controls are on its
-   settings face rather than on a settings page — a page can only ever say
-   "the picture", and a board is allowed to hold three.
-
-   The address gets a line of its own instead of a row's right-hand half: a URL
-   and a vault path are both far longer than the twenty-odd pixels a label
-   leaves over, and a field you cannot read the end of is a field you cannot
-   check. */
-.zenith-picture-settings__field {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    min-width: 0;
-}
-
-/* The small shared field, monospaced because it holds a path or an address.
-   A path that names nothing turns it red (`is-invalid`) rather than adding a
-   line of its own: the field is both the report and the repair. */
-.zenith-root input.zenith-picture-settings__input {
-    flex: 1;
-    min-width: 0;
-}
-
-/* The panel styles every button as a pill in a group; this one stands alone
-   beside a field and takes the field's shape instead. */
-.zenith-widget-settings button.zenith-picture-settings__browse {
-    flex: none;
-    width: 26px;
-    height: 26px;
-    min-width: 0;
-    padding: 0;
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-sm);
-    background: var(--zenith-bg-primary);
-}
+/* The quiet line it shows instead, and the field on the back of the card, are
+   the ones every card of the module shares — see utilities.css. */

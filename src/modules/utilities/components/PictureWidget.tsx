@@ -40,7 +40,7 @@ export const PictureWidget: React.FC<DashboardWidgetProps> = ({ instanceId = 'pi
 
     if (state.kind !== 'ready') {
         return (
-            <p className="zenith-picture__note">
+            <p className="zenith-util__note">
                 {state.kind === 'unusable' && <ImageOff size={13} />}
                 {t(state.kind === 'empty' ? 'picture.empty' : 'picture.unusable')}
             </p>
@@ -49,7 +49,7 @@ export const PictureWidget: React.FC<DashboardWidgetProps> = ({ instanceId = 'pi
 
     if (failedSrc === state.src) {
         return (
-            <p className="zenith-picture__note">
+            <p className="zenith-util__note">
                 <ImageOff size={13} />
                 {t('picture.failed')}
             </p>

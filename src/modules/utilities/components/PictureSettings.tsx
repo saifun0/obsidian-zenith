@@ -65,10 +65,10 @@ export const PictureSettings: React.FC<WidgetSettingsProps> = ({ instanceId }) =
             {/* The address and the path are one row, not two: only one of them
                 is ever the answer, and a form that shows both asks the question
                 twice. */}
-            <div className="zenith-picture-settings__field">
+            <div className="zenith-util-settings__field">
                 <input
                     type="text"
-                    className={`zenith-input zenith-input--sm is-mono zenith-picture-settings__input${missing && vault ? ' is-invalid' : ''}`}
+                    className={`zenith-input zenith-input--sm is-mono zenith-util-settings__input${missing && vault ? ' is-invalid' : ''}`}
                     value={vault ? config.picturePath : config.pictureUrl}
                     placeholder={t(vault ? 'picture.path.placeholder' : 'picture.url.placeholder')}
                     spellCheck={false}
@@ -85,7 +85,7 @@ export const PictureSettings: React.FC<WidgetSettingsProps> = ({ instanceId }) =
                 />
                 {vault && (
                     <button
-                        className="zenith-picture-settings__browse"
+                        className="zenith-util-settings__browse"
                         onClick={pick}
                         aria-label={t('settings.vaultImage.pick')}
                         title={t('settings.vaultImage.pick')}

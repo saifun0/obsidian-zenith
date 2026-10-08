@@ -4,6 +4,7 @@ import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import {
     prettifyWidgetId,
+    widgetDescription,
     widgetLabel,
     useDashboardWidgets,
     widgetSizes,
@@ -418,7 +419,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
             id: def.id,
             label: widgetLabel(def, t),
             icon: def.icon,
-            description: def.description,
+            description: widgetDescription(def, t),
             defaultSize: widgetSizes(def).defaultSize,
         }),
         // `widgetLabel` reads the translator, so an empty list froze every

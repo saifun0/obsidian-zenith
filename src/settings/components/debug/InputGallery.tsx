@@ -732,12 +732,12 @@ const InlineFields: React.FC = () => {
                     />
                 </RootScope>
             </Demo>
-            <Demo label="zenith-picture-settings__input" source="PictureSettings">
+            <Demo label="zenith-util-settings__input" source="PictureSettings">
                 <RootScope>
-                    <div className="zenith-picture-settings__field">
+                    <div className="zenith-util-settings__field">
                         <input
                             type="text"
-                            className="zenith-input zenith-input--sm is-mono zenith-picture-settings__input"
+                            className="zenith-input zenith-input--sm is-mono zenith-util-settings__input"
                             placeholder={t('picture.path.placeholder')}
                             spellCheck={false}
                             {...picture}
@@ -745,12 +745,12 @@ const InlineFields: React.FC = () => {
                     </div>
                 </RootScope>
             </Demo>
-            <Demo label="zenith-picture-settings__input · is-invalid" source="PictureSettings">
+            <Demo label="zenith-util-settings__input · is-invalid" source="PictureSettings">
                 <RootScope>
-                    <div className="zenith-picture-settings__field">
+                    <div className="zenith-util-settings__field">
                         <input
                             type="text"
-                            className="zenith-input zenith-input--sm is-mono zenith-picture-settings__input is-invalid"
+                            className="zenith-input zenith-input--sm is-mono zenith-util-settings__input is-invalid"
                             spellCheck={false}
                             {...missingPicture}
                         />

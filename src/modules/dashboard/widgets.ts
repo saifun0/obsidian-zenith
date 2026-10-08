@@ -80,6 +80,13 @@ export interface DashboardWidgetDefinition {
      * the gallery can only repeat the widget's own name back at the user.
      */
     description?: string;
+    /**
+     * Translation key for that line, winning over `description` when the
+     * dictionary has it — the same pairing as `title` and `titleKey`, and for
+     * the same reason: a gallery in one language describing its widgets in
+     * another.
+     */
+    descriptionKey?: string;
     /** Lucide icon name (kebab-case), shown in the header. */
     icon?: string;
     /**
@@ -156,6 +163,15 @@ export function widgetLabel(
 ): string {
     if (def.titleKey && t.has(def.titleKey)) return t(def.titleKey);
     return def.title ?? prettifyWidgetId(def.id);
+}
+
+/** The gallery's one line on a widget, in the user's language when there is one. */
+export function widgetDescription(
+    def: Pick<DashboardWidgetDefinition, 'description' | 'descriptionKey'>,
+    t: Translator
+): string | undefined {
+    if (def.descriptionKey && t.has(def.descriptionKey)) return t(def.descriptionKey);
+    return def.description;
 }
 
 class DashboardWidgetRegistry {

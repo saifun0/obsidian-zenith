@@ -15,7 +15,7 @@ import { dashboardTranslations } from '../src/modules/dashboard/i18n';
 import { journalTranslations } from '../src/modules/journal/i18n';
 import { mediaTranslations } from '../src/modules/media/i18n';
 import { navigatorTranslations } from '../src/modules/navigator/i18n';
-import { pictureTranslations } from '../src/modules/picture/i18n';
+import { utilitiesTranslations } from '../src/modules/utilities/i18n';
 import { prayerTranslations } from '../src/modules/prayer/i18n';
 import { projectsTranslations } from '../src/modules/projects/i18n';
 import { searchTranslations } from '../src/modules/search/i18n';
@@ -32,7 +32,7 @@ const BUILT_IN: Array<[string, TranslationTable]> = [
     ['journal', journalTranslations],
     ['media', mediaTranslations],
     ['navigator', navigatorTranslations],
-    ['picture', pictureTranslations],
+    ['picture', utilitiesTranslations],
     ['prayer', prayerTranslations],
     ['projects', projectsTranslations],
     ['search', searchTranslations],
@@ -195,6 +195,10 @@ describe('built-in module chunks', () => {
             .filter((entry) => entry.isDirectory())
             .map((entry) => entry.name)
             .sort();
-        expect(BUILT_IN.map(([id]) => id).sort()).toEqual(folders);
+        // A module's folder is its id — except where the id is older than the
+        // name. Utilities began as the picture module and keeps that id, so
+        // that settings, profiles and other devices still know it.
+        const folderOf: Record<string, string> = { picture: 'utilities' };
+        expect(BUILT_IN.map(([id]) => folderOf[id] ?? id).sort()).toEqual(folders);
     });
 });

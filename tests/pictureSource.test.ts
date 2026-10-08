@@ -4,7 +4,7 @@ import {
     normalizePictureSettings,
     pictureState,
     type PictureSettings,
-} from '../src/modules/picture/pictureSource';
+} from '../src/modules/utilities/pictureSource';
 
 const base: PictureSettings = {
     pictureSource: 'vault',

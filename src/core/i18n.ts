@@ -13,6 +13,7 @@ import { DASHBOARD_STRINGS } from '../modules/dashboard/strings';
 import { STUDY_STRINGS } from '../modules/study/strings';
 import { SEARCH_STRINGS } from '../modules/search/strings';
 import { EDITOR_STRINGS } from '../modules/editor/strings';
+import { UTILITIES_STRINGS } from '../modules/utilities/strings';
 import { ZH } from './i18n.zh';
 
 /**
@@ -413,6 +414,8 @@ const EN: Dict = {
         'Every icon Zenith can draw. Opened from folder icons, projects, content types and journal trackers.',
     'debug.modals.desc.imagePicker':
         'Pictures in the vault, newest first. Opened from picture settings and image fields.',
+    'debug.modals.desc.filePicker':
+        'Notes or files in the vault, newest first. Opened from the back of the text, links and quick-note cards.',
     'debug.modals.desc.scaffold':
         'Creates the vault folder structure and moves everything at the top level into the archive.',
     'debug.modals.desc.quickAddTask':
@@ -2144,6 +2147,8 @@ const RU: Dict = {
         'Все иконки, которые умеет рисовать Zenith. Открывается из иконок папок, проектов, типов контента и трекеров журнала.',
     'debug.modals.desc.imagePicker':
         'Картинки из хранилища, свежие сверху. Открывается из настроек картинки и полей с изображением.',
+    'debug.modals.desc.filePicker':
+        'Заметки или файлы из хранилища, свежие сверху. Открывается с оборота карточек текста, ссылок и быстрой записи.',
     'debug.modals.desc.scaffold':
         'Создаёт структуру папок хранилища и переносит всё, что лежит в корне, в архив.',
     'debug.modals.desc.quickAddTask':
@@ -3525,6 +3530,7 @@ export const DICTS: Record<Locale, Dict> = {
         ...STUDY_STRINGS.en,
         ...SEARCH_STRINGS.en,
         ...EDITOR_STRINGS.en,
+        ...UTILITIES_STRINGS.en,
     },
     ru: {
         ...RU,
@@ -3539,6 +3545,7 @@ export const DICTS: Record<Locale, Dict> = {
         ...STUDY_STRINGS.ru,
         ...SEARCH_STRINGS.ru,
         ...EDITOR_STRINGS.ru,
+        ...UTILITIES_STRINGS.ru,
     },
     zh: ZH,
 };
