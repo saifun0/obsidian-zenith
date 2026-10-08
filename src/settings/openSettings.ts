@@ -25,6 +25,18 @@ export function openZenithSettings(plugin: ZenithPlugin, moduleId?: string): voi
     setting?.openTabById?.(plugin.manifest.id);
 }
 
+/**
+ * Whether a module has anything to show on a settings page.
+ *
+ * The journal is asked about by name because it brings a hand-written page
+ * rather than a schema — the same exception the settings app makes when it
+ * draws the page. One function for everything that offers a way there, so no
+ * list and no link can offer a page that opens onto nothing.
+ */
+export function moduleHasSettings(plugin: ZenithPlugin, moduleId: string): boolean {
+    return moduleId === 'journal' || !!plugin.moduleManager.get(moduleId)?.getSettingsSchema?.();
+}
+
 /** The module page asked for, if any, handed over once. */
 export function takeSettingsPage(): string | null {
     const page = pending;

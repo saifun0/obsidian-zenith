@@ -32,7 +32,7 @@ import { CoreSettingsForm } from '../schema/CoreSettingsForm';
 import { appearanceSchema, generalSchema, notificationsSchema } from '../schema/coreSchemas';
 import { featureOnlySchema } from '../schema/featureGroup';
 import { CORE_MODULE, featureEnabled } from '../../core/features';
-import { takeSettingsPage } from '../openSettings';
+import { moduleHasSettings, takeSettingsPage } from '../openSettings';
 
 const CORE_FEATURES = featureOnlySchema(CORE_MODULE);
 
@@ -111,15 +111,11 @@ export const SettingsApp: React.FC = () => {
     );
 
     /**
-     * Whether a module has anything to show on a settings page.
-     *
-     * The journal is asked about by name because it brings a hand-written page
-     * rather than a schema — the same exception `renderModuleSettings` makes,
-     * and the two have to agree or the list offers a row that opens nothing, or
-     * hides one that would have worked.
+     * Whether a module has anything to show on a settings page. It has to agree
+     * with `renderModuleSettings`, or the list offers a row that opens nothing,
+     * or hides one that would have worked — see `moduleHasSettings`.
      */
-    const hasSettings = (id: string) =>
-        id === 'journal' || !!plugin.moduleManager.get(id)?.getSettingsSchema?.();
+    const hasSettings = (id: string) => moduleHasSettings(plugin, id);
 
     const renderRootMenu = () => {
         const modules = configurableModules(

@@ -1992,6 +1992,7 @@ export const ZH: Record<string, string> = {
     'dashboard.panel': '小组件、网格和布局',
     'dashboard.widget.name': '名称',
     'dashboard.widget.fit': '高度随内容',
+    'dashboard.widget.moduleSettings': '模块设置',
     'dashboard.widget.fit.on': '开',
     'dashboard.widget.fit.off': '关',
     'widget.countdowns': '倒计时',

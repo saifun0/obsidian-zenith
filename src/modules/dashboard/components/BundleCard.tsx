@@ -315,7 +315,13 @@ export const BundleCard: FC<BundleCardProps> = ({
                         </div>
 
                         {/* The way to the back of the card, as on every other:
-                            the settings of whichever widget is on top. */}
+                            the settings of whichever widget is on top. A rule
+                            stands between it and the icons, because it is not
+                            one of them — they choose a widget, it opens the
+                            card. */}
+                        {!editing && onConfigure && (
+                            <span className="zenith-bundle__sep" aria-hidden="true" />
+                        )}
                         {!editing && onConfigure && (
                             <button
                                 type="button"

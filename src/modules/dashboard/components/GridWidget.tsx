@@ -7,7 +7,14 @@ import React, {
     type CSSProperties,
     type FC,
 } from 'react';
-import { MoreHorizontal, RotateCcw, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import {
+    MoreHorizontal,
+    RotateCcw,
+    Settings2,
+    SlidersHorizontal,
+    Trash2,
+    X,
+} from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
 import { widgetLabel } from '../widgets';
@@ -72,11 +79,15 @@ interface GridWidgetProps {
     onSetWidth: (w: number) => void;
     onSetHeight: (h: number) => void;
     onRemove: () => void;
+    /** Open the settings page of the module this widget is from, when it has one. */
+    onModuleSettings?: () => void;
     /**
      * Replaces the card body entirely. Used by bundles, which draw their own
      * cards — one per member — inside the cell this component provides.
      */
     children?: React.ReactNode;
+    /** What the settings face opens with, in a card's own settings' place — a bundle's top widget's. */
+    panelLead?: React.ReactNode;
     /** Extra controls appended to the settings face — the bundle inspector. */
     panelExtra?: React.ReactNode;
 }
@@ -121,7 +132,9 @@ export const GridWidget: FC<GridWidgetProps> = ({
     onSetWidth,
     onSetHeight,
     onRemove,
+    onModuleSettings,
     children,
+    panelLead,
     panelExtra,
 }) => {
     const t = useTranslation();
@@ -238,6 +251,23 @@ export const GridWidget: FC<GridWidgetProps> = ({
             if (away) el.setAttribute('inert', '');
             else el.removeAttribute('inert');
         };
+        /* The focus goes round with the card. Whatever turned it was on the
+           face now turning away — the ⋯ on the front, the arrow on the back —
+           and a face must not be taken out of reach with the focus still
+           inside it: the focus would be dropped on the floor, and a keyboard
+           would have to find the card again from the top of the pane. */
+        const from = turned ? front.current : back.current;
+        const to = turned ? back.current : front.current;
+        const held = from?.ownerDocument.activeElement;
+        if (from && to && held && from.contains(held)) {
+            to.removeAttribute('inert');
+            // While arranging the front has no ⋯; the cell itself is the stop.
+            const next =
+                to.querySelector<HTMLElement>(
+                    turned ? '.zenith-widget-settings__done' : '.zenith-widget-card__more'
+                ) ?? to.closest<HTMLElement>('.zenith-grid__item');
+            next?.focus({ preventScroll: true });
+        }
         turn(front.current, turned);
         turn(back.current, !turned);
     }, [turned, hasBack]);
@@ -354,7 +384,11 @@ export const GridWidget: FC<GridWidgetProps> = ({
                 </button>
             )}
 
-            <div className="zenith-widget-flip__front" ref={front} aria-hidden={turned}>
+            {/* Neither face says `aria-hidden`: `inert` (set above) already takes
+                the one facing away out of the accessibility tree, and unlike
+                `aria-hidden` it may be set while something inside still holds
+                the focus. */}
+            <div className="zenith-widget-flip__front" ref={front}>
                 {children ?? (
                     <div className="zenith-widget-card" ref={cardEl}>
                         {/* Every widget wears the same header. A widget that
@@ -406,7 +440,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
             </div>
 
             {hasBack && (
-                <div className="zenith-widget-settings" ref={back} aria-hidden={!turned}>
+                <div className="zenith-widget-settings" ref={back}>
                     <div className="zenith-widget-settings__header">
                         <DynamicIcon name={def.icon} size={13} />
                         <span className="zenith-widget-settings__title">{title}</span>
@@ -427,92 +461,90 @@ export const GridWidget: FC<GridWidgetProps> = ({
                             page: that page has no way to say which of three
                             pictures is being talked about. */}
                         <MemberSettings def={def} instanceId={instanceId} />
+                        {panelLead}
 
-                        {/* How big the card is belongs to arranging the board,
-                            so it is here only while that is what is being done.
-                            Turned over on its own, the card shows what it is
-                            for: its name and what is in it. */}
-                        {editing && (
-                            <>
-                                {/* Presets set a shape; the steppers set an exact size.
-                                Without them the column count would have nothing to
-                                act on, since every preset is either half the grid or
-                                all of it. */}
-                                {sizes.length > 1 && (
-                                    <div className="zenith-widget-settings__row">
-                                        <span className="zenith-widget-settings__label">
-                                            {t('dashboard.widget.preset')}
-                                        </span>
-                                        <span className="zenith-widget-settings__presets">
-                                            {sizes.map((s) => (
-                                                <button
-                                                    key={s}
-                                                    className={
-                                                        s === size && !customWidth
-                                                            ? 'is-active'
-                                                            : ''
-                                                    }
-                                                    onClick={() => onResize(s)}
-                                                    aria-pressed={s === size && !customWidth}
-                                                >
-                                                    {SIZE_LABEL[s]}
-                                                </button>
-                                            ))}
-                                        </span>
-                                    </div>
-                                )}
+                        {/* How big the card is — on the back however it was
+                            reached. For a while it was there only while
+                            arranging, which left a widget with no settings of
+                            its own turning over to a single button, the one
+                            that takes it off the board.
+                            Presets set a shape; the steppers set an exact size.
+                            Without them the column count would have nothing to
+                            act on, since every preset is either half the grid
+                            or all of it. */}
+                        {sizes.length > 1 && (
+                            <div className="zenith-widget-settings__row">
+                                <span className="zenith-widget-settings__label">
+                                    {t('dashboard.widget.preset')}
+                                </span>
+                                <span className="zenith-widget-settings__presets">
+                                    {sizes.map((s) => (
+                                        <button
+                                            key={s}
+                                            className={
+                                                s === size && !customWidth
+                                                    ? 'is-active'
+                                                    : ''
+                                            }
+                                            onClick={() => onResize(s)}
+                                            aria-pressed={s === size && !customWidth}
+                                        >
+                                            {SIZE_LABEL[s]}
+                                        </button>
+                                    ))}
+                                </span>
+                            </div>
+                        )}
 
-                                {stepper(
-                                    t('dashboard.widget.width'),
-                                    `${width}/${columns}`,
-                                    t('dashboard.widget.widthHint'),
-                                    () => onSetWidth(width - 1),
-                                    () => onSetWidth(width + 1),
-                                    width > 1,
-                                    width < columns,
-                                    t('dashboard.widget.narrower'),
-                                    t('dashboard.widget.wider')
-                                )}
+                        {stepper(
+                            t('dashboard.widget.width'),
+                            `${width}/${columns}`,
+                            t('dashboard.widget.widthHint'),
+                            () => onSetWidth(width - 1),
+                            () => onSetWidth(width + 1),
+                            width > 1,
+                            width < columns,
+                            t('dashboard.widget.narrower'),
+                            t('dashboard.widget.wider')
+                        )}
 
-                                {stepper(
-                                    t('dashboard.widget.height'),
-                                    t.plural('dashboard.widget.rows', height),
-                                    t('dashboard.widget.heightHint'),
-                                    () => onSetHeight(height - 1),
-                                    () => onSetHeight(height + 1),
-                                    height > 1,
-                                    height < maxRows,
-                                    t('dashboard.widget.shorter'),
-                                    t('dashboard.widget.taller')
-                                )}
+                        {stepper(
+                            t('dashboard.widget.height'),
+                            t.plural('dashboard.widget.rows', height),
+                            t('dashboard.widget.heightHint'),
+                            () => onSetHeight(height - 1),
+                            () => onSetHeight(height + 1),
+                            height > 1,
+                            height < maxRows,
+                            t('dashboard.widget.shorter'),
+                            t('dashboard.widget.taller')
+                        )}
 
-                                {/* For a widget that can be measured: the height
-                                    above is then how tall the card may get, not
-                                    how tall it is. */}
-                                {canFit && onSetFixed && (
-                                    <div className="zenith-widget-settings__row">
-                                        <span className="zenith-widget-settings__label">
-                                            {t('dashboard.widget.fit')}
-                                        </span>
-                                        <span className="zenith-widget-settings__presets">
-                                            {[false, true].map((hold) => (
-                                                <button
-                                                    key={String(hold)}
-                                                    className={hold === fixed ? 'is-active' : ''}
-                                                    aria-pressed={hold === fixed}
-                                                    onClick={() => onSetFixed(hold)}
-                                                >
-                                                    {t(
-                                                        hold
-                                                            ? 'dashboard.widget.fit.off'
-                                                            : 'dashboard.widget.fit.on'
-                                                    )}
-                                                </button>
-                                            ))}
-                                        </span>
-                                    </div>
-                                )}
-                            </>
+                        {/* For a widget that can be measured: the height
+                            above is then how tall the card may get, not
+                            how tall it is. */}
+                        {canFit && onSetFixed && (
+                            <div className="zenith-widget-settings__row">
+                                <span className="zenith-widget-settings__label">
+                                    {t('dashboard.widget.fit')}
+                                </span>
+                                <span className="zenith-widget-settings__presets">
+                                    {[false, true].map((hold) => (
+                                        <button
+                                            key={String(hold)}
+                                            className={hold === fixed ? 'is-active' : ''}
+                                            aria-pressed={hold === fixed}
+                                            onClick={() => onSetFixed(hold)}
+                                        >
+                                            {t(
+                                                hold
+                                                    ? 'dashboard.widget.fit.off'
+                                                    : 'dashboard.widget.fit.on'
+                                            )}
+                                        </button>
+                                    ))}
+                                </span>
+                            </div>
                         )}
 
                         {panelExtra}
@@ -521,14 +553,30 @@ export const GridWidget: FC<GridWidgetProps> = ({
                             so taking the card off it has to be as well. It only
                             leaves the board — it stays in the gallery — so
                             there is nothing to confirm. */}
-                        <button
-                            type="button"
-                            className="zenith-widget-settings__remove"
-                            onClick={onRemove}
-                        >
-                            <Trash2 size={12} />
-                            {t('dashboard.widget.removeFromDashboard')}
-                        </button>
+                        <div className="zenith-widget-settings__foot">
+                            <button
+                                type="button"
+                                className="zenith-widget-settings__remove"
+                                onClick={onRemove}
+                            >
+                                <Trash2 size={12} />
+                                {t('dashboard.widget.removeFromDashboard')}
+                            </button>
+                            {/* What a card shows is mostly decided on its
+                                module's page — where the weather is for, which
+                                prayers are counted — and the card's back is
+                                where one goes looking for it. */}
+                            {onModuleSettings && (
+                                <button
+                                    type="button"
+                                    className="zenith-widget-settings__module"
+                                    onClick={onModuleSettings}
+                                >
+                                    <Settings2 size={12} />
+                                    {t('dashboard.widget.moduleSettings')}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

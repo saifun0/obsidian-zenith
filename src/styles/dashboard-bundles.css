@@ -229,14 +229,18 @@
 }
 
 /* The way to the card's back sits at the end of the rail, where every other
-   card has it at the end of its header. */
-.zenith-root button.zenith-bundle__more {
-    margin: 0 -6px 0 2px;
+   card has it at the end of its header — past a rule, since the icons before
+   it switch widgets and it does not. */
+.zenith-bundle__sep {
+    flex: none;
+    width: 1px;
+    height: 14px;
+    margin: 0 1px 0 3px;
+    background: var(--zenith-border);
 }
 
-.zenith-bundle:hover .zenith-bundle__more,
-.zenith-bundle:focus-within .zenith-bundle__more {
-    opacity: 1;
+.zenith-root button.zenith-bundle__more {
+    margin: 0 -6px 0 0;
 }
 
 .zenith-bundle__pip-more {

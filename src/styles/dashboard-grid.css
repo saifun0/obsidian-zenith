@@ -377,16 +377,33 @@
     max-width: 14rem;
 }
 
-/* Taking the card off the board: last on its back, and quiet until pointed
-   at — it is there to be found, not to be pressed by accident. */
-.zenith-widget-settings button.zenith-widget-settings__remove {
-    align-self: flex-start;
+/* Last on the back: taking the card off the board at one end, the way to its
+   module's page at the other. Both quiet until pointed at — they are there to
+   be found, not to be pressed by accident. */
+.zenith-widget-settings__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: auto;
+}
+
+.zenith-widget-settings button.zenith-widget-settings__remove,
+.zenith-widget-settings button.zenith-widget-settings__module {
     gap: 5px;
     height: auto;
     min-height: 26px;
-    margin-top: auto;
     padding: 0 8px;
     color: var(--zenith-text-faint);
+}
+
+.zenith-widget-settings button.zenith-widget-settings__remove {
+    margin-left: -8px;
+}
+
+.zenith-widget-settings button.zenith-widget-settings__module {
+    margin-right: -8px;
 }
 
 .zenith-widget-settings button.zenith-widget-settings__remove:hover:not(:disabled) {
@@ -919,30 +936,75 @@
    beside the board. They were three bars under it, which is the one place a
    board being arranged cannot be seen from.
 
-   Its wrapper is a full-height column at the pane's right edge, out of the
-   flow, and exists for the same reason the rail's does: the panel is sticky,
-   and sticky needs a parent that scrolls past it. */
-.zenith-dashboard__panelwrap {
+   Its wrapper is a full-height column inside the canvas, out of the flow, and
+   exists for the same reason the rail's does: the panel is sticky, and sticky
+   needs a parent that scrolls past it.
+
+   Open, it stands between the board and the rail: board, panel, rail, in one
+   line that ends at the pane's right-hand inset.
+
+   The board is never narrowed to make that line fit. It was, and a grid of six
+   columns squeezed by a panel's width fell under the width at which it is a
+   grid at all — what was being arranged turned into the phone's one column
+   under the user's hands. Instead the board *moves*: left, as far as the line
+   needs and no further than the pane's inset. Whatever the line still lacks
+   after that, the panel takes from the board's right-hand edge by lying over
+   it. On a pane with room to spare nothing moves and nothing is covered.
+
+   All of it is arithmetic on widths the stylesheet already knows, so it is done
+   here rather than measured: no frame in which the panel is in the wrong place,
+   and nothing to keep in step when the pane is dragged wider. `100cqi` is the
+   pane (the mount is the query container); the canvas width comes from the
+   setting (`--zenith-dash-canvas`, set on the board's root). */
+.zenith-dashboard {
     --zenith-arrange-w: 320px;
+}
+
+.zenith-dashboard.has-panel {
+    /* The board as it stands: its canvas, or the pane less its gutters. */
+    --zenith-ap-board: min(var(--zenith-dash-canvas, 1200px), 100cqi - 2 * var(--zenith-dash-gutter));
+    /* Board, panel and rail with a gap between each. */
+    --zenith-ap-line: calc(
+        var(--zenith-ap-board) + var(--zenith-arrange-w) + var(--zenith-dash-rail-w) + 2 *
+            var(--zenith-space-md)
+    );
+    /* Where the line has to start to end at the pane's inset, and where the
+       board starts now, centred. */
+    --zenith-ap-start: calc(100cqi - var(--zenith-dash-pad-x) - var(--zenith-ap-line));
+    --zenith-ap-centre: calc((100cqi - var(--zenith-ap-board)) / 2);
+    /* How far the board moves, and how much of it the panel then lies over. */
+    --zenith-ap-shift: clamp(
+        0px,
+        var(--zenith-ap-centre) - var(--zenith-ap-start),
+        var(--zenith-ap-centre) - var(--zenith-dash-pad-x)
+    );
+    --zenith-ap-over: max(0px, var(--zenith-dash-pad-x) - var(--zenith-ap-start));
+}
+
+.zenith-dashboard.has-panel .zenith-dashboard__main {
+    left: calc(-1 * var(--zenith-ap-shift));
+}
+
+.zenith-dashboard__panelwrap {
     position: absolute;
-    top: var(--zenith-dash-pad-top);
-    bottom: var(--zenith-dash-pad-bottom);
-    right: var(--zenith-dash-pad-x);
+    top: 0;
+    bottom: 0;
+    left: calc(100% + var(--zenith-space-md) - var(--zenith-ap-over, 0px));
     width: var(--zenith-arrange-w);
     pointer-events: none;
     z-index: 6;
 }
 
-/* Where the pane has the width, the board moves over and the two stand side
-   by side. Where it has not, the panel lies over the board's right-hand side
-   instead: squeezing the board to make room would drop it below the width at
-   which it is a grid, and what was being arranged would turn into the phone's
-   one column under the user's hands. The width is the same one the panel
-   opens by itself at (`PANEL_ROOM_PX`). */
-@container zenith-dash (min-width: 1240px) {
-    .zenith-dashboard.has-panel {
-        padding-right: calc(var(--zenith-dash-gutter) + 320px + var(--zenith-space-md));
-    }
+/* Nothing in it, nothing of it: the sheet below is in the flow, and an empty
+   one would still hold its margins open under the board. */
+.zenith-dashboard__panelwrap:empty {
+    display: none;
+}
+
+.zenith-dashboard.has-panel .zenith-dashboard__railwrap {
+    left: calc(
+        100% + var(--zenith-space-md) * 2 + var(--zenith-arrange-w) - var(--zenith-ap-over, 0px)
+    );
 }
 
 .zenith-arrange {
@@ -1130,17 +1192,38 @@
     100% { box-shadow: 0 0 0 2px transparent; }
 }
 
-/* ── On a phone: a sheet from the bottom ─────────────
-   There is no margin beside the board to stand in, so the panel comes up over
-   the lower part of the screen and leaves the top of the board in view. */
-@media (max-width: 560px) {
-    .zenith-dashboard__panelwrap {
-        position: fixed;
-        top: auto;
-        right: 0;
-        bottom: 0;
+/* ── On a narrow pane: a sheet from the bottom ───────
+   There is no margin beside the board to move into, and a panel over most of a
+   board one column wide leaves no board. So the panel comes up over the lower
+   part of the pane and leaves the top of the board in view.
+
+   The pane's width, not the window's: a dashboard in a split is as narrow as a
+   phone's whatever the window is.
+
+   Sticky, in the flow after the board, rather than fixed to the screen: fixed
+   is placed against the nearest containing block, and whether a query container
+   — the mount, two levels up — is one has changed between browser versions.
+   Sticky asks nothing of them. It also gives the board the sheet's height to
+   scroll by, so the last card can be brought up from under it.
+
+   The same selectors as above, later, so the board and the rail stay where
+   they are. */
+@container zenith-dash (max-width: 760px) {
+    .zenith-dashboard.has-panel .zenith-dashboard__main {
         left: 0;
+    }
+    .zenith-dashboard.has-panel .zenith-dashboard__railwrap {
+        left: calc(100% + var(--zenith-space-md));
+    }
+    .zenith-dashboard__panelwrap {
+        position: sticky;
+        top: auto;
+        bottom: 0;
+        left: auto;
         width: auto;
+        /* Out to the pane's edges, and down over the board's bottom inset. */
+        margin: var(--zenith-space-md) calc(-1 * var(--zenith-dash-gutter))
+            calc(-1 * var(--zenith-dash-pad-bottom));
         z-index: 30;
     }
     .zenith-arrange {

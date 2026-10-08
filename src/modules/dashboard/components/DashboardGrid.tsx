@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { createPortal } from 'react-dom';
 import { AlertTriangle, Layers } from 'lucide-react';
 import { useZenithStore } from '../../../store';
+import { useApp } from '../../../context/AppContext';
+import { moduleHasSettings, openZenithSettings } from '../../../settings/openSettings';
 import { useTranslation } from '../../../core/i18n';
 import {
     prettifyWidgetId,
@@ -168,6 +170,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     }, []);
 
     const t = useTranslation();
+    const { plugin } = useApp();
     const allRegistered = useDashboardWidgets();
     // A widget whose feature is off is gone the same way a disabled module's
     // widget is. The selector returns a string so a settings write that does
@@ -262,6 +265,24 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
             return (def.multiple && cardNameOf(widgetConfig, id)) || widgetLabel(def, t);
         },
         [defsById, widgetConfig, t]
+    );
+
+    /**
+     * The way from a card to its module's settings page, when there is one.
+     *
+     * Most of what a card shows is decided there rather than on its back — a
+     * back holds what differs between two copies of one widget, and a card
+     * there can only be one of has nothing of the kind. The module is the
+     * widget id's namespace, as in the gallery (`weather.now` → `weather`).
+     */
+    const moduleSettingsOf = useCallback(
+        (id: string): (() => void) | undefined => {
+            const def = defsById.get(id);
+            const [moduleId, ...rest] = (def?.id ?? '').split('.');
+            if (rest.length === 0 || !moduleHasSettings(plugin, moduleId)) return undefined;
+            return () => openZenithSettings(plugin, moduleId);
+        },
+        [defsById, plugin]
     );
 
     /** Presets per placeable item — widgets by their own, bundles by the
@@ -604,11 +625,16 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     const neededNow = useMemo(() => {
         const map = new Map<string, number>();
         for (const item of effective) {
+            // A card turned over stands at the height it was given, not at its
+            // content's: its back is a form, which a card fitted to one line
+            // of text has no room for, and the height being set there is that
+            // ceiling — so it is what the steppers should be seen to change.
+            if (item.id === flippedId) continue;
             const px = needed.get(item.id);
             if (px !== undefined && follows(item)) map.set(item.id, px);
         }
         return map;
-    }, [effective, needed, follows]);
+    }, [effective, needed, follows, flippedId]);
 
     /** The grid as it is drawn: fitted cards at the rows they need, the rest floated up. */
     const shown = useMemo(
@@ -782,18 +808,18 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                             ? { 'data-merge-target': '' }
                                             : {}),
                                     }}
-                                    panelExtra={
-                                      <>
-                                        {/* A widget inside a bundle had no way
-                                            to its own settings short of being
-                                            taken out of it. The back of the
-                                            bundle is the back of whichever
-                                            widget is on top. */}
+                                    /* A widget inside a bundle had no way to
+                                       its own settings short of being taken
+                                       out of it. The back of the bundle opens
+                                       with those of whichever widget is on
+                                       top, where a card's own would be. */
+                                    panelLead={
                                         <MemberSettings
                                             def={defsById.get(bundle.activeId)}
                                             instanceId={bundle.activeId}
                                         />
-                                        {editing && (
+                                    }
+                                    panelExtra={
                                         <BundleInspector
                                             bundle={bundle}
                                             members={bundle.members.map((id) => ({
@@ -820,8 +846,6 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                                 )
                                             }
                                         />
-                                        )}
-                                      </>
                                     }
                                     size={item.size}
                                     sizes={presets?.sizes ?? [item.size]}
@@ -840,6 +864,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                         commitLayout(resizeItem(layout, item.id, next, cfg.columns))
                                     }
                                     onRemove={() => removeWidget(item.id)}
+                                    onModuleSettings={moduleSettingsOf(bundle.activeId)}
                                 >
                                     <BundleCard
                                         bundle={bundle}
@@ -919,6 +944,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                     commitLayout(resizeItem(layout, item.id, next, cfg.columns))
                                 }
                                 onRemove={() => removeWidget(item.id)}
+                                onModuleSettings={moduleSettingsOf(item.id)}
                             />
                         );
                     })}

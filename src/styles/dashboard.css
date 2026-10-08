@@ -271,8 +271,12 @@ body.is-phone .zenith-dashboard__bg::before {
    block always, not only under a wallpaper: the rail is placed against it. */
 .zenith-dashboard__main {
     position: relative;
+    left: 0;
     margin: 0 auto;
     min-width: 0;
+    /* It moves over when the arranging panel takes the place beside it — moves,
+       not narrows. See `.has-panel` in the grid's stylesheet. */
+    transition: left var(--zenith-transition);
 }
 
 /* A full-height column standing just outside the board's right edge and taken
@@ -292,6 +296,9 @@ body.is-phone .zenith-dashboard__bg::before {
     left: calc(100% + var(--zenith-space-md));
     width: var(--zenith-dash-rail-w);
     pointer-events: none;
+    /* It steps aside for the arranging panel, which opens between it and the
+       board. */
+    transition: left var(--zenith-transition);
 }
 
 /* Sticky rather than scrolling away with the board: these are the controls FOR
@@ -586,10 +593,11 @@ body.is-phone .zenith-dashboard__bg::before {
     letter-spacing: 0.07em;
 }
 
-/* The way to a card's back. It comes up when the card is pointed at or holds
-   the focus, and takes its place at the end of the header at all times — a
-   title must not jump when the pointer arrives. Where nothing hovers, a long
-   press on the header does the same, and the button is not drawn at all. */
+/* The way to a card's back. Always drawn, and quiet: it used to come up only
+   when the card was pointed at, which kept its place at the end of the header
+   empty the rest of the time — a gap that read as something missing, on every
+   card at once — and hid the one control a card has from anyone who did not
+   happen to hover. A long press on the header does the same on a phone. */
 .zenith-root button.zenith-widget-card__more {
     display: inline-flex;
     align-items: center;
@@ -603,17 +611,11 @@ body.is-phone .zenith-dashboard__bg::before {
     border-radius: var(--zenith-radius-xs);
     background: none;
     box-shadow: none;
-    color: var(--zenith-text-muted);
-    opacity: 0;
+    color: var(--zenith-text-faint);
     cursor: pointer;
     transition:
-        opacity var(--zenith-transition-fast),
+        color var(--zenith-transition-fast),
         background var(--zenith-transition-fast);
-}
-
-.zenith-widget-card:hover .zenith-widget-card__more,
-.zenith-widget-card:focus-within .zenith-widget-card__more {
-    opacity: 1;
 }
 
 .zenith-root button.zenith-widget-card__more:hover {
@@ -622,8 +624,10 @@ body.is-phone .zenith-dashboard__bg::before {
 }
 
 @media (pointer: coarse) {
+    /* A finger's width, not a pointer's. */
     .zenith-root button.zenith-widget-card__more {
-        display: none;
+        width: 30px;
+        height: 30px;
     }
     .zenith-root button.zenith-bundle__pip {
         width: 30px;

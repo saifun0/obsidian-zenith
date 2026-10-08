@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Menu } from 'obsidian';
 import { LayoutGrid, Check, LayoutTemplate, Bell, Plus } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
@@ -20,6 +20,7 @@ import {
 } from '../dashboardPresets';
 import { DashboardGrid } from './DashboardGrid';
 import type { ArrangeTab } from './ArrangePanel';
+import { panelFitsBeside } from '../grid/panelRoom';
 import { backgroundClasses, backgroundStyle } from '../dashboardBackground';
 
 // ── Helpers ──────────────────────────────────────────
@@ -33,13 +34,22 @@ function greetingKey(hour: number): string {
 }
 
 /**
- * The narrowest pane the arranging panel opens by itself in.
- *
- * Wide enough that the board can move over for the panel and still be a grid.
- * Narrower than this the panel has to lie over the board's right-hand side, so
- * it waits to be asked for. The stylesheet makes room at the same width.
+ * Whether the arranging panel can stand beside the board here without lying
+ * over any of it — read off the page, and summed by `panelFitsBeside`.
  */
-const PANEL_ROOM_PX = 1240;
+function fitsBeside(
+    root: HTMLElement,
+    main: HTMLElement,
+    rail: HTMLElement | null,
+    host: HTMLElement | null
+): boolean {
+    // The rail back in the flow is a phone, and a panel in the flow is the
+    // sheet a narrow pane gets: neither has a "beside".
+    if (!rail || getComputedStyle(rail).position !== 'absolute') return false;
+    if (!host || getComputedStyle(host).position !== 'absolute') return false;
+    const gutter = parseFloat(getComputedStyle(root).paddingLeft) || 0;
+    return panelFitsBeside(root.clientWidth, main.offsetWidth, gutter, rail.offsetWidth);
+}
 
 /**
  * Weekday apart from the rest, and no year suffix.
@@ -97,22 +107,33 @@ export const DashboardApp: React.FC = () => {
        element of this component's — it has to be placed against the pane, and
        the grid lives inside the canvas. */
     const rootRef = useRef<HTMLDivElement>(null);
+    const mainRef = useRef<HTMLDivElement>(null);
+    const railRef = useRef<HTMLDivElement>(null);
     const [panelHost, setPanelHost] = useState<HTMLDivElement | null>(null);
     const [panelOpen, setPanelOpen] = useState(false);
     const [panelTab, setPanelTab] = useState<ArrangeTab>('widgets');
 
     /* Arranging opens the panel with it where there is room for both — the
        gallery used to be on screen for the whole of edit mode, and on a wide
-       pane it still is. Leaving edit mode always closes it. */
-    const setEditing = useCallback((next: boolean | ((was: boolean) => boolean)) => {
-        setEditingState((was) => {
-            const on = typeof next === 'function' ? next(was) : next;
-            if (on !== was) {
-                setPanelOpen(on && (rootRef.current?.offsetWidth ?? 0) >= PANEL_ROOM_PX);
-            }
-            return on;
-        });
-    }, []);
+       pane it still is. Where the panel would have to lie over part of the
+       board it waits to be asked for. Leaving edit mode always closes it. */
+    const setEditing = useCallback(
+        (next: boolean | ((was: boolean) => boolean)) => {
+            setEditingState((was) => {
+                const on = typeof next === 'function' ? next(was) : next;
+                if (on !== was) {
+                    setPanelOpen(
+                        on &&
+                            !!rootRef.current &&
+                            !!mainRef.current &&
+                            fitsBeside(rootRef.current, mainRef.current, railRef.current, panelHost)
+                    );
+                }
+                return on;
+            });
+        },
+        [panelHost]
+    );
 
     // Esc is the quickest way out of edit mode.
     useEffect(() => {
@@ -260,6 +281,14 @@ export const DashboardApp: React.FC = () => {
         <div
             ref={rootRef}
             className={`zenith-dashboard ${bgClasses}${editing && panelOpen ? ' has-panel' : ''}`}
+            // The stylesheet works out where the open panel stands, and needs
+            // the canvas width for it; `none` has no arithmetic, so "to the
+            // edges of the pane" is said as a width no pane has.
+            style={
+                {
+                    '--zenith-dash-canvas': `${grid.maxWidth > 0 ? grid.maxWidth : 100000}px`,
+                } as CSSProperties
+            }
         >
             {/* The wallpaper, as a layer of its own rather than a background on
                 the board: it has to sit under the cards and over nothing, and
@@ -272,6 +301,7 @@ export const DashboardApp: React.FC = () => {
                 can reach it; `none` is how "run to the edges of the pane" is
                 expressed. */}
             <div
+                ref={mainRef}
                 className="zenith-dashboard__main"
                 style={{ maxWidth: grid.maxWidth > 0 ? grid.maxWidth : 'none' }}
             >
@@ -279,7 +309,7 @@ export const DashboardApp: React.FC = () => {
                     into the flow and belongs above the board. On a wide one it is
                     lifted out of the flow and stands at the board's own right
                     edge — see the stylesheet. */}
-                <div className="zenith-dashboard__railwrap">
+                <div className="zenith-dashboard__railwrap" ref={railRef}>
                     {/* A rail beside the board rather than a row above it. Above, the
                     buttons owned a full line of the dashboard's width to hold three
                     icons, and pushed the first row of cards down by it; beside it
@@ -382,11 +412,12 @@ export const DashboardApp: React.FC = () => {
                             : null
                     }
                 />
-            </div>
 
-            {/* Where the arranging panel is drawn: against the pane, not the
-                canvas, so it has the pane's right-hand margin to stand in. */}
-            <div className="zenith-dashboard__panelwrap" ref={setPanelHost} />
+                {/* Where the arranging panel is drawn. Inside the canvas, last:
+                    it is placed against the board's right edge, and on a
+                    narrow pane it is the sheet that follows the board. */}
+                <div className="zenith-dashboard__panelwrap" ref={setPanelHost} />
+            </div>
         </div>
     );
 };
