@@ -56,7 +56,7 @@ import {
     type WidgetBundle,
 } from '../grid/bundleTypes';
 import { GridWidget } from './GridWidget';
-import { BundleCard } from './BundleCard';
+import { BundleCard, BundlePips } from './BundleCard';
 import { BundleInspector } from './BundleInspector';
 import { AddWidgetSheet, type AddableWidget } from './AddWidgetSheet';
 import { ArrangePanel, type ArrangeTab } from './ArrangePanel';
@@ -810,11 +810,40 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                     }}
                                     /* A widget inside a bundle had no way to
                                        its own settings short of being taken
-                                       out of it. The back of the bundle opens
-                                       with those of whichever widget is on
-                                       top, where a card's own would be. */
+                                       out of it. The back of the bundle is the
+                                       back of one of its widgets: headed with
+                                       that widget's name, opening with its
+                                       settings where a card's own would be —
+                                       and carrying the rail, so the next
+                                       widget is one tap away rather than a
+                                       turn back, a switch and a turn over.
+                                       Every member is on it: there is no
+                                       swipe here to reach the ones a front's
+                                       rail folds into "+N". */
+                                    backTitle={labelOf(bundle.activeId)}
+                                    backIcon={defsById.get(bundle.activeId)?.icon}
+                                    backHeader={
+                                        <>
+                                            <BundlePips
+                                                members={bundle.members}
+                                                activeId={bundle.activeId}
+                                                defsById={defsById}
+                                                labelOf={labelOf}
+                                                onPick={(widgetId) =>
+                                                    commitBundles(
+                                                        setActive(bundles, bundle.id, widgetId)
+                                                    )
+                                                }
+                                            />
+                                            <span className="zenith-bundle__sep" aria-hidden="true" />
+                                        </>
+                                    }
                                     panelLead={
+                                        // Keyed: two texts in one bundle share a
+                                        // settings component, and one must not
+                                        // inherit what the other was typing.
                                         <MemberSettings
+                                            key={bundle.activeId}
                                             def={defsById.get(bundle.activeId)}
                                             instanceId={bundle.activeId}
                                         />

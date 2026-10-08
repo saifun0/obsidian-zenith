@@ -243,6 +243,13 @@
     margin: 0 -6px 0 0;
 }
 
+/* The same rail on the back of the card, where it picks the widget being set
+   up. In the flow of that header rather than laid over it, so it only needs
+   the rule to sit as close to the way back as it does to the ⋯ on the front. */
+.zenith-widget-settings__header .zenith-bundle__sep {
+    margin: 0 -2px 0 -1px;
+}
+
 .zenith-bundle__pip-more {
     color: var(--zenith-text-faint);
     font-size: 0.62rem;

@@ -61,8 +61,10 @@ from the bottom instead.
 
 **Bundles.** Several widgets in one cell. The header shows their icons, the one on top lit;
 tap an icon — or swipe, or use the arrow keys — to switch. **⋯** at the end turns the card
-over: the settings of the widget on top, then the bundle's own — its size, its name, the
-order of its widgets, and taking one out.
+over to the settings of the widget on top. The same icons stand in the back's header: tap
+another and the back is that widget's, so a widget is set up where it is, without being
+taken out of the bundle first. Below come the bundle's own settings — its size, its name,
+the order of its widgets, and taking one out.
 
 The data keeps itself current. *Zenith: Refresh data* in the command palette reloads it by
 hand.

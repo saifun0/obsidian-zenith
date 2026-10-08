@@ -86,6 +86,14 @@ interface GridWidgetProps {
      * cards — one per member — inside the cell this component provides.
      */
     children?: React.ReactNode;
+    /**
+     * What the back is headed, when that is not what the front is: a bundle's
+     * back is about the widget on top, whatever the bundle itself is called.
+     */
+    backTitle?: string;
+    backIcon?: string;
+    /** Controls in the back's header, before the way back — a bundle's members. */
+    backHeader?: React.ReactNode;
     /** What the settings face opens with, in a card's own settings' place — a bundle's top widget's. */
     panelLead?: React.ReactNode;
     /** Extra controls appended to the settings face — the bundle inspector. */
@@ -134,6 +142,9 @@ export const GridWidget: FC<GridWidgetProps> = ({
     onRemove,
     onModuleSettings,
     children,
+    backTitle,
+    backIcon,
+    backHeader,
     panelLead,
     panelExtra,
 }) => {
@@ -442,8 +453,9 @@ export const GridWidget: FC<GridWidgetProps> = ({
             {hasBack && (
                 <div className="zenith-widget-settings" ref={back}>
                     <div className="zenith-widget-settings__header">
-                        <DynamicIcon name={def.icon} size={13} />
-                        <span className="zenith-widget-settings__title">{title}</span>
+                        <DynamicIcon name={backIcon ?? def.icon} size={13} />
+                        <span className="zenith-widget-settings__title">{backTitle ?? title}</span>
+                        {backHeader}
                         <button
                             className="zenith-widget-settings__done"
                             onClick={() => onFlip?.(false)}

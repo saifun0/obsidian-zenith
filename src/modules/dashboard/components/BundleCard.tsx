@@ -75,6 +75,60 @@ const MemberView: FC<MemberViewProps> = ({
     );
 };
 
+interface BundlePipsProps {
+    /** The members to draw, in rail order. */
+    members: readonly string[];
+    /** The one on top. */
+    activeId: string;
+    defsById: Map<string, DashboardWidgetDefinition>;
+    labelOf: (widgetId: string) => string;
+    onPick: (widgetId: string) => void;
+    /** Members left out of the row, shown as "+N". */
+    overflow?: number;
+}
+
+/**
+ * A bundle's members as a row of their own icons, the one on top lit.
+ *
+ * Drawn twice: in the rail on the front, where it switches the widget being
+ * shown, and in the header of the back, where it switches the widget being set
+ * up. It is the same choice either way — a bundle has one widget on top — so
+ * it is the same control in the same corner on both faces.
+ */
+export const BundlePips: FC<BundlePipsProps> = ({
+    members,
+    activeId,
+    defsById,
+    labelOf,
+    onPick,
+    overflow = 0,
+}) => {
+    const t = useTranslation();
+    return (
+        <div className="zenith-bundle__pips" role="tablist" aria-label={t('dashboard.bundle.role')}>
+            {members.map((id) => (
+                <button
+                    key={id}
+                    type="button"
+                    className={`zenith-bundle__pip ${id === activeId ? 'is-active' : ''}`}
+                    role="tab"
+                    aria-selected={id === activeId}
+                    aria-label={labelOf(id)}
+                    title={labelOf(id)}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onPick(id);
+                    }}
+                >
+                    <DynamicIcon name={defsById.get(id)?.icon} fallback={LayoutGrid} size={13} />
+                </button>
+            ))}
+            {overflow > 0 && <span className="zenith-bundle__pip-more">+{overflow}</span>}
+        </div>
+    );
+};
+
 interface BundleCardProps {
     bundle: WidgetBundle;
     /** Definitions for the members, in rail order. Missing ones are skipped. */
@@ -283,36 +337,14 @@ export const BundleCard: FC<BundleCardProps> = ({
                         bundle, not to whichever member is on top, so they hold
                         still while the cards cross-fade underneath them. */}
                     <div className="zenith-bundle__rail" ref={railEl}>
-                        <div
-                            className="zenith-bundle__pips"
-                            role="tablist"
-                            aria-label={t('dashboard.bundle.role')}
-                        >
-                            {shown.map((id) => (
-                                <button
-                                    key={id}
-                                    className={`zenith-bundle__pip ${id === targetId ? 'is-active' : ''}`}
-                                    role="tab"
-                                    aria-selected={id === targetId}
-                                    aria-label={labelOf(id)}
-                                    title={labelOf(id)}
-                                    onPointerDown={(e) => e.stopPropagation()}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        switchTo(id);
-                                    }}
-                                >
-                                    <DynamicIcon
-                                        name={defsById.get(id)?.icon}
-                                        fallback={LayoutGrid}
-                                        size={13}
-                                    />
-                                </button>
-                            ))}
-                            {overflow > 0 && (
-                                <span className="zenith-bundle__pip-more">+{overflow}</span>
-                            )}
-                        </div>
+                        <BundlePips
+                            members={shown}
+                            activeId={targetId}
+                            defsById={defsById}
+                            labelOf={labelOf}
+                            onPick={switchTo}
+                            overflow={overflow}
+                        />
 
                         {/* The way to the back of the card, as on every other:
                             the settings of whichever widget is on top. A rule
