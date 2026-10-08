@@ -164,8 +164,15 @@
    there is no wrapper to rotate — which matters because the wiggle already owns
    `transform` on the card itself, and two animations on one element overwrite
    each other. */
-.zenith-grid.is-editing .zenith-grid__item {
+.zenith-grid.is-editing .zenith-grid__item,
+.zenith-grid__item.has-back {
     perspective: 1400px;
+}
+
+/* A card turned over outside arrange mode stands above its neighbours: its
+   back may hold a field with a list, and the turn itself swings past them. */
+.zenith-grid__item.has-back {
+    z-index: 3;
 }
 
 .zenith-widget-flip__front {
@@ -180,17 +187,22 @@
    are fine for the seconds a dashboard is being arranged and pointless for the
    rest of its life. */
 .zenith-grid.is-editing .zenith-widget-flip__front,
+.zenith-grid__item.has-back .zenith-widget-flip__front,
 .zenith-widget-settings {
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     transition: transform 460ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.zenith-grid.is-editing .zenith-widget-flip__front {
+/* `.has-back` is a card with its back mounted: every card while arranging,
+   and outside it the one card being set up — for as long as it is turned and
+   the moment it takes to turn back. */
+.zenith-grid.is-editing .zenith-widget-flip__front,
+.zenith-grid__item.has-back .zenith-widget-flip__front {
     transform: rotateY(0deg);
 }
 
-.zenith-grid.is-editing .zenith-grid__item.is-flipped .zenith-widget-flip__front {
+.zenith-grid__item.has-back.is-flipped .zenith-widget-flip__front {
     transform: rotateY(-180deg);
 }
 
@@ -355,6 +367,31 @@
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: var(--zenith-text-normal);
+}
+
+/* A card's own name: a field, not a pill group, so it takes the room the
+   label leaves. */
+.zenith-root input.zenith-widget-settings__name {
+    flex: 1;
+    min-width: 0;
+    max-width: 14rem;
+}
+
+/* Taking the card off the board: last on its back, and quiet until pointed
+   at — it is there to be found, not to be pressed by accident. */
+.zenith-widget-settings button.zenith-widget-settings__remove {
+    align-self: flex-start;
+    gap: 5px;
+    height: auto;
+    min-height: 26px;
+    margin-top: auto;
+    padding: 0 8px;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-widget-settings button.zenith-widget-settings__remove:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--zenith-danger, #e5534b) 14%, transparent);
+    color: var(--zenith-danger, #e5534b);
 }
 
 /* ── Configure badge (edit mode) ─────────────────── */

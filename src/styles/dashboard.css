@@ -586,6 +586,53 @@ body.is-phone .zenith-dashboard__bg::before {
     letter-spacing: 0.07em;
 }
 
+/* The way to a card's back. It comes up when the card is pointed at or holds
+   the focus, and takes its place at the end of the header at all times — a
+   title must not jump when the pointer arrives. Where nothing hovers, a long
+   press on the header does the same, and the button is not drawn at all. */
+.zenith-root button.zenith-widget-card__more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 24px;
+    height: 22px;
+    margin: 0 -6px 0 auto;
+    padding: 0;
+    border: none;
+    border-radius: var(--zenith-radius-xs);
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    opacity: 0;
+    cursor: pointer;
+    transition:
+        opacity var(--zenith-transition-fast),
+        background var(--zenith-transition-fast);
+}
+
+.zenith-widget-card:hover .zenith-widget-card__more,
+.zenith-widget-card:focus-within .zenith-widget-card__more {
+    opacity: 1;
+}
+
+.zenith-root button.zenith-widget-card__more:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+
+@media (pointer: coarse) {
+    .zenith-root button.zenith-widget-card__more {
+        display: none;
+    }
+    /* A long press on the header is the card's menu, not a text selection. */
+    .zenith-widget-card__header {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+}
+
 .zenith-widget-card__body {
     padding: var(--zenith-space-md);
     min-width: 0;

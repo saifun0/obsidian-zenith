@@ -57,7 +57,7 @@ import { BundleInspector } from './BundleInspector';
 import { AddWidgetSheet, type AddableWidget } from './AddWidgetSheet';
 import { ArrangePanel, type ArrangeTab } from './ArrangePanel';
 import { isCopyId, newCopyId, widgetIdOf } from '../grid/widgetInstances';
-import { withoutWidgetConfig } from '../widgetConfig';
+import { cardNameOf, withoutWidgetConfig } from '../widgetConfig';
 import { GridSettingsBar } from './GridSettingsBar';
 import { LayoutPresetsBar } from './LayoutPresetsBar';
 import { featureEnabled } from '../../../core/features';
@@ -235,9 +235,12 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     const labelOf = useCallback(
         (id: string) => {
             const def = defsById.get(id);
-            return def ? widgetLabel(def, t) : prettifyWidgetId(id);
+            if (!def) return prettifyWidgetId(id);
+            // A card the user named is called that wherever it is named: on
+            // its own header, on a bundle's strip, on a drop target.
+            return (def.multiple && cardNameOf(widgetConfig, id)) || widgetLabel(def, t);
         },
-        [defsById, t]
+        [defsById, widgetConfig, t]
     );
 
     /** Presets per placeable item — widgets by their own, bundles by the
@@ -520,10 +523,20 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     );
 
     useEffect(() => {
-        // A card cannot show its settings on a dashboard that is not being
-        // arranged, and dragging one is a different intent from configuring it.
+        // Leaving arrange mode puts every card face up again: whatever was
+        // being set up there is done with.
         if (!editing) setFlippedId(null);
     }, [editing]);
+
+    // Esc turns a card back, the way it leaves arrange mode.
+    useEffect(() => {
+        if (!flippedId) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setFlippedId(null);
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [flippedId]);
 
     const drag = useGridDrag({
         layout,

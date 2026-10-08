@@ -126,7 +126,7 @@ export const ZH: Record<string, string> = {
     'picture.fit.contain': '完整显示',
     'picture.url.placeholder': 'https://…',
     'picture.path.placeholder': 'Attachments/photo.jpg',
-    'picture.empty': '还没有图片。编辑仪表盘布局，把这张卡片翻过来设置。',
+    'picture.empty': '还没有图片。点击卡片标题栏里的 ⋯ 进行设置。',
     'picture.unusable': '这不是可以显示的图片。',
     'picture.failed': '图片加载失败。',
     'settings.dashHeading': '标题',
@@ -1990,6 +1990,7 @@ export const ZH: Record<string, string> = {
     'widget.periodProgress': '进度',
     'command.refresh-data': '刷新数据',
     'dashboard.panel': '小组件、网格和布局',
+    'dashboard.widget.name': '名称',
     'widget.countdowns': '倒计时',
     'widget.lifeWeeks': '人生周历',
     'period.day': '日',
@@ -2362,7 +2363,7 @@ export const ZH: Record<string, string> = {
     'utilities.pick.file': '选择一个文件…',
     'utilities.path.placeholder': '文件夹/笔记.md',
 
-    'utilities.text.empty': '还没有文字。编辑仪表盘布局，把这张卡片翻过来设置。',
+    'utilities.text.empty': '还没有文字。点击卡片标题栏里的 ⋯ 进行设置。',
     'utilities.text.missing': '仓库里没有这篇笔记。',
     'utilities.text.blank': '这篇笔记是空的。',
     'utilities.text.source': '来源',
@@ -2377,7 +2378,7 @@ export const ZH: Record<string, string> = {
     'utilities.text.align.start': '靠左',
     'utilities.text.align.center': '居中',
 
-    'utilities.links.empty': '还没有链接。编辑仪表盘布局，把这张卡片翻过来设置。',
+    'utilities.links.empty': '还没有链接。点击卡片标题栏里的 ⋯ 进行设置。',
     'utilities.links.dead': '这个链接哪儿也去不了：仓库里没有这篇笔记。',
     'utilities.links.target': '笔记或网址',
     'utilities.links.name': '名称',
@@ -2390,7 +2391,7 @@ export const ZH: Record<string, string> = {
     'utilities.recent.by.modified': '改过的',
     'utilities.recent.by.opened': '打开过的',
 
-    'utilities.capture.empty': '还没有可写的地方。编辑仪表盘布局，把这张卡片翻过来设置。',
+    'utilities.capture.empty': '还没有可写的地方。点击卡片标题栏里的 ⋯ 进行设置。',
     'utilities.capture.placeholder': '记下来…',
     'utilities.capture.daily': '今天的笔记',
     'utilities.capture.filed': '刚刚写下的',

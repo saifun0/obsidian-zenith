@@ -59,3 +59,30 @@ export function withoutWidgetConfig(
     delete next[instanceId];
     return next;
 }
+
+/**
+ * The key a card's own name is kept under, in its bucket.
+ *
+ * The bucket is otherwise the widget's: what its fields mean is the widget's
+ * business. This one key is the board's — every card that can be named is
+ * named the same way — so no widget may use it for anything else.
+ */
+export const CARD_NAME_KEY = 'cardName';
+
+/** Longest name a card keeps. A header is one line of a narrow card. */
+export const MAX_CARD_NAME = 40;
+
+/**
+ * The name the user gave a card, or empty when they gave none.
+ *
+ * Empty is the common case and means "call it what the widget is called": two
+ * text cards are both "Text" until someone says which is which.
+ */
+export function cardNameOf(
+    all: Record<string, Record<string, unknown>>,
+    instanceId: string
+): string {
+    const raw = all[instanceId]?.[CARD_NAME_KEY];
+    return typeof raw === 'string' ? raw.trim().slice(0, MAX_CARD_NAME) : '';
+}
+

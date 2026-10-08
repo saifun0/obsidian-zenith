@@ -23,6 +23,7 @@ export const DASHBOARD_STRINGS: { en: Record<string, string>; ru: Record<string,
 
         'command.refresh-data': 'Refresh data',
         'dashboard.panel': 'Widgets, grid and arrangements',
+        'dashboard.widget.name': 'Name',
 
         'widget.periodProgress': 'Progress',
         'widget.countdowns': 'Countdowns',
@@ -85,6 +86,7 @@ export const DASHBOARD_STRINGS: { en: Record<string, string>; ru: Record<string,
 
         'command.refresh-data': 'Обновить данные',
         'dashboard.panel': 'Виджеты, сетка и раскладки',
+        'dashboard.widget.name': 'Название',
 
         'widget.periodProgress': 'Прогресс',
         'widget.countdowns': 'Отсчёты',
