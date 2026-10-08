@@ -8,9 +8,10 @@ dashboard and fill in yourself.
 
 They come with the **Utilities** module (it used to be called *Picture*, and a board that had
 pictures on it keeps them). Add a card from the widget gallery while arranging the board;
-each is set up **on the back of its own card** — arrange the board and tap the card to turn
-it over. Text, Picture, Links, Quick note and Timer can be placed more than once, each copy
-with its own settings.
+each is set up **on the back of its own card** — press **⋯** in the card's header (a long
+press on the header, on a phone) and it turns over. Text, Picture, Links, Quick note and
+Timer can be placed more than once, each copy with its own settings and its own name. See
+[Dashboard](dashboard.md) for the board itself.
 
 ## Text
 
