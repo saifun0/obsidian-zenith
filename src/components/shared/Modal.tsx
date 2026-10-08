@@ -83,13 +83,21 @@ export const Modal: React.FC<ModalProps> = ({
     // from the settings window would otherwise open behind it.
     const [host] = useState(() => activeDocument);
 
+    // The latest `onClose`, read when Escape is pressed rather than named in
+    // the effect below. Most callers pass an arrow written in place, which is
+    // a new function on every render; as a dependency it re-ran the effect on
+    // every keystroke in the form, and the effect's "focus the first field"
+    // took the cursor out of whichever field was being typed in.
+    const onCloseRef = useRef(onClose);
+    onCloseRef.current = onClose;
+
     useEffect(() => {
         if (inline) return;
         const win = host.defaultView ?? window;
         const onKey = (e: KeyboardEvent) => {
             if (fromModalAbove(e, panelRef.current)) return;
             if (e.key === 'Escape') {
-                onClose();
+                onCloseRef.current();
                 return;
             }
             if (e.key !== 'Tab' || !panelRef.current) return;
@@ -117,7 +125,8 @@ export const Modal: React.FC<ModalProps> = ({
         const prevOverflow = host.body.style.overflow;
         host.body.setCssStyles({ overflow: 'hidden' });
 
-        // Focus the first meaningful control, skipping the close button.
+        // Focus the first meaningful control, skipping the close button —
+        // once, when the dialog opens.
         const timer = win.setTimeout(() => {
             const target = panelRef.current?.querySelector<HTMLElement>(
                 'input:not([type="hidden"]), textarea, select, [data-autofocus]'
@@ -130,7 +139,7 @@ export const Modal: React.FC<ModalProps> = ({
             host.body.setCssStyles({ overflow: prevOverflow });
             win.clearTimeout(timer);
         };
-    }, [onClose, inline, host]);
+    }, [inline, host]);
 
     const dialog = (
         <div
