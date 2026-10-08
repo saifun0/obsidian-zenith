@@ -1,6 +1,7 @@
 import React, {
     useEffect,
     useLayoutEffect,
+    useMemo,
     useRef,
     useState,
     type CSSProperties,
@@ -17,6 +18,7 @@ import { useZenithStore } from '../../../store';
 import { useLongPress } from '../../../core/useLongPress';
 import { cardNameOf } from '../widgetConfig';
 import { MemberSettings } from './MemberSettings';
+import { CardFitContext } from '../cardFit';
 
 /** Travel that turns a tap into a drag. Below it, a press is a click. */
 const TAP_SLOP_PX = 6;
@@ -42,6 +44,16 @@ interface GridWidgetProps {
     flipped?: boolean;
     /** Just added from the gallery: marked for a moment so it can be found. */
     fresh?: boolean;
+    /**
+     * The card is following its content: the height it may not pass, and where
+     * to say what it needs. Null for a card drawn at the height it was given.
+     */
+    fit?: { ceilingPx: number; onNeeded: (instanceId: string, px: number) => void } | null;
+    /** The widget can be measured, so the card offers the choice at all. */
+    canFit?: boolean;
+    /** The card is held at its height rather than following its content. */
+    fixed?: boolean;
+    onSetFixed?: (fixed: boolean) => void;
     /** Turn the card over, or back. */
     onFlip?: (flipped: boolean) => void;
     /** Preset the widget is currently rendered at. */
@@ -93,6 +105,10 @@ export const GridWidget: FC<GridWidgetProps> = ({
     dragProps,
     flipped = false,
     fresh = false,
+    fit = null,
+    canFit = false,
+    fixed = false,
+    onSetFixed,
     onFlip,
     size,
     sizes,
@@ -122,6 +138,53 @@ export const GridWidget: FC<GridWidgetProps> = ({
 
     const front = useRef<HTMLDivElement>(null);
     const back = useRef<HTMLDivElement>(null);
+
+    /* A card that follows its content. What the widget draws sits in a wrapper
+       nothing stretches, so the wrapper is exactly as tall as the content
+       wants to be whatever height the card currently has — which is what makes
+       this safe to feed back into the card's height: the number being read
+       does not answer to the number being set. The card's own furniture (the
+       header, the body's padding, the border) is added from the card as it
+       stands, since all three follow the theme and the density setting.
+       Before the first paint, so a board opens at its fitted heights rather
+       than settling into them. */
+    const cardEl = useRef<HTMLDivElement>(null);
+    const fitEl = useRef<HTMLDivElement>(null);
+    const [chromePx, setChromePx] = useState(0);
+    const fitting = !!fit;
+    const onNeeded = fit?.onNeeded;
+    useLayoutEffect(() => {
+        const card = cardEl.current;
+        const inner = fitEl.current;
+        if (!fitting || !onNeeded || !card || !inner) return;
+        const read = () => {
+            const body = inner.parentElement;
+            if (!body) return;
+            const pad = getComputedStyle(body);
+            const chrome =
+                card.offsetHeight -
+                body.offsetHeight +
+                (parseFloat(pad.paddingTop) || 0) +
+                (parseFloat(pad.paddingBottom) || 0);
+            setChromePx((prev) => (Math.abs(prev - chrome) < 1 ? prev : chrome));
+            // Nothing drawn yet is not "needs nothing": a widget that fills
+            // in a moment later — a note being read, Markdown being drawn —
+            // would have the card collapse to a row and spring back. Until
+            // there is something to measure the card keeps its full height.
+            const content = inner.offsetHeight;
+            if (content > 0) onNeeded(instanceId, Math.ceil(chrome + content));
+        };
+        read();
+        if (typeof ResizeObserver === 'undefined') return;
+        const ro = new ResizeObserver(read);
+        ro.observe(inner);
+        return () => ro.disconnect();
+    }, [fitting, onNeeded, instanceId, ready]);
+    const cardFit = useMemo(
+        () => (fit ? { maxBody: chromePx > 0 ? Math.max(0, fit.ceilingPx - chromePx) : 0 } : null),
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- `fit` is a new object each render; its ceiling is the only part read.
+        [fitting, fit?.ceilingPx, chromePx]
+    );
 
     /* Turning the card is two steps, not one. The back does not exist until it
        is asked for — a board of twelve cards should not carry twelve settings
@@ -293,7 +356,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
 
             <div className="zenith-widget-flip__front" ref={front} aria-hidden={turned}>
                 {children ?? (
-                    <div className="zenith-widget-card">
+                    <div className="zenith-widget-card" ref={cardEl}>
                         {/* Every widget wears the same header. A widget that
                             thinks its own hero line says enough still gets one,
                             because a dashboard of cards that disagree about
@@ -325,8 +388,18 @@ export const GridWidget: FC<GridWidgetProps> = ({
                                 </button>
                             )}
                         </div>
-                        <div className="zenith-widget-card__body">
-                            {ready && Body && <Body size={size} instanceId={instanceId} />}
+                        <div className={`zenith-widget-card__body${fit ? ' is-fit' : ''}`}>
+                            {fit ? (
+                                <CardFitContext.Provider value={cardFit}>
+                                    <div className="zenith-widget-card__fit" ref={fitEl}>
+                                        {ready && Body && (
+                                            <Body size={size} instanceId={instanceId} />
+                                        )}
+                                    </div>
+                                </CardFitContext.Provider>
+                            ) : (
+                                ready && Body && <Body size={size} instanceId={instanceId} />
+                            )}
                         </div>
                     </div>
                 )}
@@ -411,6 +484,33 @@ export const GridWidget: FC<GridWidgetProps> = ({
                                     height < maxRows,
                                     t('dashboard.widget.shorter'),
                                     t('dashboard.widget.taller')
+                                )}
+
+                                {/* For a widget that can be measured: the height
+                                    above is then how tall the card may get, not
+                                    how tall it is. */}
+                                {canFit && onSetFixed && (
+                                    <div className="zenith-widget-settings__row">
+                                        <span className="zenith-widget-settings__label">
+                                            {t('dashboard.widget.fit')}
+                                        </span>
+                                        <span className="zenith-widget-settings__presets">
+                                            {[false, true].map((hold) => (
+                                                <button
+                                                    key={String(hold)}
+                                                    className={hold === fixed ? 'is-active' : ''}
+                                                    aria-pressed={hold === fixed}
+                                                    onClick={() => onSetFixed(hold)}
+                                                >
+                                                    {t(
+                                                        hold
+                                                            ? 'dashboard.widget.fit.off'
+                                                            : 'dashboard.widget.fit.on'
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </span>
+                                    </div>
                                 )}
                             </>
                         )}

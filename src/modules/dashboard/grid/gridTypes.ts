@@ -212,6 +212,16 @@ export interface WidgetLayoutItem {
      * absent means follow the preset, and choosing a preset clears it.
      */
     h?: number;
+    /**
+     * Keep the height above whatever the card holds.
+     *
+     * A card whose widget can be measured is otherwise only as tall as what is
+     * in it — its height here is then a ceiling, not a size — because a list
+     * of three lines in a cell four rows tall is mostly an empty cell. Set,
+     * the card stays the height it was given, for the boards that line two
+     * cards up on purpose. Means nothing for a widget that cannot be measured.
+     */
+    fixed?: boolean;
 }
 
 /** A resolved rectangle in grid units. */

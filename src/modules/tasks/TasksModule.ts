@@ -83,6 +83,8 @@ export class TasksModule extends BaseModule {
                 sizes: ['sm', 'md', 'lg'],
                 defaultSize: 'lg',
                 order: 30,
+                // Three tasks in a cell four rows tall is mostly an empty cell.
+                autoHeight: true,
                 component: TasksWidget,
             })
         );

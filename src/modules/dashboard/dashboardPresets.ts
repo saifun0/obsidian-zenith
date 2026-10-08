@@ -59,7 +59,10 @@ export function captureLayout(source: LayoutSnapshot): LayoutSnapshot {
 
 const layoutKey = (items: WidgetLayoutItem[]): string =>
     items
-        .map((i) => `${i.id}:${i.x},${i.y},${i.size},${i.w ?? '-'},${i.h ?? '-'}`)
+        .map(
+            (i) =>
+                `${i.id}:${i.x},${i.y},${i.size},${i.w ?? '-'},${i.h ?? '-'},${i.fixed ? 'f' : '-'}`
+        )
         .sort()
         .join('|');
 
@@ -204,11 +207,15 @@ export function normalizePresets(raw: unknown): DashboardPreset[] {
             savedAt: typeof p.savedAt === 'string' ? p.savedAt : '',
             dashboardLayout: p.dashboardLayout.filter(
                 (i): i is WidgetLayoutItem =>
-                    !!i && typeof i.id === 'string' && typeof i.x === 'number' && typeof i.y === 'number'
+                    !!i &&
+                    typeof i.id === 'string' &&
+                    typeof i.x === 'number' &&
+                    typeof i.y === 'number'
             ),
             dashboardBundles: Array.isArray(p.dashboardBundles)
                 ? p.dashboardBundles.filter(
-                      (b): b is WidgetBundle => !!b && typeof b.id === 'string' && Array.isArray(b.members)
+                      (b): b is WidgetBundle =>
+                          !!b && typeof b.id === 'string' && Array.isArray(b.members)
                   )
                 : [],
             dashboardStackOrder: Array.isArray(p.dashboardStackOrder)

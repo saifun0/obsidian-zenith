@@ -10,6 +10,7 @@ import { TaskWriter } from '../services/taskWriter';
 import { getTodayString } from '../../../core/dateUtils';
 import { TaskStatusControl } from './taskStatusUi';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
+import { useCardFit } from '../../dashboard/cardFit';
 import type { WidgetSize } from '../../dashboard/grid/gridTypes';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import {
@@ -231,7 +232,13 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
         return () => ro.disconnect();
     }, []);
 
-    const available = box.h > 60 ? box.h : NOMINAL_H[size];
+    // On a card that follows its content the body is as tall as this widget
+    // makes it, so measuring it would be measuring ourselves. The room to plan
+    // into is the card's ceiling instead — the height the user gave it — and
+    // the card is then drawn at whatever the plan came to.
+    const fit = useCardFit();
+    const room = fit ? fit.maxBody : box.h;
+    const available = room > 60 ? room : NOMINAL_H[size];
 
     const openTasks = useCallback(() => {
         void plugin.moduleManager.get('tasks')?.activateView();
@@ -256,6 +263,9 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
 
     const split = useMemo(() => splitTasks(tasks, today), [tasks, today]);
     const progress = dayProgress(split);
+
+    /** The headline is the bare count of what is ahead: nothing overdue, nothing today. */
+    const saysAhead = split.overdue === 0 && split.dueToday === 0;
 
     /** `sm` has no room for the day's progress; the others end on it. */
     const showFoot = size !== 'sm' && split.active.length > 0;
@@ -428,14 +438,19 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
                         </div>
                     )}
                     <div className="zenith-tw__foot-line">
-                        <span className="zenith-tw__foot-say">
-                            {progress
-                                ? withFigures(
-                                      t('tasks.widget.dayProgress', progress),
-                                      'zenith-tw__figure'
-                                  )
-                                : t.plural('tasks.widget.say.ahead', split.active.length)}
-                        </span>
+                        {/* The day's progress, or how much is ahead — unless
+                            the sentence at the top has just said exactly that,
+                            which it has when nothing is overdue or due today. */}
+                        {(progress || !saysAhead) && (
+                            <span className="zenith-tw__foot-say">
+                                {progress
+                                    ? withFigures(
+                                          t('tasks.widget.dayProgress', progress),
+                                          'zenith-tw__figure'
+                                      )
+                                    : t.plural('tasks.widget.say.ahead', split.active.length)}
+                            </span>
+                        )}
                         <button type="button" className="zenith-tw__link" onClick={openTasks}>
                             {t('tasks.widget.allTasks')}
                         </button>

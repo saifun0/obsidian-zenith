@@ -642,6 +642,23 @@ body.is-phone .zenith-dashboard__bg::before {
     min-width: 0;
 }
 
+/* On a card that follows its content: what the widget draws, in a box nothing
+   stretches. Its height is the content's own whatever the card's is, which is
+   what makes it safe to read back into the card's height. `flow-root` so a
+   first paragraph's margin stays inside the box being measured. */
+.zenith-widget-card__fit {
+    display: flow-root;
+    min-width: 0;
+}
+
+/* A fitted card rounds its height up to a whole row, so on average it has half
+   a row to spare under its content already. Asking for the full padding on top
+   of that tips a card that fits its rows exactly into one row more for the
+   sake of a few pixels of air; half of it is the least the card needs. */
+.zenith-widget-card__body.is-fit {
+    padding-bottom: calc(var(--zenith-space-md) / 2);
+}
+
 /* ── Clock Widget ────────────────────────────────── */
 /* Centred in its cell: the card is sized by the grid, so the stack sits in the
    middle rather than hugging the top with dead space beneath it. */

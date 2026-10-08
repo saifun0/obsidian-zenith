@@ -1334,6 +1334,9 @@ button.zenith-add-row {
     justify-content: space-between;
     gap: 12px;
 }
+.zenith-tw__foot-line > .zenith-tw__link:only-child {
+    margin-left: auto;
+}
 .zenith-tw__foot-say {
     min-width: 0;
     overflow: hidden;

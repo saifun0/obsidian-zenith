@@ -24,6 +24,8 @@ import {
     sortItems,
     stackOrder,
     type WidgetSizeInfo,
+    fitLayout,
+    setFixed,
 } from '../grid/gridEngine';
 import { useGridDrag } from '../grid/useGridDrag';
 import {
@@ -94,12 +96,24 @@ function useElementWidth<T extends HTMLElement>(ref: React.RefObject<T>): number
     return width;
 }
 
-/** Running pixel tops for a one-column stack of the given items. */
+/**
+ * Running pixel tops for a one-column stack of the given items.
+ *
+ * `needed` is what the cards that follow their content want, in px. In one
+ * column there is nothing beside a card to line up with, so such a card is
+ * exactly as tall as its content — no rounding up to a row — and never taller
+ * than the height it was given.
+ */
 function stackGeometry(
     items: WidgetLayoutItem[],
-    cfg: GridConfig
+    cfg: GridConfig,
+    needed?: ReadonlyMap<string, number>
 ): { tops: number[]; heights: number[]; total: number } {
-    const heights = items.map((i) => pxHeight(dimsOf(i, cfg.columns).h, cfg.rowHeight, cfg.gap));
+    const heights = items.map((i) => {
+        const ceiling = pxHeight(dimsOf(i, cfg.columns).h, cfg.rowHeight, cfg.gap);
+        const px = i.fixed ? undefined : needed?.get(i.id);
+        return px === undefined ? ceiling : Math.min(ceiling, Math.max(px, 1));
+    });
     const tops: number[] = [];
     let y = 0;
     for (const h of heights) {
@@ -146,6 +160,12 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
        brought into view and marked for a moment, rather than left for the
        user to go and look for. */
     const [freshId, setFreshId] = useState<string | null>(null);
+    /* What each card that follows its content has said it needs, in px. The
+       cards report it (see `GridWidget`); this is only where it is kept. */
+    const [needed, setNeeded] = useState<ReadonlyMap<string, number>>(() => new Map());
+    const reportNeeded = useCallback((id: string, px: number) => {
+        setNeeded((prev) => (prev.get(id) === px ? prev : new Map(prev).set(id, px)));
+    }, []);
 
     const t = useTranslation();
     const allRegistered = useDashboardWidgets();
@@ -568,7 +588,37 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
             .map((id) => byId.get(id))
             .filter((i): i is WidgetLayoutItem => !!i);
     }, [drag.stackPreview, stackItems]);
-    const liveStack = useMemo(() => stackGeometry(effectiveStack, cfg), [effectiveStack, cfg]);
+    /* Which cards follow their content right now. Not while arranging: there
+       every card is its saved cell, so what is dragged and sized is what was
+       saved, and the ceilings can be seen for what they are. Not a bundle
+       either — its members differ in height, and a cell that changed size
+       with every switch would throw the board about under it. */
+    const follows = useCallback(
+        (item: WidgetLayoutItem) =>
+            !editing &&
+            !item.fixed &&
+            !isBundleId(item.id) &&
+            !!defsById.get(item.id)?.autoHeight,
+        [editing, defsById]
+    );
+    const neededNow = useMemo(() => {
+        const map = new Map<string, number>();
+        for (const item of effective) {
+            const px = needed.get(item.id);
+            if (px !== undefined && follows(item)) map.set(item.id, px);
+        }
+        return map;
+    }, [effective, needed, follows]);
+
+    /** The grid as it is drawn: fitted cards at the rows they need, the rest floated up. */
+    const shown = useMemo(
+        () => fitLayout(effective, neededNow, cfg.rowHeight, cfg.gap, cfg.columns),
+        [effective, neededNow, cfg.rowHeight, cfg.gap, cfg.columns]
+    );
+    const liveStack = useMemo(
+        () => stackGeometry(effectiveStack, cfg, neededNow),
+        [effectiveStack, cfg, neededNow]
+    );
     const stackIndexById = useMemo(
         () => new Map(effectiveStack.map((i, idx) => [i.id, idx])),
         [effectiveStack]
@@ -591,7 +641,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
             return {
                 transform: `translate3d(0, ${liveStack.tops[idx] ?? 0}px, 0)`,
                 width: '100%',
-                height: pxHeight(h, cfg.rowHeight, cfg.gap),
+                height: liveStack.heights[idx] ?? pxHeight(h, cfg.rowHeight, cfg.gap),
             };
         }
         return {
@@ -652,7 +702,12 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
           })()
         : null;
 
-    const rendered = stacked ? effectiveStack : sortItems(effective);
+    const rendered = stacked ? effectiveStack : sortItems(shown);
+    /** The height a card was given — its ceiling, when it follows its content. */
+    const ceilingPx = (id: string): number => {
+        const saved = layout.find((i) => i.id === id);
+        return saved ? pxHeight(dimsOf(saved, cfg.columns).h, cfg.rowHeight, cfg.gap) : 0;
+    };
 
     return (
         <>
@@ -666,7 +721,7 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                 style={{
                     height: stacked
                         ? liveStack.total
-                        : pxHeight(bottomOf(effective, cfg.columns), cfg.rowHeight, cfg.gap),
+                        : pxHeight(bottomOf(shown, cfg.columns), cfg.rowHeight, cfg.gap),
                 }}
             >
                 {/* Where the dragged widget will land. */}
@@ -820,6 +875,16 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                 dragging={isDragging}
                                 flipped={flippedId === item.id}
                                 fresh={freshId === item.id}
+                                fit={
+                                    follows(item)
+                                        ? { ceilingPx: ceilingPx(item.id), onNeeded: reportNeeded }
+                                        : null
+                                }
+                                canFit={!!def.autoHeight}
+                                fixed={!!item.fixed}
+                                onSetFixed={(hold) =>
+                                    commitLayout(setFixed(layout, item.id, hold))
+                                }
                                 onFlip={(on) => setFlippedId(on ? item.id : null)}
                                 dragProps={{
                                     ...drag.getItemProps(item.id),

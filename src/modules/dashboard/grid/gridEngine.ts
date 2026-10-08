@@ -168,7 +168,9 @@ export function resizeItem(
     // neighbours the way a drag would.
     // Dropping `w` is deliberate: the preset defines a width, so choosing one
     // is also how you clear a manual span.
-    const order = sortItems(items.map((i) => (i.id === id ? { ...i, size, w: undefined, h: undefined } : i)));
+    const order = sortItems(
+        items.map((i) => (i.id === id ? { ...i, size, w: undefined, h: undefined } : i))
+    );
     return placeAll(order, cols);
 }
 
@@ -215,6 +217,63 @@ export function setHeight(
     return placeAll(order, cols);
 }
 
+/** Hold a card at the height it was given, or let it follow its content again. */
+export function setFixed(
+    items: WidgetLayoutItem[],
+    id: string,
+    fixed: boolean
+): WidgetLayoutItem[] {
+    return items.map((item) => {
+        if (item.id !== id) return item;
+        const { fixed: _was, ...rest } = item;
+        return fixed ? { ...rest, fixed: true } : rest;
+    });
+}
+
+/** The fewest rows a card of `px` height fits in. Never less than one. */
+export function rowsFor(
+    px: number,
+    rowHeight: number = ROW_HEIGHT,
+    gap: number = GRID_GAP
+): number {
+    if (!Number.isFinite(px) || px <= 0) return 1;
+    return Math.max(1, Math.ceil((px + gap) / (rowHeight + gap)));
+}
+
+/**
+ * The layout as it is drawn, once the cards that follow their content have
+ * been measured.
+ *
+ * `needed` is what each of those cards wants, in px, by layout id. A card in it
+ * is drawn at the rows that takes — never more than the height it was given,
+ * which is its ceiling — and whatever stood below floats up into the room that
+ * leaves. A card not in it is drawn as it is saved.
+ *
+ * The saved layout is not changed by any of this: it goes on holding the
+ * ceilings, so a card that fills up tomorrow grows back into the room it was
+ * given, and arranging — which shows every card at its ceiling — moves what
+ * was actually saved.
+ */
+export function fitLayout(
+    items: WidgetLayoutItem[],
+    needed: ReadonlyMap<string, number>,
+    rowHeight: number = ROW_HEIGHT,
+    gap: number = GRID_GAP,
+    cols: number = GRID_COLS
+): WidgetLayoutItem[] {
+    let changed = false;
+    const fitted = items.map((item) => {
+        const px = needed.get(item.id);
+        if (px === undefined || item.fixed) return item;
+        const ceiling = dimsOf(item, cols).h;
+        const h = Math.min(ceiling, rowsFor(px, rowHeight, gap));
+        if (h === ceiling) return item;
+        changed = true;
+        return { ...item, h };
+    });
+    return changed ? compact(fitted, cols) : items;
+}
+
 /**
  * Re-lay the whole grid at a new column count, in reading order.
  *
@@ -238,7 +297,10 @@ export function removeItem(
     cols: number = GRID_COLS
 ): WidgetLayoutItem[] {
     if (!items.some((i) => i.id === id)) return items;
-    return compact(items.filter((i) => i.id !== id), cols);
+    return compact(
+        items.filter((i) => i.id !== id),
+        cols
+    );
 }
 
 // ── Reconciliation with the widget registry ──────────

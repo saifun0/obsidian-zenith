@@ -69,6 +69,7 @@ export class UtilitiesModule extends BaseModule {
                 // things. The same goes for every card below that says so.
                 multiple: true,
                 settings: TextSettings,
+                autoHeight: true,
                 component: TextWidget,
             }),
             this.plugin.registerDashboardWidget({
@@ -97,6 +98,7 @@ export class UtilitiesModule extends BaseModule {
                 order: 82,
                 multiple: true,
                 settings: LinksSettings,
+                autoHeight: true,
                 component: LinksWidget,
             }),
             this.plugin.registerDashboardWidget({
@@ -110,6 +112,7 @@ export class UtilitiesModule extends BaseModule {
                 defaultSize: 'sm',
                 order: 84,
                 settings: RecentSettings,
+                autoHeight: true,
                 component: RecentWidget,
             }),
             this.plugin.registerDashboardWidget({

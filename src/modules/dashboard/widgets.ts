@@ -114,6 +114,21 @@ export interface DashboardWidgetDefinition {
      */
     multiple?: boolean;
     /**
+     * The card may be only as tall as what the widget draws.
+     *
+     * For a widget that is a list, or text: three lines in a cell four rows
+     * tall is mostly an empty cell. Its content is measured and the card
+     * drawn at the rows it needs, up to the height the user gave it. The
+     * widget has to be content-sized to say yes — drawn top-down, with no
+     * `height: 100%` of its own to fill — and one that plans what to draw from
+     * the room it has reads that room from `useCardFit` rather than measuring
+     * a card that now follows it.
+     *
+     * Off by default: a clock, a picture and a chart fill the cell they are
+     * given, and there is nothing to measure.
+     */
+    autoHeight?: boolean;
+    /**
      * A form for this copy, drawn on the back of the card beneath the size
      * controls.
      *

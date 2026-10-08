@@ -108,6 +108,7 @@ export class DashboardModule extends BaseModule {
                 feature: 'dashboard.countdowns',
                 // Two lists of dates — work and family, say — are two cards.
                 multiple: true,
+                autoHeight: true,
                 settings: CountdownSettings,
                 component: CountdownWidget,
             }),
