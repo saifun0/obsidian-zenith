@@ -51,6 +51,11 @@ describe('one popover, not seven', () => {
         'components/shared/Modal.tsx',
         // Full-screen image viewer: not a menu, no anchor, nothing to align to.
         'modules/tasks/components/ImageLightbox.tsx',
+        // The arranging panel: drawn into an element of the dashboard's own —
+        // still inside `.zenith-root` — so it can be placed against the pane
+        // rather than the canvas the grid lives in. Not a menu, and it has no
+        // anchor.
+        'modules/dashboard/components/DashboardGrid.tsx',
     ];
 
     it('routes anchored menus through the shared one', () => {
