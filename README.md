@@ -27,6 +27,7 @@ or the one set in *Settings → Zenith → General → Language*.
 | **Journal** | Daily notes on a calendar, with configurable habit / scale / number tracking and the day's tasks. |
 | **Content** | A library of what you read, watch and play: a list by status or a grid, series, favourites, half-star ratings, progress, covers from the vault or a link, stats, and import from MyAnimeList / Goodreads / Letterboxd / Anixart. Works offline. |
 | **Prayer** | Prayer times computed on the device, a countdown to the next one, and a record of what you prayed — kept in the daily note. |
+| **Utilities** | Small dashboard cards you fill in yourself: a text or a note, a picture, links, recent notes, a quick note and a timer. |
 | **Media Banner** | Show a GIF/image (from the vault or a URL) above the file-explorer tree, with a picker. |
 
 Enable or disable modules in **Settings → Active Modules**. Modules load and unload
@@ -66,6 +67,7 @@ More in [Privacy](docs/en/privacy.md).
 | [Profiles](docs/en/profiles.md) | Templates, saving and undoing a setup, export and import. |
 | [Notifications](docs/en/notifications.md) | Reminders, what happens to the ones you miss, quiet hours. |
 | [Dashboard](docs/en/dashboard.md) | Opening on startup, period progress, countdowns, life in weeks. |
+| [Utilities](docs/en/utilities.md) | The text, picture, links, recent notes, quick note and timer cards. |
 | [Vault helpers](docs/en/vault.md) | Folder and file icons, and the vault structure scaffold. |
 | [Tasks](docs/en/tasks.md) | The task format: priorities, dates, tags, projects, and how ordering is stored. |
 | [Journal](docs/en/journal.md) | Daily notes, habit / scale / number tracking, templates, and captured tasks. |

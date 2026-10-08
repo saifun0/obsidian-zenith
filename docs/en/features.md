@@ -49,7 +49,7 @@ off and says what it is waiting for.
 | Weather | Hourly forecast, sunrise & sunset, air quality |
 | [Editor](editor.md) | Styled code blocks, line numbers, folding, language icons, colour stripe |
 
-Modules that do one thing — the navigator, the picture, the media banner — have no features
+Modules that do one thing — the navigator, utilities, the media banner — have no features
 of their own: their module switch is the feature.
 
 ## Existing configs
