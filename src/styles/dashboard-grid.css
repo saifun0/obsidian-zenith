@@ -377,6 +377,26 @@
     max-width: 14rem;
 }
 
+/* Under a finger the shared field grows to 40px, which is right for a form and
+   wrong here: on the back of a card it stood twice the height of every row
+   round it, with a placeholder set larger than the labels. The back keeps its
+   own scale — its steppers do not grow either — so its fields are a row's
+   height. What is typed stays at 16px, below which iOS zooms the page in on
+   focus; the placeholder is not typed, and is set like the labels it sits
+   among. */
+@media (pointer: coarse) {
+    .zenith-widget-settings {
+        --zenith-field-h: 34px;
+        --zenith-field-h-sm: 30px;
+        --zenith-field-px: 10px;
+        --zenith-field-px-sm: 8px;
+    }
+    .zenith-widget-settings .zenith-input::placeholder,
+    .zenith-widget-settings .zenith-input input::placeholder {
+        font-size: 13px;
+    }
+}
+
 /* Last on the back: taking the card off the board at one end, the way to its
    module's page at the other. Both quiet until pointed at — they are there to
    be found, not to be pressed by accident. */
