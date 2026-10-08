@@ -1,10 +1,16 @@
-import React, { useCallback, useEffect, useRef, useState, type CSSProperties, type FC } from 'react';
-import { Folder } from 'lucide-react';
+import React, {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+    type CSSProperties,
+    type FC,
+} from 'react';
+import { LayoutGrid, MoreHorizontal } from 'lucide-react';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { useTranslation } from '../../../core/i18n';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
 import type { DashboardWidgetDefinition } from '../widgets';
-import { prettifyWidgetId, widgetLabel } from '../widgets';
 import { BUNDLE_MAX_PIPS, type WidgetBundle } from '../grid/bundleTypes';
 import { useCrossFade } from '../../../components/shared/useCrossFade';
 import { claimSwipes } from '../../../core/useSwipeActions';
@@ -14,6 +20,8 @@ const SWIPE_THRESHOLD_PX = 40;
 
 interface MemberViewProps {
     def: DashboardWidgetDefinition;
+    /** What the card is called: the user's name for it, or the widget's. */
+    label: string;
     /** The member's layout id — the same string its own settings live under. */
     instanceId: string;
     size: WidgetSize;
@@ -30,10 +38,16 @@ interface MemberViewProps {
  * that's how you get a clock rendered as a billboard. It gets a compact strip
  * instead: header, one line saying why, and nothing pretending to be data.
  */
-const MemberView: FC<MemberViewProps> = ({ def, instanceId, size, railReserve, compact }) => {
+const MemberView: FC<MemberViewProps> = ({
+    def,
+    label,
+    instanceId,
+    size,
+    railReserve,
+    compact,
+}) => {
     const t = useTranslation();
     const Body = def.component;
-    const label = widgetLabel(def, t);
 
     return (
         <div className="zenith-widget-card zenith-bundle__member">
@@ -70,15 +84,23 @@ interface BundleCardProps {
     unsupported: Set<string>;
     editing: boolean;
     onSetActive: (widgetId: string) => void;
+    /** What a member is called — its own name where the user gave one. */
+    labelOf: (widgetId: string) => string;
+    /** Turn the card over to the settings of the widget on top. */
+    onConfigure?: () => void;
 }
 
 /**
  * A bundle in its cell.
  *
  * It *is* the active widget — same card, same header, no second frame around
- * it. What marks it as a bundle is two small things: the rail of pips sitting
- * on the header's own line, and the shoulder peeking out below the bottom edge
- * (which lives in the grid's gap and so costs the widget no space at all).
+ * it. What marks it as a bundle is two small things: the rail on the header's
+ * own line, and the shoulder peeking out below the bottom edge (which lives in
+ * the grid's gap and so costs the widget no space at all).
+ *
+ * The rail is the members' own icons, the one on top lit. It used to be a row
+ * of dots, which said how many widgets were in the stack and nothing about
+ * which — the only way to find the journal was to press dots until it came up.
  *
  * There is deliberately no way to unfold every member at once. Growing the cell
  * to stack them was a second layout the dashboard never asked for — the point
@@ -94,6 +116,8 @@ export const BundleCard: FC<BundleCardProps> = ({
     unsupported,
     editing,
     onSetActive,
+    labelOf,
+    onConfigure,
 }) => {
     const t = useTranslation();
     const members = bundle.members;
@@ -136,7 +160,8 @@ export const BundleCard: FC<BundleCardProps> = ({
         const dx = e.clientX - start.x;
         // Vertical intent wins: the dashboard scrolls, and a swipe that was
         // meant to scroll must not also flip the bundle.
-        if (Math.abs(dx) < SWIPE_THRESHOLD_PX || Math.abs(dx) < Math.abs(e.clientY - start.y)) return;
+        if (Math.abs(dx) < SWIPE_THRESHOLD_PX || Math.abs(dx) < Math.abs(e.clientY - start.y))
+            return;
         step(dx < 0 ? 1 : -1);
     };
 
@@ -169,6 +194,7 @@ export const BundleCard: FC<BundleCardProps> = ({
             return (
                 <MemberView
                     def={def}
+                    label={labelOf(id)}
                     instanceId={id}
                     size={size}
                     railReserve={railReserve}
@@ -176,7 +202,7 @@ export const BundleCard: FC<BundleCardProps> = ({
                 />
             );
         },
-        [defsById, size, unsupported]
+        [defsById, labelOf, size, unsupported]
     );
 
     // Six pips, then a "+N" — past that the rail costs more header than the
@@ -198,7 +224,7 @@ export const BundleCard: FC<BundleCardProps> = ({
     // curve, so the rail's own width never moves.
     const railEl = useRef<HTMLDivElement | null>(null);
     const [railWidth, setRailWidth] = useState(
-        () => shown.length * 13 + 38 + (overflow > 0 ? 26 : 0)
+        () => shown.length * 24 + 44 + (overflow > 0 ? 26 : 0)
     );
     useEffect(() => {
         const el = railEl.current;
@@ -209,11 +235,6 @@ export const BundleCard: FC<BundleCardProps> = ({
         ro.observe(el);
         return () => ro.disconnect();
     }, []);
-
-    const label = (id: string) => {
-        const def = defsById.get(id);
-        return def ? widgetLabel(def, t) : prettifyWidgetId(id);
-    };
 
     return (
         <div
@@ -262,14 +283,6 @@ export const BundleCard: FC<BundleCardProps> = ({
                         bundle, not to whichever member is on top, so they hold
                         still while the cards cross-fade underneath them. */}
                     <div className="zenith-bundle__rail" ref={railEl}>
-                        {/* What the pips are pips OF. Without it a rail of
-                            dots is just a rail of dots — the shoulder behind the
-                            card says "there is more here" only to someone who
-                            already knows to look for it. */}
-                        <span className="zenith-bundle__mark" title={t('dashboard.bundle.role')}>
-                            <Folder size={12} />
-                        </span>
-
                         <div
                             className="zenith-bundle__pips"
                             role="tablist"
@@ -281,21 +294,45 @@ export const BundleCard: FC<BundleCardProps> = ({
                                     className={`zenith-bundle__pip ${id === targetId ? 'is-active' : ''}`}
                                     role="tab"
                                     aria-selected={id === targetId}
-                                    aria-label={label(id)}
-                                    title={label(id)}
+                                    aria-label={labelOf(id)}
+                                    title={labelOf(id)}
                                     onPointerDown={(e) => e.stopPropagation()}
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         switchTo(id);
                                     }}
                                 >
-                                    <span className="zenith-bundle__pip-dot" />
+                                    <DynamicIcon
+                                        name={defsById.get(id)?.icon}
+                                        fallback={LayoutGrid}
+                                        size={13}
+                                    />
                                 </button>
                             ))}
                             {overflow > 0 && (
                                 <span className="zenith-bundle__pip-more">+{overflow}</span>
                             )}
                         </div>
+
+                        {/* The way to the back of the card, as on every other:
+                            the settings of whichever widget is on top. */}
+                        {!editing && onConfigure && (
+                            <button
+                                type="button"
+                                className="zenith-widget-card__more zenith-bundle__more"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onConfigure();
+                                }}
+                                aria-label={t('dashboard.widget.settings', {
+                                    name: labelOf(targetId),
+                                })}
+                                title={t('dashboard.widget.settings', { name: labelOf(targetId) })}
+                            >
+                                <MoreHorizontal size={14} />
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

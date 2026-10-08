@@ -625,6 +625,10 @@ body.is-phone .zenith-dashboard__bg::before {
     .zenith-root button.zenith-widget-card__more {
         display: none;
     }
+    .zenith-root button.zenith-bundle__pip {
+        width: 30px;
+        height: 30px;
+    }
     /* A long press on the header is the card's menu, not a text selection. */
     .zenith-widget-card__header {
         -webkit-touch-callout: none;

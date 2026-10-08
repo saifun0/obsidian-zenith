@@ -188,51 +188,55 @@
        `.zenith-bundle__layers`. */
 }
 
-/* Says what the pips are pips of. A rail of dots on its own reads as a carousel;
-   the folder says the card is a stack of widgets, which is the thing you have to
-   know before the dots mean anything. */
-.zenith-bundle__mark {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
-    color: var(--zenith-text-faint);
-}
-
 .zenith-bundle__pips {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 1px;
 }
 
+/* One member of the stack, as its own icon. The rail used to be dots — which
+   said how many widgets were here and nothing about which, so finding the
+   journal meant pressing dots until it came up. An icon is the same size on
+   the header's line and answers that at a glance; its name is the tooltip. */
 .zenith-root button.zenith-bundle__pip {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    /* Generous vertically so the tap target survives on a phone, while the dot
-       it draws stays small. The padding is the target; the dot is the mark. */
-    padding: 7px 2px;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
     border: none;
     border-radius: var(--zenith-radius-xs);
     background: none;
     box-shadow: none;
+    color: var(--zenith-text-faint);
     cursor: pointer;
-}
-
-/* A true circle at rest, a thin bar when active — same height either way, so
-   the rail reads as one row of marks rather than a pill among dots. */
-.zenith-bundle__pip-dot {
-    display: block;
-    width: 4px;
-    height: 4px;
-    border-radius: 999px;
-    background: var(--zenith-text-muted);
-    transition: width 200ms var(--zenith-bundle-ease-std),
+    transition:
+        color 200ms var(--zenith-bundle-ease-std),
         background-color 200ms var(--zenith-bundle-ease-std);
 }
 
-.zenith-root button.zenith-bundle__pip.is-active .zenith-bundle__pip-dot {
-    width: 13px;
-    background: var(--zenith-accent);
+.zenith-root button.zenith-bundle__pip:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-muted);
+}
+
+/* The one on top: lit, and standing on a plate, so it reads as chosen rather
+   than as merely brighter. */
+.zenith-root button.zenith-bundle__pip.is-active {
+    background: color-mix(in srgb, var(--zenith-accent) 16%, transparent);
+    color: var(--zenith-accent);
+}
+
+/* The way to the card's back sits at the end of the rail, where every other
+   card has it at the end of its header. */
+.zenith-root button.zenith-bundle__more {
+    margin: 0 -6px 0 2px;
+}
+
+.zenith-bundle:hover .zenith-bundle__more,
+.zenith-bundle:focus-within .zenith-bundle__more {
+    opacity: 1;
 }
 
 .zenith-bundle__pip-more {
@@ -378,7 +382,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .zenith-bundle__pip-dot,
+    .zenith-root button.zenith-bundle__pip,
     .zenith-grid.is-merging .zenith-grid__item[data-merge-target] .zenith-widget-card,
     .zenith-grid.is-merging .zenith-grid__item[data-merge-target] .zenith-bundle__card {
         transition: none;

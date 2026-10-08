@@ -58,6 +58,7 @@ import { AddWidgetSheet, type AddableWidget } from './AddWidgetSheet';
 import { ArrangePanel, type ArrangeTab } from './ArrangePanel';
 import { isCopyId, newCopyId, widgetIdOf } from '../grid/widgetInstances';
 import { cardNameOf, withoutWidgetConfig } from '../widgetConfig';
+import { MemberSettings } from './MemberSettings';
 import { GridSettingsBar } from './GridSettingsBar';
 import { LayoutPresetsBar } from './LayoutPresetsBar';
 import { featureEnabled } from '../../../core/features';
@@ -700,8 +701,13 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                     key={item.id}
                                     def={{
                                         id: bundle.id,
-                                        title: bundle.name,
-                                        icon: 'layers',
+                                        // Named, it is called that; otherwise it
+                                        // goes by the widget on top, as its
+                                        // front does.
+                                        title: bundle.name || labelOf(bundle.activeId),
+                                        icon: bundle.name
+                                            ? 'layers'
+                                            : (defsById.get(bundle.activeId)?.icon ?? 'layers'),
                                     }}
                                     instanceId={bundle.id}
                                     style={isDragging ? dragStyle(item) : cellStyle(item)}
@@ -722,6 +728,17 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                             : {}),
                                     }}
                                     panelExtra={
+                                      <>
+                                        {/* A widget inside a bundle had no way
+                                            to its own settings short of being
+                                            taken out of it. The back of the
+                                            bundle is the back of whichever
+                                            widget is on top. */}
+                                        <MemberSettings
+                                            def={defsById.get(bundle.activeId)}
+                                            instanceId={bundle.activeId}
+                                        />
+                                        {editing && (
                                         <BundleInspector
                                             bundle={bundle}
                                             members={bundle.members.map((id) => ({
@@ -748,6 +765,8 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                                 )
                                             }
                                         />
+                                        )}
+                                      </>
                                     }
                                     size={item.size}
                                     sizes={presets?.sizes ?? [item.size]}
@@ -782,6 +801,8 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                         onSetActive={(widgetId) =>
                                             commitBundles(setActive(bundles, bundle.id, widgetId))
                                         }
+                                        labelOf={labelOf}
+                                        onConfigure={() => setFlippedId(item.id)}
                                     />
                                 </GridWidget>
                             );

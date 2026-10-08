@@ -15,19 +15,14 @@ import { useTranslation } from '../../../core/i18n';
 import { useWidgetBodiesReady } from '../startupGate';
 import { useZenithStore } from '../../../store';
 import { useLongPress } from '../../../core/useLongPress';
-import { CARD_NAME_KEY, MAX_CARD_NAME, cardNameOf, useWidgetConfig } from '../widgetConfig';
+import { cardNameOf } from '../widgetConfig';
+import { MemberSettings } from './MemberSettings';
 
 /** Travel that turns a tap into a drag. Below it, a press is a click. */
 const TAP_SLOP_PX = 6;
 
 /** How long the card takes to turn, and so how long its back outlives the turn. */
 const FLIP_MS = 460;
-
-/** A bucket read only for the card's own name; the widget reads the rest. */
-const asIs = (raw: Record<string, unknown> | undefined): Record<string, unknown> => raw ?? {};
-
-/** A field on the back of a card, which must not start a drag or a flip. */
-const stop = (e: React.PointerEvent) => e.stopPropagation();
 
 interface GridWidgetProps {
     def: DashboardWidgetDefinition;
@@ -116,7 +111,6 @@ export const GridWidget: FC<GridWidgetProps> = ({
     const t = useTranslation();
     const ready = useWidgetBodiesReady();
     const Body = def.component;
-    const Settings = def.settings;
     // The user's own name for this card, when they gave it one. Only a card
     // that can be placed more than once can be named: one clock needs no name
     // to tell it from the others.
@@ -124,7 +118,6 @@ export const GridWidget: FC<GridWidgetProps> = ({
     const ownName = useZenithStore((s) =>
         nameable ? cardNameOf(s.settings.widgetConfig, instanceId) : ''
     );
-    const [, setBucket] = useWidgetConfig(instanceId, asIs);
     const title = ownName || widgetLabel(def, t);
 
     const front = useRef<HTMLDivElement>(null);
@@ -355,33 +348,12 @@ export const GridWidget: FC<GridWidgetProps> = ({
                     </div>
 
                     <div className="zenith-widget-settings__body">
-                        {/* What this card is called, for the cards a board
-                            may hold several of. Empty means the widget's own
-                            name — which is what the field shows, greyed. */}
-                        {nameable && (
-                            <div className="zenith-widget-settings__row">
-                                <span className="zenith-widget-settings__label">
-                                    {t('dashboard.widget.name')}
-                                </span>
-                                <input
-                                    type="text"
-                                    className="zenith-input zenith-input--sm zenith-widget-settings__name"
-                                    value={ownName}
-                                    maxLength={MAX_CARD_NAME}
-                                    placeholder={widgetLabel(def, t)}
-                                    aria-label={t('dashboard.widget.name')}
-                                    onChange={(e) => setBucket({ [CARD_NAME_KEY]: e.target.value })}
-                                    onPointerDown={stop}
-                                />
-                            </div>
-                        )}
-
-                        {/* The widget's own settings. They belong to THIS card
-                            rather than to the widget, which is why they are
-                            here and not on a module's settings page: that page
-                            has no way to say which of three pictures is being
-                            talked about. */}
-                        {Settings && <Settings instanceId={instanceId} />}
+                        {/* The card's name and the widget's own settings. They
+                            belong to THIS card rather than to the widget, which
+                            is why they are here and not on a module's settings
+                            page: that page has no way to say which of three
+                            pictures is being talked about. */}
+                        <MemberSettings def={def} instanceId={instanceId} />
 
                         {/* How big the card is belongs to arranging the board,
                             so it is here only while that is what is being done.
