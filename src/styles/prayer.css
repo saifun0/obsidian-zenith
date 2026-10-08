@@ -210,6 +210,52 @@
     width: 18px;
 }
 
+/* On the dashboard a row is a line, not a box. Five framed rows inside a card
+   are five cards inside a card, and no other card on the board frames its
+   rows: what a prayer's state used to say with a border — dashed, solid,
+   accent — its colour and its mark already say. A hairline separates them, and
+   the one being waited for stands on a plate. The time is a figure in a row,
+   so it is set like every other figure in a row on the board; the serif is
+   the countdown's. */
+.zenith-prayer--widget .zenith-prayer__rows {
+    gap: 0;
+}
+
+.zenith-prayer--widget button.zenith-prayer__tile--row,
+.zenith-prayer--widget button.zenith-prayer__tile--row.is-none,
+.zenith-prayer--widget button.zenith-prayer__tile--row.is-future,
+.zenith-prayer--widget button.zenith-prayer__tile--row.is-absent,
+.zenith-prayer--widget button.zenith-prayer__tile--row.is-next {
+    height: 34px;
+    padding: 0 8px;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: transparent;
+}
+
+.zenith-prayer--widget .zenith-prayer__tile--row + .zenith-prayer__tile--row {
+    box-shadow: 0 -1px 0 0 var(--zenith-border);
+}
+
+.zenith-prayer--widget button.zenith-prayer__tile--row.is-next {
+    background: var(--zenith-bg-tertiary);
+}
+
+/* The plate has its own edges; a hairline through them would cut it. */
+.zenith-prayer--widget .zenith-prayer__tile--row.is-next,
+.zenith-prayer--widget .zenith-prayer__tile--row.is-next + .zenith-prayer__tile--row {
+    box-shadow: none;
+}
+
+.zenith-prayer--widget button.zenith-prayer__tile--row:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-prayer--widget .zenith-prayer__tile--row .zenith-prayer__tile-time {
+    font-family: var(--zenith-font);
+    font-size: 13px;
+}
+
 /* Note variant: no times — the line above the tiles already carries one. */
 .zenith-prayer button.zenith-prayer__tile--note {
     gap: 5px;

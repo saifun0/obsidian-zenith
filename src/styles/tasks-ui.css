@@ -1145,17 +1145,19 @@ button.zenith-add-row {
     height: 20px;
     flex: 0 0 auto;
 }
+/* A group's name and its count are labels, and on the board labels are set in
+   the theme's own face: the planner's serif is kept for the one sentence at
+   the top of the card and the dates down its margin, so the card has one
+   voice and the board's cards agree on what a label looks like. */
 .zenith-tw__group-count {
     text-align: right;
-    font-family: var(--zenith-font-ink);
-    font-style: italic;
-    font-size: 12px;
-    font-variant-numeric: oldstyle-nums;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
     color: var(--zenith-text-faint);
 }
 .zenith-tw__group-label {
-    font-family: var(--zenith-font-ink);
-    font-size: 14px;
+    font-size: 12px;
+    font-weight: 500;
     color: var(--zenith-text-muted);
 }
 
@@ -1342,8 +1344,8 @@ button.zenith-add-row {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    font-family: var(--zenith-font-ink);
-    font-size: 13px;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
     color: var(--zenith-text-muted);
 }
 
