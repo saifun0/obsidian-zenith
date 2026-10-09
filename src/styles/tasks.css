@@ -16,10 +16,27 @@
 
 /* ── The page ───────────────────────────────────── */
 .zenith-tasks {
+    /* How wide the page is, and how wide the margin its dates stand in — the
+       start of the title column, `--zenith-tcolumn` below. Restated here
+       because this element is the query container, and the grid's measures
+       have to live inside it to be changed by its queries. */
+    --zenith-tpage: 860px;
+    --zenith-tbalance: 136px;
     /* Plus what a phone's chrome covers (base.css): this list scrolls itself. */
     padding: calc(var(--zenith-space-lg) + var(--zenith-inset-top, 0px)) var(--zenith-space-lg)
         calc(var(--zenith-space-xl, 32px) + var(--zenith-inset-bottom, 0px));
-    max-width: 860px;
+    /* The dates' margin is on the left only, so a page centred as a box sets
+       its titles half that margin to the right of centre. Where the pane has
+       width to spare, the page keeps the same margin clear on its right —
+       empty — and the titles stand in the middle of the pane. The percentage
+       is of the pane, so this grows only by what the pane has beyond the page,
+       and a pane no wider than the page gives up nothing. */
+    padding-right: clamp(
+        var(--zenith-space-lg),
+        calc(100% - var(--zenith-tpage) + var(--zenith-space-lg)),
+        calc(var(--zenith-space-lg) + var(--zenith-tbalance))
+    );
+    max-width: calc(var(--zenith-tpage) + var(--zenith-tbalance));
     margin: 0 auto;
     position: relative;
     height: 100%;
@@ -46,8 +63,13 @@
     --zenith-tmark: 10px;
     --zenith-tcircle: 28px;
     --zenith-tgap: 8px;
-    /* Where a title begins, for everything that lines up with titles. */
-    --zenith-tcolumn: calc(var(--zenith-tmargin) + var(--zenith-tmark) + var(--zenith-tcircle) + 2 * var(--zenith-tgap));
+    /* Where the circle begins, and where a title does — for everything that
+       lines up with either. A gap follows each of margin, mark and circle; the
+       title column used to be reckoned with two of the three, which set the
+       day, every group's name and every rule a gap to the left of the titles
+       they are there to stand over. */
+    --zenith-tcircle-x: calc(var(--zenith-tmargin) + var(--zenith-tmark) + 2 * var(--zenith-tgap));
+    --zenith-tcolumn: calc(var(--zenith-tcircle-x) + var(--zenith-tcircle) + var(--zenith-tgap));
 }
 
 /* ── The day, and the line under it ─────────────── */
@@ -235,7 +257,8 @@
 .zenith-root button.zenith-tgroup__head {
     display: grid;
     grid-template-columns: var(--zenith-tmargin) 1fr auto;
-    column-gap: calc(var(--zenith-tmark) + var(--zenith-tcircle) + 2 * var(--zenith-tgap));
+    /* The name over the titles, the count in the margin. */
+    column-gap: calc(var(--zenith-tcolumn) - var(--zenith-tmargin));
     align-items: baseline;
     width: 100%;
     height: auto;
@@ -309,6 +332,11 @@
     align-items: start;
     min-height: 36px;
     padding: 4px 0;
+    /* How much room the hover's buttons take: each is 26px, 2px apart, and 6px
+       clear of what moved over — and a row with no buttons keeps nothing
+       clear. On the line, because more than one of its cells answers to it. */
+    --zenith-tact-w: calc(var(--zenith-tact, 0) * 28px + min(var(--zenith-tact, 0), 1) * 4px);
+    --zenith-tslide: 0.24s cubic-bezier(0.22, 0.8, 0.24, 1);
 }
 .zenith-trow__line > .zenith-status {
     margin-top: 0;
@@ -320,7 +348,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    left: calc(var(--zenith-tmargin) + var(--zenith-tmark) + var(--zenith-tgap));
+    left: calc(var(--zenith-tcircle-x) - var(--zenith-tgap));
     right: -6px;
     border-radius: 8px;
     background: var(--zenith-thover);
@@ -483,6 +511,15 @@
 /* The first line of the task's note, in the planner's italic: a reminder of
    what it is, never the note. */
 .zenith-trow__note {
+    /* The row's second line, from the title column to the right-hand edge. */
+    grid-column: 4 / -1;
+    grid-row: 2;
+    min-width: 0;
+    /* The first line is as tall as what the task carries beside the title,
+       which is a little taller than a title: taken back, so the note sits as
+       close under the title as it did inside its cell. */
+    margin-top: -2px;
+    cursor: pointer;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -503,10 +540,6 @@
     align-items: flex-start;
     /* Where the cell holds nothing, a click is the title's. */
     pointer-events: none;
-    /* Each button is 26px, 2px apart, and 6px clear of what moved over —
-       and a row with no buttons keeps nothing clear. */
-    --zenith-tact-w: calc(var(--zenith-tact, 0) * 28px + min(var(--zenith-tact, 0), 1) * 4px);
-    --zenith-tslide: 0.24s cubic-bezier(0.22, 0.8, 0.24, 1);
 }
 .zenith-trow__side {
     display: flex;
@@ -554,6 +587,13 @@
     color: var(--text-muted);
     font: inherit;
     cursor: pointer;
+}
+/* Two of them side by side — the progress and the paperclip — each reach 5px
+   into the gap between them for the plate they wear when open, and the gap is
+   10px: opened, the two plates met with nothing between them and read as one
+   button. The second gives most of its reach back, so they stand 4px apart. */
+.zenith-root button.zenith-trow__fold + button.zenith-trow__fold {
+    margin-left: -1px;
 }
 .zenith-root button.zenith-trow__fold:hover,
 .zenith-root button.zenith-trow__fold[aria-expanded='true'] {
@@ -644,7 +684,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 0 0 8px calc(var(--zenith-tmargin) + var(--zenith-tmark) + 2 * var(--zenith-tgap));
+    padding: 0 0 8px var(--zenith-tcircle-x);
 }
 .zenith-trow__details > .zenith-attachments {
     padding-left: calc(var(--zenith-tcircle) + var(--zenith-tgap));
@@ -1125,19 +1165,126 @@ button.zenith-lightbox__btn {
    Narrow panes and touch
    ══════════════════════════════════════════════════════════ */
 @container zenith-tasks (max-width: 560px) {
+    /* No margin. On a wide page the dates stand in a column of their own; on
+       a narrow one that column was a fifth of the width, and beside every task
+       without a date it was a fifth of the width of nothing. The date goes to
+       the end of the title's own line instead, before what the task carries —
+       the tags have already given way there — and the titles start where the
+       page does. */
     .zenith-tasks__page {
-        --zenith-tmargin: 48px;
+        --zenith-tmargin: 0px;
         --zenith-tmark: 6px;
         --zenith-tgap: 6px;
+        --zenith-tcircle-x: calc(var(--zenith-tmark) + var(--zenith-tgap));
+    }
+    /* The gaps are part of the first two columns here rather than between all
+       five: the last two — the date, and what the task carries — are each
+       often empty, and a gap kept either side of an empty column would hold
+       whichever one is there short of the right-hand edge. Each brings its
+       own space in front of it instead, so the last thing on a line ends
+       where the line does, whichever it is. */
+    .zenith-trow__line {
+        grid-template-columns:
+            calc(var(--zenith-tmark) + var(--zenith-tgap))
+            calc(var(--zenith-tcircle) + var(--zenith-tgap))
+            minmax(0, 1fr) auto auto;
+        column-gap: 0;
+    }
+    .zenith-trow__mark {
+        width: var(--zenith-tmark);
+    }
+    .zenith-trow__margin {
+        position: relative;
+        isolation: isolate;
+        grid-column: 4;
+        grid-row: 1;
+        padding-left: 8px;
+        /* Nothing to cut it to: a date is a word or two, and its backdrop
+           below has to reach out past its own edge. */
+        overflow: visible;
+        font-size: 0.8rem;
+        transition: transform var(--zenith-tslide);
+    }
+    .zenith-trow__margin:empty {
+        display: none;
+    }
+    /* The buttons come up at the right-hand edge, and everything quiet on the
+       line moves over for them — the date with what the task carries, or it
+       would be the thing they slid across. */
+    .zenith-trow:not(.is-closing):hover .zenith-trow__margin,
+    .zenith-trow:not(.is-closing):focus-within .zenith-trow__margin,
+    .zenith-trow.is-dragging .zenith-trow__margin {
+        transform: translateX(calc(-1 * var(--zenith-tact-w)));
+    }
+    /* And takes the words it moved onto out of sight, as the side does. */
+    .zenith-trow__margin::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 0 -18px;
+        z-index: -1;
+        background:
+            linear-gradient(to right, transparent, var(--zenith-thover) 18px),
+            linear-gradient(to right, transparent, var(--background-primary) 18px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--zenith-transition-fast);
+    }
+    .zenith-trow:not(.is-closing):hover .zenith-trow__margin::before,
+    .zenith-trow:not(.is-closing):focus-within .zenith-trow__margin::before {
+        opacity: 1;
+    }
+    /* Beside a date the side's own fade has nothing left to soften — the date
+       has done it — and would be drawn over the date's last letters. So there
+       it is solid from its own edge, and the two meet without a seam. */
+    .zenith-trow__margin:not(:empty) ~ .zenith-trow__end .zenith-trow__side::before {
+        inset: 0;
+        background:
+            linear-gradient(var(--zenith-thover), var(--zenith-thover)),
+            var(--background-primary);
+    }
+    .zenith-trow__end {
+        grid-column: 5;
+        grid-row: 1;
+    }
+    .zenith-trow__side {
+        gap: 0;
+        padding-left: 0;
+    }
+    .zenith-trow__side > * {
+        margin-left: 8px;
+    }
+    /* Its own -5px either side is for the plate it wears when pressed. */
+    .zenith-root button.zenith-trow__fold {
+        margin-left: 3px;
+    }
+    /* And after another of its kind, the same 4px between the two plates. */
+    .zenith-root button.zenith-trow__fold + button.zenith-trow__fold {
+        margin-left: 9px;
+    }
+    .zenith-trow__note {
+        grid-column: 3 / -1;
+    }
+    /* A group's name over the titles still, its count after it. */
+    .zenith-root button.zenith-tgroup__head {
+        grid-template-columns: auto 1fr auto;
+        column-gap: 8px;
+        padding-left: var(--zenith-tcolumn);
+    }
+    .zenith-tgroup__count {
+        order: 2;
+        padding-right: 0;
+    }
+    .zenith-tgroup__title {
+        order: 1;
+    }
+    .zenith-tgroup__fold {
+        order: 3;
     }
     .zenith-tasks-head__day {
         font-size: 1.4rem;
     }
     .zenith-tasks-tally {
         font-size: 0.82rem;
-    }
-    .zenith-trow__margin {
-        font-size: 0.8rem;
     }
     /* The tags give way first: the title is what the row is for. */
     .zenith-trow__tags,
@@ -1202,30 +1349,41 @@ button.zenith-lightbox__btn {
    the day goes back under the title, as the one quiet line it used to be. */
 @container zenith-tasks (max-width: 300px) {
     .zenith-tasks__page {
-        --zenith-tmargin: 0px;
         --zenith-tmark: 0px;
+        --zenith-tcircle-x: 0px;
     }
     .zenith-trow__line {
-        grid-template-columns: var(--zenith-tcircle) minmax(0, 1fr) auto;
-        grid-template-areas: 'circle head side' '. margin margin';
+        grid-template-columns:
+            calc(var(--zenith-tcircle) + var(--zenith-tgap))
+            minmax(0, 1fr) auto;
+        grid-template-areas: 'circle head side' '. note note' '. margin margin';
     }
     .zenith-trow__line > .zenith-status { grid-area: circle; }
     .zenith-trow__head { grid-area: head; }
     .zenith-trow__end { grid-area: side; }
+    .zenith-trow__note { grid-area: note; }
     .zenith-trow__margin {
         grid-area: margin;
         justify-content: flex-start;
-        padding-top: 0;
+        padding: 0;
     }
-    .zenith-trow__margin:empty { display: none; }
+    /* Under the title it is in nothing's way, so it stays where it is. */
+    .zenith-trow:not(.is-closing):hover .zenith-trow__margin,
+    .zenith-trow:not(.is-closing):focus-within .zenith-trow__margin,
+    .zenith-trow.is-dragging .zenith-trow__margin {
+        transform: none;
+    }
+    .zenith-trow__margin::before {
+        display: none;
+    }
+    /* And the side is beside the title's words again, so its fade is back. */
+    .zenith-trow__margin:not(:empty) ~ .zenith-trow__end .zenith-trow__side::before {
+        inset: 0 0 0 -18px;
+        background:
+            linear-gradient(to right, transparent, var(--zenith-thover) 18px),
+            linear-gradient(to right, transparent, var(--background-primary) 18px);
+    }
     .zenith-trow__mark { display: none; }
-    .zenith-root button.zenith-tgroup__head {
-        grid-template-columns: auto 1fr auto;
-        column-gap: 8px;
-    }
-    .zenith-tgroup__count { order: 2; }
-    .zenith-tgroup__title { order: 1; }
-    .zenith-tgroup__fold { order: 3; }
 }
 
 /* Touch: nothing hovers, so nothing waits for it. The menu is a long press
@@ -1243,8 +1401,14 @@ button.zenith-lightbox__btn {
         display: none;
     }
     /* Nothing comes up, so no place is kept for it and nothing moves. */
-    .zenith-trow__side:not(:last-child) {
+    .zenith-trow__side:not(:last-child),
+    .zenith-trow:not(.is-closing):hover .zenith-trow__margin,
+    .zenith-trow:not(.is-closing):focus-within .zenith-trow__margin,
+    .zenith-trow.is-dragging .zenith-trow__margin {
         transform: none;
+    }
+    .zenith-trow__margin::before {
+        display: none;
     }
     .zenith-trow__end {
         margin-left: 0;

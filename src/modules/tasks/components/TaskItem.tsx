@@ -261,6 +261,11 @@ export const TaskItem: FC<TaskItemProps> = ({
         }
     );
 
+    const openEditor = () => {
+        if (closing || press.swallowClick() || swipe.swallowClick()) return;
+        setEditing(true);
+    };
+
     const toggleDetails = (e: React.MouseEvent) => {
         e.stopPropagation();
         setDetailsOpen(key, !open);
@@ -314,7 +319,10 @@ export const TaskItem: FC<TaskItemProps> = ({
                 )}
 
                 <div className="zenith-trow__sheet" ref={swipe.sheetRef} {...swipe.handlers}>
-                    <div className="zenith-trow__line">
+                    <div
+                        className="zenith-trow__line"
+                        style={{ '--zenith-tact': actionCount } as CSSProperties}
+                    >
                         <span className={`zenith-trow__margin is-${margin.tone}`}>
                             {closing ? (
                                 closing.phase === 'held' &&
@@ -359,10 +367,7 @@ export const TaskItem: FC<TaskItemProps> = ({
                             role="button"
                             tabIndex={closing ? -1 : 0}
                             data-task-head=""
-                            onClick={() => {
-                                if (closing || press.swallowClick() || swipe.swallowClick()) return;
-                                setEditing(true);
-                            }}
+                            onClick={openEditor}
                             onKeyDown={(e) => {
                                 if (closing) return;
                                 if (e.key === 'Enter') {
@@ -382,13 +387,28 @@ export const TaskItem: FC<TaskItemProps> = ({
                                 {/* Inline, so the ink of a closing task follows the words line by line. */}
                                 <span className="zenith-trow__ink">{task.title}</span>
                             </span>
-                            {note && <span className="zenith-trow__note">{note}</span>}
                         </div>
 
-                        <div
-                            className="zenith-trow__end"
-                            style={{ '--zenith-tact': actionCount } as CSSProperties}
-                        >
+                        {/* The note is the row's second line, not the title
+                            cell's: it runs out to the right-hand edge, under
+                            what the task carries. Inside the title's cell it
+                            was cut to the title's width, short of an edge it
+                            had all the room to reach. It is still part of what
+                            a tap opens. */}
+                        {note && (
+                            <span
+                                className="zenith-trow__note"
+                                onClick={openEditor}
+                                onPointerDown={press.onPointerDown}
+                                onPointerMove={press.onPointerMove}
+                                onPointerUp={press.onPointerUp}
+                                onPointerCancel={press.onPointerCancel}
+                            >
+                                {note}
+                            </span>
+                        )}
+
+                        <div className="zenith-trow__end">
                             <div className="zenith-trow__side" onClick={stop}>
                                 {active && (
                                     <>
