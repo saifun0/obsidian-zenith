@@ -96,6 +96,64 @@ describe('deleting a task by line number', () => {
         expect(store.text).not.toContain('Buy milk');
     });
 
+    /**
+     * A task with subtasks, deleted. The subtasks used to stay in the note,
+     * and with nothing above them the list read them back as tasks of their
+     * own: one task gone, two in its place.
+     */
+    const TREE = [
+        '# Day',
+        '',
+        '- [ ] Buy milk',
+        '- [ ] Move house',
+        '\tBoxes are in the garage.',
+        '\t- [ ] Pack the kitchen',
+        '\t\t- [ ] Wrap the glasses',
+        '\t- [x] Book the van',
+        '- [ ] File the tax return',
+        '',
+    ].join('\n');
+
+    it('takes its subtasks with it, however deep', async () => {
+        const { app, store } = fakeApp('Day.md', TREE);
+
+        const ok = await new TaskWriter(app).deleteTaskInFile('Day.md', 4, 'Move house');
+
+        expect(ok).toBe(true);
+        expect(store.text).toBe(
+            ['# Day', '', '- [ ] Buy milk', '- [ ] File the tax return', ''].join('\n')
+        );
+    });
+
+    it('takes only its own subtree when it is a subtask itself', async () => {
+        const { app, store } = fakeApp('Day.md', TREE);
+
+        const ok = await new TaskWriter(app).deleteTaskInFile('Day.md', 6, 'Pack the kitchen');
+
+        expect(ok).toBe(true);
+        expect(store.text).toBe(
+            [
+                '# Day',
+                '',
+                '- [ ] Buy milk',
+                '- [ ] Move house',
+                '\tBoxes are in the garage.',
+                '\t- [x] Book the van',
+                '- [ ] File the tax return',
+                '',
+            ].join('\n')
+        );
+    });
+
+    it('stops at the blank line before the next task', async () => {
+        const spaced = ['- [ ] One', '\t- [ ] One and a half', '', '- [ ] Two'].join('\n');
+        const { app, store } = fakeApp('Day.md', spaced);
+
+        await new TaskWriter(app).deleteTaskInFile('Day.md', 1, 'One');
+
+        expect(store.text).toBe(['', '- [ ] Two'].join('\n'));
+    });
+
     it('refuses a line that is no longer a task at all', async () => {
         const { app, store } = fakeApp('Day.md', NOTE);
         const before = store.text;
@@ -326,6 +384,22 @@ describe('finishing a recurring task', () => {
         const { app, store } = fakeApp(
             'Chores.md',
             ['- [ ] Throw out the boxes 🏁 delete', '\tthe big ones', '- [ ] Next'].join('\n')
+        );
+
+        await new TaskWriter(app).setStatusInFile('Chores.md', 1, 'done', 'Throw out the boxes');
+
+        expect(store.text).toBe('- [ ] Next');
+    });
+
+    it('removes a finished `🏁 delete` task together with its subtasks', async () => {
+        const { app, store } = fakeApp(
+            'Chores.md',
+            [
+                '- [ ] Throw out the boxes 🏁 delete',
+                '\t- [x] the big ones',
+                '\t- [ ] the small ones',
+                '- [ ] Next',
+            ].join('\n')
         );
 
         await new TaskWriter(app).setStatusInFile('Chores.md', 1, 'done', 'Throw out the boxes');

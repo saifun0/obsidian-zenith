@@ -14,7 +14,7 @@ import {
 import { buildDetailLines, detailRange, writeDetails, type TaskDetails } from './taskDetails';
 import { charFromStatus, type TaskStatus } from '../../../core/constants';
 import { getTodayString } from '../../../core/dateUtils';
-import { moveBlock, extractBlock, insertBlock, type DropPosition } from './taskMove';
+import { moveBlock, extractBlock, insertBlock, findBlock, type DropPosition } from './taskMove';
 import { insertUnderHeading, appendBlock } from '../../../services/markdownSections';
 import type { TaskTarget } from './taskTarget';
 
@@ -120,6 +120,24 @@ export interface AddedTask {
     line: string;
 }
 
+/**
+ * Where the lines a task owns end — `[lineIdx, end)`.
+ *
+ * A task is its checkbox line and everything indented under it: the
+ * description, the attachments, and its subtasks with theirs. Taking a task
+ * out of a note means taking all of that. It used to mean the line and its
+ * description only, which left the subtasks standing in the note with nothing
+ * above them — and a checkbox with no task above it is a task: delete one with
+ * two subtasks and the list showed two new tasks in its place.
+ *
+ * The block is the same one a drag carries (`findBlock`). That knows `-` and
+ * `*` bullets; for a `+` one the detail lines are still the task's own.
+ */
+function ownedEnd(lines: string[], lineIdx: number): number {
+    const block = findBlock(lines, lineIdx);
+    return block ? block.end + 1 : detailRange(lines, lineIdx).end;
+}
+
 export class TaskWriter {
     constructor(private readonly app: App) {}
 
@@ -208,9 +226,8 @@ export class TaskWriter {
                 lines[idx] = next;
             } else if (doneWith) {
                 // Nothing comes after it, so it goes the way a delete goes:
-                // with the lines that belong to it.
-                const { end } = detailRange(lines, idx);
-                lines.splice(idx, end - idx);
+                // with the lines that belong to it, subtasks included.
+                lines.splice(idx, ownedEnd(lines, idx) - idx);
             } else if (next) {
                 lines.splice(idx, 0, next);
             }
@@ -493,11 +510,10 @@ export class TaskWriter {
             if (!parts) return data;
             if (!titlesMatch(parts[3], expectedTitle)) return data;
 
-            // The description and attachments go with it: they are the task's
-            // own lines, and left behind they would read as loose prose in the
-            // middle of a list.
-            const { end } = detailRange(lines, idx);
-            lines.splice(idx, end - idx);
+            // Everything under it goes with it. The description and the
+            // attachments left behind would read as loose prose in the middle
+            // of a list; the subtasks left behind would read as tasks.
+            lines.splice(idx, ownedEnd(lines, idx) - idx);
             ok = true;
             return lines.join('\n');
         });
