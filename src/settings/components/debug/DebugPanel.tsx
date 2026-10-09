@@ -13,6 +13,7 @@ import { NotificationDebug } from './NotificationDebug';
 import { StateInspector } from './StateInspector';
 import { StringsAudit } from './StringsAudit';
 import { CodeGallery } from './CodeGallery';
+import { WidgetGallery } from './WidgetGallery';
 
 /**
  * Debug tools, reachable only from About.
@@ -21,16 +22,18 @@ import { CodeGallery } from './CodeGallery';
  * question you only have while something is broken, and a permanent entry would
  * put a page of raw JSON one click from a page about accent colours.
  *
- * Seven tabs, each a different kind of "is this what I think it is":
- * what the controls look like, what every dialog and every field looks like,
- * what the store holds, what the loader believes, whether a reminder reaches
- * you, and which language is answering. An eighth while Study is on: the
- * timetable at any hour, without waiting for it. And while the editor is on,
- * every kind of code block and every language it knows.
+ * Eight tabs, each a different kind of "is this what I think it is":
+ * what the controls look like, what every dashboard widget looks like at every
+ * size, what every dialog and every field looks like, what the store holds,
+ * what the loader believes, whether a reminder reaches you, and which language
+ * is answering. A ninth while Study is on: the timetable at any hour, without
+ * waiting for it. And while the editor is on, every kind of code block and
+ * every language it knows.
  */
 
 type Tab =
     | 'components'
+    | 'widgets'
     | 'modals'
     | 'inputs'
     | 'state'
@@ -65,6 +68,7 @@ export const DebugPanel: React.FC = () => {
                 onChange={(v) => setTab(v as Tab)}
                 options={[
                     { value: 'components', label: t('debug.tab.components'), icon: 'layout-grid' },
+                    { value: 'widgets', label: t('debug.tab.widgets'), icon: 'layout-dashboard' },
                     { value: 'modals', label: t('debug.tab.modals'), icon: 'app-window' },
                     { value: 'inputs', label: t('debug.tab.inputs'), icon: 'text-cursor-input' },
                     { value: 'state', label: t('debug.tab.state'), icon: 'braces' },
@@ -81,6 +85,7 @@ export const DebugPanel: React.FC = () => {
             />
 
             {tab === 'components' && <ComponentGallery />}
+            {tab === 'widgets' && <WidgetGallery />}
             {tab === 'modals' && <ModalGallery />}
             {tab === 'inputs' && <InputGallery />}
             {tab === 'state' && <StateInspector />}

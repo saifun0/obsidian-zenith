@@ -111,6 +111,62 @@
     border-bottom: none;
 }
 
+/* ── Widgets ── */
+/* Every widget at every size, in the board's own card. A specimen is a box of
+   exactly the card's drawn size holding the card at its real size, scaled as a
+   picture — so the box is what the page is laid out by, and the card overflows
+   it by exactly what the scale takes back. */
+.zenith-debug__widgets {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+    /* At full size a card is wider than the window it is being looked at in. */
+    overflow-x: auto;
+}
+
+.zenith-debug__widgets .zenith-debug__section {
+    gap: 18px;
+}
+
+.zenith-debug__widget {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.zenith-debug__widget-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    color: var(--text-muted);
+}
+
+.zenith-debug__widget-head svg {
+    align-self: center;
+    flex: none;
+}
+
+.zenith-debug__specimens {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.zenith-debug__specimen {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: none;
+    margin: 0;
+}
+
+.zenith-debug__specimen-box {
+    position: relative;
+    flex: none;
+}
+
 /* ── State ── */
 .zenith-debug__toolbar {
     display: flex;

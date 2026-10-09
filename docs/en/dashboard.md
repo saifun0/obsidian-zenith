@@ -69,6 +69,10 @@ the order of its widgets, and taking one out.
 The data keeps itself current. *Zenith: Refresh data* in the command palette reloads it by
 hand.
 
+To see every widget at every size it offers without resizing cards on the board, open
+*Settings → About → Debug tools → Widgets*: each one in the board's own card, on your own
+data, drawn for the board or for a phone's column.
+
 ## Progress
 
 *Dashboard → Period progress.* How far through the day, week, month and year you are: a bar
