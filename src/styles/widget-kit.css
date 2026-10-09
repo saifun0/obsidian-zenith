@@ -389,3 +389,39 @@
     font-weight: 400;
     font-variant-numeric: lining-nums tabular-nums;
 }
+
+/* ── The last line of a card ─────────────────────── */
+/* A card that follows its content is rounded up to a whole row of the board,
+   and so has room to spare under what it draws (`--zenith-card-slack`, set by
+   the card). Its last line is moved down by that much, to stand on the card's
+   bottom edge. `zenith-wsink` is for a last line that is not a `zenith-wfoot`. */
+.zenith-widget-card__body.is-fit .zenith-wfoot,
+.zenith-widget-card__body.is-fit .zenith-wsink {
+    transform: translateY(var(--zenith-card-slack, 0px));
+}
+
+/* ── Nothing to show, and something to do about it ── */
+/* The same quiet line, as a button: pressing it turns the card over to the
+   settings that would fill it. */
+.zenith-root button.zenith-wempty {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    font-weight: 400;
+    text-align: left;
+    justify-content: flex-start;
+    cursor: pointer;
+    transition: color var(--zenith-w-quick) var(--zenith-ease-out);
+}
+.zenith-root button.zenith-wempty:hover,
+.zenith-root button.zenith-wempty:focus-visible {
+    color: var(--zenith-text-muted);
+}
+.zenith-wempty__go {
+    flex: none;
+    margin-left: auto;
+    opacity: 0.7;
+}

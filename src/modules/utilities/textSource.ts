@@ -11,10 +11,13 @@
 export type TextSource = 'own' | 'note';
 export type TextSize = 'sm' | 'md' | 'lg';
 export type TextAlign = 'start' | 'center';
+/** The theme's own face, or the planner's serif — for a line that is a motto rather than a note. */
+export type TextFace = 'plain' | 'serif';
 
 export const TEXT_SOURCES: readonly TextSource[] = ['own', 'note'] as const;
 export const TEXT_SIZES: readonly TextSize[] = ['sm', 'md', 'lg'] as const;
 export const TEXT_ALIGNS: readonly TextAlign[] = ['start', 'center'] as const;
+export const TEXT_FACES: readonly TextFace[] = ['plain', 'serif'] as const;
 
 /** One card's worth of settings — per copy, like every widget's. */
 export interface TextSettings extends Record<string, unknown> {
@@ -26,6 +29,7 @@ export interface TextSettings extends Record<string, unknown> {
     textPath: string;
     textSize: TextSize;
     textAlign: TextAlign;
+    textFace: TextFace;
 }
 
 export const DEFAULT_TEXT_SETTINGS: TextSettings = {
@@ -34,6 +38,7 @@ export const DEFAULT_TEXT_SETTINGS: TextSettings = {
     textPath: '',
     textSize: 'md',
     textAlign: 'start',
+    textFace: 'plain',
 };
 
 const oneOf = <T extends string>(value: unknown, allowed: readonly T[], fallback: T): T =>
@@ -52,6 +57,7 @@ export function normalizeTextSettings(raw: Record<string, unknown> | undefined):
         textPath: text(raw.textPath),
         textSize: oneOf(raw.textSize, TEXT_SIZES, DEFAULT_TEXT_SETTINGS.textSize),
         textAlign: oneOf(raw.textAlign, TEXT_ALIGNS, DEFAULT_TEXT_SETTINGS.textAlign),
+        textFace: oneOf(raw.textFace, TEXT_FACES, DEFAULT_TEXT_SETTINGS.textFace),
     };
 }
 

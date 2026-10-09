@@ -134,7 +134,7 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = () => {
                 only comes down here on the sizes with no metrics row — the
                 large card already sets it as a figure of its own, and a card
                 that says "streak 11" twice has one of them too many. */}
-            <div className="zenith-jw__meta">
+            <div className="zenith-jw__meta zenith-wsink">
                 <span className="zenith-jw__meta-fact">
                     <CheckCircle2 size={11} />
                     <span>

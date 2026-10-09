@@ -397,3 +397,106 @@ describe('furniture the card measured for itself', () => {
         expect(shown + p.hidden).toBe(12);
     });
 });
+
+describe('a wide card, planned in two columns', () => {
+    const next = (n: number): Task[] =>
+        Array.from({ length: n }, (_, i) => task(`Later ${i + 1}`, { dueDate: `2026-09-${10 + i}` }));
+    const today = (n: number): Task[] =>
+        Array.from({ length: n }, (_, i) => task(`Now ${i + 1}`, { dueDate: TODAY }));
+
+    const shownIn = (p: Plan): number =>
+        (p.columns ?? []).reduce(
+            (n, c) => n + (c.groups ? c.groups.flatMap((g) => g.lines) : c.lines).length,
+            0
+        );
+
+    it('holds what one column could not, and says what it still leaves out', () => {
+        const split = splitTasks([...today(3), ...next(9)], TODAY);
+        const one = planWidget({ split, size: 'sm', available: 190, expanded: null });
+        const two = planWidget({ split, size: 'sm', available: 190, expanded: null, columns: 2 });
+        expect(shownIn(two)).toBeGreaterThan(one.lines.length);
+        expect(shownIn(two) + two.hidden).toBe(12);
+        expect(two.columns).toHaveLength(2);
+    });
+
+    it('never makes a column taller than the room it was planned into', () => {
+        for (const available of [190, 260, 330, 460]) {
+            for (const size of ['sm', 'md', 'lg'] as const) {
+                const split = splitTasks([...today(4), ...next(14)], TODAY);
+                const p = planWidget({ split, size, available, expanded: null, columns: 2 });
+                const m = METRICS[size];
+                for (const col of p.columns ?? []) {
+                    const drawn = col.groups
+                        ? col.groups.reduce(
+                              (n, g, i) =>
+                                  n + m.label + (i > 0 ? m.area : 0) + heightOf(g.lines, p.gap) + p.gap,
+                              0
+                          )
+                        : heightOf(col.lines, p.gap);
+                    const furniture = size === 'sm' ? m.head + 2 * m.area : m.head + m.stats + 3 * m.area;
+                    expect(drawn).toBeLessThanOrEqual(available - furniture);
+                }
+            }
+        }
+    });
+
+    it('balances the two, so the card is as short as the tasks allow', () => {
+        // Six, not eight: the small composition draws three tasks a column at most.
+        const split = splitTasks(next(6), TODAY);
+        const p = planWidget({ split, size: 'sm', available: 600, expanded: null, columns: 2 });
+        expect(p.hidden).toBe(0);
+        expect(p.columns?.map((c) => c.lines.length)).toEqual([3, 3]);
+
+        const four = planWidget({
+            split: splitTasks(next(4), TODAY),
+            size: 'sm',
+            available: 600,
+            expanded: null,
+            columns: 2,
+        });
+        expect(four.columns?.map((c) => c.lines.length)).toEqual([2, 2]);
+    });
+
+    it('turns the corner at the end of a group where that costs nearly nothing', () => {
+        const split = splitTasks([...today(4), ...next(4)], TODAY);
+        const p = planWidget({ split, size: 'lg', available: 600, expanded: null, columns: 2 });
+        expect(p.columns?.[0].groups?.map((g) => g.label)).toEqual(['today']);
+        expect(p.columns?.[1].groups?.map((g) => g.label)).toEqual(['next']);
+        expect(p.columns?.[1].groups?.[0].continued).toBeUndefined();
+    });
+
+    it('marks a group that runs on into the second column, and counts it whole', () => {
+        const split = splitTasks(next(9), TODAY);
+        const p = planWidget({ split, size: 'lg', available: 600, expanded: null, columns: 2 });
+        const [first, second] = p.columns ?? [];
+        expect(first.groups?.[0].continued).toBeUndefined();
+        expect(second.groups?.[0].label).toBe('next');
+        expect(second.groups?.[0].continued).toBe(true);
+        expect(second.groups?.[0].count).toBe(9);
+        // Everything is still there in reading order, as one group.
+        expect(p.groups).toHaveLength(1);
+        expect(p.groups?.[0].lines).toHaveLength(9);
+    });
+
+    it('is one column when there is one task to draw', () => {
+        const split = splitTasks(next(1), TODAY);
+        const p = planWidget({ split, size: 'sm', available: 190, expanded: null, columns: 2 });
+        expect(p.columns).toHaveLength(1);
+        expect(p.hidden).toBe(0);
+    });
+
+    it('draws one task even where not one fits', () => {
+        const split = splitTasks(next(5), TODAY);
+        const p = planWidget({ split, size: 'lg', available: 60, expanded: null, columns: 2 });
+        expect(shownIn(p)).toBe(1);
+        expect(p.hidden).toBe(4);
+    });
+
+    it('leaves the single-column plan exactly as it was', () => {
+        const split = splitTasks([...today(3), ...next(9)], TODAY);
+        const plain = planWidget({ split, size: 'md', available: 300, expanded: null });
+        const one = planWidget({ split, size: 'md', available: 300, expanded: null, columns: 1 });
+        expect(one).toEqual(plain);
+        expect(plain.columns).toBeUndefined();
+    });
+});

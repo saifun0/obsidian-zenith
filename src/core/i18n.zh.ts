@@ -2399,6 +2399,9 @@ export const ZH: Record<string, string> = {
     'utilities.text.align': '对齐',
     'utilities.text.align.start': '靠左',
     'utilities.text.align.center': '居中',
+    'utilities.text.face': '字体',
+    'utilities.text.face.plain': '普通',
+    'utilities.text.face.serif': '衬线',
 
     'utilities.links.empty': '还没有链接。点击卡片标题栏里的 ⋯ 进行设置。',
     'utilities.links.dead': '这个链接哪儿也去不了：仓库里没有这篇笔记。',

@@ -57,13 +57,38 @@
     height: 100%;
     min-height: 0;
 }
+/* The one widget that scrolls, and it does it without a scrollbar: a text
+   longer than its card fades out at the bottom while there is more below. */
 .zenith-utext__scroll {
     flex: 1;
     display: flex;
     flex-direction: column;
     min-height: 0;
     overflow-y: auto;
-    scrollbar-width: thin;
+    scrollbar-width: none;
+}
+.zenith-utext__scroll::-webkit-scrollbar {
+    display: none;
+}
+.zenith-utext__scroll.has-more {
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent);
+}
+
+/* The planner's serif, for a card that is a motto rather than a note: the
+   face the board's one figure is set in, here by the user's own choice. */
+.zenith-utext.is-face-serif .zenith-md {
+    font-family: var(--zenith-w-fig-font);
+    font-weight: 400;
+    letter-spacing: 0.002em;
+}
+.zenith-utext.is-face-serif.is-lg .zenith-md {
+    font-size: 1.5rem;
+    font-weight: 400;
+}
+.zenith-utext.is-face-serif .zenith-md :is(h1, h2, h3, h4, h5, h6, strong, b) {
+    font-weight: 400;
+    font-style: italic;
 }
 .zenith-utext.is-sm .zenith-md { font-size: 0.8rem; }
 .zenith-utext.is-md .zenith-md { font-size: 0.92rem; }
@@ -422,4 +447,10 @@
 .zenith-root input.zenith-utimer__minutes {
     width: 5rem;
     text-align: right;
+}
+
+/* On a card that follows its content the text is as tall as it is, up to the
+   card's ceiling — the height it may not pass is set on it by the widget. */
+.zenith-widget-card__fit > .zenith-utext {
+    height: auto;
 }

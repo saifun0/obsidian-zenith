@@ -219,6 +219,9 @@
    the countdown's. */
 .zenith-prayer--widget .zenith-prayer__rows {
     gap: 0;
+    /* Out by the rows' own padding: a prayer's name starts on the card's
+       margin, under the line above it, and only the plate goes past. */
+    margin-inline: -8px;
 }
 
 .zenith-prayer--widget button.zenith-prayer__tile--row,

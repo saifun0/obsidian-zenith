@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { ImageOff } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ImageOff, ImagePlus } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import { useWidgetConfig } from '../../dashboard/widgetConfig';
+import { WidgetEmpty } from '../../dashboard/components/WidgetEmpty';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import { normalizePictureSettings, pictureState } from '../pictureSource';
 
@@ -35,34 +36,51 @@ export const PictureWidget: React.FC<DashboardWidgetProps> = ({ instanceId = 'pi
     // clear the last one's failure, and a bare boolean would keep reporting the
     // old link as broken for ever.
     const [failedSrc, setFailedSrc] = useState('');
+    // And the one that has arrived: the picture is drawn in once it is decoded,
+    // rather than top-down as the bytes come.
+    const [loadedSrc, setLoadedSrc] = useState('');
 
     const state = pictureState(config, (path) => app.vault.adapter.getResourcePath(path));
 
+    // A picture the browser already holds fires no load for this element to
+    // hear: ask it, so a cached picture is not left waiting to be drawn in.
+    const imgRef = useRef<HTMLImageElement>(null);
+    const src = state.kind === 'ready' ? state.src : '';
+    useEffect(() => {
+        const img = imgRef.current;
+        if (src && img?.complete && img.naturalWidth > 0) setLoadedSrc(src);
+    }, [src]);
+
     if (state.kind !== 'ready') {
         return (
-            <p className="zenith-wempty">
-                {state.kind === 'unusable' && <ImageOff size={13} />}
+            <WidgetEmpty
+                settings
+                icon={state.kind === 'unusable' ? <ImageOff size={14} /> : <ImagePlus size={14} />}
+            >
                 {t(state.kind === 'empty' ? 'picture.empty' : 'picture.unusable')}
-            </p>
+            </WidgetEmpty>
         );
     }
 
     if (failedSrc === state.src) {
         return (
-            <p className="zenith-wempty">
-                <ImageOff size={13} />
+            <WidgetEmpty settings icon={<ImageOff size={14} />}>
                 {t('picture.failed')}
-            </p>
+            </WidgetEmpty>
         );
     }
 
     return (
         <div className="zenith-picture">
             <img
-                className="zenith-picture__img"
+                // Keyed by address: a different picture is a different arrival.
+                key={state.src}
+                ref={imgRef}
+                className={`zenith-picture__img${loadedSrc === state.src ? ' is-loaded' : ''}`}
                 src={state.src}
                 alt=""
                 style={{ objectFit: config.pictureFit }}
+                onLoad={() => setLoadedSrc(state.src)}
                 onError={() => setFailedSrc(state.src)}
                 // The board's own drag is a pointer gesture; a picture that can
                 // also be dragged out of the card competes with it.

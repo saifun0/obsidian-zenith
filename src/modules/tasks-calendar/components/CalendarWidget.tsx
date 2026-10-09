@@ -399,7 +399,7 @@ export const CalendarWidget: FC<DashboardWidgetProps> = () => {
                 )}
             </div>
 
-            <div className="zenith-tcalw__foot">
+            <div className="zenith-tcalw__foot zenith-wsink">
                 <span className="zenith-tcalw__foot-stats">
                     {footerText(t, rows, overdue.length, days)}
                 </span>

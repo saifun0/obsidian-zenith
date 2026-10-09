@@ -27,6 +27,15 @@ export interface CardRoom {
     height: number;
     /** The card follows its content, so `height` is a limit rather than a size. */
     fit: boolean;
+    /**
+     * Turn the card over to its settings. Absent where the card cannot be
+     * turned from inside — a bundle's member, or a board being arranged.
+     *
+     * For the line a widget draws when it has not been set up: "choose a
+     * picture" is a line to press, not a line to read and then go looking for
+     * the three dots.
+     */
+    openBack?: () => void;
 }
 
 const UNMEASURED: CardRoom = { width: 0, height: 0, fit: false };

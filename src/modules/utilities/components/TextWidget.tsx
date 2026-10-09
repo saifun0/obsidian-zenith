@@ -1,13 +1,24 @@
-import React, { useCallback, useEffect, useState, type FC } from 'react';
+import React, {
+    useCallback,
+    useEffect,
+    useLayoutEffect,
+    useRef,
+    useState,
+    type FC,
+    type ReactNode,
+} from 'react';
 import { TFile } from 'obsidian';
 import { FileText, FileX, FolderOpen } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import { pickVaultFile } from '../../../components/shared/VaultFilePickerModal';
 import { useWidgetConfig } from '../../dashboard/widgetConfig';
+import { useCardRoom } from '../../dashboard/cardRoom';
+import { WidgetEmpty } from '../../dashboard/components/WidgetEmpty';
 import type { DashboardWidgetProps, WidgetSettingsProps } from '../../dashboard/widgets';
 import {
     TEXT_ALIGNS,
+    TEXT_FACES,
     TEXT_SIZES,
     TEXT_SOURCES,
     noteBody,
@@ -15,6 +26,7 @@ import {
     normalizeTextSettings,
     textState,
     type TextAlign,
+    type TextFace,
     type TextSize,
     type TextSource,
 } from '../textSource';
@@ -64,6 +76,41 @@ function useNoteBody(path: string, onRenamed: (path: string) => void): string | 
     return read?.path === path ? read.body : undefined;
 }
 
+/**
+ * The text, in as much of the card as it may have.
+ *
+ * A text longer than its card is still a text someone wants to read, so this
+ * is the one widget that can be scrolled — but not with a scrollbar down the
+ * side of a card. The last lines fade out where there is more below, which
+ * says "this goes on" without drawing a control, and stop fading at the end.
+ */
+const TextScroll: FC<{ children: ReactNode }> = ({ children }) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const [more, setMore] = useState(false);
+    useLayoutEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        const read = () => setMore(el.scrollHeight - el.scrollTop - el.clientHeight > 2);
+        read();
+        el.addEventListener('scroll', read, { passive: true });
+        if (typeof ResizeObserver === 'undefined') {
+            return () => el.removeEventListener('scroll', read);
+        }
+        const ro = new ResizeObserver(read);
+        ro.observe(el);
+        if (el.firstElementChild) ro.observe(el.firstElementChild);
+        return () => {
+            el.removeEventListener('scroll', read);
+            ro.disconnect();
+        };
+    }, []);
+    return (
+        <div className={`zenith-utext__scroll${more ? ' has-more' : ''}`} ref={ref}>
+            {children}
+        </div>
+    );
+};
+
 const NoteText: FC<{ path: string; className: string; onRenamed: (path: string) => void }> = ({
     path,
     className,
@@ -72,26 +119,27 @@ const NoteText: FC<{ path: string; className: string; onRenamed: (path: string) 
     const { app } = useApp();
     const t = useTranslation();
     const body = useNoteBody(path, onRenamed);
+    const room = useCardRoom();
+    const ceiling = room.height > 0 ? { maxHeight: room.height } : undefined;
 
     if (body === undefined) return null;
     if (body === null) {
         return (
-            <p className="zenith-wempty">
-                <FileX size={13} />
+            <WidgetEmpty settings icon={<FileX size={14} />}>
                 {t('utilities.text.missing')}
-            </p>
+            </WidgetEmpty>
         );
     }
 
     return (
-        <div className={className}>
-            <div className="zenith-utext__scroll">
+        <div className={className} style={ceiling}>
+            <TextScroll>
                 {body ? (
                     <Markdown markdown={body} sourcePath={path} />
                 ) : (
                     <p className="zenith-wempty">{t('utilities.text.blank')}</p>
                 )}
-            </div>
+            </TextScroll>
             {/* The one way from the card to the note it is showing. */}
             <button
                 type="button"
@@ -119,20 +167,21 @@ export const TextWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.tex
     const [config, setConfig] = useWidgetConfig(instanceId, normalizeTextSettings);
     const onRenamed = useCallback((path: string) => setConfig({ textPath: path }), [setConfig]);
 
+    const room = useCardRoom();
     const state = textState(config);
-    const className = `zenith-utext is-${config.textSize} is-${config.textAlign}`;
+    const className = `zenith-utext is-${config.textSize} is-${config.textAlign} is-face-${config.textFace}`;
 
     if (state.kind === 'empty') {
-        return <p className="zenith-wempty">{t('utilities.text.empty')}</p>;
+        return <WidgetEmpty settings>{t('utilities.text.empty')}</WidgetEmpty>;
     }
     if (state.kind === 'note') {
         return <NoteText path={state.path} className={className} onRenamed={onRenamed} />;
     }
     return (
-        <div className={className}>
-            <div className="zenith-utext__scroll">
+        <div className={className} style={room.height > 0 ? { maxHeight: room.height } : undefined}>
+            <TextScroll>
                 <Markdown markdown={state.markdown} sourcePath="" />
-            </div>
+            </TextScroll>
         </div>
     );
 };
@@ -234,6 +283,22 @@ export const TextSettings: FC<WidgetSettingsProps> = ({ instanceId }) => {
                             onClick={() => setConfig({ textAlign: align })}
                         >
                             {t(`utilities.text.align.${align}`)}
+                        </button>
+                    ))}
+                </span>
+            </div>
+
+            <div className="zenith-widget-settings__row">
+                <span className="zenith-widget-settings__label">{t('utilities.text.face')}</span>
+                <span className="zenith-widget-settings__presets">
+                    {TEXT_FACES.map((face: TextFace) => (
+                        <button
+                            key={face}
+                            className={face === config.textFace ? 'is-active' : ''}
+                            aria-pressed={face === config.textFace}
+                            onClick={() => setConfig({ textFace: face })}
+                        >
+                            {t(`utilities.text.face.${face}`)}
                         </button>
                     ))}
                 </span>

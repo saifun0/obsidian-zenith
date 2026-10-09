@@ -5,6 +5,7 @@ import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import { pickVaultFile } from '../../../components/shared/VaultFilePickerModal';
 import { useWidgetConfig } from '../../dashboard/widgetConfig';
+import { WidgetEmpty } from '../../dashboard/components/WidgetEmpty';
 import type { DashboardWidgetProps, WidgetSettingsProps } from '../../dashboard/widgets';
 import {
     linkLabel,
@@ -62,7 +63,7 @@ export const LinksWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.li
         .filter((row) => row.parsed.kind !== 'empty');
 
     if (rows.length === 0) {
-        return <p className="zenith-wempty">{t('utilities.links.empty')}</p>;
+        return <WidgetEmpty settings>{t('utilities.links.empty')}</WidgetEmpty>;
     }
 
     const fileOf = (parsed: ParsedLink): TFile | null =>

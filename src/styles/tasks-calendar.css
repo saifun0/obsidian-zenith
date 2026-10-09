@@ -1654,3 +1654,8 @@
 .zenith-root button.zenith-tcal__chip.is-placeable {
     cursor: grab;
 }
+
+/* See the same rule on the tasks card: the last line is moved past this box. */
+.zenith-widget-card__fit > .zenith-tcalw {
+    overflow: visible;
+}

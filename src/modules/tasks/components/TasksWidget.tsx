@@ -10,7 +10,7 @@ import { TaskWriter } from '../services/taskWriter';
 import { getTodayString } from '../../../core/dateUtils';
 import { TaskStatusControl } from './taskStatusUi';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
-import { useCardFit, useCardRoom } from '../../dashboard/cardRoom';
+import { ROOM_WIDE, useCardFit, useCardRoom } from '../../dashboard/cardRoom';
 import type { WidgetSize } from '../../dashboard/grid/gridTypes';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import {
@@ -20,6 +20,7 @@ import {
     planWidget,
     splitTasks,
     type Line,
+    type Group,
 } from '../services/widgetLayout';
 import { marginText } from '../services/taskMargin';
 import { isClosingOf, useClosingTasks, type Closing } from '../services/closingTasks';
@@ -323,9 +324,12 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
         // it observes is mounted and unmounted with it.
     }, [showFoot]);
 
+    // Two columns in a card wide enough for them: one line the width of a
+    // board has its title at one edge and what it carries at the other.
+    const columns = cardRoom.width >= ROOM_WIDE ? 2 : 1;
     const layout = useMemo(
-        () => planWidget({ split, size, available, expanded, chrome }),
-        [split, size, available, expanded, chrome]
+        () => planWidget({ split, size, available, expanded, chrome, columns }),
+        [split, size, available, expanded, chrome, columns]
     );
 
     // ── Rendering ────────────────────────────────────
@@ -391,6 +395,24 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
     );
     const quiet = split.active.length === 0;
 
+    const renderGroup = (g: Group) => (
+        <div key={g.label} className="zenith-tw__group" style={{ gap: layout.gap }}>
+            {/* A group that began in the column before keeps the place its
+                name would stand in, so the rows of both columns are level. */}
+            <div className="zenith-tw__group-head" aria-hidden={g.continued || undefined}>
+                {!g.continued && (
+                    <>
+                        <span className="zenith-tw__group-count">{g.count}</span>
+                        <span className="zenith-tw__group-label">
+                            {t(`tasks.widget.group.${g.label}`)}
+                        </span>
+                    </>
+                )}
+            </div>
+            {g.lines.map((line) => renderLine(line, g.label === 'today'))}
+        </div>
+    );
+
     return (
         <div className={`zenith-tw zenith-tw--${size}`} ref={rootRef}>
             <div className="zenith-tw__head" ref={headRef} style={{ minHeight: m.head }}>
@@ -411,20 +433,22 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
                 )}
             </div>
 
-            {layout.groups ? (
-                <div className="zenith-tw__groups">
-                    {layout.groups.map((g) => (
-                        <div key={g.label} className="zenith-tw__group" style={{ gap: layout.gap }}>
-                            <div className="zenith-tw__group-head">
-                                <span className="zenith-tw__group-count">{g.count}</span>
-                                <span className="zenith-tw__group-label">
-                                    {t(`tasks.widget.group.${g.label}`)}
-                                </span>
+            {layout.columns ? (
+                <div className={`zenith-tw__cols${layout.columns.length > 1 ? ' is-two' : ''}`}>
+                    {layout.columns.map((col, i) =>
+                        col.groups ? (
+                            <div key={i} className="zenith-tw__groups">
+                                {col.groups.map(renderGroup)}
                             </div>
-                            {g.lines.map((line) => renderLine(line, g.label === 'today'))}
-                        </div>
-                    ))}
+                        ) : (
+                            <div key={i} className="zenith-tw__body" style={{ gap: layout.gap }}>
+                                {col.lines.map((line) => renderLine(line, false))}
+                            </div>
+                        )
+                    )}
                 </div>
+            ) : layout.groups ? (
+                <div className="zenith-tw__groups">{layout.groups.map(renderGroup)}</div>
             ) : (
                 <div className="zenith-tw__body" style={{ gap: layout.gap }}>
                     {layout.lines.map((line) => renderLine(line, false))}
@@ -442,7 +466,7 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
             )}
 
             {showFoot && (
-                <div className="zenith-tw__foot" ref={footRef}>
+                <div className="zenith-tw__foot zenith-wsink" ref={footRef}>
                     {progress && (
                         <div
                             className="zenith-tw__progress"

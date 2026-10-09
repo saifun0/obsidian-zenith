@@ -1410,3 +1410,9 @@
         height: 38vh;
     }
 }
+
+/* Under the "now" side the list starts on the card's margin: out by the rows'
+   own padding, so only the plate under a row goes past it. */
+.zenith-study--widget.is-stacked .zenith-study__list {
+    margin-inline: -8px;
+}

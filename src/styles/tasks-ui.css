@@ -1135,6 +1135,36 @@ button.zenith-add-row {
     overflow: hidden;
 }
 .zenith-tw__groups { gap: 8px; }
+
+/* Two columns, read down the first and then the second, a hairline between —
+   the two panes every wide card is made of. Each is a phone's width, so each
+   is drawn as a narrow card is: the tags give way to the title. */
+.zenith-tw__cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+}
+.zenith-tw__cols.is-two {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 48px;
+    align-items: start;
+}
+.zenith-tw__cols.is-two > :nth-child(2) {
+    position: relative;
+    overflow: visible;
+}
+.zenith-tw__cols.is-two > :nth-child(2)::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 -24px;
+    width: 1px;
+    background: var(--zenith-border);
+}
+@container zenith-tw (max-width: 900px) {
+    .zenith-tw__cols.is-two .zenith-tw__tags {
+        display: none;
+    }
+}
 .zenith-tw__group {
     display: flex;
     flex-direction: column;
@@ -1365,4 +1395,12 @@ button.zenith-add-row {
 @media (prefers-reduced-motion: reduce) {
     .zenith-tw__row.is-closing .zenith-tw__ink { animation: none; background-size: 100% 1px; }
     .zenith-tw__progress-ink { transition: none; }
+}
+
+/* On a card that follows its content the last line is moved down to the card's
+   bottom edge (widget-kit.css), past the end of this box — which must not cut
+   it off. The plan is what keeps the rows inside; nothing else overflows. */
+.zenith-widget-card__fit > .zenith-tw {
+    height: auto;
+    overflow: visible;
 }

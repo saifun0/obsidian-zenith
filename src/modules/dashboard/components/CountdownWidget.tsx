@@ -9,6 +9,7 @@ import { useZenithStore } from '../../../store';
 import { DateField } from '../../../components/ui/fields';
 import { ROOM_WIDE, rowPx, rowsThatFit, useCardRoom } from '../cardRoom';
 import { useWidgetConfig } from '../widgetConfig';
+import { WidgetEmpty } from './WidgetEmpty';
 import type { DashboardWidgetProps, WidgetSettingsProps } from '../widgets';
 import {
     daysUntil,
@@ -108,7 +109,7 @@ export const CountdownWidget: FC<DashboardWidgetProps> = ({
     );
 
     if (all.length === 0) {
-        return <p className="zenith-wempty">{t('countdown.empty')}</p>;
+        return <WidgetEmpty settings>{t('countdown.empty')}</WidgetEmpty>;
     }
 
     const [lead, ...rest] = all;

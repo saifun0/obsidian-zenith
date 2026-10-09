@@ -141,6 +141,18 @@ export interface Group {
     label: GroupKey;
     count: number;
     lines: Line[];
+    /**
+     * The group began in the column before this one. Its name is not said a
+     * second time; the place it would stand in is kept, so the rows of the two
+     * columns stay on the same lines.
+     */
+    continued?: boolean;
+}
+
+/** One column of a card planned in two. Exactly one of the two is filled. */
+export interface PlanColumn {
+    lines: Line[];
+    groups: Group[] | null;
 }
 
 export interface Plan {
@@ -152,6 +164,11 @@ export interface Plan {
     hidden: number;
     /** Vertical gap the rendered rows must use for the maths to hold. */
     gap: number;
+    /**
+     * The same plan as columns, when the card was planned in two. `lines` and
+     * `groups` still hold everything, in reading order.
+     */
+    columns?: PlanColumn[];
 }
 
 /**
@@ -178,9 +195,24 @@ export interface PlanInput {
     expanded: string | null;
     /** What the card's own furniture turned out to cost. See `Chrome`. */
     chrome?: Chrome;
+    /**
+     * Columns to lay the tasks out in: one, or two in a card wide enough that
+     * one line would run its title to one edge and its tags to the other.
+     */
+    columns?: 1 | 2;
 }
 
-export function planWidget({ split, size, available, expanded, chrome }: PlanInput): Plan {
+/** What splitting a group across the two columns costs, in px, when choosing where to split. */
+const SPLIT_INSIDE_GROUP = 6;
+
+export function planWidget({
+    split,
+    size,
+    available,
+    expanded,
+    chrome,
+    columns = 1,
+}: PlanInput): Plan {
     const metrics = METRICS[size];
     // A measurement of zero is "not measured yet", never "takes no room".
     const m: Metrics = {
@@ -208,6 +240,136 @@ export function planWidget({ split, size, available, expanded, chrome }: PlanInp
 
     const empty: Plan = { lines: [], groups: null, hidden: 0, gap };
     if (split.active.length === 0) return empty;
+
+    if (columns === 2) {
+        /* Two columns, read down the first and then down the second, and
+           balanced: the same tasks in one column and a half would leave the
+           card as tall as one column made it, with half of it empty.
+
+           Every task is a unit with what it costs. As many units are kept as
+           two columns of the card's height can hold; then the place to turn
+           from the first column to the second is the one that leaves the
+           taller of the two shortest — at the end of a group where that costs
+           nearly nothing, since a group that turns the corner loses its name
+           on the far side. */
+        const grouped = size !== 'sm';
+        interface Unit {
+            label: GroupKey | null;
+            lines: Line[];
+            cost: number;
+        }
+        const sections: Array<[GroupKey | null, Task[]]> = grouped
+            ? [
+                  ['today', split.burning],
+                  ['doing', split.doing],
+                  ['next', split.next],
+              ]
+            : [
+                  [
+                      null,
+                      [...split.burning, ...split.doing, ...split.next].sort(
+                          (a, b) => Number(b.id === expanded) - Number(a.id === expanded)
+                      ),
+                  ],
+              ];
+        const units: Unit[] = sections.flatMap(([label, items]) =>
+            items.map((task) => {
+                const lines = blockFor(task);
+                return {
+                    label,
+                    lines,
+                    cost: lines.reduce((n, l) => n + l.height, 0) + gap * lines.length,
+                };
+            })
+        );
+
+        /** A column of `units[from, to)`: a name over each group, or its place. */
+        const columnHeight = (from: number, to: number): number => {
+            let h = 0;
+            for (let i = from; i < to; i++) {
+                h += units[i].cost;
+                if (!grouped) continue;
+                const first = i === from;
+                if (first || units[i].label !== units[i - 1].label) {
+                    h += m.label + (first ? 0 : m.area);
+                }
+            }
+            return h;
+        };
+
+        const base = grouped
+            ? available - m.head - m.stats - 3 * m.area
+            : available - m.head - 2 * m.area;
+        const cap = Number.isFinite(m.cap) ? m.cap * 2 : units.length;
+
+        let kept = 0;
+        let turn = 0;
+        for (let k = Math.min(units.length, cap); k >= 1; k--) {
+            // Something left out has to be said, and saying it costs a line.
+            const budget = k < units.length ? base - m.foot - m.area : base;
+            let best = -1;
+            let bestScore = Infinity;
+            for (let s = 1; s <= k; s++) {
+                const a = columnHeight(0, s);
+                const b = s < k ? columnHeight(s, k) : 0;
+                if (a > budget || b > budget) continue;
+                const inside = s < k && units[s].label === units[s - 1].label;
+                const score = Math.max(a, b) + (inside ? SPLIT_INSIDE_GROUP : 0);
+                if (score < bestScore) {
+                    bestScore = score;
+                    best = s;
+                }
+            }
+            if (best > 0) {
+                kept = k;
+                turn = best;
+                break;
+            }
+        }
+        // Not even one task fits a column: one is drawn anyway, as in a single
+        // column — a card that shows nothing is worse than one a line too tall.
+        if (kept === 0) {
+            kept = 1;
+            turn = 1;
+        }
+
+        const countOf = (label: GroupKey): number =>
+            label === 'today'
+                ? split.burning.length
+                : label === 'doing'
+                  ? split.doing.length
+                  : split.next.length;
+        const column = (from: number, to: number): PlanColumn => {
+            if (!grouped) return { lines: units.slice(from, to).flatMap((u) => u.lines), groups: null };
+            const groups: Group[] = [];
+            for (let i = from; i < to; i++) {
+                const label = units[i].label as GroupKey;
+                const last = groups[groups.length - 1];
+                if (last && last.label === label) {
+                    last.lines.push(...units[i].lines);
+                    continue;
+                }
+                groups.push({
+                    label,
+                    count: countOf(label),
+                    lines: [...units[i].lines],
+                    ...(i === from && from > 0 && units[from - 1].label === label
+                        ? { continued: true }
+                        : {}),
+                });
+            }
+            return { lines: [], groups };
+        };
+        const cols = [column(0, turn), ...(turn < kept ? [column(turn, kept)] : [])];
+        const whole = column(0, kept);
+        return {
+            ...empty,
+            lines: whole.lines,
+            groups: whole.groups && whole.groups.length ? whole.groups : null,
+            hidden: units.length - kept,
+            columns: cols,
+        };
+    }
 
     if (size === 'sm') {
         // The opened task floats up, so its subtasks are never the part cut.

@@ -26,8 +26,10 @@ Your own words, or the top of a note.
   characters — a card shows the top of a note, not the note. The name under the text opens
   it.
 
-**Size** (small, normal, large) and **Align** (left or centre) are the two things a line of
-text can ask for; a large centred line makes a motto, a small left-aligned note a list.
+**Size** (small, normal, large), **Align** (left or centre) and **Typeface** (plain or
+serif) are what a line of text can ask for; a large centred line in the serif makes a motto,
+a small left-aligned note a list. A text longer than its card scrolls, and its last lines
+fade while there is more below; the card draws no scrollbar.
 
 Checkboxes in the text are drawn, not ticked: ticking one on the card would change the card
 and not the note. A picture embedded by a link is loaded from that address, as it would be in

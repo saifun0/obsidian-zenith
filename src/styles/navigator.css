@@ -20,10 +20,139 @@
     grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
 }
 
-/* On a card the body already has the card's margin; a second one of the
-   launcher's own set its buttons in from every other card's left edge. */
+/* ── On a card ───────────────────────────────────────
+   The launcher is a list of places, and on the board a list is rows — a
+   glyph, a name, a plate under the one being pointed at (widget-kit.css). It
+   was a grid of filled tiles seventy-six pixels tall: eight views were three
+   rows of boxes inside a box, taller than the card, behind a scrollbar. As
+   rows in as many columns as fit, the same eight are three lines, and the
+   card is as tall as they are. */
 .zenith-widget-card__body .zenith-launcher {
     padding: 0;
+    gap: 0 24px;
+}
+/* A hundred and twelve: two columns still fit a third of a six-column board. */
+.zenith-widget-card__body .zenith-launcher--grid {
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+}
+.zenith-widget-card__body .zenith-launcher button.zenith-launcher__btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 9px;
+    height: auto;
+    min-height: var(--zenith-w-row);
+    padding: 4px 0;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: none;
+    overflow: visible;
+    font-size: var(--zenith-w-text);
+    text-align: left;
+}
+.zenith-widget-card__body .zenith-launcher button.zenith-launcher__btn::before {
+    content: '';
+    position: absolute;
+    inset: 0 -8px;
+    border-radius: inherit;
+    background: var(--zenith-bg-hover);
+    opacity: 0;
+    transition: opacity var(--zenith-w-quick) var(--zenith-ease-out);
+    pointer-events: none;
+}
+.zenith-widget-card__body .zenith-launcher button.zenith-launcher__btn:hover,
+.zenith-widget-card__body .zenith-launcher button.zenith-launcher__btn.is-open {
+    background: none;
+    border: none;
+}
+.zenith-widget-card__body .zenith-launcher button.zenith-launcher__btn:hover::before,
+.zenith-widget-card__body .zenith-launcher button.zenith-launcher__btn:focus-visible::before {
+    opacity: 1;
+}
+.zenith-widget-card__body .zenith-launcher button.zenith-launcher__btn:focus-visible {
+    outline: none;
+}
+.zenith-widget-card__body .zenith-launcher button.zenith-launcher__btn:focus-visible::before {
+    box-shadow: 0 0 0 1px var(--zenith-accent);
+}
+.zenith-widget-card__body
+    .zenith-launcher
+    button.zenith-launcher__btn
+    > :not(.zenith-launcher__dot) {
+    position: relative;
+}
+.zenith-widget-card__body .zenith-launcher__icon {
+    color: var(--zenith-text-muted);
+    transition: color var(--zenith-w-quick) var(--zenith-ease-out);
+}
+.zenith-widget-card__body .zenith-launcher__btn:hover .zenith-launcher__icon,
+.zenith-widget-card__body .zenith-launcher__btn.is-open .zenith-launcher__icon {
+    color: var(--zenith-accent);
+}
+/* A view that is already open: its glyph in the accent, and a dot at the end
+   of its row — where every row on the board puts the one thing it has to add. */
+.zenith-widget-card__body .zenith-launcher__dot {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    margin-top: -2.5px;
+}
+.zenith-widget-card__body .zenith-launcher__text {
+    flex: 1 1 auto;
+    width: auto;
+}
+.zenith-widget-card__body .zenith-launcher--grid .zenith-launcher__label {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--zenith-w-text);
+    font-weight: 400;
+}
+/* One column: the name, and what it is in a quieter voice on the same line. */
+.zenith-widget-card__body .zenith-launcher--list .zenith-launcher__text {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 10px;
+}
+.zenith-widget-card__body .zenith-launcher--list .zenith-launcher__label {
+    flex: none;
+    max-width: 60%;
+    font-weight: 400;
+}
+.zenith-widget-card__body .zenith-launcher--list .zenith-launcher__desc {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: var(--zenith-w-meta);
+    color: var(--zenith-text-faint);
+}
+/* No names: a line of glyphs, each a square to press. */
+.zenith-widget-card__body .zenith-launcher--grid.is-icons-only {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin: 0 -8px;
+}
+.zenith-widget-card__body .zenith-launcher--grid.is-icons-only button.zenith-launcher__btn {
+    justify-content: center;
+    width: 38px;
+    min-height: 38px;
+    padding: 0;
+}
+.zenith-widget-card__body
+    .zenith-launcher--grid.is-icons-only
+    button.zenith-launcher__btn::before {
+    inset: 0;
+}
+.zenith-widget-card__body .zenith-launcher--grid.is-icons-only .zenith-launcher__dot {
+    top: 5px;
+    right: 5px;
+    margin-top: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+    .zenith-widget-card__body .zenith-launcher button.zenith-launcher__btn::before,
+    .zenith-widget-card__body .zenith-launcher__icon {
+        transition: none;
+    }
 }
 
 .zenith-launcher--grid.is-icons-only {

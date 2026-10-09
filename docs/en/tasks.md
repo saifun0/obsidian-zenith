@@ -148,8 +148,9 @@ to `Zenith Inbox.md` otherwise.
 **On the dashboard**, the tasks card is the same page, smaller: a sentence — *1 overdue,
 2 for today* — the tasks in the list's own rows, grouped as *Today*, *In progress* and
 *Up next*, and along the bottom the day's progress as one line of ink: what was closed today
-out of what today asked for. The card never scrolls; what does not fit is counted in its
-*+N more* link.
+out of what today asked for. In a wide card the tasks run in two columns — down the first,
+then down the second. The card never scrolls; what does not fit is counted in its *+N more*
+link.
 
 > Dates are compared in your **local** timezone, so “Today” / “Overdue” are always correct.
 

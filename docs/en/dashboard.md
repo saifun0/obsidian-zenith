@@ -43,6 +43,9 @@ rows of the board, and a timer or a line to write on takes one. Only the clock, 
 weeks, the weather and a picture fill the cell they are given. The height you give a card
 is the most it may take, and it grows back into it as it fills.
 
+A card with nothing to show because it has not been set up ("no picture yet", "no links")
+says so in one line — press it, and the card turns over to its settings.
+
 **Width.** What a card draws depends on the room it has, not on the name of its size: one
 column in a narrow card; in a wide one the main figure stands beside the list, and the list
 runs in columns. So the same card looks different in half the board, across the whole of it

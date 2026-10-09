@@ -3499,7 +3499,6 @@ button.zenith-cw__cta {
 
 /* A caption, as on every card: a sentence in lower case. */
 .zenith-cw__section-title {
-    padding: 0 7px;
     font-size: var(--zenith-w-meta);
     line-height: 1.3;
     color: var(--zenith-text-faint);
@@ -4571,4 +4570,17 @@ button.zenith-cw__cta {
     .zenith-life__now {
         animation: none;
     }
+}
+
+/* ── One left edge ───────────────────────────────────
+   A row that lights up under the pointer carries a few pixels of padding for
+   the plate to reach into. Left as it is, that padding sets the row's text in
+   from the card's margin, and a card's lines start at two different places.
+   The lists are moved out by their rows' padding instead, so text starts on
+   the margin everywhere and only the plate goes past it. */
+.zenith-cw__list {
+    margin-inline: -7px;
+}
+.zenith-cw__spot {
+    padding-inline: 0;
 }

@@ -6,6 +6,7 @@ import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { pickVaultFile } from '../../../components/shared/VaultFilePickerModal';
 import { useWidgetConfig } from '../../dashboard/widgetConfig';
+import { WidgetEmpty } from '../../dashboard/components/WidgetEmpty';
 import type { DashboardWidgetProps, WidgetSettingsProps } from '../../dashboard/widgets';
 import {
     CAPTURE_TARGETS,
@@ -47,7 +48,11 @@ export const CaptureWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.
     const path = capturePath(config.capturePath);
 
     if (target === 'note' && !path) {
-        return <p className="zenith-wempty zenith-wmid">{t('utilities.capture.empty')}</p>;
+        return (
+            <WidgetEmpty settings className="zenith-wmid">
+                {t('utilities.capture.empty')}
+            </WidgetEmpty>
+        );
     }
     const last = filed[0];
 

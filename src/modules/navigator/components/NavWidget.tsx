@@ -108,9 +108,9 @@ export const NavWidget: React.FC = () => {
                         aria-label={label}
                     >
                         <span className="zenith-launcher__icon">
-                            <DynamicIcon name={def.icon} size={18} fallback={Compass} />
-                            {isOpen && <i className="zenith-launcher__dot" aria-hidden="true" />}
+                            <DynamicIcon name={def.icon} size={16} fallback={Compass} />
                         </span>
+                        {isOpen && <i className="zenith-launcher__dot" aria-hidden="true" />}
                         {!iconsOnly && (
                             <span className="zenith-launcher__text">
                                 <span className="zenith-launcher__label">{label}</span>

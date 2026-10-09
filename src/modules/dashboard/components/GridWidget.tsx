@@ -175,6 +175,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
     const cardEl = useRef<HTMLDivElement>(null);
     const fitEl = useRef<HTMLDivElement>(null);
     const [chromePx, setChromePx] = useState(0);
+    const [contentPx, setContentPx] = useState(0);
     const fitting = !!fit;
     const onNeeded = fit?.onNeeded;
     useLayoutEffect(() => {
@@ -196,6 +197,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
             // would have the card collapse to a row and spring back. Until
             // there is something to measure the card keeps its full height.
             const content = inner.offsetHeight;
+            setContentPx((prev) => (Math.abs(prev - content) < 1 ? prev : content));
             if (content > 0) onNeeded(instanceId, Math.ceil(chrome + content));
         };
         read();
@@ -211,6 +213,10 @@ export const GridWidget: FC<GridWidgetProps> = ({
     const bodyEl = useRef<HTMLDivElement>(null);
     const bodyBox = useBodyBox(bodyEl, [ready]);
     const ceilingPx = fit?.ceilingPx ?? 0;
+    const openBack = useMemo(
+        () => (!editing && onFlip ? () => onFlip(true) : undefined),
+        [editing, onFlip]
+    );
     const room = useMemo<CardRoom>(
         () => ({
             width: bodyBox.width,
@@ -220,9 +226,25 @@ export const GridWidget: FC<GridWidgetProps> = ({
                     : 0
                 : bodyBox.height,
             fit: fitting,
+            openBack,
         }),
-        [fitting, ceilingPx, chromePx, bodyBox.width, bodyBox.height]
+        [fitting, ceilingPx, chromePx, bodyBox.width, bodyBox.height, openBack]
     );
+
+    /* What a fitted card has to spare. Its height is rounded up to a whole
+       row of the board, so its content ends some way short of its bottom
+       edge — on average half a row short. The widget cannot be told to fill
+       that: it is what is being measured, and a widget that grew into the
+       spare room would be measured taller and given more. So the room is
+       handed to the stylesheet instead, as a length, and a card's last line
+       (`zenith-wfoot`, `zenith-wsink`) is moved down by it — moved, not laid
+       out, which changes nothing that is measured. The line then stands on
+       the card's bottom edge, where the eye expects a footer, and the spare
+       room is between the list and it, where it reads as room for more. */
+    const slackPx =
+        fitting && contentPx > 0 && bodyBox.height > 0
+            ? Math.max(0, Math.floor(bodyBox.height - contentPx))
+            : 0;
 
     /* Turning the card is two steps, not one. The back does not exist until it
        is asked for — a board of twelve cards should not carry twelve settings
@@ -450,6 +472,7 @@ export const GridWidget: FC<GridWidgetProps> = ({
                         <div
                             className={`zenith-widget-card__body${fit ? ' is-fit' : ''}`}
                             ref={bodyEl}
+                            style={{ '--zenith-card-slack': `${slackPx}px` } as CSSProperties}
                         >
                             <CardRoomContext.Provider value={room}>
                                 {fit ? (
