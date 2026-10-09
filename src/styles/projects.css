@@ -384,10 +384,26 @@
     gap: 2px;
     flex: 1 1 0;
     min-height: 0;
-    margin: 0;
+    /* Out by the rows' own padding, so a name starts on the card's margin and
+       the plate under a pointed-at row reaches a little past it. */
+    margin: 0 -7px;
     padding: 0;
     list-style: none;
     overflow: hidden;
+}
+
+/* Wide enough for two columns of projects: reading down, the second
+   continuing the first. */
+@container zenith-card (min-width: 560px) {
+    .zenith-pw__list {
+        display: block;
+        columns: 2;
+        column-gap: 40px;
+    }
+    .zenith-pw__item {
+        break-inside: avoid;
+        margin-bottom: 2px;
+    }
 }
 
 .zenith-pw__item {

@@ -335,12 +335,14 @@
 }
 
 /* ── Hero ────────────────────────────────────────── */
+/* A caption, as on every card: a sentence in lower case. */
 .zenith-prayer__kicker {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
+    font-size: var(--zenith-w-meta);
+    line-height: 1.3;
     color: var(--zenith-text-muted);
+}
+.zenith-prayer__kicker::first-letter {
+    text-transform: uppercase;
 }
 
 .zenith-prayer__hero {
@@ -361,7 +363,7 @@
 }
 
 .zenith-prayer__hero-time {
-    font-family: var(--zenith-font-serif);
+    font-family: var(--zenith-w-fig-font, var(--zenith-font-serif));
     font-size: 54px;
     line-height: 1;
     letter-spacing: -0.015em;
@@ -438,8 +440,10 @@
 }
 
 /* ── Widget frame ────────────────────────────────── */
+/* As tall as the card where the card is held at its height; as tall as what is
+   on it where the card follows its content. */
 .zenith-prayer--widget {
-    height: 100%;
+    min-height: 100%;
     gap: 0;
 }
 

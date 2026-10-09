@@ -68,6 +68,7 @@ export class ContentModule extends BaseModule {
                 // meter, which is a composition a half-width cell can hold.
                 sizes: ['sm', 'md', 'lg'],
                 defaultSize: 'md',
+                autoHeight: true,
                 order: 40,
                 component: ContentWidget,
             }),
@@ -80,6 +81,7 @@ export class ContentModule extends BaseModule {
                 icon: 'target',
                 sizes: ['sm', 'md'],
                 defaultSize: 'sm',
+                autoHeight: true,
                 order: 41,
                 component: ChallengeWidget,
             })

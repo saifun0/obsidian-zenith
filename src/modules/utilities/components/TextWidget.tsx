@@ -76,7 +76,7 @@ const NoteText: FC<{ path: string; className: string; onRenamed: (path: string) 
     if (body === undefined) return null;
     if (body === null) {
         return (
-            <p className="zenith-util__note">
+            <p className="zenith-wempty">
                 <FileX size={13} />
                 {t('utilities.text.missing')}
             </p>
@@ -89,7 +89,7 @@ const NoteText: FC<{ path: string; className: string; onRenamed: (path: string) 
                 {body ? (
                     <Markdown markdown={body} sourcePath={path} />
                 ) : (
-                    <p className="zenith-util__note">{t('utilities.text.blank')}</p>
+                    <p className="zenith-wempty">{t('utilities.text.blank')}</p>
                 )}
             </div>
             {/* The one way from the card to the note it is showing. */}
@@ -123,7 +123,7 @@ export const TextWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.tex
     const className = `zenith-utext is-${config.textSize} is-${config.textAlign}`;
 
     if (state.kind === 'empty') {
-        return <p className="zenith-util__note">{t('utilities.text.empty')}</p>;
+        return <p className="zenith-wempty">{t('utilities.text.empty')}</p>;
     }
     if (state.kind === 'note') {
         return <NoteText path={state.path} className={className} onRenamed={onRenamed} />;

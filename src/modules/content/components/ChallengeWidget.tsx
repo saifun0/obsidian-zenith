@@ -11,7 +11,7 @@ export const ChallengeWidget: FC<DashboardWidgetProps> = () => {
     const t = useTranslation();
     const progress = useChallenge();
     if (!progress.length) {
-        return <p className="zenith-challenge__empty">{t('content.challenge.none')}</p>;
+        return <p className="zenith-wempty">{t('content.challenge.none')}</p>;
     }
     return <ChallengeBars progress={progress} compact />;
 };

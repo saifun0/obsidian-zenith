@@ -1,5 +1,3 @@
-import type { WidgetSize } from '../dashboard/grid/gridTypes';
-
 /**
  * The recent-notes widget, as data.
  *
@@ -23,10 +21,18 @@ export function normalizeRecentSettings(raw: Record<string, unknown> | undefined
 }
 
 /**
- * How many rows a card asks for. The small card shows one column of them, the
- * wide ones flow into as many columns as fit, so they ask for more.
+ * The most a card ever lists, and what it lists before it has been measured.
+ * Between the two it shows what its room holds: the rows that fit its height,
+ * in as many columns as fit its width.
  */
-export const RECENT_LIMIT: Record<WidgetSize, number> = { sm: 6, md: 12, lg: 24 };
+export const RECENT_MAX = 24;
+export const RECENT_MIN = 3;
+
+/** How many notes a card of `columns` columns and `rows` rows asks for. */
+export function recentLimit(columns: number, rows: number): number {
+    const n = Math.max(1, Math.floor(columns)) * Math.max(1, Math.floor(rows));
+    return Math.min(RECENT_MAX, Math.max(RECENT_MIN, n));
+}
 
 /** What the lists are made from: a file, as little of it as is needed. */
 export interface RecentSource {

@@ -25,7 +25,7 @@ import { useZenithStore } from '../../../store';
 import { useLongPress } from '../../../core/useLongPress';
 import { cardNameOf } from '../widgetConfig';
 import { MemberSettings } from './MemberSettings';
-import { CardFitContext } from '../cardFit';
+import { CardRoomContext, useBodyBox, type CardRoom } from '../cardRoom';
 
 /** Travel that turns a tap into a drag. Below it, a press is a click. */
 const TAP_SLOP_PX = 6;
@@ -204,10 +204,24 @@ export const GridWidget: FC<GridWidgetProps> = ({
         ro.observe(inner);
         return () => ro.disconnect();
     }, [fitting, onNeeded, instanceId, ready]);
-    const cardFit = useMemo(
-        () => (fit ? { maxBody: chromePx > 0 ? Math.max(0, fit.ceilingPx - chromePx) : 0 } : null),
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- `fit` is a new object each render; its ceiling is the only part read.
-        [fitting, fit?.ceilingPx, chromePx]
+    /* The room the widget lays itself out in. Its width is the body's own; its
+       height is the body's too on a card held at its height, and on one that
+       follows its content the ceiling — the body there is only as tall as
+       what is drawn, which is the one number a widget cannot plan from. */
+    const bodyEl = useRef<HTMLDivElement>(null);
+    const bodyBox = useBodyBox(bodyEl, [ready]);
+    const ceilingPx = fit?.ceilingPx ?? 0;
+    const room = useMemo<CardRoom>(
+        () => ({
+            width: bodyBox.width,
+            height: fitting
+                ? chromePx > 0
+                    ? Math.max(0, ceilingPx - chromePx)
+                    : 0
+                : bodyBox.height,
+            fit: fitting,
+        }),
+        [fitting, ceilingPx, chromePx, bodyBox.width, bodyBox.height]
     );
 
     /* Turning the card is two steps, not one. The back does not exist until it
@@ -433,18 +447,21 @@ export const GridWidget: FC<GridWidgetProps> = ({
                                 </button>
                             )}
                         </div>
-                        <div className={`zenith-widget-card__body${fit ? ' is-fit' : ''}`}>
-                            {fit ? (
-                                <CardFitContext.Provider value={cardFit}>
+                        <div
+                            className={`zenith-widget-card__body${fit ? ' is-fit' : ''}`}
+                            ref={bodyEl}
+                        >
+                            <CardRoomContext.Provider value={room}>
+                                {fit ? (
                                     <div className="zenith-widget-card__fit" ref={fitEl}>
                                         {ready && Body && (
                                             <Body size={size} instanceId={instanceId} />
                                         )}
                                     </div>
-                                </CardFitContext.Provider>
-                            ) : (
-                                ready && Body && <Body size={size} instanceId={instanceId} />
-                            )}
+                                ) : (
+                                    ready && Body && <Body size={size} instanceId={instanceId} />
+                                )}
+                            </CardRoomContext.Provider>
                         </div>
                     </div>
                 )}

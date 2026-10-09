@@ -72,13 +72,16 @@ What is written is one list item with the time in front: `- 09:05 call the bank`
 **Time** off to leave it out. A line you type as a list item or a task yourself
 (`- [ ] buy milk`) is kept exactly as typed.
 
-Under the line the card says where it writes — that is also the way to the note — and keeps
-the last few lines you filed in view, so you can see they were written.
+Under the line the card says where it writes — that is also the way to the note — and shows
+the last line you filed beside it, so you can see it was written. The card is always one
+row tall.
 
 ## Timer
 
 A kitchen timer: pick 5, 15, 25 or 45 minutes (or any length on the back of the card), press
-**Start**, and the card counts down and says when it will end.
+start, and the card counts down and says when it will end; the line under the figure
+empties with the time. A running timer can be paused and resumed; it is reset from a pause
+or once the time is up. A paused timer does not ring.
 
 When the time is up the card says so, and a notice comes through the
 [notification center](notifications.md) — so it reaches you with the dashboard closed, and

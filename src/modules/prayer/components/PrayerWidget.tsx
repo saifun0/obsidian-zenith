@@ -1,11 +1,12 @@
 import { useFeature } from '../../../core/useFeature';
-import React, { useEffect, useRef, useState, type FC } from 'react';
+import React, { type FC } from 'react';
 import { Maximize2 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
+import { useCardRoom } from '../../dashboard/cardRoom';
 import { EXTRA_PRAYERS, PRAYERS, isPerformed, type ExtraPrayerId, type PrayerId } from '../prayerConfig';
 import { formatClock, hasEntered, nextPrayer } from '../prayerTimes';
 import { useCountdownText } from './useCountdownText';
@@ -40,6 +41,8 @@ import { PrayerModal } from '../PrayerModal';
  */
 const STACK_WIDTH = 430;
 const SPLIT_WIDTH = 740;
+/** A card with this much height has room for the week and the voluntary prayers under the day. */
+const WEEK_MIN_PX = 330;
 
 /**
  * PrayerWidget — the day's prayers on the dashboard.
@@ -48,12 +51,16 @@ const SPLIT_WIDTH = 740;
  * countdown owns the left half at every size that has one; the five prayers sit
  * to the right of a hairline, each a tile you can tap.
  *
- * The three presets are three compositions, not one composition with the bottom
- * cut off — which is what the first version did, and why its tiles lost their
- * names. `sm` drops to a stacked hero, `lg` earns a week strip and the
- * voluntary prayers.
+ * Four compositions, chosen by the room the card has rather than by the name
+ * of its preset (see cardRoom.ts): a line and five rows in a phone's column,
+ * the hero over a row of tiles in half a board, the hero beside the tiles in
+ * a wide card, and under those — where the card has the height — the week and
+ * the voluntary prayers. The card follows its content, so the tall one is as
+ * tall as that makes it and no taller: it used to be four rows whatever was
+ * in them, with the day at the top, the week at the bottom and nothing
+ * between.
  */
-export const PrayerWidget: FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
+export const PrayerWidget: FC<DashboardWidgetProps> = () => {
     const t = useTranslation();
     const { app, plugin } = useApp();
     const settings = useZenithStore((s) => s.settings);
@@ -68,22 +75,12 @@ export const PrayerWidget: FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
     const openMenu = usePrayerMenu(today);
     const countdownText = useCountdownText(today);
 
-    // The preset says how much room the grid gave us; only the element knows
-    // how wide that is in this pane. A sidebar `md` is narrower than a `sm` on
-    // a wide canvas.
-    const rootRef = useRef<HTMLDivElement>(null);
-    const [width, setWidth] = useState(0);
-    useEffect(() => {
-        const el = rootRef.current;
-        if (!el || typeof ResizeObserver === 'undefined') return;
-        const ro = new ResizeObserver((entries) => setWidth(entries[0].contentRect.width));
-        ro.observe(el);
-        return () => ro.disconnect();
-    }, []);
+    const room = useCardRoom();
+    const width = room.width;
 
     if (!place || !day) {
         return (
-            <div className="zenith-prayer zenith-prayer--widget" ref={rootRef}>
+            <div className="zenith-prayer zenith-prayer--widget">
                 <PrayerNoPlace />
             </div>
         );
@@ -128,19 +125,16 @@ export const PrayerWidget: FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
         </button>
     );
 
-    // Before the first measurement the preset is the best guess available;
-    // after it, the pane's real width decides — and the preset only says
-    // whether there is vertical room for the week and the extras.
+    // Before the first measurement the middle composition is the guess: it
+    // is the one that is wrong by least whichever way the card turns out.
     const layout: 'stack' | 'sm' | 'md' | 'lg' =
         width === 0
-            ? size === 'sm'
-                ? 'sm'
-                : size
+            ? 'sm'
             : width < STACK_WIDTH
               ? 'stack'
               : width < SPLIT_WIDTH
                 ? 'sm'
-                : size === 'lg'
+                : room.height >= WEEK_MIN_PX
                   ? 'lg'
                   : 'md';
 
@@ -182,7 +176,7 @@ export const PrayerWidget: FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
     // ── One line, then a row per prayer: the phone layout ──
     if (layout === 'stack') {
         return (
-            <div className="zenith-prayer zenith-prayer--widget zenith-prayer--stack" ref={rootRef}>
+            <div className="zenith-prayer zenith-prayer--widget zenith-prayer--stack">
                 <div className="zenith-prayer__oneline">
                     <b>
                         {next ? `${t(`prayer.${next.id}`)} ${formatClock(next.at, t.locale)}` : '—'}
@@ -220,7 +214,7 @@ export const PrayerWidget: FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
 
     if (layout === 'sm') {
         return (
-            <div className="zenith-prayer zenith-prayer--widget zenith-prayer--sm" ref={rootRef}>
+            <div className="zenith-prayer zenith-prayer--widget zenith-prayer--sm">
                 <div className="zenith-prayer__hero zenith-prayer__hero--split">
                     <div className="zenith-prayer__hero-text">
                         <span className="zenith-prayer__kicker">
@@ -249,7 +243,6 @@ export const PrayerWidget: FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
     return (
         <div
             className={`zenith-prayer zenith-prayer--widget zenith-prayer--${layout}`}
-            ref={rootRef}
         >
             <div className="zenith-prayer__split">
                 {hero}

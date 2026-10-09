@@ -1,6 +1,7 @@
 import React, {
     useCallback,
     useEffect,
+    useMemo,
     useRef,
     useState,
     type CSSProperties,
@@ -11,6 +12,7 @@ import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { useTranslation } from '../../../core/i18n';
 import { SIZE_LABEL, type WidgetSize } from '../grid/gridTypes';
 import type { DashboardWidgetDefinition } from '../widgets';
+import { CardRoomContext, useBodyBox, type CardRoom } from '../cardRoom';
 import { BUNDLE_MAX_PIPS, type WidgetBundle } from '../grid/bundleTypes';
 import { useCrossFade } from '../../../components/shared/useCrossFade';
 import { claimSwipes } from '../../../core/useSwipeActions';
@@ -48,6 +50,13 @@ const MemberView: FC<MemberViewProps> = ({
 }) => {
     const t = useTranslation();
     const Body = def.component;
+    // A bundle holds the height it was given, so the body's box is the room.
+    const bodyEl = useRef<HTMLDivElement>(null);
+    const box = useBodyBox(bodyEl);
+    const room = useMemo<CardRoom>(
+        () => ({ width: box.width, height: box.height, fit: false }),
+        [box.width, box.height]
+    );
 
     return (
         <div className="zenith-widget-card zenith-bundle__member">
@@ -62,13 +71,15 @@ const MemberView: FC<MemberViewProps> = ({
                     />
                 ) : null}
             </div>
-            <div className="zenith-widget-card__body">
+            <div className="zenith-widget-card__body" ref={bodyEl}>
                 {compact ? (
                     <div className="zenith-bundle__compact">
                         {t('dashboard.bundle.compact', { name: label, size: SIZE_LABEL[size] })}
                     </div>
                 ) : Body ? (
-                    <Body size={size} instanceId={instanceId} />
+                    <CardRoomContext.Provider value={room}>
+                        <Body size={size} instanceId={instanceId} />
+                    </CardRoomContext.Provider>
                 ) : null}
             </div>
         </div>

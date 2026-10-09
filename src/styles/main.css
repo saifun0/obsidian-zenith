@@ -8,6 +8,7 @@
 @import './notifications.css';
 @import './profiles.css';
 @import '../components/ui/fields/fields.css';
+@import './widget-kit.css';
 @import './dashboard.css';
 @import './dashboard-grid.css';
 @import './dashboard-bundles.css';

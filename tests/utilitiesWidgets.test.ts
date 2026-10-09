@@ -14,7 +14,9 @@ import {
     parseLink,
 } from '../src/modules/utilities/links';
 import {
-    RECENT_LIMIT,
+    RECENT_MAX,
+    RECENT_MIN,
+    recentLimit,
     normalizeRecentSettings,
     recentlyModified,
     recentlyOpened,
@@ -273,9 +275,16 @@ describe('recent notes', () => {
         expect(recentlyModified(files, 0)).toEqual([]);
     });
 
-    it('asks for more rows the wider the card', () => {
-        expect(RECENT_LIMIT.sm).toBeLessThan(RECENT_LIMIT.md);
-        expect(RECENT_LIMIT.md).toBeLessThan(RECENT_LIMIT.lg);
+    it('asks for what the card holds: its rows, in its columns', () => {
+        expect(recentLimit(1, 6)).toBe(6);
+        expect(recentLimit(2, 6)).toBe(12);
+        expect(recentLimit(3, 6)).toBe(18);
+    });
+
+    it('never asks for nothing, and never for more than the card will ever list', () => {
+        expect(recentLimit(1, 0)).toBe(RECENT_MIN);
+        expect(recentLimit(0, 0)).toBe(RECENT_MIN);
+        expect(recentLimit(3, 40)).toBe(RECENT_MAX);
     });
 
     it('shows changed notes unless told otherwise', () => {

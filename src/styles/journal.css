@@ -1749,9 +1749,11 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
    own content, which is why this is not on `.zenith-jw`. The habit list is
    what takes the height — see `.zenith-jhab`. */
 .zenith-jw--stats {
-    height: 100%;
-    min-height: 0;
     gap: 8px;
+}
+/* The check-in card: the trackers, then one line. */
+.zenith-jw--checkin {
+    gap: 10px;
 }
 
 /* The CHECK-IN widget's header, and only its: it announces today's entry with
@@ -1863,9 +1865,8 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--zenith-space-sm);
-    padding: var(--zenith-space-sm) 0;
+    padding: 10px 0 4px;
     border-top: 1px solid var(--zenith-border);
-    border-bottom: 1px solid var(--zenith-border);
 }
 .zenith-jw__metric {
     display: flex;
@@ -1950,17 +1951,16 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
 .zenith-jhab {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto auto;
-    grid-auto-rows: minmax(18px, 34px);
-    align-content: center;
+    /* The card says how tall a row is: full height, or closed up where there
+       are more trackers than the card's height holds. See JournalStatsWidget. */
+    grid-auto-rows: var(--jhab-row, 26px);
     column-gap: 8px;
-    row-gap: 1px;
-    flex: 1 1 0;
+    row-gap: 0;
+    flex: none;
     min-height: 0;
-    margin: 0;
+    margin: 0 -6px;
     padding: 0;
     list-style: none;
-    overflow-y: auto;
-    scrollbar-width: thin;
     /* The day marks answer to the card's width — see the queries below. */
     container-type: inline-size;
     container-name: zenith-jhab;
@@ -2111,14 +2111,21 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     }
 }
 
-/* ── A tall card ──
-   Taller rows, bigger type, the same reading. */
-.zenith-jw--lg .zenith-jhab {
-    grid-auto-rows: minmax(24px, 42px);
-}
-
-.zenith-jw--lg .zenith-jhab__row {
-    font-size: 0.88rem;
+/* Wider still, and the days are the row: they spread across everything the
+   name and the figure leave, so a month is a line the eye can run along
+   rather than a cluster parked at the far end of an empty row. */
+@container zenith-jhab (min-width: 680px) {
+    .zenith-jhab {
+        grid-template-columns: auto fit-content(200px) minmax(0, 1fr) auto;
+        column-gap: 14px;
+    }
+    .zenith-jhab__row {
+        column-gap: 14px;
+    }
+    .zenith-jhab__days {
+        justify-content: space-between;
+        padding-inline: 10px;
+    }
 }
 
 /* Motion off means off — the user's own switch and the system's. */
@@ -2357,44 +2364,91 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     justify-content: flex-end;
 }
 
-.zenith-ritual-card {
+.zenith-root button.zenith-ritual-card {
     display: flex;
     align-items: center;
-    gap: var(--zenith-space-sm);
-    height: 100%;
-    padding: var(--zenith-space-sm) var(--zenith-space-md);
+    justify-content: flex-start;
+    gap: 12px;
+    box-sizing: border-box;
+    width: 100%;
+    height: auto;
+    min-height: 44px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
 }
 
+/* The sun, or the moon: which one says what time of day the card thinks it is. */
 .zenith-ritual-card__icon {
-    color: var(--zenith-accent);
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--zenith-warning) 12%, transparent);
+    color: var(--zenith-warning);
+    transition: transform var(--zenith-w-draw) var(--zenith-ease-settle);
+}
+.zenith-ritual-card.is-evening .zenith-ritual-card__icon {
+    background: color-mix(in srgb, var(--zenith-info) 12%, transparent);
+    color: var(--zenith-info);
+}
+.zenith-ritual-card:hover .zenith-ritual-card__icon {
+    transform: rotate(30deg);
 }
 
 .zenith-ritual-card__text {
     display: flex;
     flex-direction: column;
+    gap: 2px;
     flex: 1;
     min-width: 0;
 }
 
-.zenith-ritual-card__title {
-    font-weight: 600;
-    color: var(--zenith-text-normal);
-}
-
 .zenith-ritual-card__line {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.8rem;
-    color: var(--zenith-text-muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-size: var(--zenith-w-text);
+    line-height: 1.35;
+    color: var(--zenith-text-faint);
+}
+/* The day's main task: the one phrase on the card, in the planner's hand. */
+.zenith-ritual-card__line.is-focus {
+    font-family: var(--zenith-w-fig-font);
+    font-size: 1.12rem;
+    font-style: italic;
+    line-height: 1.25;
+    color: var(--zenith-text-normal);
 }
 
-.zenith-root button.zenith-ritual-card__open {
-    flex-shrink: 0;
+.zenith-ritual-card__go {
+    flex: none;
+    color: var(--zenith-text-faint);
+    transition:
+        transform var(--zenith-w-quick) var(--zenith-ease-out),
+        color var(--zenith-w-quick) var(--zenith-ease-out);
+}
+.zenith-ritual-card:hover .zenith-ritual-card__go {
+    color: var(--zenith-text-normal);
+    transform: translateX(2px);
+}
+@media (prefers-reduced-motion: reduce) {
+    .zenith-ritual-card__icon,
+    .zenith-ritual-card__go {
+        transition: none;
+    }
+    .zenith-ritual-card:hover .zenith-ritual-card__icon,
+    .zenith-ritual-card:hover .zenith-ritual-card__go {
+        transform: none;
+    }
 }
 
 .zenith-ritual-settings {

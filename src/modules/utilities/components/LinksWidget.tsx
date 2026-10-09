@@ -62,7 +62,7 @@ export const LinksWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.li
         .filter((row) => row.parsed.kind !== 'empty');
 
     if (rows.length === 0) {
-        return <p className="zenith-util__note">{t('utilities.links.empty')}</p>;
+        return <p className="zenith-wempty">{t('utilities.links.empty')}</p>;
     }
 
     const fileOf = (parsed: ParsedLink): TFile | null =>
@@ -95,15 +95,15 @@ export const LinksWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.li
                     <li key={i}>
                         <button
                             type="button"
-                            className={`zenith-ulinks__row${dead ? ' is-dead' : ''}`}
+                            className={`zenith-wline zenith-ulinks__row${dead ? ' is-dead' : ''}`}
                             title={dead ? t('utilities.links.dead') : item.target.trim()}
                             aria-disabled={dead}
                             onClick={(e) => {
                                 if (!dead) open(parsed, e);
                             }}
                         >
-                            <Icon size={14} className="zenith-ulinks__icon" />
-                            <span className="zenith-ulinks__label">{linkLabel(item)}</span>
+                            <Icon size={14} className="zenith-wline__icon" />
+                            <span className="zenith-wline__name">{linkLabel(item)}</span>
                         </button>
                     </li>
                 );

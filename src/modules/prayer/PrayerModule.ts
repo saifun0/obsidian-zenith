@@ -96,6 +96,7 @@ export class PrayerModule extends BaseModule {
                 description: "The next prayer, a countdown, and today's five at a tap.",
                 sizes: ['sm', 'md', 'lg'],
                 defaultSize: 'md',
+                autoHeight: true,
                 order: 25,
                 component: PrayerWidget,
             }),

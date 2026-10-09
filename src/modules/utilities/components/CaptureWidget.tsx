@@ -1,6 +1,6 @@
 import React, { useState, type FC } from 'react';
 import { Notice, TFile } from 'obsidian';
-import { ArrowRight, FolderOpen } from 'lucide-react';
+import { ArrowRight, Check, FolderOpen } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
@@ -26,8 +26,12 @@ import { noteName } from '../textSource';
  * It goes to today's daily note for whoever keeps the journal, or to a note of
  * the user's choosing, as one more item in a list — with the hour in front of
  * it unless that is switched off. Under the line the card says where it
- * writes, and that is also the way to the note. What was just filed stays in
- * view below it: the proof it was written, without a pop-up to say so.
+ * writes, and that is also the way to the note; beside that, the last thing
+ * filed: the proof it was written, without a pop-up to say so.
+ *
+ * One line of proof, not a growing list of them. A card that got taller with
+ * every thought moved the board under the hand writing on it, and the list
+ * was gone at the next restart anyway; the note itself is one press away.
  */
 export const CaptureWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.capture' }) => {
     const { app } = useApp();
@@ -43,8 +47,9 @@ export const CaptureWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.
     const path = capturePath(config.capturePath);
 
     if (target === 'note' && !path) {
-        return <p className="zenith-util__note">{t('utilities.capture.empty')}</p>;
+        return <p className="zenith-wempty zenith-wmid">{t('utilities.capture.empty')}</p>;
     }
+    const last = filed[0];
 
     const submit = async () => {
         const now = new Date();
@@ -91,7 +96,7 @@ export const CaptureWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.
     };
 
     return (
-        <div className="zenith-ucapture">
+        <div className="zenith-ucapture zenith-wmid">
             <form
                 className="zenith-ucapture__form"
                 onSubmit={(e) => {
@@ -111,26 +116,29 @@ export const CaptureWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.
                 />
             </form>
 
-            <button
-                type="button"
-                className="zenith-ucapture__target"
-                title={target === 'note' ? path : undefined}
-                onClick={() => void openTarget()}
-            >
-                <ArrowRight size={12} />
-                <span>{target === 'daily' ? t('utilities.capture.daily') : noteName(path)}</span>
-            </button>
-
-            {filed.length > 0 && (
-                <ul className="zenith-ucapture__filed" aria-label={t('utilities.capture.filed')}>
-                    {filed.map((line, i) => (
-                        <li key={`${line.time}:${i}:${line.text}`}>
-                            <span className="zenith-ucapture__time">{line.time}</span>
-                            <span className="zenith-ucapture__text">{line.text}</span>
-                        </li>
-                    ))}
-                </ul>
-            )}
+            <div className="zenith-ucapture__foot">
+                <button
+                    type="button"
+                    className="zenith-ucapture__target"
+                    title={target === 'note' ? path : undefined}
+                    onClick={() => void openTarget()}
+                >
+                    <ArrowRight size={12} />
+                    <span>{target === 'daily' ? t('utilities.capture.daily') : noteName(path)}</span>
+                </button>
+                {last && (
+                    <span
+                        // Keyed by the line, so each one filed arrives rather
+                        // than replacing the last without a sign.
+                        key={`${filed.length}:${last.time}:${last.text}`}
+                        className="zenith-ucapture__last"
+                        aria-label={t('utilities.capture.filed')}
+                    >
+                        <Check size={12} />
+                        <span className="zenith-ucapture__text">{last.text}</span>
+                    </span>
+                )}
+            </div>
         </div>
     );
 };

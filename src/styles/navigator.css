@@ -20,6 +20,12 @@
     grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
 }
 
+/* On a card the body already has the card's margin; a second one of the
+   launcher's own set its buttons in from every other card's left edge. */
+.zenith-widget-card__body .zenith-launcher {
+    padding: 0;
+}
+
 .zenith-launcher--grid.is-icons-only {
     grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
 }

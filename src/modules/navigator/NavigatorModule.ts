@@ -48,6 +48,7 @@ export class NavigatorModule extends BaseModule {
                 description: 'Jump to any Zenith view — and anywhere a module adds a button.',
                 sizes: ['sm', 'md', 'lg'],
                 defaultSize: 'sm',
+                autoHeight: true,
                 order: 5,
                 component: NavWidget,
             })

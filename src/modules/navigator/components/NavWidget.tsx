@@ -76,11 +76,10 @@ export const NavWidget: React.FC = () => {
 
     if (visible.length === 0) {
         return (
-            <div className="zenith-launcher__empty">
-                <Compass size={20} />
-                <p className="zenith-launcher__empty-title">{t('nav.empty')}</p>
-                <p className="zenith-launcher__empty-hint">{t('nav.emptyHint')}</p>
-            </div>
+            <p className="zenith-wempty" title={t('nav.emptyHint')}>
+                <Compass size={14} />
+                {t('nav.empty')}
+            </p>
         );
     }
 

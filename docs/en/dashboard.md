@@ -38,9 +38,15 @@ board may hold several of (text, links, picture, countdowns, quick note, timer) 
 **Name** there, so three texts are not three cards called *Text*. Esc, or the arrow in the
 back's corner, turns it back.
 
-**Height.** A card of lines — tasks, links, recent notes, countdowns, text — is only as tall
-as what is in it: three tasks do not hold four rows of the board. The height you give such
-a card is the most it may take, and it grows back into it as it fills. On a phone it is
+**Height.** Nearly every card is only as tall as what is in it: three tasks do not hold four
+rows of the board, and a timer or a line to write on takes one. Only the clock, life in
+weeks, the weather and a picture fill the cell they are given. The height you give a card
+is the most it may take, and it grows back into it as it fills.
+
+**Width.** What a card draws depends on the room it has, not on the name of its size: one
+column in a narrow card; in a wide one the main figure stands beside the list, and the list
+runs in columns. So the same card looks different in half the board, across the whole of it
+and in a phone's column — and is empty in none of them. On a phone it is
 exactly as tall as its content. *Fit to content* on the card's back switches this off for
 a card you want held at its height; turned over, a card stands at that full height, so the
 height being set is the one on screen. Bundles keep their height.
@@ -76,14 +82,18 @@ data, drawn for the board or for a phone's column.
 ## Progress
 
 *Dashboard → Period progress.* How far through the day, week, month and year you are: a bar
-and a percentage each. What is left ("98 days left") is in each row's title. On the back of
+and a percentage each. Press the card and the percentage gives way to what is left ("98 d");
+the choice is kept, and is on the back as well (**Figure**). In a wide card the periods
+stand side by side. On the back of
 the card, **Hijri month** adds the month by the moon under the year — in Ramadan, Ramadan's
 progress. The week starts on the day set in the journal (*Week starts on*); the Hijri month
 follows the prayer module's calendar and its offset.
 
 ## Countdowns
 
-*Dashboard → Countdowns.* Days until what is coming, soonest first, one line each:
+*Dashboard → Countdowns.* Days until what is coming. The soonest is the card's figure; the
+rest are lines under it or beside it, as many as the card's height holds. Where the dates
+come from:
 
 - **your own dates**, added on the back of the card — a trip, an exam; mark one **Yearly**
   and it comes round every year (a birthday on 29 February falls on the 28th in other

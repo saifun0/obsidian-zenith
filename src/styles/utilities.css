@@ -7,17 +7,8 @@
    row, a line of text, one number.
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-/* Nothing set up yet, or something set up that cannot be shown. One quiet
-   line — a card is not the place to explain its own settings. */
-.zenith-util__note {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin: 0;
-    color: var(--zenith-text-faint);
-    font-size: 0.78rem;
-    text-wrap: pretty;
-}
+/* Nothing set up yet, or something set up that cannot be shown, is said in the
+   one quiet line every card says it in: `.zenith-wempty`, widget-kit.css. */
 
 /* ── Markdown in a card ─────────────────────────── */
 /* Drawn by Obsidian, so it wears the theme. What is set here is only what a
@@ -134,77 +125,19 @@
 }
 
 /* ── Rows: links and recent notes ───────────────── */
-.zenith-ulinks,
-.zenith-urecent {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-/* As many columns as fit, and every row in view. */
+/* Both are lists of the kit's rows (`.zenith-wline`). Recent notes read down
+   and run into columns (`.zenith-wlist--columns`); links are few and chosen,
+   so they fill across — as many columns as fit, every row in view. */
 .zenith-ulinks {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1px 8px;
+    gap: 0 28px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
-/* Recent notes read down, not across: the second column continues the first. */
-.zenith-urecent {
-    columns: 240px;
-    column-gap: 16px;
-}
-.zenith-urecent > li {
-    break-inside: avoid;
-}
-
-.zenith-root button.zenith-ulinks__row,
-.zenith-root button.zenith-urecent__row {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 8px;
-    width: 100%;
-    height: auto;
-    min-height: 30px;
-    padding: 5px 8px;
-    border: none;
-    border-radius: var(--zenith-radius-sm);
-    background: none;
-    box-shadow: none;
-    color: var(--zenith-text-normal);
-    font-size: 0.85rem;
-    text-align: left;
-    cursor: pointer;
-}
-.zenith-root button.zenith-ulinks__row:hover,
-.zenith-root button.zenith-urecent__row:hover {
-    background: var(--zenith-bg-hover);
-}
-.zenith-root button.zenith-urecent__row {
-    align-items: baseline;
-}
-
-.zenith-ulinks__icon {
-    flex: none;
-    color: var(--zenith-text-faint);
-}
-.zenith-ulinks__label,
-.zenith-urecent__name {
+.zenith-ulinks > li {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.zenith-urecent__name {
-    flex: 1;
-}
-.zenith-urecent__meta {
-    flex: none;
-    max-width: 45%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 0.72rem;
-    font-variant-numeric: tabular-nums;
-    color: var(--zenith-text-faint);
 }
 
 /* A link that leads nowhere says so, and does nothing. */
@@ -212,18 +145,20 @@
     color: var(--zenith-text-faint);
     cursor: default;
 }
-.zenith-root button.zenith-ulinks__row.is-dead:hover {
-    background: none;
+.zenith-root button.zenith-ulinks__row.is-dead::before {
+    display: none;
 }
-.zenith-ulinks__row.is-dead .zenith-ulinks__label {
+.zenith-ulinks__row.is-dead .zenith-wline__name {
     text-decoration: line-through;
 }
 
 /* ── Quick note ─────────────────────────────────── */
+/* A ruled line, and under it where the line goes. A row tall at any width. */
 .zenith-ucapture {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    justify-content: center;
+    gap: 2px;
     height: 100%;
     min-height: 0;
 }
@@ -234,18 +169,18 @@
 .zenith-root input.zenith-ucapture__input {
     width: 100%;
     height: 34px;
-    padding: 0 2px;
+    padding: 0;
     border: none;
-    border-bottom: 1px solid color-mix(in srgb, var(--background-modifier-border) 70%, transparent);
+    border-bottom: 1px solid var(--zenith-w-track);
     border-radius: 0;
     background: transparent;
     box-shadow: none;
     font-size: 0.95rem;
     color: var(--zenith-text-normal);
-    transition: border-color var(--zenith-transition-fast);
+    transition: border-color var(--zenith-w-move) var(--zenith-ease-out);
 }
 .zenith-root input.zenith-ucapture__input:focus {
-    border-bottom-color: var(--zenith-text-faint);
+    border-bottom-color: var(--zenith-accent);
     box-shadow: none;
     outline: none;
 }
@@ -254,31 +189,32 @@
     opacity: 1;
 }
 
-/* What was just filed: the proof it was written. */
-.zenith-ucapture__filed {
+/* Where it writes, and the last thing written there. */
+.zenith-ucapture__foot {
     display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-height: 0;
-    margin: 4px 0 0;
-    padding: 0;
-    overflow: hidden;
-    list-style: none;
-}
-.zenith-ucapture__filed > li {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
+    align-items: center;
+    gap: 12px;
     min-width: 0;
-    font-size: 0.8rem;
-    color: var(--zenith-text-muted);
-    animation: zenith-fade-in var(--zenith-transition) both;
+    min-height: 24px;
 }
-.zenith-ucapture__time {
-    flex: none;
+.zenith-ucapture__foot > .zenith-ucapture__target {
+    flex: 0 1 auto;
+    min-width: 0;
+}
+.zenith-ucapture__last {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1 1 0;
+    justify-content: flex-end;
+    min-width: 0;
     font-size: 0.72rem;
-    font-variant-numeric: tabular-nums;
-    color: var(--zenith-text-faint);
+    color: var(--zenith-text-muted);
+    animation: zenith-ucapture-filed var(--zenith-w-draw) var(--zenith-ease-settle) both;
+}
+.zenith-ucapture__last > svg {
+    flex: none;
+    color: var(--zenith-success);
 }
 .zenith-ucapture__text {
     min-width: 0;
@@ -286,45 +222,124 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+@keyframes zenith-ucapture-filed {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+}
+
+@media (pointer: coarse) {
+    /* Sixteen pixels, or iOS zooms the page in on the field. */
+    .zenith-root input.zenith-ucapture__input {
+        height: 40px;
+        font-size: 16px;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .zenith-ucapture__last {
+        animation: none;
+    }
+}
 
 /* ── Timer ──────────────────────────────────────── */
-/* One number, in the middle of the card. */
+/* The number, what it counts in or towards, and the one thing to do next —
+   over a hairline that empties with the time.
+
+   Two lines where the card is narrow: the number and its button, then the
+   choice of minutes. One line where there is room, and then the card is a row
+   tall. Either way the parts keep their places from state to state. */
 .zenith-utimer {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        'clock acts'
+        'mid   mid'
+        'bar   bar';
     align-items: center;
-    justify-content: center;
-    gap: 10px;
+    align-content: center;
+    gap: 8px 12px;
     box-sizing: border-box;
     height: 100%;
     min-height: 0;
 }
 .zenith-utimer__clock {
-    font-size: 2.4rem;
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
-    color: var(--zenith-text-normal);
+    grid-area: clock;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+.zenith-utimer__mid {
+    grid-area: mid;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    /* A row of minutes or a line of words: the same height either way. */
+    min-height: 26px;
+    margin-left: -7px;
+}
+.zenith-utimer__mid > .zenith-wcap {
+    margin-left: 7px;
+}
+.zenith-utimer__acts {
+    grid-area: acts;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.zenith-utimer__bar {
+    grid-area: bar;
+}
+/* Before a start there is nothing to empty: the track alone. */
+.zenith-utimer.is-idle .zenith-utimer__bar .zenith-wbar__fill {
+    display: none;
+}
+/* Second by second, at the pace of the seconds. */
+.zenith-utimer.is-running .zenith-utimer__bar .zenith-wbar__fill {
+    animation: none;
+    transition: width 1s linear;
+}
+.zenith-utimer.is-held .zenith-utimer__clock {
+    color: var(--zenith-text-muted);
+}
+.zenith-utimer.is-held .zenith-utimer__bar .zenith-wbar__fill {
+    animation: none;
+    background: var(--zenith-text-faint);
+}
+/* Up: said in words, in the figure's place and face, and breathing. */
 .zenith-utimer.is-done .zenith-utimer__clock {
-    font-size: 1.4rem;
+    font-size: var(--zenith-w-fig-sm);
+    font-style: italic;
     letter-spacing: 0;
     color: var(--zenith-accent);
+    animation: zenith-utimer-done 2.4s ease-in-out infinite;
 }
-.zenith-utimer__until {
-    margin-top: -4px;
-    font-size: 0.78rem;
-    font-variant-numeric: tabular-nums;
-    color: var(--zenith-text-faint);
+@keyframes zenith-utimer-done {
+    50% {
+        opacity: 0.55;
+    }
 }
-.zenith-utimer__presets {
-    display: inline-flex;
-    gap: 2px;
+
+@container zenith-card (min-width: 380px) {
+    .zenith-utimer {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            'clock mid acts'
+            'bar   bar bar';
+        gap: 10px 16px;
+    }
+    .zenith-utimer__mid {
+        margin-left: 0;
+    }
 }
-.zenith-root button.zenith-utimer__preset {
-    min-width: 32px;
-    font-variant-numeric: tabular-nums;
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-utimer.is-done .zenith-utimer__clock {
+        animation: none;
+    }
+    .zenith-utimer.is-running .zenith-utimer__bar .zenith-wbar__fill {
+        transition: none;
+    }
 }
 
 /* ── On the back of the card ────────────────────── */

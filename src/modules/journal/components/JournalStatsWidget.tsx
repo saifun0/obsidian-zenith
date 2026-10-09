@@ -1,5 +1,5 @@
 import { useFeature } from '../../../core/useFeature';
-import React, { useMemo, type FC } from 'react';
+import React, { useMemo, type CSSProperties, type FC } from 'react';
 import { NotebookPen, CalendarDays, Flame, CheckCircle2 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
@@ -8,19 +8,32 @@ import { getTodayString } from '../../../core/dateUtils';
 import { usableTrackers } from '../services/usableTrackers';
 import { useReducedMotion } from '../../../components/shared/useCrossFade';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
+import { useCardRoom } from '../../dashboard/cardRoom';
 import { entriesByDate, journalStats } from '../services/journalStats';
 import { recentHabits } from '../services/habitMonth';
 import { HabitGlance } from './HabitGlance';
 
 const WINDOW_DAYS = 30;
 
+/** A tracker's row: as tall as it likes to be, and as short as it can go. */
+const ROW_PX = 26;
+const ROW_MIN_PX = 18;
+/** The footnote line, and the three journal figures when there is room for them. */
+const META_PX = 34;
+const METRICS_PX = 70;
+
 /**
  * JournalStatsWidget — every tracker's last few weeks, at a glance.
  *
  * One row per tracker: its icon and name, its recent days as marks, and one
- * figure. See `HabitGlance`. The large card adds three numbers about the
- * journal as a whole, and every size ends on one thin line — how much of the
- * window was written on, the writing streak, and the way into the journal.
+ * figure. See `HabitGlance`. A card with the height to spare adds three
+ * numbers about the journal as a whole, and every card ends on one thin line —
+ * how much of the window was written on, the writing streak, and the way into
+ * the journal.
+ *
+ * The card is as tall as its trackers: it follows its content. Where there
+ * are more of them than the height it was given holds at full size, the rows
+ * close up before anything scrolls.
  *
  * Those footnote numbers are the JOURNAL's, and nothing above them is: no row
  * repeats a streak or a day count of its own, so the card never shows two
@@ -30,7 +43,7 @@ const WINDOW_DAYS = 30;
  * Deliberately read-only: values are set in the check-in widget, in the note's
  * own block, or in the journal view, and that button goes there.
  */
-export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
+export const JournalStatsWidget: FC<DashboardWidgetProps> = () => {
     const t = useTranslation();
     const wordsOn = useFeature('journal.wordCount');
     const { plugin } = useApp();
@@ -51,7 +64,14 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
         [entries, trackers, today, weekStart]
     );
 
-    const showMetrics = size === 'lg';
+    const room = useCardRoom();
+    const n = rows.length;
+    // The three figures come when the trackers at full height leave room.
+    const showMetrics = n > 0 && room.height >= n * ROW_PX + META_PX + METRICS_PX;
+    const rowPx =
+        n > 0 && room.height > 0
+            ? Math.min(ROW_PX, Math.max(ROW_MIN_PX, Math.floor((room.height - META_PX) / n)))
+            : ROW_PX;
 
     const openJournal = () => void plugin.moduleManager.get('journal')?.activateView();
 
@@ -81,12 +101,15 @@ export const JournalStatsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) =>
     ];
 
     return (
-        <div className={`zenith-jw zenith-jw--stats zenith-jw--${size}`}>
+        <div
+            className="zenith-jw zenith-jw--stats"
+            style={{ '--jhab-row': `${rowPx}px` } as CSSProperties}
+        >
             {rows.length === 0 ? (
-                <div className="zenith-jw__empty">
-                    <NotebookPen size={24} strokeWidth={1.5} />
-                    <span>{t('journal.noTrackers')}</span>
-                </div>
+                <p className="zenith-wempty">
+                    <NotebookPen size={14} />
+                    {t('journal.noTrackers')}
+                </p>
             ) : (
                 <HabitGlance
                     rows={rows}

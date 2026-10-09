@@ -6,6 +6,8 @@ import { useNow } from '../../../core/useNow';
 import { toLocalIsoDate } from '../../../core/dateUtils';
 import { isoToDate } from '../../../core/calendarDates';
 import { useZenithStore } from '../../../store';
+import { DateField } from '../../../components/ui/fields';
+import { ROOM_WIDE, rowPx, rowsThatFit, useCardRoom } from '../cardRoom';
 import { useWidgetConfig } from '../widgetConfig';
 import type { DashboardWidgetProps, WidgetSettingsProps } from '../widgets';
 import {
@@ -49,7 +51,11 @@ function normalizeCountdownConfig(raw: Record<string, unknown> | undefined): Cou
     };
 }
 
-const LIMIT = { sm: 4, md: 6, lg: 10 } as const;
+/** The most rows a card lists under its figure, however tall it is. */
+const MAX_ROWS = 12;
+
+/** What the figure and its caption take, when the rows go under them. */
+const LEAD_PX = 84;
 
 function title(c: Countdown, t: Translator): string {
     return c.hijri ? t(`countdown.hijri.${c.hijri}`) : c.title;
@@ -64,11 +70,15 @@ function inDays(days: number, t: Translator): string {
 /**
  * Days until what is coming: dates the user typed on the back of the card,
  * tasks tagged for it, projects' target dates and — for whoever keeps the
- * prayer module — Ramadan and the two Eids. One list, soonest first, a line
- * each; a row that comes from a note opens it.
+ * prayer module — Ramadan and the two Eids.
+ *
+ * The soonest is the card's figure — the number of days, and under it what
+ * they lead to — because the soonest is the one being waited for; the rest
+ * are a list, soonest first, a line each. Beside the figure in a wide card,
+ * under it in a narrow one, and as many of them as the card's height holds.
+ * Anything that comes from a note opens it.
  */
 export const CountdownWidget: FC<DashboardWidgetProps> = ({
-    size = 'sm',
     instanceId = 'dashboard.countdowns',
 }) => {
     const t = useTranslation();
@@ -80,62 +90,108 @@ export const CountdownWidget: FC<DashboardWidgetProps> = ({
     const prayerOn = useZenithStore((s) => s.settings.activeModuleIds.includes('prayer'));
     const today = toLocalIsoDate(useNow(60 * 60_000));
     const hijriOn = config.hijri ?? prayerOn;
+    const room = useCardRoom();
 
     // The Hijri walk converts up to a year of days; once a day is plenty.
     const hijri = useMemo(
         () => (hijriOn ? hijriCountdowns(today, offset) : []),
         [hijriOn, today, offset]
     );
-    const list = upcoming(
+    const all = upcoming(
         [
             ownCountdowns(config.events, today),
             hijri,
             config.projects ? projectCountdowns(projects, today) : [],
             config.tasks ? taskCountdowns(tasks, config.tag, today) : [],
         ],
-        LIMIT[size]
+        Number.MAX_SAFE_INTEGER
     );
 
-    if (list.length === 0) {
-        return <p className="zenith-countdowns__empty">{t('countdown.empty')}</p>;
+    if (all.length === 0) {
+        return <p className="zenith-wempty">{t('countdown.empty')}</p>;
     }
 
+    const [lead, ...rest] = all;
+    // Beside the figure the rows have the card's whole height; under it, what
+    // the figure leaves. One of them gives its place to "N more" when there
+    // are more dates than rows.
+    const split = room.width >= ROOM_WIDE;
+    const fits = Math.min(MAX_ROWS, rowsThatFit(room.height, rowPx(), split ? 0 : LEAD_PX));
+    const rows = rest.length > fits ? rest.slice(0, Math.max(1, fits - 1)) : rest;
+    const more = rest.length - rows.length;
+
+    const dateOf = (c: Countdown) =>
+        isoToDate(c.date).toLocaleDateString(t.locale, { day: 'numeric', month: 'short' });
+    const open = (c: Countdown) => void app.workspace.openLinkText(c.path ?? '', '', false);
+
+    const leadDays = daysUntil(lead.date, today);
+    const leadBody = (
+        <>
+            {leadDays > 1 ? (
+                <span className="zenith-wfig">
+                    {leadDays}
+                    <span className="zenith-wfig__unit">{t.plural('countdown.unit', leadDays)}</span>
+                </span>
+            ) : (
+                <span className="zenith-wfig is-word">{inDays(leadDays, t)}</span>
+            )}
+            <span className="zenith-countdowns__what">
+                <span>{title(lead, t)}</span>
+                <span className="zenith-wcap zenith-wcap--faint">{dateOf(lead)}</span>
+            </span>
+        </>
+    );
+    const leadClass = `zenith-countdowns__lead${leadDays === 0 ? ' is-today' : ''}`;
+
     return (
-        <ul className="zenith-countdowns">
-            {list.map((c) => {
-                const days = daysUntil(c.date, today);
-                const date = isoToDate(c.date).toLocaleDateString(t.locale, {
-                    day: 'numeric',
-                    month: 'short',
-                });
-                const body = (
-                    <>
-                        <span className="zenith-countdowns__title">{title(c, t)}</span>
-                        <span className="zenith-countdowns__date">{date}</span>
-                        <span className={`zenith-countdowns__days${days === 0 ? ' is-today' : ''}`}>
-                            {inDays(days, t)}
-                        </span>
-                    </>
-                );
-                return (
-                    <li key={c.key}>
-                        {c.path ? (
-                            <button
-                                type="button"
-                                className="zenith-countdowns__row is-link"
-                                onClick={() =>
-                                    void app.workspace.openLinkText(c.path ?? '', '', false)
-                                }
-                            >
-                                {body}
-                            </button>
-                        ) : (
-                            <div className="zenith-countdowns__row">{body}</div>
-                        )}
-                    </li>
-                );
-            })}
-        </ul>
+        <div className="zenith-countdowns zenith-wsplit">
+            {lead.path ? (
+                <button type="button" className={leadClass} onClick={() => open(lead)}>
+                    {leadBody}
+                </button>
+            ) : (
+                <div className={leadClass}>{leadBody}</div>
+            )}
+
+            {rows.length > 0 && (
+                <ul className="zenith-wlist">
+                    {rows.map((c) => {
+                        const days = daysUntil(c.date, today);
+                        const body = (
+                            <>
+                                <span className="zenith-wline__name">{title(c, t)}</span>
+                                <span className="zenith-countdowns__date">{dateOf(c)}</span>
+                                <span
+                                    className={`zenith-countdowns__days${days === 0 ? ' is-today' : ''}`}
+                                >
+                                    {inDays(days, t)}
+                                </span>
+                            </>
+                        );
+                        return (
+                            <li key={c.key}>
+                                {c.path ? (
+                                    <button
+                                        type="button"
+                                        className="zenith-wline"
+                                        onClick={() => open(c)}
+                                    >
+                                        {body}
+                                    </button>
+                                ) : (
+                                    <div className="zenith-wline">{body}</div>
+                                )}
+                            </li>
+                        );
+                    })}
+                    {more > 0 && (
+                        <li className="zenith-wcap zenith-wcap--faint zenith-countdowns__more">
+                            {t('common.more', { count: more })}
+                        </li>
+                    )}
+                </ul>
+            )}
+        </div>
     );
 };
 
@@ -201,13 +257,14 @@ export const CountdownSettings: FC<WidgetSettingsProps> = ({ instanceId }) => {
                             onChange={(e) => setEvent(i, { title: e.target.value })}
                             onPointerDown={stop}
                         />
-                        <input
-                            type="date"
-                            className="zenith-input zenith-input--sm"
-                            value={event.date}
-                            onChange={(e) => setEvent(i, { date: e.target.value })}
-                            onPointerDown={stop}
-                        />
+                        <span onPointerDown={stop}>
+                            <DateField
+                                size="sm"
+                                clearable={false}
+                                value={event.date}
+                                onChange={(date) => setEvent(i, { date })}
+                            />
+                        </span>
                         <button
                             type="button"
                             className={`zenith-countdowns__yearly${event.yearly ? ' is-active' : ''}`}

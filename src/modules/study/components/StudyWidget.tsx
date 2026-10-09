@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState, type FC } from 'react';
+import React, { useLayoutEffect, useRef, useState, type FC } from 'react';
 import { Maximize2 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
 import { addDays, isoToDate } from '../../../core/calendarDates';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
+import { ROOM_WIDE, useCardRoom } from '../../dashboard/cardRoom';
 import {
     dayState,
     isoDay,
@@ -22,13 +23,15 @@ import { NowCard } from './NowCard';
 import { ImportDialog } from './ImportDialog';
 import { EditorDialog } from './EditorDialog';
 
-/**
- * Where the widget's layout changes, measured rather than taken from the
- * preset: a `md` card in a sidebar is narrower than a `sm` one on a wide
- * board. Below SPLIT the card is one column; at or above it, the "now" side
- * and today's list sit next to each other.
- */
-const SPLIT = 560;
+/** What the parts of the card take, for working out how many classes fit. */
+const HEAD_PX = 32;
+const ROW_PX = 46;
+const LIST_TITLE_PX = 24;
+const WEEK_PX = 100;
+/** The rule and the air between the "now" side and a list under it. */
+const STACK_GAP_PX = 24;
+/** A card with this much height has room for the shape of the week as well. */
+const WEEK_MIN_PX = 400;
 
 /**
  * Classes on the dashboard.
@@ -40,11 +43,17 @@ const SPLIT = 560;
  * same thing: the whole day as a strip with a needle at now, the day's list,
  * and at the largest size the week.
  *
- * Everything is on the card at once — no pages to swipe through. A class
- * that is over fades rather than disappearing, so the list keeps the shape
- * of the day.
+ * Everything is on the card at once — no pages to swipe through, and nothing
+ * that scrolls: the list is as many classes as the card's height holds,
+ * starting from the one that is on or next, and says how many it left out. A
+ * class that is over fades rather than disappearing, so the list keeps the
+ * shape of the day.
+ *
+ * What is drawn follows the room the card has (cardRoom.ts), not the name of
+ * its preset: the "now" side and the list stand side by side in a wide card,
+ * and the list goes under it — or goes — in a narrow one.
  */
-export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
+export const StudyWidget: FC<DashboardWidgetProps> = () => {
     const t = useTranslation();
     const { plugin } = useApp();
     const schedule = useStudySchedule();
@@ -52,17 +61,17 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const weekStyle = useZenithStore((s) => s.settings.studyWeekNames);
     const { today, now, preview } = useStudyNow();
     const [dialog, setDialog] = useState<'import' | 'edit' | null>(null);
-    const listRef = useRef<HTMLDivElement>(null);
+    const room = useCardRoom();
 
-    const rootRef = useRef<HTMLDivElement>(null);
-    const [width, setWidth] = useState(0);
-    useEffect(() => {
-        const el = rootRef.current;
-        if (!el || typeof ResizeObserver === 'undefined') return;
-        const ro = new ResizeObserver((entries) => setWidth(entries[0].contentRect.width));
-        ro.observe(el);
-        return () => ro.disconnect();
-    }, []);
+    // The "now" side is as tall as what it says, which changes with the hour;
+    // the list under it gets what is left, so it has to be measured.
+    const nowRef = useRef<HTMLDivElement>(null);
+    const [nowPx, setNowPx] = useState(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Every render: it reads what only exists after layout, and stops itself when nothing moved.
+    useLayoutEffect(() => {
+        const h = nowRef.current?.offsetHeight ?? 0;
+        setNowPx((prev) => (Math.abs(prev - h) > 1 ? h : prev));
+    });
 
     // Every hook runs before the early return below: today's lessons are
     // simply none while there is no timetable.
@@ -74,18 +83,6 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const upcoming = dayOver ? nextStudyDay(schedule, today, opts) : null;
     const listed = dayOver ? (upcoming?.lessons ?? []) : lessons;
 
-    // A short card scrolls its list to what is on now, or next: the finished
-    // first class is not what anyone opens the dashboard to see.
-    const focusRow = dayOver ? undefined : lessons.find((l) => l.end > now)?.lesson.id;
-    useEffect(() => {
-        const box = listRef.current;
-        const row = focusRow
-            ? box?.querySelector<HTMLElement>(`[data-lesson="${focusRow}"]`)
-            : null;
-        if (!box) return;
-        box.scrollTop = row ? Math.max(0, row.offsetTop - box.offsetTop - 4) : 0;
-    }, [focusRow, width]);
-
     const dialogs = (
         <>
             {dialog === 'import' && <ImportDialog onClose={() => setDialog(null)} />}
@@ -95,7 +92,7 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
 
     if (!schedule.lessons.length) {
         return (
-            <div className="zenith-study zenith-study--widget" ref={rootRef}>
+            <div className="zenith-study zenith-study--widget">
                 <StudySetup
                     compact
                     onImport={() => setDialog('import')}
@@ -113,10 +110,37 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
             : state.kind === 'during'
               ? (state.next?.start ?? null)
               : null;
-    const split = width >= SPLIT;
-    const showList = size !== 'sm' && listed.length > 0;
-    const showWeek =
-        size === 'lg' && termState(today, opts) !== 'before' && termState(today, opts) !== 'after';
+    const split = room.width >= ROOM_WIDE;
+    const term = termState(today, opts);
+    const showWeek = room.height >= WEEK_MIN_PX && term !== 'before' && term !== 'after';
+
+    const upcomingTitle =
+        upcoming &&
+        (upcoming.date === addDays(today, 1)
+            ? t('study.list.tomorrow')
+            : `${dayName(isoDay(upcoming.date), t.locale, 'long')}, ${isoToDate(
+                  upcoming.date
+              ).toLocaleDateString(t.locale, { day: 'numeric', month: 'long' })}`);
+
+    // How many classes the list has the height for. Beside the "now" side it
+    // has the card's; under it, what that side leaves — and there a list of
+    // one class is not a list, so it waits for room for two.
+    const listRoom =
+        room.height -
+        HEAD_PX -
+        (showWeek ? WEEK_PX : 0) -
+        (split ? 0 : nowPx + STACK_GAP_PX) -
+        (upcomingTitle ? LIST_TITLE_PX : 0);
+    const fits = room.height > 0 ? Math.max(0, Math.floor(listRoom / ROW_PX)) : 0;
+    const showList = listed.length > 0 && fits >= (split ? 1 : 2);
+    // From the class that is on, or next: the finished first class is not what
+    // anyone opens the dashboard to see. One row gives way to the count of
+    // what did not fit.
+    const focusAt = dayOver ? 0 : Math.max(0, lessons.findIndex((l) => l.end > now));
+    const room4 = listed.length > fits ? Math.max(1, fits - 1) : fits;
+    const from = Math.max(0, Math.min(focusAt, listed.length - room4));
+    const rows = listed.slice(from, from + room4);
+    const left = listed.length - from - rows.length;
 
     const openFull = () => void plugin.moduleManager.get('study')?.activateView();
 
@@ -143,30 +167,16 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     );
 
     const nowSide = (
-        <div className="zenith-study__now-side">
-            <NowCard
-                schedule={schedule}
-                opts={opts}
-                today={today}
-                now={now}
-                roomy={split || size !== 'sm'}
-            />
+        <div className="zenith-study__now-side" ref={nowRef}>
+            <NowCard schedule={schedule} opts={opts} today={today} now={now} roomy={split} />
             {!dayOver && <DayBand lessons={lessons} now={now} />}
         </div>
     );
 
-    const upcomingTitle =
-        upcoming &&
-        (upcoming.date === addDays(today, 1)
-            ? t('study.list.tomorrow')
-            : `${dayName(isoDay(upcoming.date), t.locale, 'long')}, ${isoToDate(
-                  upcoming.date
-              ).toLocaleDateString(t.locale, { day: 'numeric', month: 'long' })}`);
-
     const list = showList && (
-        <div className="zenith-study__list" ref={listRef}>
+        <div className="zenith-study__list">
             {upcomingTitle && <span className="zenith-study__list-title">{upcomingTitle}</span>}
-            {listed.map((item) => (
+            {rows.map((item) => (
                 <LessonRow
                     key={item.lesson.id}
                     item={item}
@@ -174,13 +184,17 @@ export const StudyWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
                     showTeacher={split}
                 />
             ))}
+            {left > 0 && (
+                <span className="zenith-wcap zenith-wcap--faint zenith-study__more">
+                    {t('common.more', { count: left })}
+                </span>
+            )}
         </div>
     );
 
     return (
         <div
-            className={`zenith-study zenith-study--widget is-${size}${split ? ' is-split' : ' is-stacked'}`}
-            ref={rootRef}
+            className={`zenith-study zenith-study--widget${split ? ' is-split' : ' is-stacked'}`}
         >
             {header}
             {split ? (

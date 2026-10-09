@@ -14,6 +14,8 @@ import { useZenithStore } from '../../store';
 import { resolveLocale, useTranslation } from '../../core/i18n';
 import { useNow } from '../../core/useNow';
 import type { DashboardWidgetProps } from '../dashboard/widgets';
+import { ROOM_WIDE, useCardRoom } from '../dashboard/cardRoom';
+import type { WidgetSize } from '../dashboard/grid/gridTypes';
 import { preferredPlace, searchPlaces } from '../../services/geocode';
 import { getCachedWeather, getWeather, describeWeather, type WeatherData } from './weatherService';
 import { temperature, unitSystem, wind as windOf } from './weatherFormat';
@@ -141,7 +143,28 @@ const WeatherSkeleton: React.FC<{ size: string; label: string }> = ({ size, labe
  * That's why there are no collapse toggles: the size *is* the control. For a
  * full read at any preset, clicking the card opens the expanded panel.
  */
-export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
+/** A card with this much height has room for the days ahead. */
+const DAILY_MIN_PX = 400;
+
+/** The width an hour takes on the card: its label, its glyph and its temperature. */
+const HOUR_PX = 46;
+
+export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size: preset = 'sm' }) => {
+    // What the card draws follows the room it has, not the name of its preset
+    // (see cardRoom.ts): the compact card with the day's curve where it is
+    // narrow, the wide one with the hours across it where it is not, and the
+    // days ahead under either wherever there is the height for them. A
+    // "medium" card in a phone's column used to be the wide composition
+    // squeezed into a third of the width it was drawn for.
+    const room = useCardRoom();
+    const size: WidgetSize =
+        room.width <= 0
+            ? preset
+            : room.height >= DAILY_MIN_PX
+              ? 'lg'
+              : room.width >= ROOM_WIDE
+                ? 'md'
+                : 'sm';
     const t = useTranslation();
     const override = useZenithStore((s) => s.settings.weatherPlace);
     const location = useZenithStore((s) => s.settings.location);
@@ -272,7 +295,7 @@ export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) =
                         label={t(look.labelKey)}
                     />
                     <div className="zenith-weather__temp-group">
-                        <span className="zenith-weather__temp zenith-serif">
+                        <span className="zenith-weather__temp zenith-wfig-face">
                             {temperature(data.tempC, unit)}°
                         </span>
                         <span className="zenith-weather__condition">{t(look.labelKey)}</span>
@@ -298,7 +321,12 @@ export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) =
             {withHourly && (
                 <div className="zenith-weather__section zenith-weather__section--hourly">
                     <span className="zenith-weather__section-title">{t('weather.tab.hourly')}</span>
-                    <HourlyStrip hourly={hourly} unit={unit} t={t} />
+                    <HourlyStrip
+                        hourly={hourly}
+                        unit={unit}
+                        t={t}
+                        columns={Math.max(4, Math.floor(room.width / HOUR_PX))}
+                    />
                 </div>
             )}
 

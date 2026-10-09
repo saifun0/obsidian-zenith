@@ -6,10 +6,11 @@ import { useNow } from '../../../core/useNow';
 import { relativeTime } from '../../sync/relativeTime';
 import { useWidgetConfig } from '../../dashboard/widgetConfig';
 import type { DashboardWidgetProps, WidgetSettingsProps } from '../../dashboard/widgets';
+import { listColumns, rowPx, rowsThatFit, useCardRoom } from '../../dashboard/cardRoom';
 import {
     RECENT_BYS,
-    RECENT_LIMIT,
     normalizeRecentSettings,
+    recentLimit,
     recentlyModified,
     recentlyOpened,
     type RecentBy,
@@ -55,14 +56,12 @@ function useVaultActivity(): number {
 /**
  * The notes last written, or the files last opened: a row each, newest first.
  *
- * On a wide card the rows flow into columns, so a board-wide card shows a
- * dozen without a scrollbar. A row opens its note — in a new tab with the
- * modifier held, as a link in a note would.
+ * As many as the card holds, and never one more: the rows that fit the height
+ * it was given, in as many columns as fit its width. So a card is full at
+ * every size and on a phone, and none of them scrolls. A row opens its note —
+ * in a new tab with the modifier held, as a link in a note would.
  */
-export const RecentWidget: FC<DashboardWidgetProps> = ({
-    size = 'md',
-    instanceId = 'picture.recent',
-}) => {
+export const RecentWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.recent' }) => {
     const { app } = useApp();
     const t = useTranslation();
     const [config] = useWidgetConfig(instanceId, normalizeRecentSettings);
@@ -70,7 +69,8 @@ export const RecentWidget: FC<DashboardWidgetProps> = ({
     // "5 min ago" has to become "6 min ago" with nobody touching the vault.
     useNow(60_000);
 
-    const limit = RECENT_LIMIT[size];
+    const room = useCardRoom();
+    const limit = recentLimit(listColumns(room.width), rowsThatFit(room.height, rowPx()));
     const opened = config.recentBy === 'opened';
 
     const entries = useMemo(
@@ -97,16 +97,16 @@ export const RecentWidget: FC<DashboardWidgetProps> = ({
     );
 
     if (entries.length === 0) {
-        return <p className="zenith-util__note">{t('utilities.recent.empty')}</p>;
+        return <p className="zenith-wempty">{t('utilities.recent.empty')}</p>;
     }
 
     return (
-        <ul className="zenith-urecent">
+        <ul className="zenith-wlist zenith-wlist--columns">
             {entries.map((entry) => (
                 <li key={entry.path}>
                     <button
                         type="button"
-                        className="zenith-urecent__row"
+                        className="zenith-wline"
                         title={entry.path}
                         onClick={(e) =>
                             void app.workspace.openLinkText(
@@ -116,8 +116,8 @@ export const RecentWidget: FC<DashboardWidgetProps> = ({
                             )
                         }
                     >
-                        <span className="zenith-urecent__name">{entry.name}</span>
-                        <span className="zenith-urecent__meta">
+                        <span className="zenith-wline__name">{entry.name}</span>
+                        <span className="zenith-wline__end">
                             {opened ? entry.folder : relativeTime(t, entry.mtime)}
                         </span>
                     </button>

@@ -33,8 +33,10 @@
 }
 
 /* ── Widget ──────────────────────────────────────── */
+/* As tall as the card where the card is held at its height; as tall as what is
+   on it where the card follows its content. */
 .zenith-study--widget {
-    height: 100%;
+    min-height: 100%;
 }
 
 .zenith-study__top {
@@ -145,17 +147,23 @@
     flex: 1;
     min-width: 0;
     min-height: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
+    /* Nothing scrolls: the list is as many classes as fit, and a line for the
+       rest. See StudyWidget. */
+    overflow: hidden;
 }
 
+/* A caption, as on every card: a sentence in lower case. */
 .zenith-study__list-title {
     padding: 2px 8px 4px;
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-size: var(--zenith-w-meta);
+    line-height: 1.3;
     color: var(--zenith-text-muted);
+}
+.zenith-study__list-title::first-letter {
+    text-transform: uppercase;
+}
+.zenith-study__more {
+    padding: 4px 8px 0;
 }
 
 .is-stacked .zenith-study__list {
@@ -171,12 +179,14 @@
     min-width: 0;
 }
 
+/* A caption, as on every card: a sentence in lower case. */
 .zenith-study-now__kicker {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-size: var(--zenith-w-meta);
+    line-height: 1.3;
     color: var(--zenith-text-muted);
+}
+.zenith-study-now__kicker::first-letter {
+    text-transform: uppercase;
 }
 
 .zenith-study-now__title {

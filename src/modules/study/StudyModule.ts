@@ -92,6 +92,7 @@ export class StudyModule extends BaseModule {
                 icon: 'graduation-cap',
                 sizes: ['sm', 'md', 'lg'],
                 defaultSize: 'md',
+                autoHeight: true,
                 order: 35,
                 component: StudyWidget,
             }),

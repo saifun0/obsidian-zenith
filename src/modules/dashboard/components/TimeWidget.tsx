@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
-import { ChevronLeft, ChevronRight, CalendarDays, Clock } from 'lucide-react';
+import React, { useState, useEffect, useMemo, type CSSProperties } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { TFile, type App } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import type { DashboardWidgetProps } from '../widgets';
+import { ROOM_MEDIUM, useCardRoom } from '../cardRoom';
 import {
     JournalWriter,
     journalConfig,
@@ -123,29 +124,19 @@ async function openDailyNote(app: App, writer: JournalWriter, config: JournalCon
  * its own state (viewed month, refresh tick) plus the task-store subscription
  * still re-render it when they should.
  */
-const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) => {
-    const t = useTranslation();
+/**
+ * What a day carries, and the way into it: whether it has tasks, whether it
+ * has a note, and opening — making, if need be — that note.
+ *
+ * Shared by the month and by the week that stands in for it on a narrow card,
+ * so a day says the same thing about itself in both.
+ */
+function useDays() {
     const { app } = useApp();
     const tasks = useZenithStore((s) => s.tasks);
     const settings = useZenithStore((s) => s.settings);
-
-    const [view, setView] = useState(() => {
-        const d = new Date();
-        return { y: d.getFullYear(), m: d.getMonth() };
-    });
     // Bumped after creating a note so its dot appears without a full reload.
     const [tick, setTick] = useState(0);
-
-    const locale = dateLocale(t);
-    const cells = useMemo(() => monthGrid(view.y, view.m), [view]);
-    const weekdays = useMemo(() => weekdayLabels(locale), [locale]);
-    // Month and year formatted apart and joined by hand. Asking the locale for
-    // both at once gets "август 2026 г." in Russian — correct for prose, and
-    // three characters of legal boilerplate in a calendar header.
-    const title = useMemo(() => {
-        const first = new Date(view.y, view.m, 1);
-        return `${first.toLocaleDateString(locale, { month: 'long' })} ${view.y}`;
-    }, [view, locale]);
 
     // Set of `yyyy-mm-dd` that carry at least one task, for the day dots.
     const taskDays = useMemo(() => {
@@ -165,6 +156,89 @@ const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) =
     const hasNote = (d: Date): boolean => writer.find(config, ymd(d)) instanceof TFile;
     void tick; // `hasNote` reads the vault live; `tick` just forces a recheck.
 
+    const openDay = (d: Date) => {
+        void openDailyNote(app, writer, config, ymd(d))
+            .then(() => setTick((n) => n + 1))
+            .catch((err) => console.error('Zenith: could not open the daily note', err));
+    };
+
+    return { taskDays, hasNote, openDay };
+}
+
+/** The seven days of the week `today` is in, Monday first. */
+function weekOf(today: Date): Date[] {
+    const lead = (today.getDay() + 6) % 7;
+    return Array.from(
+        { length: 7 },
+        (_, i) => new Date(today.getFullYear(), today.getMonth(), today.getDate() - lead + i)
+    );
+}
+
+/**
+ * This week, a day to a column: what the month says about seven days, in the
+ * one line a narrow card has for it. It used to be the whole month behind a
+ * button that swapped it for the clock — half the card always out of sight,
+ * and the half in sight chosen by whoever pressed last.
+ */
+const WeekRow: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) => {
+    const t = useTranslation();
+    const { taskDays, hasNote, openDay } = useDays();
+    const locale = dateLocale(t);
+    const weekdays = useMemo(() => weekdayLabels(locale), [locale]);
+    // The week is today's: reworked when the day turns, not every second.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `todayStr` is the day; the Date is made from now.
+    const days = useMemo(() => weekOf(new Date()), [todayStr]);
+
+    return (
+        <div className="zenith-clock__week">
+            {days.map((d, i) => {
+                const key = ymd(d);
+                return (
+                    <button
+                        key={key}
+                        className={`zenith-clock__wday${key === todayStr ? ' is-today' : ''}${i >= 5 ? ' is-weekend' : ''}`}
+                        onClick={() => openDay(d)}
+                        aria-current={key === todayStr ? 'date' : undefined}
+                        title={t('clock.openDay', {
+                            date: d.toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
+                        })}
+                    >
+                        <span className="zenith-clock__wname" aria-hidden="true">
+                            {weekdays[i]}
+                        </span>
+                        <span className="zenith-clock__wnum">{d.getDate()}</span>
+                        <span className="zenith-cal__dots">
+                            {taskDays.has(key) && <i className="zenith-cal__dot is-task" />}
+                            {hasNote(d) && <i className="zenith-cal__dot is-note" />}
+                        </span>
+                    </button>
+                );
+            })}
+        </div>
+    );
+});
+WeekRow.displayName = 'WeekRow';
+
+const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) => {
+    const t = useTranslation();
+    const { taskDays, hasNote, openDay } = useDays();
+
+    const [view, setView] = useState(() => {
+        const d = new Date();
+        return { y: d.getFullYear(), m: d.getMonth() };
+    });
+
+    const locale = dateLocale(t);
+    const cells = useMemo(() => monthGrid(view.y, view.m), [view]);
+    const weekdays = useMemo(() => weekdayLabels(locale), [locale]);
+    // Month and year formatted apart and joined by hand. Asking the locale for
+    // both at once gets "август 2026 г." in Russian — correct for prose, and
+    // three characters of legal boilerplate in a calendar header.
+    const title = useMemo(() => {
+        const first = new Date(view.y, view.m, 1);
+        return `${first.toLocaleDateString(locale, { month: 'long' })} ${view.y}`;
+    }, [view, locale]);
+
     const shift = (delta: number) =>
         setView((v) => {
             const d = new Date(v.y, v.m + delta, 1);
@@ -173,11 +247,6 @@ const MiniCalendar: React.FC<{ todayStr: string }> = React.memo(({ todayStr }) =
     const reset = () => {
         const d = new Date();
         setView({ y: d.getFullYear(), m: d.getMonth() });
-    };
-    const openDay = (d: Date) => {
-        void openDailyNote(app, writer, config, ymd(d))
-            .then(() => setTick((n) => n + 1))
-            .catch((err) => console.error('Zenith: could not open the daily note', err));
     };
 
     return (
@@ -258,41 +327,30 @@ MiniCalendar.displayName = 'MiniCalendar';
 
 // ── Component ────────────────────────────────────────
 
-/** Below this content width the clock + calendar can't sit side by side without
- *  clipping, so we collapse to one pane at a time behind a floating toggle. The
- *  34px added padding in compact mode keeps a comfortable hysteresis gap, so the
- *  layout doesn't flip back and forth right at the boundary. */
-const COMPACT_WIDTH = 400;
+/** A card this tall has room for the month under the clock; a shorter one gets the week. */
+const MONTH_BELOW_PX = 380;
 
 /**
- * The clock (big time, weekday, date, 24-hour day strip) and a functional month
- * calendar. Wide cards show both side by side; narrow ones (a sidebar leaf) show
- * a single pane the user flips with a floating toggle on the right edge.
+ * The time, the date, the day as a ruled strip with a needle on the present
+ * minute — and the calendar the date belongs to.
+ *
+ * How much calendar depends on the room, and all of it is in view at once:
+ * the month beside the clock where the card is wide enough for both, the
+ * month under it where the card is narrow but tall, and this week in a single
+ * line where it is neither.
  */
-export const TimeWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
+export const TimeWidget: React.FC<DashboardWidgetProps> = () => {
     const t = useTranslation();
     const [now, setNow] = useState(() => new Date());
+    const room = useCardRoom();
 
     useEffect(() => {
         const id = window.setInterval(() => setNow(new Date()), 1000);
         return () => window.clearInterval(id);
     }, []);
 
-    const rootRef = useRef<HTMLDivElement>(null);
-    const [compact, setCompact] = useState(false);
-    const [view, setView] = useState<'clock' | 'calendar'>('clock');
-
-    // Switch layouts on the widget's own width, not the window's — a widget can
-    // be narrow in a sidebar while the window is wide.
-    useEffect(() => {
-        const el = rootRef.current;
-        if (!el || typeof ResizeObserver === 'undefined') return;
-        const ro = new ResizeObserver((entries) => {
-            setCompact(entries[0].contentRect.width < COMPACT_WIDTH);
-        });
-        ro.observe(el);
-        return () => ro.disconnect();
-    }, []);
+    const beside = room.width >= ROOM_MEDIUM;
+    const calendar = beside ? 'beside' : room.height >= MONTH_BELOW_PX ? 'below' : 'week';
 
     const hours = padTwo(now.getHours());
     const minutes = padTwo(now.getMinutes());
@@ -303,17 +361,11 @@ export const TimeWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
     const weekday = now.toLocaleDateString(locale, { weekday: 'long' });
     const dayMonth = now.toLocaleDateString(locale, { day: 'numeric', month: 'long' });
 
-    const showClock = !compact || view === 'clock';
-    const showCalendar = !compact || view === 'calendar';
-
     return (
-        <div
-            ref={rootRef}
-            className={`zenith-clock zenith-clock--${size} ${compact ? 'is-compact' : ''}`}
-        >
-            {showClock && (
+        <div className={`zenith-clock is-${calendar}`}>
+            {
                 <div className="zenith-clock__main">
-                    <div className="zenith-clock__time zenith-serif">
+                    <div className="zenith-clock__time zenith-wfig">
                         <span>{hours}</span>
                         <span className="zenith-clock__colon">:</span>
                         <span>{minutes}</span>
@@ -370,19 +422,12 @@ export const TimeWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) => {
                         </div>
                     </div>
                 </div>
-            )}
+            }
 
-            {showCalendar && <MiniCalendar todayStr={ymd(now)} />}
-
-            {compact && (
-                <button
-                    className="zenith-clock__toggle"
-                    onClick={() => setView((v) => (v === 'clock' ? 'calendar' : 'clock'))}
-                    aria-label={t(view === 'clock' ? 'clock.showCalendar' : 'clock.showClock')}
-                    title={t(view === 'clock' ? 'clock.showCalendar' : 'clock.showClock')}
-                >
-                    {view === 'clock' ? <CalendarDays size={16} /> : <Clock size={16} />}
-                </button>
+            {calendar === 'week' ? (
+                <WeekRow todayStr={ymd(now)} />
+            ) : (
+                <MiniCalendar todayStr={ymd(now)} />
             )}
         </div>
     );

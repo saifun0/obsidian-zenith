@@ -10,7 +10,7 @@ import { TaskWriter } from '../services/taskWriter';
 import { getTodayString } from '../../../core/dateUtils';
 import { TaskStatusControl } from './taskStatusUi';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
-import { useCardFit } from '../../dashboard/cardFit';
+import { useCardFit, useCardRoom } from '../../dashboard/cardRoom';
 import type { WidgetSize } from '../../dashboard/grid/gridTypes';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import {
@@ -159,8 +159,29 @@ const WidgetRow: FC<RowProps> = ({
     );
 };
 
-export const TasksWidget: FC<DashboardWidgetProps> = ({ size = 'lg' }) => {
+/**
+ * The heights the card's three compositions change at. The compositions are
+ * still named after the presets they were once tied to — `sm` a flat list
+ * under the sentence, `md` and `lg` the labelled groups over the day's
+ * progress — but which one is drawn is a matter of the room the card has, not
+ * of the preset it was placed at: a "medium" card two rows tall had the room
+ * for the sentence, one group and two tasks, where the flat list holds three.
+ */
+const GROUPS_MIN_PX = 250;
+const ROOMY_MIN_PX = 420;
+
+export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) => {
     const t = useTranslation();
+    const cardRoom = useCardRoom();
+    // Until the card has been measured the preset is the best guess there is.
+    const size: WidgetSize =
+        cardRoom.height <= 0
+            ? preset
+            : cardRoom.height < GROUPS_MIN_PX
+              ? 'sm'
+              : cardRoom.height < ROOMY_MIN_PX
+                ? 'md'
+                : 'lg';
     const { app, plugin } = useApp();
     const stored = useZenithStore((s) => s.tasks);
     const closings = useClosingTasks((s) => s.items);

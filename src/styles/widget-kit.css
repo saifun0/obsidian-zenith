@@ -1,0 +1,391 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Zenith — what every widget is made of
+   ──────────────────────────────────────────────────────
+   Twenty-two cards used to be twenty-two designs. Each had its own idea of a
+   big number, of a row, of a caption, of what to say when it had nothing to
+   show — and of what to do with a cell wider than it needed, which was mostly
+   to leave it empty. These are the parts they share instead.
+
+   The rules the parts carry:
+
+   1. One figure per card is set in the planner's serif — the time, the
+      temperature, the days left. Everything else is the theme's own face.
+   2. A row is a line, not a box. Only the one current thing gets a plate.
+   3. A caption is a sentence in lower case. The card's header is the only
+      capitals on it.
+   4. A card lays itself out from the room it has (see cardRoom.ts), never from
+      the name of its preset: one column, then a figure beside its rows, then
+      two panes, then columns.
+   5. Nothing moves that does not mean something, and nothing moves at all for
+      someone who asked for less motion.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.zenith-root {
+    /* The one figure: its face, and the three sizes it comes in. */
+    --zenith-w-fig-font: var(--zenith-font-ink);
+    --zenith-w-fig: 2.75rem;
+    --zenith-w-fig-sm: 2rem;
+    --zenith-w-fig-lg: 3.5rem;
+
+    /* A row's text, what stands beside it, and the row's own height. */
+    --zenith-w-text: 0.84rem;
+    --zenith-w-meta: 0.74rem;
+    --zenith-w-row: 30px;
+
+    /* A plate under the one current thing. */
+    --zenith-w-plate: color-mix(in srgb, var(--zenith-text-normal) 5%, transparent);
+    /* The track a hairline bar runs in. */
+    --zenith-w-track: color-mix(in srgb, var(--zenith-text-normal) 9%, transparent);
+
+    /* How things move: out quickly, and settling rather than stopping. */
+    --zenith-ease-out: cubic-bezier(0.2, 0, 0, 1);
+    --zenith-ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+    --zenith-w-quick: 150ms;
+    --zenith-w-move: 260ms;
+    --zenith-w-draw: 520ms;
+}
+
+/* The card's body is the container every widget's layout answers to. The
+   breakpoints below — 380, 560, 820 — are cardRoom.ts's ROOM_MEDIUM, ROOM_WIDE
+   and ROOM_GRAND; a container query cannot read a variable, so they are
+   repeated here and wherever a widget's own stylesheet asks. */
+.zenith-widget-card__body {
+    container: zenith-card / inline-size;
+}
+
+/* ── The figure ──────────────────────────────────── */
+.zenith-wfig {
+    font-family: var(--zenith-w-fig-font);
+    font-size: var(--zenith-w-fig);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.015em;
+    font-variant-numeric: lining-nums tabular-nums;
+    color: var(--zenith-text-normal);
+    white-space: nowrap;
+}
+.zenith-wfig--sm {
+    font-size: var(--zenith-w-fig-sm);
+}
+.zenith-wfig--lg {
+    font-size: var(--zenith-w-fig-lg);
+}
+/* What a figure is counted in, set small on its baseline: `45 дн`, `6°`. */
+.zenith-wfig__unit {
+    margin-left: 0.18em;
+    font-family: var(--zenith-font);
+    font-size: 0.34em;
+    letter-spacing: 0;
+    color: var(--zenith-text-muted);
+}
+
+/* ── A caption ───────────────────────────────────── */
+/* What a figure is, or what a group of rows is. One weight, one size. */
+.zenith-wcap {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--zenith-w-meta);
+    line-height: 1.3;
+    color: var(--zenith-text-muted);
+}
+.zenith-wcap--faint {
+    color: var(--zenith-text-faint);
+}
+
+/* ── Rows ────────────────────────────────────────── */
+.zenith-wlist {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* A row: its name, and one thing at its end. As a button it is pressed
+   anywhere along its length; the plate comes up under it and reaches a little
+   past the text on both sides, so the text itself stays on the card's margin. */
+.zenith-root .zenith-wline,
+.zenith-root button.zenith-wline {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: var(--zenith-w-row);
+    margin: 0;
+    padding: 4px 0;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: var(--zenith-w-text);
+    font-weight: 400;
+    line-height: 1.3;
+    text-align: left;
+}
+.zenith-root button.zenith-wline {
+    position: relative;
+    cursor: pointer;
+}
+.zenith-root button.zenith-wline::before {
+    content: '';
+    position: absolute;
+    inset: 0 -8px;
+    border-radius: inherit;
+    background: var(--zenith-bg-hover);
+    opacity: 0;
+    transition: opacity var(--zenith-w-quick) var(--zenith-ease-out);
+    pointer-events: none;
+}
+.zenith-root button.zenith-wline:hover::before,
+.zenith-root button.zenith-wline:focus-visible::before {
+    opacity: 1;
+}
+.zenith-root button.zenith-wline:focus-visible {
+    outline: none;
+}
+.zenith-root button.zenith-wline:focus-visible::before {
+    box-shadow: 0 0 0 1px var(--zenith-accent);
+}
+.zenith-wline > * {
+    position: relative;
+}
+.zenith-wline__icon {
+    flex: none;
+    color: var(--zenith-text-faint);
+}
+.zenith-wline__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.zenith-wline__end {
+    flex: none;
+    max-width: 50%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--zenith-w-meta);
+    font-variant-numeric: tabular-nums;
+    color: var(--zenith-text-faint);
+}
+/* The one current thing. */
+.zenith-wline.is-current::before {
+    content: '';
+    position: absolute;
+    inset: 0 -8px;
+    border-radius: var(--zenith-radius-sm);
+    background: var(--zenith-w-plate);
+    opacity: 1;
+}
+
+/* Rows that run in columns once there is room for them, reading down: the
+   second column continues the first. */
+.zenith-wlist--columns {
+    display: block;
+    columns: 1;
+    column-gap: 32px;
+}
+.zenith-wlist--columns > * {
+    break-inside: avoid;
+}
+@container zenith-card (min-width: 560px) {
+    .zenith-wlist--columns {
+        columns: 2;
+    }
+}
+@container zenith-card (min-width: 820px) {
+    .zenith-wlist--columns {
+        columns: 3;
+    }
+}
+
+/* ── Two panes ───────────────────────────────────── */
+/* The figure and what it is about on one side, the rows on the other, a
+   hairline between. One column until there is room for both. */
+.zenith-wsplit {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    min-width: 0;
+}
+@container zenith-card (min-width: 560px) {
+    .zenith-wsplit {
+        grid-template-columns: minmax(0, var(--zenith-wsplit-lead, 0.8fr)) minmax(0, 1.2fr);
+        gap: 0 48px;
+        align-items: start;
+    }
+    .zenith-wsplit > :nth-child(2) {
+        position: relative;
+    }
+    .zenith-wsplit > :nth-child(2)::before {
+        content: '';
+        position: absolute;
+        inset: 0 auto 0 -24px;
+        width: 1px;
+        background: var(--zenith-border);
+    }
+}
+
+/* ── A hairline bar ──────────────────────────────── */
+/* A share of something: two pixels of track, and the part that is done. It
+   draws itself in when the card arrives, from nothing, once. */
+.zenith-wbar {
+    position: relative;
+    display: block;
+    height: 2px;
+    min-width: 0;
+    border-radius: 1px;
+    background: var(--zenith-w-track);
+    overflow: hidden;
+}
+.zenith-wbar__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--zenith-wbar, 0%);
+    border-radius: inherit;
+    background: var(--zenith-wbar-color, var(--zenith-accent));
+    transform-origin: 0 50%;
+    animation: zenith-wbar-in var(--zenith-w-draw) var(--zenith-ease-settle) both;
+    transition: width var(--zenith-w-move) var(--zenith-ease-out);
+}
+@keyframes zenith-wbar-in {
+    from {
+        transform: scaleX(0);
+    }
+}
+
+/* ── Nothing to show ─────────────────────────────── */
+/* One quiet line, and at most one thing to do about it. */
+.zenith-wempty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: var(--zenith-w-row);
+    margin: 0;
+    color: var(--zenith-text-faint);
+    font-size: var(--zenith-w-text);
+    text-wrap: pretty;
+}
+.zenith-wempty > svg {
+    flex: none;
+}
+
+/* ── A quiet control ─────────────────────────────── */
+/* A choice among a few, set in the row it belongs to: no frame, the chosen one
+   on a plate. Obsidian gives every button thirty pixels of height and a
+   shadow; both go. */
+.zenith-wpick {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+}
+.zenith-root button.zenith-wpick__item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    min-width: 30px;
+    padding: 0 7px;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    font-size: var(--zenith-w-meta);
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition:
+        color var(--zenith-w-quick) var(--zenith-ease-out),
+        background var(--zenith-w-quick) var(--zenith-ease-out);
+}
+.zenith-root button.zenith-wpick__item:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+.zenith-root button.zenith-wpick__item.is-active {
+    background: var(--zenith-w-plate);
+    color: var(--zenith-text-normal);
+    font-weight: 600;
+}
+
+/* A round button with one glyph: start, stop, send. The card's one action. */
+.zenith-root button.zenith-wact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--zenith-accent);
+    box-shadow: none;
+    color: var(--text-on-accent, #fff);
+    cursor: pointer;
+    transition:
+        transform var(--zenith-w-quick) var(--zenith-ease-out),
+        background var(--zenith-w-quick) var(--zenith-ease-out),
+        color var(--zenith-w-quick) var(--zenith-ease-out);
+}
+.zenith-root button.zenith-wact:hover {
+    background: var(--zenith-accent-hover);
+}
+.zenith-root button.zenith-wact:active {
+    transform: scale(0.94);
+}
+.zenith-root button.zenith-wact--quiet {
+    background: var(--zenith-w-plate);
+    color: var(--zenith-text-normal);
+}
+.zenith-root button.zenith-wact--quiet:hover {
+    background: var(--zenith-bg-hover);
+}
+.zenith-root button.zenith-wact:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+@media (pointer: coarse) {
+    .zenith-root {
+        --zenith-w-row: 36px;
+    }
+    .zenith-root button.zenith-wpick__item {
+        height: 32px;
+        min-width: 36px;
+    }
+    .zenith-root button.zenith-wact {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-wbar__fill {
+        animation: none;
+        transition: none;
+    }
+    .zenith-root button.zenith-wact,
+    .zenith-root button.zenith-wline::before {
+        transition: none;
+    }
+}
+
+/* The figure's face alone, for a figure a widget sizes itself. */
+.zenith-wfig-face {
+    font-family: var(--zenith-w-fig-font);
+    font-weight: 400;
+    font-variant-numeric: lining-nums tabular-nums;
+}

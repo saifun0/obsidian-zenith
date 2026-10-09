@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Notice } from 'obsidian';
 import { ArrowRight, Library, Moon, Star } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
@@ -21,7 +21,7 @@ import { useContentMenu } from './useContentMenu';
 import { ProgressPopover } from './ProgressPopover';
 import { Meter } from '../../../components/shared';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
-import type { WidgetSize } from '../../dashboard/grid/gridTypes';
+import { ROOM_MEDIUM, ROOM_WIDE, useCardRoom } from '../../dashboard/cardRoom';
 
 /**
  * ContentWidget — the dashboard face of the library.
@@ -54,26 +54,21 @@ import type { WidgetSize } from '../../dashboard/grid/gridTypes';
  * decided in `buildContentShelf` — away from here, where it can be tested.
  */
 
-/** What each preset shows. How MUCH it shows is measured; see `rowBudget`. */
-interface WidgetLayout {
-    /**
-     * Rows to draw before the card has measured itself — a first paint, not a
-     * layout. It used to be the answer, counted in pixels against the height
-     * each preset had on the day it was written, and it went wrong the moment
-     * anything above the card changed height.
-     */
-    rows: number;
-    /** Draw the leading item large, with its artwork. */
-    spotlight: boolean;
-    /** The note beside the way out, for what the shelf cannot say. */
-    stats: boolean;
-}
+/**
+ * Rows to draw before the card has measured itself — a first paint, not a
+ * layout. How many it really draws is measured; see `rowBudget`.
+ */
+const FIRST_ROWS = 3;
 
-const LAYOUT: Record<WidgetSize, WidgetLayout> = {
-    sm: { rows: 1, spotlight: false, stats: false },
-    md: { rows: 3, spotlight: true, stats: true },
-    lg: { rows: 5, spotlight: true, stats: true },
-};
+/**
+ * A card this tall draws its leading item large even in one column. A shorter
+ * one keeps it as the first row: the spotlight is seventy pixels, and in a
+ * card of two hundred that is the shelf.
+ */
+const SPOTLIGHT_MIN_PX = 300;
+
+/** Under this the legend drops its words and the spotlight its size. */
+const SHORT_PX = 210;
 
 /** The statuses the card counts, in the library's order and colours. */
 const STATUS_META = STATUS_ORDER.map((key) => ({ key, color: STATUS_COLOR[key] }));
@@ -88,8 +83,9 @@ const CHEER_MS = 900;
 const ROW_H = 44;
 /** `gap` on `.zenith-cw__list`. */
 const ROW_GAP = 2;
-/** A section title and the gap under it. */
+/** A section title, the gap under it, and the gap over it when rows come first. */
 const SECTION_H = 26;
+const SECTION_GAP = 8;
 
 /**
  * Everything a row needs to draw itself, worked out once.
@@ -110,7 +106,7 @@ interface RowFacts {
     canBump: boolean;
 }
 
-export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) => {
+export const ContentWidget: React.FC<DashboardWidgetProps> = () => {
     const { app, plugin } = useApp();
     const t = useTranslation();
     const quickOn = useFeature('content.quickIncrement');
@@ -121,9 +117,7 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
     const animations = useZenithStore((s) => s.settings.uiAnimations);
     const reduced = useReducedMotion();
     const animate = animations && !reduced;
-
-
-    const layout = LAYOUT[size];
+    const card = useCardRoom();
 
     // `now` is read once per render rather than per item: a shelf where two
     // rows disagree about what "today" is has no consistent answer for
@@ -133,63 +127,71 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
         [items]
     );
 
+    /* What the card draws is decided by the room it has, not by the name of its
+       preset. Wide enough, and the leading item stands beside the shelf rather
+       than over it — which is what a card the width of the board was missing:
+       it drew the spotlight across the whole width, had no height left for a
+       single row under it, and showed one item where the half-width card
+       showed three. */
+    const split = card.width >= ROOM_WIDE;
+    const spotlight = !!shelf.spotlight && (split || card.height >= SPOTLIGHT_MIN_PX);
+    const stats = card.width >= ROOM_MEDIUM;
+    const layout = useMemo(() => ({ spotlight, stats }), [spotlight, stats]);
+
     /**
      * How many rows there is actually room for — measured, not budgeted.
      *
-     * `LAYOUT` used to say: three rows on `md`, five on `lg`. Those numbers
-     * were counted against the height each preset had at the time, and the day
-     * the card grew a title band above it they were all one row too many. The
-     * shelf ran past the bottom of the card and the footer, which is drawn
-     * after it, landed on top of the last row. The row budget cannot be a
-     * constant, because nothing about the card's height is one: the user drags
-     * it, the density setting rescales it, the chrome above it changes.
+     * The budget cannot be a constant, because nothing about the card's height
+     * is one: the user drags it, the density setting rescales it, the chrome
+     * above it changes. It was a constant once, and the day the card grew a
+     * title band every preset was one row too many: the shelf ran past the
+     * bottom and the footer was drawn over the last row.
      *
-     * So the rows are measured against the element that holds them, which is
-     * what the card has left after the spotlight. Safe from feeding back on
-     * itself: that element takes the leftover height (`flex: 1 1 0`), so it is
-     * the same size whether it ends up holding two rows or six, and a row's
-     * own height does not depend on how many there are.
+     * So it is the card's room (see cardRoom.ts) less everything on the card
+     * that is not a row: the line of counts, the footer, and the spotlight
+     * when it stands over the rows rather than beside them. Those are measured
+     * off the card as drawn. None of them depends on how many rows there are,
+     * which is what keeps this from feeding back on itself — and what lets the
+     * card follow its content: the room is the ceiling, and a shelf of two
+     * rows makes a card two rows tall.
      */
+    const rootRef = useRef<HTMLDivElement>(null);
+    const shelfRef = useRef<HTMLDivElement>(null);
     const rowsRef = useRef<HTMLDivElement>(null);
     const firstRowRef = useRef<HTMLLIElement>(null);
-    const [room, setRoom] = useState({ area: 0, row: 0 });
+    const [room, setRoom] = useState({ other: 0, row: 0 });
 
-    useEffect(() => {
-        const el = rowsRef.current;
-        if (!el || typeof ResizeObserver === 'undefined') return;
-        const ro = new ResizeObserver(([entry]) => {
-            const area = entry.contentRect.height;
-            setRoom((prev) => (Math.abs(prev.area - area) > 1 ? { ...prev, area } : prev));
-        });
-        ro.observe(el);
-        return () => ro.disconnect();
-    }, []);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Deliberately every render: it measures a row that only exists after layout. The functional update returns `prev` unchanged when nothing moved, and React stops there — so there is no chain.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Deliberately every render: it measures what only exists after layout. The functional update returns `prev` unchanged when nothing moved, and React stops there — so there is no chain.
     useLayoutEffect(() => {
+        const root = rootRef.current;
+        const shelfEl = shelfRef.current;
+        const rows = rowsRef.current;
+        if (!root || !shelfEl || !rows) return;
+        const outside = root.offsetHeight - shelfEl.offsetHeight;
+        const inside = split ? 0 : shelfEl.offsetHeight - rows.offsetHeight;
+        const other = outside + inside;
         const row = firstRowRef.current?.offsetHeight ?? 0;
-        if (row > 0) setRoom((prev) => (Math.abs(prev.row - row) > 1 ? { ...prev, row } : prev));
+        setRoom((prev) =>
+            Math.abs(prev.other - other) > 1 || (row > 0 && Math.abs(prev.row - row) > 1)
+                ? { other, row: row > 0 ? row : prev.row }
+                : prev
+        );
     });
 
     const rowBudget = useMemo(() => {
-        if (room.area <= 0) return layout.rows;
+        if (card.height <= 0 || room.other <= 0) return FIRST_ROWS;
         const rowH = room.row > 0 ? room.row : ROW_H;
-        // Each section draws a title above its rows, and the second section
-        // only exists when the first left room for it — so allowing for both
-        // is short by at most half a row and never long by any.
         // Only the "up next" group is labelled, and it exists only when the
         // shelf left room for it — so this is short by at most half a row and
         // never long by any.
-        const free = room.area - (shelf.upNext.length > 0 ? SECTION_H : 0);
+        const free =
+            card.height - room.other - (shelf.upNext.length > 0 ? SECTION_H + SECTION_GAP : 0);
         const fits = Math.floor((free + ROW_GAP) / (rowH + ROW_GAP));
         // A card drawing the spotlight has already shown the thing it exists
         // to show, so it may honestly show no rows at all. One that is not
         // must never draw nothing.
         return Math.max(layout.spotlight ? 0 : 1, fits);
-        // Not `shelf.spotlight`: what this reads is `layout.spotlight`, the
-        // decision about whether a spotlight is drawn, and the two parted
-        // company when that flag moved onto the layout.
-    }, [room, layout, shelf.upNext.length]);
+    }, [card.height, room, layout, shelf.upNext.length]);
 
     /**
      * The rows the spotlight left room for.
@@ -309,7 +311,10 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
     const segments = STATUS_META.filter((s) => counts.byStatus[s.key]);
 
     return (
-        <div className="zenith-cw">
+        <div
+            className={`zenith-cw${card.height > 0 && card.height < SHORT_PX ? ' is-short' : ''}`}
+            ref={rootRef}
+        >
             {/* The library, in one line with a bar ruled under it.
              *
              * It used to be three blocks — a 1.5rem total with a rating pill,
@@ -381,7 +386,10 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
                 </div>
             </div>
 
-            <div className="zenith-cw__shelf">
+            <div
+                className={`zenith-cw__shelf${layout.spotlight ? ' has-spot' : ''}`}
+                ref={shelfRef}
+            >
                 {layout.spotlight && shelf.spotlight && (
                     <Spotlight
                         item={shelf.spotlight}
@@ -399,7 +407,17 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = ({ size = 'md' }) =
                  * has to be guessed about how tall the spotlight, the status
                  * line or the card's own title band happen to be. See
                  * `rowsRef`. */}
-                <div className="zenith-cw__rows" ref={rowsRef}>
+                <div
+                    className="zenith-cw__rows"
+                    ref={rowsRef}
+                    // The backstop: should the budget ever be a row out, the
+                    // row is cut — the card does not grow a scrollbar for it.
+                    style={
+                        card.height > 0 && room.other > 0
+                            ? { maxHeight: Math.max(0, card.height - room.other) }
+                            : undefined
+                    }
+                >
                     {/* No heading over these. The rule under the spotlight
                         already says the shelf continues, and "Continue" over
                         rows that each carry a half-finished meter says it a

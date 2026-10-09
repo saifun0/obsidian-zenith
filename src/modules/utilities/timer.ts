@@ -33,9 +33,21 @@ export interface TimerSettings extends Record<string, unknown> {
     timerMinutes: number;
     /** Epoch ms the running timer ends at; 0 while it is not running. */
     timerEndsAt: number;
+    /**
+     * Whole seconds left on a timer that was put on hold; 0 when none is.
+     *
+     * A held timer has no end — that is what holding it means — so it is kept
+     * as what remains, and given an end again when it is let go. Nothing rings
+     * for it in the meantime: `timerEvents` reads ends, and it has none.
+     */
+    timerHeld: number;
 }
 
-export const DEFAULT_TIMER_SETTINGS: TimerSettings = { timerMinutes: 25, timerEndsAt: 0 };
+export const DEFAULT_TIMER_SETTINGS: TimerSettings = {
+    timerMinutes: 25,
+    timerEndsAt: 0,
+    timerHeld: 0,
+};
 
 /** A length in whole minutes, inside what the card can count. */
 export function clampMinutes(value: unknown): number {
@@ -47,12 +59,18 @@ export function clampMinutes(value: unknown): number {
 export function normalizeTimerSettings(raw: Record<string, unknown> | undefined): TimerSettings {
     if (!raw) return DEFAULT_TIMER_SETTINGS;
     const endsAt = typeof raw.timerEndsAt === 'number' && raw.timerEndsAt > 0 ? raw.timerEndsAt : 0;
+    const held =
+        typeof raw.timerHeld === 'number' && Number.isFinite(raw.timerHeld) && raw.timerHeld > 0
+            ? Math.min(TIMER_MAX_MINUTES * 60, Math.round(raw.timerHeld))
+            : 0;
     return {
         timerMinutes:
             raw.timerMinutes === undefined
                 ? DEFAULT_TIMER_SETTINGS.timerMinutes
                 : clampMinutes(raw.timerMinutes),
         timerEndsAt: endsAt,
+        // Running wins: a timer with an end is counting, whatever else is stored.
+        timerHeld: endsAt ? 0 : held,
     };
 }
 
@@ -60,15 +78,52 @@ export type TimerState =
     | { kind: 'idle' }
     /** Counting down: whole seconds left, never less than one. */
     | { kind: 'running'; left: number }
+    /** On hold, with this much still to count. */
+    | { kind: 'held'; left: number }
     /** The time is up and nobody has put the timer away yet. */
     | { kind: 'done' };
 
 export function timerState(settings: TimerSettings, now: number): TimerState {
-    if (!settings.timerEndsAt) return { kind: 'idle' };
+    if (!settings.timerEndsAt) {
+        return settings.timerHeld > 0 ? { kind: 'held', left: settings.timerHeld } : { kind: 'idle' };
+    }
     const left = Math.ceil((settings.timerEndsAt - now) / 1000);
     if (left > 0) return { kind: 'running', left };
     return now - settings.timerEndsAt < TIMER_DONE_MS ? { kind: 'done' } : { kind: 'idle' };
 }
+
+/**
+ * How much of a run is still to go, from 1 (just started) to 0 (done).
+ *
+ * Against the length the card is set to, which is the length it was started
+ * at: the length cannot be changed while a timer runs or is held.
+ */
+export function timerShare(settings: TimerSettings, left: number): number {
+    const total = settings.timerMinutes * 60;
+    if (total <= 0) return 0;
+    return Math.min(1, Math.max(0, left / total));
+}
+
+/** The settings of a timer started now. */
+export function timerStart(settings: TimerSettings, now: number): Partial<TimerSettings> {
+    return { timerEndsAt: now + settings.timerMinutes * 60_000, timerHeld: 0 };
+}
+
+/** The settings of a running timer put on hold now; nothing, if it is not running. */
+export function timerHold(settings: TimerSettings, now: number): Partial<TimerSettings> {
+    const state = timerState(settings, now);
+    if (state.kind !== 'running') return {};
+    return { timerEndsAt: 0, timerHeld: state.left };
+}
+
+/** The settings of a held timer let go now; nothing, if none is held. */
+export function timerResume(settings: TimerSettings, now: number): Partial<TimerSettings> {
+    if (settings.timerEndsAt || settings.timerHeld <= 0) return {};
+    return { timerEndsAt: now + settings.timerHeld * 1000, timerHeld: 0 };
+}
+
+/** The settings of a timer put away, whatever it was doing. */
+export const TIMER_CLEARED: Partial<TimerSettings> = { timerEndsAt: 0, timerHeld: 0 };
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 

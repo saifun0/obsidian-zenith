@@ -34,6 +34,9 @@ export const ChallengeBars: FC<{ progress: ChallengeProgress[]; compact?: boolea
             {progress.map((p) => {
                 const type = types.typeOf(p.typeId);
                 const fraction = Math.min(1, p.done / p.target);
+                // Where the year says the count should be by today: the mark
+                // the bar is ahead of or behind.
+                const due = Math.min(1, Math.max(0, (p.done - p.pace.delta) / p.target));
                 const behind = Math.max(0, Math.round(-p.pace.delta));
                 const ahead = Math.max(0, Math.round(p.pace.delta));
                 const status =
@@ -48,7 +51,12 @@ export const ChallengeBars: FC<{ progress: ChallengeProgress[]; compact?: boolea
                     <div
                         key={p.typeId}
                         className={`zenith-challenge__row is-${p.pace.status}`}
-                        style={{ '--challenge-color': type.color } as CSSProperties}
+                        style={
+                            {
+                                '--challenge-color': type.color,
+                                '--challenge-due': `${(due * 100).toFixed(1)}%`,
+                            } as CSSProperties
+                        }
                     >
                         <span className="zenith-challenge__head">
                             <ObsidianIcon name={type.icon} size={13} />
@@ -61,6 +69,7 @@ export const ChallengeBars: FC<{ progress: ChallengeProgress[]; compact?: boolea
                         </span>
                         <span className="zenith-challenge__bar" aria-hidden="true">
                             <span style={{ width: `${fraction * 100}%` }} />
+                            {p.pace.status !== 'done' && <i className="zenith-challenge__due" />}
                         </span>
                         <span className="zenith-challenge__status">{status}</span>
                     </div>

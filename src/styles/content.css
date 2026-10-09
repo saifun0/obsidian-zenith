@@ -1438,9 +1438,43 @@ button.zenith-ctype__add {
     gap: var(--zenith-space-md);
 }
 
+/* On the dashboard: a goal to a column where there is room for columns, so a
+   card of two goals is one line of them rather than two bars the width of the
+   board. The bar is the kit's hairline, in the type's own colour. */
 .zenith-challenge.is-compact {
-    gap: var(--zenith-space-sm);
-    padding: var(--zenith-space-sm) var(--zenith-space-md);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px 32px;
+}
+.zenith-challenge.is-compact .zenith-challenge__row {
+    gap: 7px;
+    min-width: 0;
+}
+.zenith-challenge.is-compact .zenith-challenge__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--zenith-w-text);
+}
+.zenith-challenge.is-compact .zenith-challenge__count {
+    font-size: var(--zenith-w-text);
+}
+.zenith-challenge.is-compact .zenith-challenge__bar {
+    height: 2px;
+    border-radius: 1px;
+    background: var(--zenith-w-track);
+}
+.zenith-challenge.is-compact .zenith-challenge__bar > span {
+    transform-origin: 0 50%;
+    animation: zenith-wbar-in var(--zenith-w-draw) var(--zenith-ease-settle) both;
+}
+.zenith-challenge.is-compact .zenith-challenge__status {
+    font-size: var(--zenith-w-meta);
+}
+@media (prefers-reduced-motion: reduce) {
+    .zenith-challenge.is-compact .zenith-challenge__bar > span {
+        animation: none;
+    }
 }
 
 .zenith-challenge__row {
@@ -1470,11 +1504,26 @@ button.zenith-ctype__add {
 }
 
 .zenith-challenge__bar {
+    position: relative;
     display: block;
     height: 4px;
     border-radius: 2px;
     background: var(--zenith-bg-secondary);
-    overflow: hidden;
+}
+
+.zenith-challenge__bar > span {
+    border-radius: inherit;
+}
+
+/* Where the year says the count should have reached by today — a notch the
+   bar is short of, or past. It is what "three behind" is behind of. */
+.zenith-challenge__due {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    left: var(--challenge-due, 0%);
+    width: 1px;
+    background: var(--zenith-text-faint);
 }
 
 .zenith-challenge__bar > span {

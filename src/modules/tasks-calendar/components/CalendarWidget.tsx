@@ -10,6 +10,7 @@ import { addDays, isoToDate } from '../../../core/calendarDates';
 import { buildDateMatcher, relativeNotePath } from '../../journal/services/journalDates';
 import type { Task } from '../../../store/taskSlice';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
+import { ROOM_WIDE, useCardRoom } from '../../dashboard/cardRoom';
 import { buildCalendar, type EntryKind } from '../services/calendarTasks';
 import { useFeature } from '../../../core/useFeature';
 import { spanColor } from '../services/spanColor';
@@ -19,8 +20,20 @@ import { noteName } from './TaskChip';
 /** Days the axis can be set to. Anything else falls back to a week. */
 const HORIZONS = [7, 14] as const;
 
-/** Rows each size preset has room for. */
-const ROW_BUDGET: Record<string, number> = { sm: 4, md: 5, lg: 10 };
+/**
+ * A lane's height and the gap under it, and what the rest of the card takes:
+ * the line of days, the footer, and the overdue strip when there is one. The
+ * card draws as many lanes as its height leaves room for — and, following its
+ * content, is no taller than the lanes it has. They used to share whatever
+ * height the preset gave, so five tasks in a tall card were five bars with
+ * sixty pixels of nothing between each.
+ */
+const LANE_PX = 24;
+const LANE_GAP_PX = 4;
+const FURNITURE_PX = 66;
+const OVERDUE_PX = 30;
+/** The most lanes a card draws, however tall. */
+const MAX_LANES = 12;
 
 /** A day of the axis, as the header and the labels render it. */
 interface Day {
@@ -101,7 +114,8 @@ function footerText(t: Translator, rows: Row[], overdue: number, days: Day[]): s
  *
  * Design: `Week Ahead.dc.html` / `WA_Ribbon` (concept 1b).
  */
-export const CalendarWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
+export const CalendarWidget: FC<DashboardWidgetProps> = () => {
+    const room = useCardRoom();
     const t = useTranslation();
     const { plugin } = useApp();
     const locale = intlLocale(t.locale);
@@ -221,11 +235,23 @@ export const CalendarWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
      */
     const openTasks = () => void plugin.moduleManager.get('tasks')?.activateView();
 
-    const shown = rows.slice(0, ROW_BUDGET[size] ?? 5);
+    const lanesRoom =
+        room.height -
+        FURNITURE_PX -
+        (settings.calendarShowOverdue && overdue.length > 0 ? OVERDUE_PX : 0);
+    const lanes =
+        room.height > 0
+            ? Math.min(
+                  MAX_LANES,
+                  Math.max(1, Math.floor((lanesRoom + LANE_GAP_PX) / (LANE_PX + LANE_GAP_PX)))
+              )
+            : 4;
+    // One lane gives way to the count of what did not fit.
+    const shown = rows.length > lanes ? rows.slice(0, Math.max(1, lanes - 1)) : rows;
     const hidden = rows.length - shown.length;
     const last = days[days.length - 1];
     const weekRange = `${days[0].short} ${days[0].num} — ${last.short} ${last.num}`;
-    const compact = size === 'sm';
+    const compact = room.width < ROOM_WIDE;
 
     return (
         <div

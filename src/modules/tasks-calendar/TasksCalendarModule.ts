@@ -49,6 +49,7 @@ export class TasksCalendarModule extends BaseModule {
                 icon: 'calendar-days',
                 sizes: ['sm', 'md', 'lg'],
                 defaultSize: 'md',
+                autoHeight: true,
                 order: 35,
                 component: CalendarWidget,
             })

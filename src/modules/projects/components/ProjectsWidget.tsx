@@ -4,6 +4,7 @@ import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
+import { ROOM_WIDE, rowPx, rowsThatFit, useCardRoom } from '../../dashboard/cardRoom';
 import type { Project } from '../projectsTypes';
 import { dueLabel } from '../services/projectStats';
 import { useFeature } from '../../../core/useFeature';
@@ -18,7 +19,11 @@ import { ProjectFormModal } from '../ProjectFormModal';
  * because a card that counts three while the view counts six and explains
  * neither number is a card you stop trusting.
  */
-export const ProjectsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
+/** The most the card lists, and what its footer takes from the rows' height. */
+const MAX_ROWS = 12;
+const FOOT_PX = 40;
+
+export const ProjectsWidget: FC<DashboardWidgetProps> = () => {
     const t = useTranslation();
     const linksOn = useFeature('projects.taskLinks');
     const { app, plugin } = useApp();
@@ -52,17 +57,22 @@ export const ProjectsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
         [app]
     );
 
-    const rows = size === 'sm' ? 2 : size === 'md' ? 4 : 8;
+    // As many as the card holds: the rows its height leaves over the footer,
+    // in two columns where it is wide enough for two. A line running the
+    // width of a board has its name at one end and its date at the other.
+    const room = useCardRoom();
+    const columns = room.width >= ROOM_WIDE ? 2 : 1;
+    const rows = Math.min(MAX_ROWS, columns * rowsThatFit(room.height, rowPx(), FOOT_PX));
     const shown = active.slice(0, rows);
     const hidden = active.length - shown.length;
 
     return (
         <div className="zenith-pw">
             {shown.length === 0 ? (
-                <div className="zenith-pw__empty">
-                    <FolderKanban size={24} strokeWidth={1.5} />
-                    <span>{t('projects.widget.empty')}</span>
-                </div>
+                <p className="zenith-wempty">
+                    <FolderKanban size={14} />
+                    {t('projects.widget.empty')}
+                </p>
             ) : (
                 <ul className="zenith-pw__list">
                     {shown.map((p) => {

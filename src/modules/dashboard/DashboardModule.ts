@@ -91,6 +91,7 @@ export class DashboardModule extends BaseModule {
                 description: 'How far through the day, week, month and year.',
                 sizes: ['sm', 'md'],
                 defaultSize: 'sm',
+                autoHeight: true,
                 order: 12,
                 feature: 'dashboard.periodProgress',
                 settings: PeriodSettings,
