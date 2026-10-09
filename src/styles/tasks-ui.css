@@ -1201,6 +1201,11 @@ button.zenith-add-row {
     column-gap: 10px;
     align-items: center;
     flex: 0 0 auto;
+    /* Air at the end of the line, inside the plate that comes up under it: the
+       date in the margin has its own on the left, and without this the tags
+       and the subtask count ran to the plate's very edge — the count's own
+       plate, pressed, stood flush against it. */
+    padding-right: 8px;
     border-radius: 6px;
 }
 .zenith-tw__row:hover { background-color: color-mix(in srgb, var(--zenith-bg-hover) 70%, transparent); }
