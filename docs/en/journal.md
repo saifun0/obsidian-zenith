@@ -79,10 +79,12 @@ block to your own template to get the same.
 The date comes from the note the block sits in, not from the clock — so opening last
 Tuesday and ticking a habit records it against last Tuesday.
 
-The controls **scroll sideways rather than wrap**, in the block and in the widgets. That is
-deliberate: controls that wrapped got dropped when a card was resized small, which silently
-made some habits un-tickable at some sizes. Scrolling keeps every one of them reachable at
-every width.
+In the block the controls **scroll sideways rather than wrap**: a block is one line of a
+note, and a line that grew with the number of habits would push the note about. On the
+Check-in card they wrap onto as many lines as they need, so every habit is in sight at
+once; a card too small for all of them scrolls down. Either way none is ever dropped — the
+controls that used to wrap were cut off when a card was resized small, which silently made
+some habits un-tickable at some sizes.
 
 Pattern tokens are `YYYY`, `YY`, `MMMM`, `MMM`, `MM`, `M`, `DD`, `D`, `dddd`, `ddd`, with
 `[…]` for literals; a `/` nests notes in subfolders (`YYYY/MM/DD`). Month and weekday names
