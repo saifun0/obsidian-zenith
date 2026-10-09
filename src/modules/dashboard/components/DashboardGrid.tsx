@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type FC } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertTriangle, Layers } from 'lucide-react';
+import { Layers } from 'lucide-react';
 import { useZenithStore } from '../../../store';
 import { useApp } from '../../../context/AppContext';
 import { moduleHasSettings, openZenithSettings } from '../../../settings/openSettings';
@@ -32,7 +32,6 @@ import {
 import { useGridDrag } from '../grid/useGridDrag';
 import {
     MAX_ROWS,
-    SIZE_LABEL,
     dimsOf,
     normalizeGridConfig,
     shouldStack,
@@ -52,7 +51,6 @@ import {
     renameBundle,
     reorderMembers,
     setActive,
-    supportsSize,
     type WidgetBundle,
 } from '../grid/bundleTypes';
 import { GridWidget } from './GridWidget';
@@ -611,16 +609,29 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     }, [drag.stackPreview, stackItems]);
     /* Which cards follow their content right now. Not while arranging: there
        every card is its saved cell, so what is dragged and sized is what was
-       saved, and the ceilings can be seen for what they are. Not a bundle
-       either — its members differ in height, and a cell that changed size
-       with every switch would throw the board about under it. */
+       saved, and the ceilings can be seen for what they are.
+
+       A bundle follows its content when every member is content: it is then
+       as tall as its tallest member, measured whether or not that member is on
+       top (see `BundleCard`) — not as tall as the one on top, since a cell
+       that changed size with every switch would throw the board about under
+       it. One member that fills its cell, and the bundle is held at the height
+       it was given. */
+    const canFollow = useCallback(
+        (id: string): boolean => {
+            if (!isBundleId(id)) return !!defsById.get(id)?.autoHeight;
+            const bundle = bundles.find((b) => b.id === id);
+            return (
+                !!bundle &&
+                bundle.members.length > 0 &&
+                bundle.members.every((m) => !!defsById.get(m)?.autoHeight)
+            );
+        },
+        [defsById, bundles]
+    );
     const follows = useCallback(
-        (item: WidgetLayoutItem) =>
-            !editing &&
-            !item.fixed &&
-            !isBundleId(item.id) &&
-            !!defsById.get(item.id)?.autoHeight,
-        [editing, defsById]
+        (item: WidgetLayoutItem) => !editing && !item.fixed && canFollow(item.id),
+        [editing, canFollow]
     );
     const neededNow = useMemo(() => {
         const map = new Map<string, number>();
@@ -712,21 +723,10 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
     const mergeRect = drag.mergeTargetId
         ? layout.find((i) => i.id === drag.mergeTargetId)
         : undefined;
-    const mergeLabel = drag.mergeTargetId
-        ? (() => {
-              const source = drag.dragId ?? '';
-              const size = layout.find((i) => i.id === drag.mergeTargetId)?.size ?? 'md';
-              return supportsSize(source, size, sizesById)
-                  ? { text: t('dashboard.bundle.mergeHint'), warn: false }
-                  : {
-                        text: t('dashboard.bundle.mergeSizeHint', {
-                            name: labelOf(source),
-                            size: SIZE_LABEL[size],
-                        }),
-                        warn: true,
-                    };
-          })()
-        : null;
+    // Every widget is drawn at every size now, so there is nothing to warn of:
+    // this used to say a widget "does not come in" the bundle's size, and the
+    // bundle then drew a strip in its place.
+    const mergeLabel = drag.mergeTargetId ? t('dashboard.bundle.mergeHint') : null;
 
     const rendered = stacked ? effectiveStack : sortItems(shown);
     /** The height a card was given — its ceiling, when it follows its content. */
@@ -755,13 +755,10 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
 
                 {/* Held long enough over another card: this is what release does. */}
                 {mergeRect && mergeLabel && (
-                    <div
-                        className={`zenith-grid__merge ${mergeLabel.warn ? 'is-warning' : ''}`}
-                        style={cellStyle(mergeRect)}
-                    >
+                    <div className="zenith-grid__merge" style={cellStyle(mergeRect)}>
                         <span className="zenith-grid__merge-badge">
-                            {mergeLabel.warn ? <AlertTriangle size={13} /> : <Layers size={13} />}
-                            {mergeLabel.text}
+                            <Layers size={13} />
+                            {mergeLabel}
                         </span>
                     </div>
                 )}
@@ -894,17 +891,23 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
                                     }
                                     onRemove={() => removeWidget(item.id)}
                                     onModuleSettings={moduleSettingsOf(bundle.activeId)}
+                                    canFit={canFollow(item.id)}
+                                    fixed={!!item.fixed}
+                                    onSetFixed={(hold) =>
+                                        commitLayout(setFixed(layout, item.id, hold))
+                                    }
                                 >
                                     <BundleCard
                                         bundle={bundle}
                                         defsById={defsById}
                                         size={item.size}
-                                        unsupported={
-                                            new Set(
-                                                bundle.members.filter(
-                                                    (m) => !supportsSize(m, item.size, sizesById)
-                                                )
-                                            )
+                                        fit={
+                                            follows(item)
+                                                ? {
+                                                      ceilingPx: ceilingPx(item.id),
+                                                      onNeeded: (px) => reportNeeded(item.id, px),
+                                                  }
+                                                : null
                                         }
                                         editing={editing}
                                         onSetActive={(widgetId) =>

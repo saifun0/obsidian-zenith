@@ -130,6 +130,23 @@
     pointer-events: none;
 }
 
+/* A member that is not on top, drawn only so its height can be read: as wide
+   as the one that is, as tall as it wants to be, and neither seen nor
+   touched. */
+.zenith-bundle__measure {
+    position: absolute;
+    inset: 0 0 auto 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+.zenith-bundle__measure > .zenith-bundle__member {
+    height: auto;
+}
+.zenith-bundle__measure * {
+    animation: none !important;
+    transition: none !important;
+}
+
 /* Inside a bundle the widget card is not a card — the bundle's frame already
    is one. Left to itself it draws a second hairline a pixel inside the first
    and curves it to a different radius, which is what puts little ears in every
@@ -151,16 +168,6 @@
 
 /* A member that can't render at the bundle's size says so instead of being
    stretched into a shape it was never designed for. */
-.zenith-bundle__compact {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    padding: 0 2px;
-    color: var(--zenith-text-faint);
-    font-size: 0.72rem;
-    text-wrap: pretty;
-}
-
 /* ── Rail ────────────────────────────────────────────
    Lives in the header row, right-aligned, over the layers. Always visible —
    never a hover affordance, because Obsidian runs on phones too. */

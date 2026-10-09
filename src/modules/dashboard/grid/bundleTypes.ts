@@ -76,16 +76,6 @@ export function bundleSizes(
     return { sizes, defaultSize: sizes.includes('md') ? 'md' : sizes[0] };
 }
 
-/** Whether `widgetId` can render at `size` — false means the compact fallback. */
-export function supportsSize(
-    widgetId: string,
-    size: WidgetSize,
-    sizesById: Map<string, { sizes: readonly WidgetSize[] }>
-): boolean {
-    const info = sizesById.get(widgetId);
-    return !info || info.sizes.includes(size);
-}
-
 /**
  * Coerce stored bundles into usable ones.
  *

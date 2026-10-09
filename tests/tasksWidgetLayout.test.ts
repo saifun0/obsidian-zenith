@@ -196,11 +196,15 @@ describe('sm — the three most urgent', () => {
         expect(heightOf(p.lines, p.gap)).toBeLessThanOrEqual(NOMINAL_H.sm - m.head - 2 * m.area - m.foot - m.area);
     });
 
-    it('opens one task’s subtasks in place, and floats it to the top', () => {
+    it('opens one task’s subtasks in place, and moves nothing to do it', () => {
         const tasks = screenshot();
         const pc = tasks[0];
+        const closed = titlesOf(plan(tasks, 'sm').lines);
         const p = plan(tasks, 'sm', pc.id);
-        expect(titlesOf(p.lines)[0]).toBe('Улучшение ПК 3.0');
+        const drawn = p.lines.flatMap((l) => (l.kind === 'task' ? [l.task.title] : []));
+        expect(drawn).toContain('Улучшение ПК 3.0');
+        // Whatever is still drawn is in the order it was in before the opening.
+        expect(drawn).toEqual(closed.filter((title) => drawn.includes(title)));
         // Two previewed, and the two it can't show are named as a link.
         expect(p.lines.filter((l) => l.kind === 'sub')).toHaveLength(2);
         const more = p.lines.find((l) => l.kind === 'more');

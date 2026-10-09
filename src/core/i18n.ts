@@ -350,6 +350,9 @@ const EN: Dict = {
     'debug.widgets.board': 'Board',
     'debug.widgets.phone': 'Phone',
     'debug.widgets.fit': 'To scale',
+    'debug.widgets.width': 'Width',
+    'debug.widgets.height': 'Height',
+    'debug.widgets.preset': 'preset',
     'debug.widgets.count': 'Widgets: {widgets} · sizes: {variants}',
     'debug.widgets.none': 'No widgets are registered: every module that has one is off.',
     'debug.code.switches': 'Switches',
@@ -908,9 +911,6 @@ const EN: Dict = {
     'dashboard.bundle.name': 'Bundle name',
     'dashboard.bundle.namePlaceholder': 'name (optional)',
     'dashboard.bundle.mergeHint': 'Bundle these together',
-    'dashboard.bundle.mergeSizeHint': "{name} has no {size} size — it'll show compact",
-    'dashboard.bundle.compact':
-        '{name} has no {size} size — resize the bundle, or give it its own cell',
     'dashboard.bundle.dissolved': 'Zenith: bundle dissolved — one widget left.',
 
     // ── Tasks ───────────────────────────────────────
@@ -2093,6 +2093,9 @@ const RU: Dict = {
     'debug.widgets.board': 'Доска',
     'debug.widgets.phone': 'Телефон',
     'debug.widgets.fit': 'В масштабе',
+    'debug.widgets.width': 'Ширина',
+    'debug.widgets.height': 'Высота',
+    'debug.widgets.preset': 'пресет',
     'debug.widgets.count': 'Виджетов: {widgets} · размеров: {variants}',
     'debug.widgets.none': 'Виджетов нет: все модули, у которых они есть, выключены.',
     'debug.code.switches': 'Переключатели',
@@ -2659,9 +2662,6 @@ const RU: Dict = {
     'dashboard.bundle.name': 'Имя связки',
     'dashboard.bundle.namePlaceholder': 'имя (необязательно)',
     'dashboard.bundle.mergeHint': 'Объединить в связку',
-    'dashboard.bundle.mergeSizeHint': '{name} не умеет {size} — покажется компактно',
-    'dashboard.bundle.compact':
-        '{name} не умеет размер {size} — поменяйте размер связки или выньте его в свою ячейку',
     'dashboard.bundle.dissolved': 'Zenith: связка распущена — остался один виджет.',
 
     // ── Задачи ──────────────────────────────────────

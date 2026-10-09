@@ -12,7 +12,6 @@ import {
     renameBundle,
     reorderMembers,
     setActive,
-    supportsSize,
     type WidgetBundle,
 } from '../src/modules/dashboard/grid/bundleTypes';
 import type { WidgetSize } from '../src/modules/dashboard/grid/gridTypes';
@@ -66,18 +65,6 @@ describe('bundleSizes', () => {
     it('ignores members the registry does not know', () => {
         const map = sizes({ a: ['sm', 'md'] });
         expect(bundleSizes(['a', 'gone'], map).sizes).toEqual(['sm', 'md']);
-    });
-});
-
-describe('supportsSize', () => {
-    it('reports what a widget can render', () => {
-        const map = sizes({ clock: ['sm', 'md'] });
-        expect(supportsSize('clock', 'md', map)).toBe(true);
-        expect(supportsSize('clock', 'lg', map)).toBe(false);
-    });
-
-    it('assumes an unknown widget copes, rather than showing a false warning', () => {
-        expect(supportsSize('mystery', 'lg', sizes({}))).toBe(true);
     });
 });
 

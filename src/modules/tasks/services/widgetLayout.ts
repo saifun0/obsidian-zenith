@@ -397,23 +397,32 @@ export function planWidget({
     }
 
     if (size === 'sm') {
-        // The opened task floats up, so its subtasks are never the part cut.
-        const ordered = [...split.burning, ...split.doing, ...split.next].sort(
-            (a, b) => Number(b.id === expanded) - Number(a.id === expanded)
-        );
+        /* The opened task is paid for first, so its subtasks are never the
+           part cut — and it stays where it stands. It used to float to the top
+           of the list for the same guarantee, which moved the row out from
+           under the pointer that had just opened it; the tasks that no longer
+           fit now leave from the foot of the list instead, and nothing else
+           changes place. */
+        const ordered = [...split.burning, ...split.doing, ...split.next];
+        const opened = ordered.find((task) => task.id === expanded);
         const fit = (budget: number): { lines: Line[]; hidden: number } => {
-            const lines: Line[] = [];
+            const kept = new Set<string>();
             let used = 0;
-            let shown = 0;
-            for (const task of ordered) {
-                const block = blockFor(task);
-                const cost = blockHeight(block) + (used > 0 ? gap : 0);
-                if (shown >= m.cap || used + cost > budget) continue;
-                used += cost;
-                shown++;
-                lines.push(...block);
+            if (opened) {
+                used = blockHeight(blockFor(opened));
+                kept.add(opened.id);
             }
-            return { lines, hidden: ordered.length - shown };
+            for (const task of ordered) {
+                if (kept.has(task.id)) continue;
+                const cost = blockHeight(blockFor(task)) + (used > 0 ? gap : 0);
+                if (kept.size >= m.cap || used + cost > budget) continue;
+                used += cost;
+                kept.add(task.id);
+            }
+            return {
+                lines: ordered.filter((task) => kept.has(task.id)).flatMap(blockFor),
+                hidden: ordered.length - kept.size,
+            };
         };
         const free = available - m.head - 2 * m.area;
         let plan = fit(free);

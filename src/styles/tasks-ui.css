@@ -1102,6 +1102,9 @@ button.zenith-add-row {
     justify-content: space-between;
     gap: 12px;
     flex: 0 0 auto;
+    /* The rows keep eight pixels of air at their end; the link up here and the
+       one in the foot end on the same line as what the rows carry. */
+    padding-right: 8px;
 }
 .zenith-tw__say {
     margin: 0;
@@ -1383,6 +1386,7 @@ button.zenith-add-row {
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
+    padding-right: 8px;
 }
 .zenith-tw__foot-line > .zenith-tw__link:only-child {
     margin-left: auto;

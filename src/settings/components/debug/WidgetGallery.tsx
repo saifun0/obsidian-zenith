@@ -38,6 +38,13 @@ import { Segmented, Select } from '../../controls';
  * to scale or at full size with a scrollbar. To scale is the default, because
  * the window the settings live in is narrower than a board.
  *
+ * And a third, since a widget lays itself out from the room it has rather than
+ * from its preset's name: the cell. A preset is only the cell a card starts
+ * with — its width and its height are set apart from it on the card's back —
+ * so the width and the height can be set here too, and every widget is then
+ * drawn once, in that cell. A third of the board and one row tall is a cell no
+ * preset names, and one a board is full of.
+ *
  * What it does not show is a widget's own states — empty, erroring, set up some
  * other way. Those depend on what is in the vault and cannot be listed; the
  * cards here are the ones the dashboard would draw right now.
@@ -84,9 +91,31 @@ function useWidth<T extends HTMLElement>(ref: React.RefObject<T>): number {
 
 const noop = () => {};
 
+/** A width to draw every widget at, as a share of the board; `preset` leaves it to the preset. */
+type WidthChoice = 'preset' | 'third' | 'half' | 'twoThirds' | 'full';
+const WIDTH_CHOICES: readonly WidthChoice[] = ['preset', 'third', 'half', 'twoThirds', 'full'];
+const WIDTH_SIGN: Record<Exclude<WidthChoice, 'preset'>, string> = {
+    third: '⅓',
+    half: '½',
+    twoThirds: '⅔',
+    full: '1',
+};
+
+/** That share, in whole columns of a grid of `columns`. */
+function columnsOf(choice: Exclude<WidthChoice, 'preset'>, columns: number): number {
+    const share = { third: 1 / 3, half: 1 / 2, twoThirds: 2 / 3, full: 1 }[choice];
+    return Math.min(columns, Math.max(1, Math.round(columns * share)));
+}
+
+/** Heights offered, in rows. Zero is "as the preset has it". */
+const HEIGHT_CHOICES: readonly number[] = [0, 1, 2, 3, 4, 6];
+
 interface SpecimenProps {
     def: DashboardWidgetDefinition;
     size: WidgetSize;
+    /** The cell's width in columns and height in rows, where they are not the preset's. */
+    wide?: number;
+    tall?: number;
     cfg: GridConfig;
     /** The width of the pane being drawn for. */
     pane: number;
@@ -103,11 +132,12 @@ interface SpecimenProps {
  * the three sizes of one widget share an instance id and so would otherwise
  * report their heights under one name.
  */
-const Specimen: FC<SpecimenProps> = ({ def, size, cfg, pane, phone, scale }) => {
+const Specimen: FC<SpecimenProps> = ({ def, size, wide, tall, cfg, pane, phone, scale }) => {
     const [needed, setNeeded] = useState<number | null>(null);
     const onNeeded = useCallback((_id: string, px: number) => setNeeded(px), []);
 
-    const dims = sizeDims(size, cfg.columns);
+    const preset = sizeDims(size, cfg.columns);
+    const dims = { w: wide ?? preset.w, h: tall ?? preset.h };
     const column = (pane - (cfg.columns - 1) * cfg.gap) / cfg.columns;
     const width = phone ? pane : Math.round(dims.w * column + (dims.w - 1) * cfg.gap);
     const ceiling = pxHeight(dims.h, cfg.rowHeight, cfg.gap);
@@ -126,7 +156,7 @@ const Specimen: FC<SpecimenProps> = ({ def, size, cfg, pane, phone, scale }) => 
     return (
         <figure className="zenith-debug__specimen" style={{ width: Math.round(width * scale) }}>
             <figcaption className="zenith-debug__demo-label">
-                {SIZE_LABEL[size]}
+                {wide === undefined && tall === undefined ? SIZE_LABEL[size] : ''}
                 <em className="zenith-debug__demo-source">
                     {phone ? `${width}` : `${dims.w}/${cfg.columns}`} × {Math.round(height)}
                 </em>
@@ -176,6 +206,8 @@ export const WidgetGallery: FC = () => {
     const [module, setModule] = useState('all');
     const [pane, setPane] = useState<'board' | 'phone'>('board');
     const [zoom, setZoom] = useState<'fit' | 'full'>('fit');
+    const [widthChoice, setWidthChoice] = useState<WidthChoice>('preset');
+    const [rows, setRows] = useState(0);
 
     const host = useRef<HTMLDivElement>(null);
     const room = useWidth(host);
@@ -195,6 +227,11 @@ export const WidgetGallery: FC = () => {
     const shown = module === 'all' ? groups : groups.filter((g) => g.key === module);
 
     const phone = pane === 'phone';
+    // A cell of one's own choosing: every widget once, in it, rather than once
+    // per preset. On a phone a card is the column's width whatever it is set to.
+    const wide = phone || widthChoice === 'preset' ? undefined : columnsOf(widthChoice, cfg.columns);
+    const tall = rows > 0 ? rows : undefined;
+    const custom = wide !== undefined || tall !== undefined;
     // The board the cards are drawn for: the canvas as it is set, or the
     // default where it is set to run to the edges of whatever pane it is in.
     const width = phone ? PHONE_WIDTH : cfg.maxWidth > 0 ? cfg.maxWidth : CANVAS_WIDTH;
@@ -218,6 +255,26 @@ export const WidgetGallery: FC = () => {
                         { value: 'board', label: t('debug.widgets.board'), icon: 'layout-dashboard' },
                         { value: 'phone', label: t('debug.widgets.phone'), icon: 'smartphone' },
                     ]}
+                />
+                <Select
+                    value={widthChoice}
+                    onChange={(v) => setWidthChoice(v as WidthChoice)}
+                    options={WIDTH_CHOICES.map((choice) => ({
+                        value: choice,
+                        label: `${t('debug.widgets.width')}: ${
+                            choice === 'preset' ? t('debug.widgets.preset') : WIDTH_SIGN[choice]
+                        }`,
+                    }))}
+                />
+                <Select
+                    value={String(rows)}
+                    onChange={(v) => setRows(Number(v))}
+                    options={HEIGHT_CHOICES.map((n) => ({
+                        value: String(n),
+                        label: `${t('debug.widgets.height')}: ${
+                            n === 0 ? t('debug.widgets.preset') : n
+                        }`,
+                    }))}
                 />
                 <Segmented
                     value={zoom}
@@ -255,11 +312,16 @@ export const WidgetGallery: FC = () => {
                                         className="zenith-debug__specimens"
                                         style={{ gap: SPECIMEN_GAP }}
                                     >
-                                        {widgetSizes(def).sizes.map((size) => (
+                                        {(custom
+                                            ? [widgetSizes(def).defaultSize]
+                                            : widgetSizes(def).sizes
+                                        ).map((size) => (
                                             <Specimen
-                                                key={`${size}:${pane}`}
+                                                key={`${size}:${pane}:${wide ?? ''}:${tall ?? ''}`}
                                                 def={def}
                                                 size={size}
+                                                wide={wide}
+                                                tall={tall}
                                                 cfg={cfg}
                                                 pane={width}
                                                 phone={phone}

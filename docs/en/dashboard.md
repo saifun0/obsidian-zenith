@@ -52,7 +52,11 @@ runs in columns. So the same card looks different in half the board, across the 
 and in a phone's column — and is empty in none of them. On a phone it is
 exactly as tall as its content. *Fit to content* on the card's back switches this off for
 a card you want held at its height; turned over, a card stands at that full height, so the
-height being set is the one on screen. Bundles keep their height.
+height being set is the one on screen.
+
+A bundle whose widgets are all of that kind is as tall as the tallest of them — not as the
+one on top, so the board does not jump when you switch. A bundle holding a widget that fills
+its cell (the clock, the weather, a picture, life in weeks) keeps the height it was given.
 
 **Arranging.** The grid button puts the board in arrange mode: drag a card to move it, hold
 it over another to bundle them, tap it to turn it over. **+** opens a panel beside the
@@ -80,7 +84,8 @@ hand.
 
 To see every widget at every size it offers without resizing cards on the board, open
 *Settings → About → Debug tools → Widgets*: each one in the board's own card, on your own
-data, drawn for the board or for a phone's column.
+data, drawn for the board or for a phone's column. **Width** and **Height** there draw every
+widget in a cell of any size — a third of the board and one row tall, say.
 
 ## Progress
 
