@@ -285,12 +285,17 @@ export const ContentImportModal: FC<ContentImportModalProps> = ({ onClose, onImp
                                     <li key={`${i.title}-${n}`}>
                                         <span className="zenith-import__preview-title">
                                             {i.favorite && (
-                                                <Heart
-                                                    size={11}
+                                                // The name is on a span, not on
+                                                // the icon: an icon is an <svg>,
+                                                // and Obsidian's tooltip throws on
+                                                // an <svg> carrying `aria-label`.
+                                                <span
                                                     className="zenith-import__heart"
-                                                    fill="currentColor"
+                                                    role="img"
                                                     aria-label={t('content.favorite.filter')}
-                                                />
+                                                >
+                                                    <Heart size={11} fill="currentColor" />
+                                                </span>
                                             )}
                                             {i.title}
                                         </span>
@@ -343,16 +348,20 @@ export const ContentImportModal: FC<ContentImportModalProps> = ({ onClose, onImp
                                                         </>
                                                     )}
                                                     {u.favorite !== undefined && (
-                                                        <Heart
-                                                            size={11}
+                                                        <span
                                                             className="zenith-import__heart"
-                                                            fill={u.favorite ? 'currentColor' : 'none'}
+                                                            role="img"
                                                             aria-label={t(
                                                                 u.favorite
                                                                     ? 'content.favorite.add'
                                                                     : 'content.favorite.remove'
                                                             )}
-                                                        />
+                                                        >
+                                                            <Heart
+                                                                size={11}
+                                                                fill={u.favorite ? 'currentColor' : 'none'}
+                                                            />
+                                                        </span>
                                                     )}
                                                 </span>
                                             </label>

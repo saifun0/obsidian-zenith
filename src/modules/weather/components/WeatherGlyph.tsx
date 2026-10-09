@@ -204,8 +204,10 @@ export const WeatherGlyph: React.FC<Props> = React.memo(
                 width={size}
                 height={size}
                 role="img"
-                aria-label={label}
+                aria-labelledby={label ? `zenith-wg-name${uid}` : undefined}
             >
+                {/* Not `aria-label`: see LifeWeeksWidget. */}
+                {label && <desc id={`zenith-wg-name${uid}`}>{label}</desc>}
                 <defs>
                     <radialGradient id={glowId}>
                         <stop offset="0.35" className="zenith-wglyph__glow-in" />

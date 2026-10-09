@@ -213,8 +213,10 @@ const SkyStage: React.FC<{ data: WeatherData; nowMs: number; t: Translator }> = 
                 className="zenith-weather__sky-svg"
                 viewBox={`0 0 ${ARC.w} ${ARC.h}`}
                 role="img"
-                aria-label={t('weather.sunPath')}
+                aria-labelledby={`zenith-sky-name${uid}`}
             >
+                {/* Not `aria-label`: see LifeWeeksWidget. */}
+                <desc id={`zenith-sky-name${uid}`}>{t('weather.sunPath')}</desc>
                 <defs>
                     <linearGradient id={arcId} x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0" className="zenith-weather__arc-stop-low" />
@@ -409,11 +411,9 @@ const MoonCard: React.FC<{ latitude: number; t: Translator; at?: Date }> = ({
     return (
         <div className="zenith-weather__moon">
             <div className="zenith-weather__moon-disc">
-                <svg
-                    viewBox="-34 -34 68 68"
-                    role="img"
-                    aria-label={t(`weather.moon.${phase.phase}`)}
-                >
+                <svg viewBox="-34 -34 68 68" role="img" aria-labelledby={`zenith-moon-name${uid}`}>
+                    {/* Not `aria-label`: see LifeWeeksWidget. */}
+                    <desc id={`zenith-moon-name${uid}`}>{t(`weather.moon.${phase.phase}`)}</desc>
                     <defs>
                         <radialGradient id={faceId} cx="0.36" cy="0.3" r="0.85">
                             <stop offset="0" className="zenith-weather__moon-stop-in" />

@@ -67,8 +67,16 @@ export const LifeWeeksWidget: FC<DashboardWidgetProps> = () => {
                     height={plan.rows * plan.cell}
                     viewBox={`0 0 ${width} ${height}`}
                     role="img"
-                    aria-label={t('lifeWeeks.aria', { lived: life.lived, total: life.total })}
+                    aria-labelledby={`${id}-name`}
                 >
+                    {/* Named through `aria-labelledby`, never `aria-label`:
+                        Obsidian shows a tooltip for anything carrying
+                        `aria-label` and asks it `isShown()`, which an SVG
+                        element does not have — so a labelled <svg> threw on
+                        every pass of the pointer. */}
+                    <desc id={`${id}-name`}>
+                        {t('lifeWeeks.aria', { lived: life.lived, total: life.total })}
+                    </desc>
                     <defs>
                         {dot('lived', 'zenith-life__lived')}
                         {dot('left', 'zenith-life__left')}

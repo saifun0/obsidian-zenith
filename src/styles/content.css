@@ -2256,6 +2256,7 @@ button.zenith-ctype__add {
 }
 
 .zenith-import__heart {
+    display: inline-flex;
     flex: none;
     margin-right: 4px;
     color: #ec4899;

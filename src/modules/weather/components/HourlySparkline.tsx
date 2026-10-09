@@ -188,12 +188,16 @@ export const HourlySparkline: React.FC<Props> = React.memo(({ hourly, daily, uni
                 <svg
                     viewBox={`0 0 ${SPARK.w} ${H}`}
                     role="img"
-                    aria-label={t('weather.spark.aria', {
-                        hours: last,
-                        low: loT,
-                        high: hiT,
-                    })}
+                    aria-labelledby={`zenith-spark-name${uid}`}
                 >
+                    {/* Not `aria-label`: see LifeWeeksWidget. */}
+                    <desc id={`zenith-spark-name${uid}`}>
+                        {t('weather.spark.aria', {
+                            hours: last,
+                            low: loT,
+                            high: hiT,
+                        })}
+                    </desc>
                     <defs>
                         <linearGradient
                             id={gradId}
