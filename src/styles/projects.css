@@ -369,6 +369,15 @@
     container-name: zenith-pw;
 }
 
+/* On a card that follows its content the widget is as tall as its lines, so
+   the list is too: there is no cell height for it to take the rest of. */
+.zenith-widget-card__fit > .zenith-pw {
+    height: auto;
+}
+.zenith-widget-card__fit > .zenith-pw > .zenith-pw__list {
+    flex: none;
+}
+
 .zenith-pw__list {
     display: flex;
     flex-direction: column;

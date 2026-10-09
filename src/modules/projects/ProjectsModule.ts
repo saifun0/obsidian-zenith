@@ -59,6 +59,8 @@ export class ProjectsModule extends BaseModule {
                 sizes: ['sm', 'md', 'lg'],
                 defaultSize: 'md',
                 order: 35,
+                // Two projects in a cell four rows tall is mostly an empty cell.
+                autoHeight: true,
                 component: ProjectsWidget,
             })
         );

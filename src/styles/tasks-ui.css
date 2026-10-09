@@ -1079,6 +1079,9 @@ button.zenith-add-row {
     /* The card must never scroll: whatever doesn't fit is counted into the
        "+N more" link by the layout, not left hanging over the edge. */
     overflow: hidden;
+    /* It asks how wide it is: a large card is a phone's width on a phone. */
+    container-type: inline-size;
+    container-name: zenith-tw;
 }
 .zenith-tw--lg { gap: 10px; --zenith-twmargin: 50px; }
 .zenith-tw--sm { --zenith-twmargin: 48px; }
@@ -1249,6 +1252,16 @@ button.zenith-add-row {
     text-decoration: underline dotted;
     text-underline-offset: 3px;
     cursor: pointer;
+}
+
+/* The tags give way first: the title is what the row is for. The large card
+   shows them, and in one column on a phone that card is 340px wide — where two
+   tags took half of each line and left "Изучение H…" of a title. The list
+   itself drops them at the same point. */
+@container zenith-tw (max-width: 420px) {
+    .zenith-tw__tags {
+        display: none;
+    }
 }
 
 /* Tags and the subtask progress — which is also what opens them. */

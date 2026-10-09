@@ -1339,6 +1339,76 @@ button.zenith-weather__retry {
     padding: 0 0 4px;
 }
 
+/* ── md and lg: everything in the cell it was given ──
+   Both stood a line or two taller than their cell at the default row height —
+   by 22px and 33px — so the card scrolled inside itself, and what was under
+   the fold on the md card was the hours' temperatures, which is what the hours
+   are there for. Two things give the height back, and neither is a figure:
+
+   • the sunrise line moves up beside the stats, on their rule, instead of
+     taking a line of its own;
+   • the hours lose their caption. A row of clock times over a row of skies
+     does not need to be told it is hourly.
+
+   A grid rather than the column the small card is, so those two can share a
+   row; everything else spans it. Not while loading: the skeleton centres
+   itself in the cell, which is the column's doing. */
+.zenith-weather--md:not(.zenith-weather--loading),
+.zenith-weather--lg:not(.zenith-weather--loading) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-auto-rows: min-content;
+    align-content: start;
+    column-gap: 0;
+}
+
+.zenith-weather--md:not(.zenith-weather--loading) > *,
+.zenith-weather--lg:not(.zenith-weather--loading) > * {
+    grid-column: 1 / -1;
+}
+
+.zenith-weather--md:not(.zenith-weather--loading) > .zenith-weather__details,
+.zenith-weather--lg:not(.zenith-weather--loading) > .zenith-weather__details {
+    grid-column: 1;
+}
+
+.zenith-weather--md:not(.zenith-weather--loading) > .zenith-weather__sunline,
+.zenith-weather--lg:not(.zenith-weather--loading) > .zenith-weather__sunline {
+    grid-column: 2;
+    margin-top: 0;
+    padding: var(--zenith-space-xs) 0 0 var(--zenith-space-lg);
+    border-top: 1px solid var(--zenith-border);
+}
+
+.zenith-weather--md .zenith-weather__section--hourly > .zenith-weather__section-title,
+.zenith-weather--lg .zenith-weather__section--hourly > .zenith-weather__section-title {
+    display: none;
+}
+
+/* A phone's column is too narrow for the stats, both times and the length of
+   the day on one line: the stats wrapped under themselves and took back the
+   line this was for. The length of the day is the one of them that is not a
+   reading, so it is the one that goes. */
+.zenith-weather--md:not(.zenith-weather--loading),
+.zenith-weather--lg:not(.zenith-weather--loading) {
+    container-type: inline-size;
+    container-name: zenith-wwide;
+}
+
+@container zenith-wwide (max-width: 400px) {
+    .zenith-weather__sunline-len {
+        display: none;
+    }
+    .zenith-weather__details {
+        gap: var(--zenith-space-sm);
+    }
+    .zenith-weather--md:not(.zenith-weather--loading) > .zenith-weather__sunline,
+    .zenith-weather--lg:not(.zenith-weather--loading) > .zenith-weather__sunline {
+        gap: var(--zenith-space-sm);
+        padding-left: var(--zenith-space-sm);
+    }
+}
+
 /* ── Size variants ───────────────────────────────── */
 /* sm shows only the essentials, so it can afford to breathe: bigger type,
    centred in the card. Details and forecasts start at md.

@@ -256,6 +256,69 @@
     font-size: 13px;
 }
 
+/* The wide card, md and lg: five columns, not five boxes.
+
+   Two things were wrong with the tiles there. They are buttons, and Obsidian
+   gives every button the height of an input — 30px — which these never took
+   back: a tile made of a name, a time and a mark was cut to its middle line,
+   the name gone and the times of neighbouring tiles run together. And each
+   was a framed plate with its time in the serif, five more headline figures
+   beside the one the card is about.
+
+   So a tile is as tall as its column, wears no frame, and sets its time like
+   any other figure on the board; the one being waited for stands on a plate,
+   as its row does on the small card. A time with "AM" after it breaks onto two
+   lines where a column is too narrow for both, instead of pushing out of it. */
+.zenith-prayer--widget.zenith-prayer--md button.zenith-prayer__tile--tile,
+.zenith-prayer--widget.zenith-prayer--lg button.zenith-prayer__tile--tile {
+    height: auto;
+    /* As tall as what it holds, in the middle of its column: stretched to the
+       column's height, the plate under the one being waited for was a bar the
+       height of the card. */
+    align-self: center;
+    gap: 6px;
+    padding: 10px 6px;
+    border: none;
+    background: transparent;
+}
+
+.zenith-prayer--widget.zenith-prayer--md button.zenith-prayer__tile--tile.is-next,
+.zenith-prayer--widget.zenith-prayer--lg button.zenith-prayer__tile--tile.is-next {
+    background: var(--zenith-bg-tertiary);
+}
+
+.zenith-prayer--widget.zenith-prayer--md button.zenith-prayer__tile--tile:hover:not(:disabled),
+.zenith-prayer--widget.zenith-prayer--lg button.zenith-prayer__tile--tile:hover:not(:disabled) {
+    background: var(--zenith-bg-hover);
+}
+
+.zenith-prayer--widget.zenith-prayer--md .zenith-prayer__tile--tile .zenith-prayer__tile-time,
+.zenith-prayer--widget.zenith-prayer--lg .zenith-prayer__tile--tile .zenith-prayer__tile-time {
+    max-width: 100%;
+    font-family: var(--zenith-font);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.zenith-prayer--widget.zenith-prayer--lg .zenith-prayer__tile--tile .zenith-prayer__tile-time {
+    font-size: 18px;
+}
+
+/* Under the time rather than at the foot of the column: in a column this tall
+   a mark pinned to the bottom is no longer beside what it marks. */
+.zenith-prayer--widget.zenith-prayer--md .zenith-prayer__tile--tile .zenith-prayer__tile-mark,
+.zenith-prayer--widget.zenith-prayer--lg .zenith-prayer__tile--tile .zenith-prayer__tile-mark {
+    margin-top: 0;
+}
+
+/* The days of the week under the lg card are labels too. */
+.zenith-prayer--widget .zenith-prayer__week-num {
+    font-family: var(--zenith-font);
+    font-variant-numeric: tabular-nums;
+}
+
 /* Note variant: no times — the line above the tiles already carries one. */
 .zenith-prayer button.zenith-prayer__tile--note {
     gap: 5px;

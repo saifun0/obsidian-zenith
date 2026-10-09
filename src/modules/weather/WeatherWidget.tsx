@@ -296,7 +296,7 @@ export const WeatherWidget: React.FC<DashboardWidgetProps> = ({ size = 'sm' }) =
             {showSun && <SunLine today={today} t={t} />}
 
             {withHourly && (
-                <div className="zenith-weather__section">
+                <div className="zenith-weather__section zenith-weather__section--hourly">
                     <span className="zenith-weather__section-title">{t('weather.tab.hourly')}</span>
                     <HourlyStrip hourly={hourly} unit={unit} t={t} />
                 </div>
