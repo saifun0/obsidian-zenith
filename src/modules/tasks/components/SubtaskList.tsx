@@ -8,7 +8,9 @@ import type { TaskStatus } from '../../../core/constants';
 import { useFeature } from '../../../core/useFeature';
 import { useLongPress } from '../../../core/useLongPress';
 import { openFileAtLine } from '../../../core/openInVault';
+import { confirmDelete } from '../../../core/ConfirmModal';
 import { TaskWriter } from '../services/taskWriter';
+import { countSubtasks } from '../services/taskStats';
 import { formatDuration } from '../services/taskFormat';
 import { TaskStatusControl } from './taskStatusUi';
 import { TaskTimerButton } from './TaskTimerButton';
@@ -109,6 +111,13 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
     };
 
     const remove = async (sub: SubTask) => {
+        // The same question a task is asked with: a subtask takes its own
+        // subtasks with it too.
+        const under = countSubtasks(sub.subtasks).total;
+        if (under > 0) {
+            const question = t.plural('tasks.delete.withSubtasks', under, { name: sub.title });
+            if (!(await confirmDelete(app, question))) return;
+        }
         try {
             if (await writer().deleteTaskInFile(filePath, sub.lineNumber, sub.title)) await reload();
         } catch (err) {

@@ -74,8 +74,14 @@ Each task is one **line** in a grid:
 | **Margin** | The day, in italic — under *Today* just the hour, within the week the weekday, further out the date; red once it has passed. ↻ when the task repeats. |
 | **!** | An urgent task, in red. High priority sets the title heavier; low, quieter. |
 | **Circle** | ○ to do, ◐ in progress, ● done, ⊘ cancelled — said by shape, not colour. |
-| **Title** | And under it, in italic, the first line of its note. |
+| **Title** | And under it, in italic, the first line of its note, out to the line's right-hand edge. |
 | **Right** | Two tags, how far its subtasks are (an arc and *2/5*), a paperclip. |
+
+In a narrow pane and on a phone there is no margin: it would be a fifth of the width, and
+empty beside every task without a date. The day stands at the end of the title's line
+instead, before the arc and the paperclip, and a group's count after its name. On a wide
+pane the page keeps as much clear on its right as the margin takes on its left, so the
+titles stand in the middle.
 
 **A click on the circle closes the task** (a second click opens it again). The ink is drawn
 through the title, and the task stays where it was for a couple of seconds with **undo** in
@@ -87,7 +93,9 @@ circle.
 **A click on the title opens the editor.** A right-click or a long press on the row opens
 everything else: the statuses, *Move to today / tomorrow*, *Remove the date*, add a subtask,
 the timer, open in file, delete. On a desktop the timer, **⋯** and the drag handle come up
-over the right edge when you point at a row.
+over the right edge when you point at a row. Deleting a task takes everything under it out
+of the note with it — its description, its attachments and its subtasks — and when there
+are subtasks it asks first, since nothing brings them back.
 
 **On a phone, a row swipes:** to the right to close it, to the left to move it to tomorrow.
 The swipe is the row's only when it starts away from the very edge of the screen — from the

@@ -6,7 +6,9 @@ import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { getTodayString } from '../../../core/dateUtils';
 import { useTranslation } from '../../../core/i18n';
+import { confirmDelete } from '../../../core/ConfirmModal';
 import { TaskWriter } from '../services/taskWriter';
+import { countSubtasks } from '../services/taskStats';
 import { addDays, bucketOf } from '../services/taskBuckets';
 import { attachUndo, closesTask, dropClosing, holdClosing } from '../services/closingTasks';
 import type { ScheduleTarget } from './taskMenu';
@@ -91,6 +93,14 @@ export function useTaskActions(task: Task) {
 
     const remove = async () => {
         if (!task.filePath) return;
+        // A task goes with everything under it, and nothing brings it back. One
+        // line is one click; a task with others under it is asked about first,
+        // by name and by how many.
+        const under = countSubtasks(task.subtasks).total;
+        if (under > 0) {
+            const question = t.plural('tasks.delete.withSubtasks', under, { name: task.title });
+            if (!(await confirmDelete(app, question))) return;
+        }
         removeTask(task.id); // optimistic
         try {
             const ok = await new TaskWriter(app).deleteTaskInFile(

@@ -819,6 +819,7 @@ export const ZH: Record<string, string> = {
     'tasks.error.update': 'Zenith：无法在文件中更新任务。',
     'tasks.error.save': 'Zenith：无法保存任务的修改。',
     'tasks.error.delete': 'Zenith：无法删除任务。',
+    'tasks.delete.withSubtasks.other': '删除“{name}”及其下的 {count} 个子任务？此操作无法撤销。',
     'tasks.error.move': 'Zenith：无法移动该任务。',
     'tasks.error.moveSubtask': 'Zenith：无法把该子任务移到那里。',
     'tasks.error.titleRequired': 'Zenith：任务描述不能为空。',
