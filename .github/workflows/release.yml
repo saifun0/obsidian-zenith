@@ -34,14 +34,16 @@ concurrency:
 
 jobs:
     release:
-        runs-on: ubuntu-latest
+        # A named image, not ubuntu-latest: the system a release is built on
+        # changes when this line does, and not before. ci.yml names the same.
+        runs-on: ubuntu-24.04
         env:
             VERSION: ${{ inputs.version }}
             GH_TOKEN: ${{ github.token }}
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v7
 
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v7
               with:
                   node-version: 22
                   cache: npm

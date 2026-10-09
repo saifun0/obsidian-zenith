@@ -18,11 +18,13 @@ permissions:
 
 jobs:
     check:
-        runs-on: ubuntu-latest
+        # The image release.yml builds on, so a green run here is a green
+        # run there.
+        runs-on: ubuntu-24.04
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v7
 
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v7
               with:
                   node-version: 22
                   cache: npm
@@ -44,7 +46,7 @@ jobs:
             - name: Production build
               run: node esbuild.config.mjs production
 
-            - uses: actions/upload-artifact@v4
+            - uses: actions/upload-artifact@v7
               with:
                   name: zenith-${{ github.sha }}
                   path: |
