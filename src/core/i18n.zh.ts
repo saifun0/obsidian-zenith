@@ -2306,6 +2306,7 @@ export const ZH: Record<string, string> = {
     'tasks.quick.placeholder': '写下一个任务…',
     'tasks.quick.label': '新任务',
     'tasks.quick.hint': '↵ 添加 · ⇧↵ 更多',
+    'tasks.quick.more': '更多选项',
     'tasks.quick.literal': '不是日期——保留在标题中',
     'tasks.tally.active.other': '{count} 项待办',
     'tasks.tally.doing': '{count} 项进行中',

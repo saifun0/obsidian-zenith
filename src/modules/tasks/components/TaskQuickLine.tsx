@@ -1,5 +1,6 @@
 import React, { forwardRef, useMemo, useState } from 'react';
 import { Notice } from 'obsidian';
+import { SlidersHorizontal } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
@@ -48,6 +49,12 @@ interface TaskQuickLineProps {
  * Tapping what the margin says takes the reading back, for the day the words
  * meant something else. Enter writes it and leaves the line ready for the
  * next; Shift+Enter opens the full editor with what has been typed.
+ *
+ * A phone has no Shift+Enter, and there the only way to a task's finer points
+ * was to write the task first and open it afterwards. So the line ends in a
+ * button that does what the chord does — drawn where the chord's hint is not,
+ * on a touch screen and on a narrow page (see tasks.css). It is there on an
+ * empty line too: the editor is as good a place to start a task as the line.
  */
 export const TaskQuickLine = forwardRef<HTMLInputElement, TaskQuickLineProps>(
     ({ onExpand }, ref) => {
@@ -104,6 +111,13 @@ export const TaskQuickLine = forwardRef<HTMLInputElement, TaskQuickLineProps>(
             }
         };
 
+        /** The line so far, in the full editor — and the line left clean. */
+        const expand = () => {
+            onExpand(draft);
+            setText('');
+            setLiteral(false);
+        };
+
         return (
             <div className={`zenith-trow zenith-tquick ${text ? 'is-typing' : ''}`}>
                 <div className="zenith-trow__sheet">
@@ -145,9 +159,7 @@ export const TaskQuickLine = forwardRef<HTMLInputElement, TaskQuickLineProps>(
                                 if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                                     e.preventDefault();
                                     if (e.shiftKey || e.metaKey || e.ctrlKey) {
-                                        onExpand(draft);
-                                        setText('');
-                                        setLiteral(false);
+                                        expand();
                                     } else {
                                         void submit();
                                     }
@@ -164,6 +176,16 @@ export const TaskQuickLine = forwardRef<HTMLInputElement, TaskQuickLineProps>(
                                 {t('tasks.quick.hint')}
                             </span>
                         )}
+                        <button
+                            type="button"
+                            className="zenith-trow__action zenith-tquick__more"
+                            aria-label={t('tasks.quick.more')}
+                            title={t('tasks.quick.more')}
+                            disabled={busy}
+                            onClick={expand}
+                        >
+                            <SlidersHorizontal size={15} />
+                        </button>
                     </div>
                 </div>
             </div>

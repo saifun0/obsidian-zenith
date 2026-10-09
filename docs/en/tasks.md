@@ -105,7 +105,9 @@ edge it still opens Obsidian's sidebars. The drag handles stay hidden there unti
 **Writing a task** happens on the line above the list, as on paper: type it and press
 <kbd>Enter</kbd>; the line is ready for the next. With natural input on (see below) the date
 it reads shows up in the margin as you type — click it to keep those words in the title
-instead. <kbd>Shift</kbd>+<kbd>Enter</kbd> opens the full editor with what you typed.
+instead. <kbd>Shift</kbd>+<kbd>Enter</kbd> opens the full editor with what you typed; on a
+phone and in a narrow pane the button at the end of the line does the same, on an empty
+line as well.
 
 **Search** (⌕, or <kbd>/</kbd>) reads more than words: `#work` keeps tasks tagged so (or
 under it, like `#work/zenith`), `!high` one priority and `!` / `!!` / `!!!` a priority or

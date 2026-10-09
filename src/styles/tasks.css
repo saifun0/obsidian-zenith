@@ -771,6 +771,15 @@
     font-size: 0.74rem;
     color: var(--text-faint);
 }
+/* The way to the full editor for a hand with no Shift key. Where the hint
+   above is drawn it says how; where it is not — a narrow page, a touch screen
+   — this is drawn instead, at the end of the line. Its glyph ends where the
+   line does, as what a task carries does on the rows below. */
+.zenith-root button.zenith-tquick__more {
+    display: none;
+    margin: 0 -5px 0 6px;
+    color: var(--text-faint);
+}
 /* What the phrase was read as, in the margin where the row will show it. */
 .zenith-root button.zenith-tquick__read {
     display: inline-flex;
@@ -1292,6 +1301,9 @@ button.zenith-lightbox__btn {
     .zenith-tquick__hint {
         display: none;
     }
+    .zenith-root button.zenith-tquick__more {
+        display: inline-flex;
+    }
     /* And there is no room to keep clear for the buttons: their place is the
        end of the title's first line, and what moves over for them takes the
        words under it out of sight, softly, while the pointer is there. */
@@ -1396,6 +1408,10 @@ button.zenith-lightbox__btn {
     .zenith-subtask .zenith-timer:not(.is-running),
     .zenith-tquick__hint {
         display: none;
+    }
+    /* No keyboard chord to say, so the button it stands for. */
+    .zenith-root button.zenith-tquick__more {
+        display: inline-flex;
     }
     .zenith-trow:not(.is-reordering) .zenith-trow__actions {
         display: none;
