@@ -478,6 +478,84 @@ describe('a wide card, planned in two columns', () => {
         expect(p.groups?.[0].lines).toHaveLength(9);
     });
 
+    /** Which column each drawn task is in, by title. */
+    const sides = (p: Plan): Map<string, number> => {
+        const out = new Map<string, number>();
+        (p.columns ?? []).forEach((c, i) => {
+            for (const line of c.groups ? c.groups.flatMap((g) => g.lines) : c.lines) {
+                if (line.kind === 'task') out.set(line.task.title, i);
+            }
+        });
+        return out;
+    };
+
+    it('moves no task to the other column when one is opened', () => {
+        for (const size of ['sm', 'md', 'lg'] as const) {
+            const tasks = [
+                task('A', { dueDate: '2026-09-10' }),
+                task('B', { dueDate: '2026-09-11' }),
+                task('C', {
+                    dueDate: '2026-09-12',
+                    subtasks: [sub('one'), sub('two'), sub('three')],
+                }),
+            ];
+            const split = splitTasks(tasks, TODAY);
+            const closed = planWidget({ split, size, available: 460, expanded: null, columns: 2 });
+            for (const opened of tasks) {
+                const open = planWidget({
+                    split,
+                    size,
+                    available: 460,
+                    expanded: opened.id,
+                    columns: 2,
+                });
+                for (const [title, side] of sides(open)) {
+                    expect(side, `${size}: ${title} with ${opened.title} opened`).toBe(
+                        sides(closed).get(title)
+                    );
+                }
+                expect(open.hidden).toBe(0);
+            }
+        }
+    });
+
+    it('puts the longer column first where two turns are as good as each other', () => {
+        const split = splitTasks(next(3), TODAY);
+        const p = planWidget({ split, size: 'lg', available: 460, expanded: null, columns: 2 });
+        expect(p.columns?.map((c) => c.groups?.flatMap((g) => g.lines).length)).toEqual([2, 1]);
+    });
+
+    it('lets the foot of the opened task\'s column give way, and nothing else', () => {
+        const tasks = [
+            task('A', {
+                dueDate: '2026-09-10',
+                subtasks: [sub('one'), sub('two'), sub('three'), sub('four')],
+            }),
+            ...next(5),
+        ];
+        const split = splitTasks(tasks, TODAY);
+        const closed = planWidget({ split, size: 'lg', available: 250, expanded: null, columns: 2 });
+        const open = planWidget({
+            split,
+            size: 'lg',
+            available: 250,
+            expanded: tasks[0].id,
+            columns: 2,
+        });
+        const before = sides(closed);
+        const after = sides(open);
+        // The opened task is still there, where it was.
+        expect(after.get('A')).toBe(before.get('A'));
+        // Whatever is still drawn has not changed sides.
+        for (const [title, side] of after) expect(side).toBe(before.get(title));
+        // The other column lost nothing to the opening itself.
+        const other = before.get('A') === 0 ? 1 : 0;
+        const inOther = (m: Map<string, number>) => [...m].filter(([, s]) => s === other).length;
+        expect(inOther(before) - inOther(after)).toBeLessThanOrEqual(1);
+        // And the count of what is not drawn is the truth.
+        expect(after.size + open.hidden).toBe(tasks.length);
+    });
+
     it('is one column when there is one task to draw', () => {
         const split = splitTasks(next(1), TODAY);
         const p = planWidget({ split, size: 'sm', available: 190, expanded: null, columns: 2 });

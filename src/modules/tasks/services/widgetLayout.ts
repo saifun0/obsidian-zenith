@@ -246,17 +246,24 @@ export function planWidget({
            balanced: the same tasks in one column and a half would leave the
            card as tall as one column made it, with half of it empty.
 
-           Every task is a unit with what it costs. As many units are kept as
-           two columns of the card's height can hold; then the place to turn
-           from the first column to the second is the one that leaves the
-           taller of the two shortest — at the end of a group where that costs
-           nearly nothing, since a group that turns the corner loses its name
-           on the far side. */
+           Where each task stands is decided as if nothing were opened, and an
+           opened task does not change it. It did at first: the turn from one
+           column to the other was balanced on the heights as drawn, so
+           opening a task's subtasks made its column taller, the balance moved,
+           and a task from the other column jumped across to even it out —
+           under the pointer that had just pressed. Now opening a task only
+           makes its own column longer; if that is more than the column holds,
+           the tasks at the foot of that column are the ones that give way,
+           into the "+N more". Nothing changes sides. */
         const grouped = size !== 'sm';
         interface Unit {
             label: GroupKey | null;
             lines: Line[];
+            /** What it costs as drawn — its subtasks included, if it is the one opened. */
             cost: number;
+            /** What it costs closed, at the spacing of a card with nothing opened. */
+            closed: number;
+            open: boolean;
         }
         const sections: Array<[GroupKey | null, Task[]]> = grouped
             ? [
@@ -264,14 +271,7 @@ export function planWidget({
                   ['doing', split.doing],
                   ['next', split.next],
               ]
-            : [
-                  [
-                      null,
-                      [...split.burning, ...split.doing, ...split.next].sort(
-                          (a, b) => Number(b.id === expanded) - Number(a.id === expanded)
-                      ),
-                  ],
-              ];
+            : [[null, [...split.burning, ...split.doing, ...split.next]]];
         const units: Unit[] = sections.flatMap(([label, items]) =>
             items.map((task) => {
                 const lines = blockFor(task);
@@ -279,19 +279,20 @@ export function planWidget({
                     label,
                     lines,
                     cost: lines.reduce((n, l) => n + l.height, 0) + gap * lines.length,
+                    closed: m.task + m.gap,
+                    open: expanded === task.id,
                 };
             })
         );
 
-        /** A column of `units[from, to)`: a name over each group, or its place. */
-        const columnHeight = (from: number, to: number): number => {
+        /** A column's height: its tasks, and a name over each group — or its place. */
+        const heightOf = (col: readonly Unit[], by: 'cost' | 'closed'): number => {
             let h = 0;
-            for (let i = from; i < to; i++) {
-                h += units[i].cost;
+            for (let i = 0; i < col.length; i++) {
+                h += col[i][by];
                 if (!grouped) continue;
-                const first = i === from;
-                if (first || units[i].label !== units[i - 1].label) {
-                    h += m.label + (first ? 0 : m.area);
+                if (i === 0 || col[i].label !== col[i - 1].label) {
+                    h += m.label + (i === 0 ? 0 : m.area);
                 }
             }
             return h;
@@ -302,6 +303,10 @@ export function planWidget({
             : available - m.head - 2 * m.area;
         const cap = Number.isFinite(m.cap) ? m.cap * 2 : units.length;
 
+        // Where everything stands, closed. As many tasks as two columns hold,
+        // and the turn that leaves the taller column shortest — at the end of
+        // a group where that costs nearly nothing, and with the longer column
+        // first where two turns are as good as each other.
         let kept = 0;
         let turn = 0;
         for (let k = Math.min(units.length, cap); k >= 1; k--) {
@@ -310,12 +315,12 @@ export function planWidget({
             let best = -1;
             let bestScore = Infinity;
             for (let s = 1; s <= k; s++) {
-                const a = columnHeight(0, s);
-                const b = s < k ? columnHeight(s, k) : 0;
+                const a = heightOf(units.slice(0, s), 'closed');
+                const b = heightOf(units.slice(s, k), 'closed');
                 if (a > budget || b > budget) continue;
                 const inside = s < k && units[s].label === units[s - 1].label;
                 const score = Math.max(a, b) + (inside ? SPLIT_INSIDE_GROUP : 0);
-                if (score < bestScore) {
+                if (score <= bestScore) {
                     bestScore = score;
                     best = s;
                 }
@@ -333,40 +338,60 @@ export function planWidget({
             turn = 1;
         }
 
+        // Then the opened task, which makes its own column longer and moves
+        // nothing. What no longer fits under it leaves from the foot of that
+        // column — never the opened task itself.
+        const first = units.slice(0, turn);
+        const second = units.slice(turn, kept);
+        const runsOn = second.length > 0 && second[0].label === first[first.length - 1].label;
+        let hidden = units.length - kept;
+        for (let again = true; again; ) {
+            again = false;
+            const budget = hidden > 0 ? base - m.foot - m.area : base;
+            for (const col of [first, second]) {
+                while (col.length > 1 && heightOf(col, 'cost') > budget) {
+                    let i = col.length - 1;
+                    while (i >= 0 && col[i].open) i--;
+                    if (i < 0) break;
+                    col.splice(i, 1);
+                    hidden++;
+                    again = true;
+                }
+            }
+        }
+
         const countOf = (label: GroupKey): number =>
             label === 'today'
                 ? split.burning.length
                 : label === 'doing'
                   ? split.doing.length
                   : split.next.length;
-        const column = (from: number, to: number): PlanColumn => {
-            if (!grouped) return { lines: units.slice(from, to).flatMap((u) => u.lines), groups: null };
+        const column = (col: readonly Unit[], continued: boolean): PlanColumn => {
+            if (!grouped) return { lines: col.flatMap((u) => u.lines), groups: null };
             const groups: Group[] = [];
-            for (let i = from; i < to; i++) {
-                const label = units[i].label as GroupKey;
+            col.forEach((unit, i) => {
+                const label = unit.label as GroupKey;
                 const last = groups[groups.length - 1];
                 if (last && last.label === label) {
-                    last.lines.push(...units[i].lines);
-                    continue;
+                    last.lines.push(...unit.lines);
+                    return;
                 }
                 groups.push({
                     label,
                     count: countOf(label),
-                    lines: [...units[i].lines],
-                    ...(i === from && from > 0 && units[from - 1].label === label
-                        ? { continued: true }
-                        : {}),
+                    lines: [...unit.lines],
+                    ...(i === 0 && continued ? { continued: true } : {}),
                 });
-            }
+            });
             return { lines: [], groups };
         };
-        const cols = [column(0, turn), ...(turn < kept ? [column(turn, kept)] : [])];
-        const whole = column(0, kept);
+        const cols = [column(first, false), ...(second.length ? [column(second, runsOn)] : [])];
+        const whole = column([...first, ...second], false);
         return {
             ...empty,
             lines: whole.lines,
             groups: whole.groups && whole.groups.length ? whole.groups : null,
-            hidden: units.length - kept,
+            hidden,
             columns: cols,
         };
     }
