@@ -31,6 +31,7 @@ import { PendingAuthStore } from './modules/sync/services/remotes/oauthPending';
 import { ZenithSettingTab } from './settings/ZenithSettingTab';
 import { registerUriCapture } from './core/uri/uriCapture';
 import { scheduleUpdateCheck } from './core/updateCheck';
+import { ZENITH_ICON, registerZenithIcon } from './core/brandIcon';
 import { registerQuickAddTaskCommand } from './modules/tasks/commands';
 import { dashboardWidgets, type DashboardWidgetDefinition } from './modules/dashboard/widgets';
 import { navActions, type NavActionDefinition } from './modules/navigator/navigation';
@@ -299,7 +300,8 @@ export default class ZenithPlugin extends Plugin {
         );
 
         // ── Ribbon icon → opens default (or first active) module ──
-        this.addRibbonIcon('brain', 'Zenith', () => this.openDefaultModule());
+        registerZenithIcon();
+        this.addRibbonIcon(ZENITH_ICON, 'Zenith', () => this.openDefaultModule());
 
         // ── Persist notifications on change, the same way ──
         this.disposers.push(

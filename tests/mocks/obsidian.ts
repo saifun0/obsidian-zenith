@@ -117,6 +117,12 @@ export function getIconIds(): string[] {
     return [...mockIcons.keys()];
 }
 
+/** What `addIcon` was handed, by id: the inside of an icon's `0 0 100 100` box. */
+export const mockAddedIcons = new Map<string, string>();
+export function addIcon(id: string, svgContent: string): void {
+    mockAddedIcons.set(id, svgContent);
+}
+
 /** Obsidian's interface language. English unless a test sets `mockLanguage.value`. */
 export const mockLanguage = { value: 'en' };
 export function getLanguage(): string {

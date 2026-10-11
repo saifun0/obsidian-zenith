@@ -156,7 +156,7 @@ export class SyncModule extends BaseModule {
 
         // The ribbon, beside Zenith's own icon.
         //
-        // Registered here rather than in `main.ts` — where the `brain` icon
+        // Registered here rather than in `main.ts` — where Zenith's own icon
         // lives — so that it arrives and leaves with the module. An icon for a
         // module somebody switched off is a button that reports on nothing,
         // and `main.ts` has no way to know when that happened.
