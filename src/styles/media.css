@@ -68,9 +68,9 @@
 }
 
 /* ── Picker modal ───────────────────────────────── */
-.zenith-media-picker-modal {
-    width: min(920px, 92vw) !important;
-    max-width: 920px !important;
+.zenith-media-picker-modal:not(#_) {
+    width: min(920px, 92vw);
+    max-width: 920px;
 }
 .zenith-media-picker {
     display: flex;

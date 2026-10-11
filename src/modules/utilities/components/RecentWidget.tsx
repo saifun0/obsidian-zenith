@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, type FC } from 'react';
+import React, { useEffect, useMemo, useState, type CSSProperties, type FC } from 'react';
 import { Keymap, TFile } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
@@ -70,7 +70,8 @@ export const RecentWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.r
     useNow(60_000);
 
     const room = useCardRoom();
-    const limit = recentLimit(listColumns(room.width), rowsThatFit(room.height, rowPx()));
+    const columns = listColumns(room.width);
+    const limit = recentLimit(columns, rowsThatFit(room.height, rowPx()));
     const opened = config.recentBy === 'opened';
 
     const entries = useMemo(
@@ -101,7 +102,17 @@ export const RecentWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.r
     }
 
     return (
-        <ul className="zenith-wlist zenith-wlist--columns">
+        <ul
+            className="zenith-wlist zenith-wlist--columns"
+            // Read down, then across: the grid is told how many columns there
+            // are and how many rows that leaves each (widget-kit.css).
+            style={
+                {
+                    '--zenith-wlist-cols': columns,
+                    '--zenith-wlist-rows': Math.ceil(entries.length / columns),
+                } as CSSProperties
+            }
+        >
             {entries.map((entry) => (
                 <li key={entry.path}>
                     <button

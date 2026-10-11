@@ -670,9 +670,11 @@ body.is-phone .zenith-dashboard__bg::before {
 /* That spare half-row sits under a list, where it reads as the end of the
    list. Under a single thing — a timer, a line to write on — it reads as the
    thing having slipped to the top, so a widget that is one thing says so
-   (`zenith-wmid`) and is stood in the middle of whatever the card rounds to. */
-.zenith-widget-card__body.is-fit > .zenith-widget-card__fit:has(> .zenith-wmid) {
-    margin-block: auto;
+   (`zenith-wmid`) and is stood in the middle of whatever the card rounds to:
+   moved down by half of what the card has to spare, which the card hands the
+   stylesheet as `--zenith-card-slack` (see GridWidget). */
+.zenith-widget-card__body.is-fit > .zenith-widget-card__fit > .zenith-wmid {
+    transform: translateY(calc(var(--zenith-card-slack, 0px) / 2));
 }
 
 /* ── Clock Widget ────────────────────────────────── */
@@ -1377,7 +1379,8 @@ button.zenith-weather__retry {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-auto-rows: min-content;
     align-content: start;
-    column-gap: 0;
+    /* Rows keep the six pixels the card's column had; the two columns touch. */
+    gap: 6px 0;
 }
 
 .zenith-weather--md:not(.zenith-weather--loading) > *,
@@ -4311,18 +4314,33 @@ button.zenith-cw__cta {
     outline: 1px solid var(--zenith-accent);
     outline-offset: 6px;
 }
+/* A row is a grid of its own on the card's three columns, so the labels, the
+   bars and the figures of every row line up — the card's columns handed down
+   to it where the engine can, and three of fixed width where it cannot. */
 .zenith-periods__row {
-    display: contents;
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: 5.5em minmax(0, 1fr) 3.5em;
+    align-items: center;
+    gap: 0 12px;
+}
+@supports (grid-template-columns: subgrid) {
+    .zenith-periods__row {
+        grid-template-columns: subgrid;
+    }
 }
 .zenith-periods__label {
     grid-column: 1;
+    grid-row: 1;
     line-height: var(--zenith-w-row);
 }
 .zenith-periods__bar {
     grid-column: 2;
+    grid-row: 1;
 }
 .zenith-periods__value {
     grid-column: 3;
+    grid-row: 1;
     min-width: 3ch;
     font-size: var(--zenith-w-text);
     font-weight: 600;
@@ -4350,6 +4368,7 @@ button.zenith-cw__cta {
     }
     .zenith-periods__row {
         display: grid;
+        grid-column: auto;
         grid-template-columns: minmax(0, 1fr) auto;
         grid-template-areas:
             'label value'
@@ -4543,16 +4562,17 @@ button.zenith-cw__cta {
 .zenith-life__left {
     fill: var(--zenith-w-track);
 }
-/* The marks lived arrive from the left, the way they were lived. */
-.zenith-life__past {
+/* The marks lived arrive from the left, the way they were lived: they are
+   seen through a window (`zenith-life__wipe`, a rect in the SVG's own
+   clipPath) that opens from the left edge. */
+.zenith-life__wipe {
+    transform-box: fill-box;
+    transform-origin: 0 0;
     animation: zenith-life-in 900ms var(--zenith-ease-settle) both;
 }
 @keyframes zenith-life-in {
     from {
-        clip-path: inset(0 100% 0 0);
-    }
-    to {
-        clip-path: inset(0 0 0 0);
+        transform: scaleX(0);
     }
 }
 /* This week: the one mark that is not settled yet. */
@@ -4566,7 +4586,7 @@ button.zenith-cw__cta {
     }
 }
 @media (prefers-reduced-motion: reduce) {
-    .zenith-life__past,
+    .zenith-life__wipe,
     .zenith-life__now {
         animation: none;
     }

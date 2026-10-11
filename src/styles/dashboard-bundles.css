@@ -103,14 +103,7 @@
 .zenith-bundle__layers {
     position: absolute;
     inset: 0;
-    clip-path: polygon(
-        0 0,
-        calc(100% - var(--zenith-bundle-rail, 0px)) 0,
-        calc(100% - var(--zenith-bundle-rail, 0px)) calc(var(--zenith-bundle-head) - 1px),
-        100% calc(var(--zenith-bundle-head) - 1px),
-        100% 100%,
-        0 100%
-    );
+    /* The notch itself is set where the rail's width is known: BundleCard. */
 }
 
 .zenith-bundle__layer {
@@ -142,9 +135,9 @@
 .zenith-bundle__measure > .zenith-bundle__member {
     height: auto;
 }
-.zenith-bundle__measure * {
-    animation: none !important;
-    transition: none !important;
+.zenith-bundle__measure *:not(#_) {
+    animation: none;
+    transition: none;
 }
 
 /* Inside a bundle the widget card is not a card — the bundle's frame already

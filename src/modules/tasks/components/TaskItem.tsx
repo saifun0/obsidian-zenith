@@ -119,6 +119,17 @@ interface TaskItemProps {
 }
 
 /**
+ * Each line of a wrapped title draws the strike of its own: without this the
+ * ink is one background laid across the lines end to end, and closing a task
+ * of three lines strikes the first, then the second, then the third. Said on
+ * the element because it is a property of this one span and of nothing else.
+ */
+const INK_PER_LINE: React.CSSProperties = {
+    WebkitBoxDecorationBreak: 'clone',
+    boxDecorationBreak: 'clone',
+};
+
+/**
  * One task, as a line of a planner.
  *
  * In the margin, the day — or under "Today", the hour — and a ↻ when it
@@ -385,7 +396,9 @@ export const TaskItem: FC<TaskItemProps> = ({
                         >
                             <span className={`zenith-trow__title is-p-${task.priority}`}>
                                 {/* Inline, so the ink of a closing task follows the words line by line. */}
-                                <span className="zenith-trow__ink">{task.title}</span>
+                                <span className="zenith-trow__ink" style={INK_PER_LINE}>
+                                    {task.title}
+                                </span>
                             </span>
                         </div>
 

@@ -179,6 +179,9 @@ export class SyncProgressNotice {
         // from this notice is `close()`.
         const notice = new Notice(fragment, 0);
         notice.containerEl.addClass('zenith-notice');
+        // For the stylesheet, which widens this box on a phone: it used to find
+        // it by what it holds (`:has`), and is told instead.
+        notice.messageEl.addClass('zenith-syncnotice-host');
         this.parts = { notice, title, count, fill, rate, stored, file };
         this.lastDrawAt = 0;
         return this.parts;

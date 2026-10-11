@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, type FC } from 'react';
+import React, { useCallback, useMemo, type FC, type CSSProperties } from 'react';
 import { ArrowRight, FolderKanban, Plus } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
@@ -74,7 +74,12 @@ export const ProjectsWidget: FC<DashboardWidgetProps> = () => {
                     {t('projects.widget.empty')}
                 </p>
             ) : (
-                <ul className="zenith-pw__list">
+                <ul
+                    className="zenith-pw__list"
+                    // Where the list is two columns it is filled down them, and
+                    // has to be told how many rows that is (projects.css).
+                    style={{ '--zenith-pw-rows': Math.ceil(shown.length / columns) } as CSSProperties}
+                >
                     {shown.map((p) => {
                         const due = dueLabel(p, t);
                         return (

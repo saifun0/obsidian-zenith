@@ -27,10 +27,6 @@
     box-sizing: border-box;
     width: 100vw;
     height: 100vh;
-    /* Dynamic viewport height where it exists. On iOS `100vh` is the height with
-       the browser chrome retracted, so a bottom sheet's lower edge ends up under
-       the home indicator; `100dvh` tracks the visible box instead. */
-    height: 100dvh;
     /* `.zenith-root` scrolls view roots; the scrim must not. */
     overflow: hidden;
     z-index: var(--layer-modal, 100);
@@ -42,6 +38,15 @@
     -webkit-backdrop-filter: blur(5px);
     backdrop-filter: blur(5px);
     animation: zenith-fade-in 0.15s ease;
+}
+
+/* Dynamic viewport height where it exists. On iOS `100vh` is the height with
+   the browser chrome retracted, so a bottom sheet's lower edge ends up under
+   the home indicator; `100dvh` tracks the visible box instead. */
+@supports (height: 100dvh) {
+    .zenith-dialog {
+        height: 100dvh;
+    }
 }
 
 /* A full-viewport backdrop-filter that is ALSO fading in makes the compositor
@@ -357,12 +362,17 @@
     .zenith-dialog__panel {
         max-width: none;
         max-height: 94vh;
-        /* Tall as the screen allows, short of the camera's band. */
-        max-height: calc(100dvh - var(--zenith-safe-top, 0px) - 16px);
         height: auto;
         border-radius: var(--zenith-radius-lg) var(--zenith-radius-lg) 0 0;
         border-bottom: none;
         animation: zenith-sheet-up var(--zenith-transition-slow);
+    }
+
+    /* Tall as the screen allows, short of the camera's band. */
+    @supports (height: 100dvh) {
+        .zenith-dialog__panel {
+            max-height: calc(100dvh - var(--zenith-safe-top, 0px) - 16px);
+        }
     }
 
     .zenith-dialog__body {

@@ -80,9 +80,14 @@ export const LifeWeeksWidget: FC<DashboardWidgetProps> = () => {
                     <defs>
                         {dot('lived', 'zenith-life__lived')}
                         {dot('left', 'zenith-life__left')}
+                        {/* The window the lived marks arrive through: it opens
+                            from the left edge (`zenith-life__wipe`). */}
+                        <clipPath id={`${id}-wipe`}>
+                            <rect className="zenith-life__wipe" width={width} height={height} />
+                        </clipPath>
                     </defs>
                     <rect width={width} height={height} fill={`url(#${id}-left)`} />
-                    <g className="zenith-life__past">
+                    <g className="zenith-life__past" clipPath={`url(#${id}-wipe)`}>
                         {marks.lived.map((r, i) => (
                             <rect
                                 key={i}

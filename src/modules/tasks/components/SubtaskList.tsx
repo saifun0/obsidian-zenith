@@ -88,6 +88,17 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
     const [addText, setAddText] = useState('');
     // The subtask whose editor is open.
     const [detailing, setDetailing] = useState<SubTask | null>(null);
+    /* The row under the pointer, by its line. The stylesheet lights the elbow
+       of the group whose own row is pointed at — not a nested one — and used to
+       find that group with `:has(> .zenith-subtask:hover)`; the list tells it
+       instead (`is-row-hover`). */
+    const [hoverLine, setHoverLine] = useState<number | null>(null);
+    const hoverOf = (line: number) => ({
+        onMouseEnter: () => setHoverLine(line),
+        onMouseLeave: () => setHoverLine((prev) => (prev === line ? null : prev)),
+    });
+    // The field for a new subtask at the root, which the last group stands above.
+    const addingAtRoot = depth === 0 && addUnder === parentLine;
 
     // Only the root level answers the task's action; a nested tree has its own
     // per-row add and would otherwise open a second field at the same time.
@@ -161,11 +172,21 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
     );
 
     return (
-        <ul className="zenith-subtasks">
-            {subtasks.map((sub) => (
-                <li key={sub.lineNumber} className="zenith-subtask-group">
+        <ul className={`zenith-subtasks${subtasks.length > 0 ? ' has-rows' : ''}`}>
+            {subtasks.map((sub, i) => (
+                <li
+                    key={sub.lineNumber}
+                    className={[
+                        'zenith-subtask-group',
+                        addingAtRoot && i === subtasks.length - 1 ? 'is-before-add' : '',
+                        hoverLine === sub.lineNumber ? 'is-row-hover' : '',
+                    ]
+                        .filter(Boolean)
+                        .join(' ')}
+                >
                     <SubtaskRow
                         sub={sub}
+                        hover={hoverOf(sub.lineNumber)}
                         filePath={filePath}
                         sortable={sortable}
                         reorderable={reorderable}
@@ -180,7 +201,12 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
                     />
 
                     {addUnder === sub.lineNumber && (
-                        <div className="zenith-subtask zenith-subtask--nested-add">{addInput}</div>
+                        <div
+                            className="zenith-subtask zenith-subtask--nested-add"
+                            {...hoverOf(sub.lineNumber)}
+                        >
+                            {addInput}
+                        </div>
                     )}
 
                     {sub.subtasks.length > 0 && (
@@ -198,7 +224,7 @@ export const SubtaskTree: FC<SubtaskTreeProps> = ({
 
             {/* The field "add subtask" opens at the root, and nothing else:
                 adding is one of the task's actions. */}
-            {depth === 0 && addUnder === parentLine && (
+            {addingAtRoot && (
                 <li className="zenith-subtask zenith-subtask--add is-open">{addInput}</li>
             )}
             {detailing && (
@@ -223,6 +249,8 @@ interface SubtaskRowProps {
     onAddChild: () => void;
     onOpen: () => void;
     onDelete: () => void;
+    /** Tells the list the pointer is over this row, or has left it. */
+    hover?: { onMouseEnter: () => void; onMouseLeave: () => void };
 }
 
 /** One subtask's line: its checkbox, its title and what it is quietly carrying. */
@@ -236,6 +264,7 @@ const SubtaskRow: FC<SubtaskRowProps> = ({
     onAddChild,
     onOpen,
     onDelete,
+    hover,
 }) => {
     const { app } = useApp();
     const t = useTranslation();
@@ -283,6 +312,8 @@ const SubtaskRow: FC<SubtaskRowProps> = ({
                 .filter(Boolean)
                 .join(' ')}
             onContextMenu={press.onContextMenu}
+            onMouseEnter={hover?.onMouseEnter}
+            onMouseLeave={hover?.onMouseLeave}
         >
             <TaskStatusControl status={sub.status} onChange={onStatus} size={14} />
             <span

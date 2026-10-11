@@ -56,9 +56,14 @@ body.is-hidden-nav .view-content.zenith-root {
 .zenith-settings svg.lucide,
 .zenith-quick-add svg.lucide,
 .zenith-pop svg.lucide {
-    width: auto !important;
-    height: auto !important;
     flex-shrink: 0;
+}
+.zenith-root svg.lucide:not(#_),
+.zenith-settings svg.lucide:not(#_),
+.zenith-quick-add svg.lucide:not(#_),
+.zenith-pop svg.lucide:not(#_) {
+    width: auto;
+    height: auto;
 }
 
 /* ── Scrollbar ──────────────────────────────────── */
@@ -210,8 +215,10 @@ body.is-hidden-nav .view-content.zenith-root {
 }
 .zenith-nav-icon svg {
     display: block;
-    width: 16px !important;
-    height: 16px !important;
+}
+.zenith-nav-icon svg:not(#_) {
+    width: 16px;
+    height: 16px;
 }
 .nav-folder-title.zenith-has-icon .nav-folder-collapse-indicator {
     margin-right: 0;
@@ -273,9 +280,9 @@ input.zenith-input.zenith-icon-picker__search {
     cursor: pointer;
     transition: all 0.12s ease;
 }
-.zenith-icon-picker__item svg {
-    width: 20px !important;
-    height: 20px !important;
+.zenith-icon-picker__item svg:not(#_) {
+    width: 20px;
+    height: 20px;
 }
 .zenith-icon-picker__item:hover {
     background: var(--background-modifier-hover);

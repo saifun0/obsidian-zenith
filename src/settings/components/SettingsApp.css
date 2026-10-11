@@ -3,10 +3,12 @@
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 .vertical-tab-content-container .zenith-custom-settings-container {
-    padding: 0 !important;
-    margin: 0 !important;
     height: 100%;
     overflow-y: auto;
+}
+.vertical-tab-content-container .zenith-custom-settings-container:not(#_) {
+    padding: 0;
+    margin: 0;
 }
 
 /* ── The scale everything on this page is measured in ──
@@ -87,7 +89,6 @@
 
 .zenith-settings__title {
     font-family: inherit;
-    font-size: 1.3rem !important;
     font-weight: 600;
     margin: 0;
     letter-spacing: -0.01em;
@@ -96,6 +97,9 @@
     display: flex;
     align-items: center;
     gap: 6px;
+}
+.zenith-settings__title:not(#_) {
+    font-size: 1.3rem;
 }
 
 /* The same mark the ribbon and the About page use, in the same accent every
@@ -110,26 +114,28 @@
     left: 0;
     display: flex;
     align-items: center;
-    gap: 6px;
-    background: transparent !important; /* Force override Obsidian button styles */
-    border: none !important;
-    box-shadow: none !important;
-    padding: 4px 8px 4px 0 !important;
-    margin: 0 !important;
-    color: var(--text-muted) !important;
+    gap: 6px; /* Force override Obsidian button styles */
     cursor: pointer;
-    transition: color 0.2s ease !important;
+}
+.zenith-settings__back-btn:not(#_) {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 4px 8px 4px 0;
+    margin: 0;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
 }
 
-.zenith-settings__back-btn:hover {
-    color: var(--text-normal) !important;
-    background: transparent !important; /* Ensure no background on hover */
+.zenith-settings__back-btn:hover:not(#_) {
+    color: var(--text-normal);
+    background: transparent; /* Ensure no background on hover */
 }
 
-.zenith-settings__back-text {
-    font-size: 0.9rem !important;
-    font-weight: 500 !important;
-    line-height: 1 !important;
+.zenith-settings__back-text:not(#_) {
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1;
 }
 
 /* ── Root Menu (iOS Settings Grouped Style) ── */
@@ -291,8 +297,7 @@
        from. */
     padding: var(--zs-row-y) 0;
     border-bottom: 1px solid var(--background-modifier-border);
-    column-gap: 24px;
-    row-gap: 10px;
+    gap: 10px 24px;
     /* A row reads: label and description on the left, the control on the right,
        and any note or error on its own full-width line beneath. Without the wrap
        a note becomes a third column and squeezes the label into a strip — which
@@ -382,35 +387,35 @@ label.zenith-settings__item-name {
    `!important`s, because Obsidian's settings dialog styles its inputs more
    specifically than anything else in the app — but it no longer has values of
    its own to drift. */
-.zenith-settings__input {
-    width: 260px !important;
-    height: var(--zenith-field-h) !important;
-    min-height: var(--zenith-field-h) !important;
-    padding: 0 var(--zenith-field-px) !important;
-    margin: 0 !important;
-    border: 1px solid var(--zenith-field-border) !important;
-    border-radius: var(--zenith-field-radius) !important;
-    background: var(--zenith-field-bg) !important;
-    color: var(--text-normal) !important;
-    font-family: inherit !important;
-    font-size: var(--zenith-field-font) !important;
-    line-height: normal !important;
-    box-sizing: border-box !important;
+.zenith-settings__input:not(#_) {
+    width: 260px;
+    height: var(--zenith-field-h);
+    min-height: var(--zenith-field-h);
+    padding: 0 var(--zenith-field-px);
+    margin: 0;
+    border: 1px solid var(--zenith-field-border);
+    border-radius: var(--zenith-field-radius);
+    background: var(--zenith-field-bg);
+    color: var(--text-normal);
+    font-family: inherit;
+    font-size: var(--zenith-field-font);
+    line-height: normal;
+    box-sizing: border-box;
     transition:
         border-color 0.15s ease,
-        box-shadow 0.15s ease !important;
-    box-shadow: none !important;
+        box-shadow 0.15s ease;
+    box-shadow: none;
 }
 
-.zenith-settings__input:hover:not(:disabled):not(:focus) {
-    border-color: var(--zenith-field-border-hover) !important;
+.zenith-settings__input:hover:not(:disabled):not(:focus):not(#_) {
+    border-color: var(--zenith-field-border-hover);
 }
 
 /* One ring, everywhere something takes focus: the same one fields.css draws. */
-.zenith-settings__input:focus {
-    border-color: var(--zenith-field-accent) !important;
-    outline: none !important;
-    box-shadow: var(--zenith-field-ring) !important;
+.zenith-settings__input:focus:not(#_) {
+    border-color: var(--zenith-field-accent);
+    outline: none;
+    box-shadow: var(--zenith-field-ring);
 }
 
 /* A picker — dropdown, date — takes the text field's width; the rest of its
@@ -457,21 +462,23 @@ label.zenith-settings__item-name {
    empty because Obsidian masks a checkmark into it for anything checked, and
    ours would ride around inside the travelling circle. */
 .zenith-settings__toggle-label input[type='checkbox'] {
-    appearance: none !important;
-    -webkit-appearance: none !important;
     position: relative;
     box-sizing: border-box;
     flex: none;
     cursor: pointer;
-    width: 38px !important;
-    height: 22px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 1px solid transparent !important;
-    border-radius: 999px !important;
-    background: var(--background-modifier-border) !important;
-    box-shadow: none !important;
     transition: background 0.18s ease;
+}
+.zenith-settings__toggle-label input[type='checkbox']:not(#_) {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 38px;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: var(--background-modifier-border);
+    box-shadow: none;
 }
 
 .zenith-settings__toggle-label input[type='checkbox']::before {
@@ -487,8 +494,8 @@ label.zenith-settings__item-name {
     transition: transform 0.18s ease;
 }
 
-.zenith-settings__toggle-label input[type='checkbox']:checked {
-    background: var(--interactive-accent) !important;
+.zenith-settings__toggle-label input[type='checkbox']:checked:not(#_) {
+    background: var(--interactive-accent);
 }
 
 /* 38 wide, less 2px of inset at each end, less the 16px thumb. */
@@ -496,17 +503,17 @@ label.zenith-settings__item-name {
     transform: translateX(16px);
 }
 
-.zenith-settings__toggle-label input[type='checkbox']::after {
-    content: none !important;
-    display: none !important;
+.zenith-settings__toggle-label input[type='checkbox']:not(#_)::after {
+    content: none;
+    display: none;
 }
 
-.zenith-settings__toggle-label input[type='checkbox']:hover:not(:disabled) {
-    background: var(--background-modifier-border-hover, var(--text-faint)) !important;
+.zenith-settings__toggle-label input[type='checkbox']:hover:not(:disabled):not(#_) {
+    background: var(--background-modifier-border-hover, var(--text-faint));
 }
 
-.zenith-settings__toggle-label input[type='checkbox']:checked:hover:not(:disabled) {
-    background: var(--interactive-accent-hover, var(--interactive-accent)) !important;
+.zenith-settings__toggle-label input[type='checkbox']:checked:hover:not(:disabled):not(#_) {
+    background: var(--interactive-accent-hover, var(--interactive-accent));
 }
 
 .zenith-settings__toggle-label input[type='checkbox']:focus-visible {
@@ -536,8 +543,11 @@ label.zenith-settings__item-name {
 
 .zenith-settings__item--stack .zenith-settings__input,
 .zenith-settings__item--stack .zenith-settings__picker {
-    width: 100% !important;
     max-width: 360px;
+}
+.zenith-settings__item--stack .zenith-settings__input:not(#_),
+.zenith-settings__item--stack .zenith-settings__picker:not(#_) {
+    width: 100%;
 }
 
 /* ── Masked fields ── */
@@ -568,14 +578,16 @@ button.zenith-settings__reveal {
     width: 32px;
     /* Same tie, same answer: at (0,1,1) this only DRAWS with Obsidian's own
        button height, and a tie is decided by load order rather than by us. */
-    height: 32px !important;
-    padding: 0 !important;
     border: 1px solid var(--background-modifier-border);
     border-radius: var(--zs-radius-control);
     background: var(--background-secondary);
     color: var(--text-muted);
     cursor: pointer;
     box-shadow: none;
+}
+button.zenith-settings__reveal:not(#_) {
+    height: 32px;
+    padding: 0;
 }
 
 .zenith-settings__reveal:hover:not(:disabled) {
@@ -603,13 +615,15 @@ button.zenith-settings__noteMark {
     justify-content: center;
     width: 18px;
     height: 18px;
-    padding: 0 !important;
     border: none;
     border-radius: 50%;
     background: transparent;
     box-shadow: none;
     color: var(--text-faint);
     cursor: help;
+}
+button.zenith-settings__noteMark:not(#_) {
+    padding: 0;
 }
 
 .zenith-settings__noteMark:hover,
@@ -679,18 +693,20 @@ button.zenith-settings__noteMark {
    the fix, and it costs the icon-only ones nothing: centring is what they
    wanted anyway. */
 .zenith-settings__inline-btn {
-    display: inline-flex !important;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 4px 10px !important;
-    font-size: 0.8rem !important;
-    border-radius: var(--zs-radius-control) !important;
-    border: 1px solid var(--background-modifier-border) !important;
-    background: var(--background-primary) !important;
-    color: var(--text-normal) !important;
     cursor: pointer;
     white-space: nowrap;
+}
+.zenith-settings__inline-btn:not(#_) {
+    display: inline-flex;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    border-radius: var(--zs-radius-control);
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
 }
 
 /* Standing next to an input or a select, it matches their height. A 26px
@@ -701,8 +717,8 @@ button.zenith-settings__noteMark {
     min-height: 32px;
 }
 
-.zenith-settings__inline-btn:hover {
-    background: var(--background-modifier-hover) !important;
+.zenith-settings__inline-btn:hover:not(#_) {
+    background: var(--background-modifier-hover);
 }
 
 /* Several of these disable themselves while they work — locating, reloading,
@@ -712,8 +728,8 @@ button.zenith-settings__noteMark {
     cursor: default;
 }
 
-.zenith-settings__inline-btn:disabled:hover {
-    background: var(--background-primary) !important;
+.zenith-settings__inline-btn:disabled:hover:not(#_) {
+    background: var(--background-primary);
 }
 
 /* ── Color control ── */
@@ -735,11 +751,9 @@ button.zenith-settings__noteMark {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.85rem !important;
     line-height: 1.4;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--text-muted) !important;
     font-weight: 600;
     /* The distance between one section and the next is paid for once, here,
        and it meets the card's own bottom margin in a block container — where
@@ -750,7 +764,11 @@ button.zenith-settings__noteMark {
        of a card — "what travels" is a heading and a description and nothing
        else — and then the next heading arrived 12px later while every other
        pair on the page stood 24px apart. */
-    margin: var(--zs-gap-section) 0 var(--zs-gap-label) !important;
+}
+.zenith-settings__section-label:not(#_) {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: var(--zs-gap-section) 0 var(--zs-gap-label);
 }
 
 /* Except at the very top, where the page header has already paid for it. */
@@ -773,7 +791,7 @@ button.zenith-settings__noteMark {
     margin: -1px;
     padding: 0;
     overflow: hidden;
-    clip-path: inset(50%);
+    clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
 }
@@ -900,13 +918,15 @@ button.zenith-settings__icon-btn {
 
 /* ── Vault settings: CTA button + icon rows ── */
 .zenith-settings__inline-btn--cta {
-    background: var(--interactive-accent) !important;
-    color: var(--text-on-accent, #fff) !important;
-    border-color: transparent !important;
     font-weight: 500;
 }
-.zenith-settings__inline-btn--cta:hover {
-    background: var(--interactive-accent-hover) !important;
+.zenith-settings__inline-btn--cta:not(#_) {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent, #fff);
+    border-color: transparent;
+}
+.zenith-settings__inline-btn--cta:hover:not(#_) {
+    background: var(--interactive-accent-hover);
 }
 
 .zenith-settings__icon-row-left {
@@ -1038,16 +1058,18 @@ button.zenith-settings__icon-btn {
        whatever the order of the stylesheets — and a 30px strip beside a 32px
        input is the kind of two-pixel mismatch that reads as broken without
        anyone being able to name it. */
-    height: 28px !important;
-    padding: 0 12px !important;
-    border: none !important;
-    border-radius: var(--zs-radius-control) !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: var(--text-muted) !important;
     font-size: 0.85rem;
     cursor: pointer;
     white-space: nowrap;
+}
+.zenith-seg__opt:not(#_) {
+    height: 28px;
+    padding: 0 12px;
+    border: none;
+    border-radius: var(--zs-radius-control);
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-muted);
 }
 
 /* The group is one tab stop with the arrow keys moving inside it, so the ring
@@ -1058,9 +1080,9 @@ button.zenith-settings__icon-btn {
     outline-offset: -2px;
 }
 
-.zenith-seg__opt.is-active {
-    background: var(--background-primary) !important;
-    color: var(--text-normal) !important;
+.zenith-seg__opt.is-active:not(#_) {
+    background: var(--background-primary);
+    color: var(--text-normal);
 }
 
 /* ── A number and the unit it counts, as one field ──
@@ -1094,15 +1116,15 @@ button.zenith-settings__icon-btn {
     box-shadow: var(--zenith-field-ring);
 }
 
-.zenith-settings__num .zenith-settings__input,
-.zenith-settings__num .zenith-settings__input:focus {
-    width: 92px !important;
-    height: 100% !important;
-    min-height: 0 !important;
-    border: none !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
+.zenith-settings__num .zenith-settings__input:not(#_),
+.zenith-settings__num .zenith-settings__input:focus:not(#_) {
+    width: 92px;
+    height: 100%;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .zenith-settings__num-unit {
@@ -1179,31 +1201,33 @@ button.zenith-settings__icon-btn {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 11px !important;
-    border: 1px solid var(--background-modifier-border) !important;
-    border-radius: 999px !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: var(--text-muted) !important;
     font-size: 0.82rem;
     cursor: pointer;
 }
+.zenith-settings__chip:not(#_) {
+    padding: 5px 11px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-muted);
+}
 
-.zenith-settings__chip.is-active {
-    border-color: var(--interactive-accent) !important;
-    background: color-mix(in srgb, var(--interactive-accent) 15%, transparent) !important;
-    color: var(--text-normal) !important;
+.zenith-settings__chip.is-active:not(#_) {
+    border-color: var(--interactive-accent);
+    background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
+    color: var(--text-normal);
 }
 
 /* Muted until hovered — a destructive button that shouts from the resting state
    makes every settings page feel dangerous. */
-.zenith-settings__inline-btn--danger {
-    color: var(--text-muted) !important;
+.zenith-settings__inline-btn--danger:not(#_) {
+    color: var(--text-muted);
 }
 
-.zenith-settings__inline-btn--danger:hover {
-    border-color: var(--text-error, #e05252) !important;
-    color: var(--text-error, #e05252) !important;
+.zenith-settings__inline-btn--danger:hover:not(#_) {
+    border-color: var(--text-error, #e05252);
+    color: var(--text-error, #e05252);
 }
 
 .zenith-settings__media-preview {
@@ -1312,21 +1336,23 @@ button.zenith-settings__icon-btn {
     justify-content: flex-start;
     gap: 8px;
     width: 100%;
-    padding: 7px 9px !important;
-    border: none !important;
-    border-radius: 6px !important;
-    background: transparent !important;
-    box-shadow: none !important;
     text-align: left;
     cursor: pointer;
+}
+.zenith-wplace__hit:not(#_) {
+    padding: 7px 9px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
 }
 
 /* One highlighted row, whether the mouse or the arrow keys put it there — the
    pointer sets the same index the keys move, so the two never disagree about
    which row Enter would take. */
-.zenith-wplace__hit.is-active,
-.zenith-wplace__hit:hover {
-    background: var(--background-modifier-hover) !important;
+.zenith-wplace__hit.is-active:not(#_),
+.zenith-wplace__hit:hover:not(#_) {
+    background: var(--background-modifier-hover);
 }
 
 .zenith-wplace__hit-name {
@@ -1496,15 +1522,15 @@ button.zenith-settings__reveal:focus-visible {
         margin-left: 0;
     }
 
-    .zenith-settings__input {
-        width: 100% !important;
+    .zenith-settings__input:not(#_) {
+        width: 100%;
     }
 
     .zenith-settings__picker {
         width: 100%;
     }
 
-    .zenith-settings__num .zenith-settings__input {
-        width: 92px !important;
+    .zenith-settings__num .zenith-settings__input:not(#_) {
+        width: 92px;
     }
 }

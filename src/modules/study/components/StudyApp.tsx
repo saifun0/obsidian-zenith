@@ -1,4 +1,11 @@
-import React, { useEffect, useRef, useState, type FC } from 'react';
+import React, {
+    useEffect,
+    useLayoutEffect,
+    useRef,
+    useState,
+    type CSSProperties,
+    type FC,
+} from 'react';
 import { ClipboardPaste, GraduationCap, Pencil, Sparkles } from 'lucide-react';
 import { useTranslation } from '../../../core/i18n';
 import { addDays, isoToDate, startOfWeek } from '../../../core/calendarDates';
@@ -41,6 +48,61 @@ type Dialog =
     | { kind: 'edit'; lessonId?: string }
     | { kind: 'lesson'; id: string; date: string }
     | null;
+
+/** A bell's column is this wide at least, and this far from the next (study.css). */
+const BELL_COLUMN_PX = 128;
+const BELL_GAP_PX = 24;
+
+/**
+ * The bell timetable, the way a school prints it: numbered, in columns, read
+ * down. As many columns as fit the width, and the rows that divides the bells
+ * into — counted here, because a grid filled downwards has to be told its
+ * rows, and how many columns fit is not something a stylesheet can pass on.
+ */
+const BellsList: FC<{ bells: ReadonlyArray<{ n: number; start: string; end: string }> }> = ({
+    bells,
+}) => {
+    const list = useRef<HTMLOListElement>(null);
+    const [columns, setColumns] = useState(1);
+    useLayoutEffect(() => {
+        const el = list.current;
+        if (!el) return;
+        const read = () => {
+            const cs = getComputedStyle(el);
+            const width =
+                el.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+            const fit = Math.max(
+                1,
+                Math.floor((width + BELL_GAP_PX) / (BELL_COLUMN_PX + BELL_GAP_PX))
+            );
+            setColumns((prev) => (prev === fit ? prev : fit));
+        };
+        read();
+        if (typeof ResizeObserver === 'undefined') return;
+        const ro = new ResizeObserver(read);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    return (
+        <ol
+            ref={list}
+            style={
+                {
+                    '--zenith-bells-cols': columns,
+                    '--zenith-bells-rows': Math.ceil(bells.length / columns),
+                } as CSSProperties
+            }
+        >
+            {bells.map((b) => (
+                <li key={b.n}>
+                    <b>{b.n}</b>
+                    {b.start}–{b.end}
+                </li>
+            ))}
+        </ol>
+    );
+};
 
 /**
  * The timetable, whole: today at the top, then the week — as the paper grid
@@ -224,14 +286,7 @@ export const StudyApp: FC = () => {
                     {!grid && schedule.bells.length > 0 && (
                         <section className="zenith-study-view__bells">
                             <h3>{t('study.bells')}</h3>
-                            <ol>
-                                {schedule.bells.map((b) => (
-                                    <li key={b.n}>
-                                        <b>{b.n}</b>
-                                        {b.start}–{b.end}
-                                    </li>
-                                ))}
-                            </ol>
+                            <BellsList bells={schedule.bells} />
                         </section>
                     )}
                 </>

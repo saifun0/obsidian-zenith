@@ -40,8 +40,8 @@
     background: color-mix(in srgb, var(--interactive-accent) 10%, transparent);
 }
 
-.zenith-checkbox-card__input {
-    display: none !important;
+.zenith-checkbox-card__input:not(#_) {
+    display: none;
 }
 
 /* Icon on the left, state on the right, gear between them. */
@@ -108,23 +108,25 @@
     flex-shrink: 0;
     width: 28px;
     height: 28px;
-    padding: 0 !important;
-    border-radius: 6px !important;
-    border: 1px solid var(--background-modifier-border) !important;
-    background: var(--background-primary) !important;
-    box-shadow: none !important;
-    color: var(--text-muted) !important;
     cursor: pointer;
     transition:
         opacity 0.15s ease,
         background 0.15s ease,
         color 0.15s ease;
 }
+.zenith-checkbox-card__settings:not(#_) {
+    padding: 0;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    box-shadow: none;
+    color: var(--text-muted);
+}
 
-.zenith-checkbox-card__settings:hover {
-    background: var(--background-modifier-hover) !important;
-    color: var(--text-normal) !important;
-    border-color: var(--interactive-accent) !important;
+.zenith-checkbox-card__settings:hover:not(#_) {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+    border-color: var(--interactive-accent);
 }
 
 /* Hidden until the tile is hovered — but ONLY where hovering exists. On a

@@ -18,6 +18,24 @@ import { BUNDLE_MAX_PIPS, type WidgetBundle } from '../grid/bundleTypes';
 import { useCrossFade } from '../../../components/shared/useCrossFade';
 import { claimSwipes } from '../../../core/useSwipeActions';
 
+/**
+ * The window the members are seen through: the whole card, less a notch where
+ * the rail stands — as wide as the rail (`--zenith-bundle-rail`, measured
+ * below) and a pixel short of the header's height, so the header's hairline
+ * runs on under it. On the element because the rail's width is this
+ * component's to know; the stylesheet has the rest of the note.
+ */
+const LAYERS_WINDOW: CSSProperties = {
+    clipPath: `polygon(
+        0 0,
+        calc(100% - var(--zenith-bundle-rail, 0px)) 0,
+        calc(100% - var(--zenith-bundle-rail, 0px)) calc(var(--zenith-bundle-head) - 1px),
+        100% calc(var(--zenith-bundle-head) - 1px),
+        100% 100%,
+        0 100%
+    )`,
+};
+
 /** Horizontal travel that counts as a swipe rather than a tap. */
 const SWIPE_THRESHOLD_PX = 40;
 
@@ -444,7 +462,7 @@ export const BundleCard: FC<BundleCardProps> = ({
                         the rail sits — see the stylesheet. The layers cannot
                         carry the notch themselves: `clip-path` travels with an
                         element's transform, and these slide. */}
-                    <div className="zenith-bundle__layers">
+                    <div className="zenith-bundle__layers" style={LAYERS_WINDOW}>
                         {/* Keyed by widget id, never by slot — see `CrossFade.layers`. */}
                         {layers.map((id) => (
                             <div

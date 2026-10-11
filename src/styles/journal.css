@@ -1954,8 +1954,7 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     /* The card says how tall a row is: full height, or closed up where there
        are more trackers than the card's height holds. See JournalStatsWidget. */
     grid-auto-rows: var(--jhab-row, 26px);
-    column-gap: 8px;
-    row-gap: 0;
+    gap: 0 8px;
     flex: none;
     min-height: 0;
     margin: 0 -6px;
@@ -1973,10 +1972,9 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
        figures aligned, if not quite as snugly. */
     display: grid;
     grid-template-columns: 16px minmax(0, 1fr) auto 4.8em;
-    grid-template-columns: subgrid;
     grid-column: 1 / -1;
     align-items: center;
-    column-gap: 8px;
+    gap: 0 8px;
     min-width: 0;
     margin: 0;
     padding: 0 6px;
@@ -1986,6 +1984,13 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     animation: zenith-jhab-in 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
     animation-delay: calc(var(--jhab-at, 0) * 35ms);
     transition: background var(--zenith-transition-fast);
+}
+
+/* The parent's own columns, where the engine can hand them down. */
+@supports (grid-template-columns: subgrid) {
+    .zenith-jhab__row {
+        grid-template-columns: subgrid;
+    }
 }
 
 /* Not a control — the row does nothing when clicked. The tint is a reading
@@ -2117,10 +2122,10 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
 @container zenith-jhab (min-width: 680px) {
     .zenith-jhab {
         grid-template-columns: auto fit-content(200px) minmax(0, 1fr) auto;
-        column-gap: 14px;
+        gap: 0 14px;
     }
     .zenith-jhab__row {
-        column-gap: 14px;
+        gap: 0 14px;
     }
     .zenith-jhab__days {
         justify-content: space-between;

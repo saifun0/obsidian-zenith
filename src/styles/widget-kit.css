@@ -189,24 +189,16 @@
 }
 
 /* Rows that run in columns once there is room for them, reading down: the
-   second column continues the first. */
+   second column continues the first. A grid filled column by column; how many
+   columns there are and how many rows that makes is the list's own to say
+   (`listColumns` in cardRoom.ts — the same widths the card's panes change
+   at), since a grid has to be told its rows to be filled downwards. */
 .zenith-wlist--columns {
-    display: block;
-    columns: 1;
-    column-gap: 32px;
-}
-.zenith-wlist--columns > * {
-    break-inside: avoid;
-}
-@container zenith-card (min-width: 560px) {
-    .zenith-wlist--columns {
-        columns: 2;
-    }
-}
-@container zenith-card (min-width: 820px) {
-    .zenith-wlist--columns {
-        columns: 3;
-    }
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-columns: repeat(var(--zenith-wlist-cols, 1), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--zenith-wlist-rows, 1), auto);
+    gap: 0 32px;
 }
 
 /* ── Two panes ───────────────────────────────────── */

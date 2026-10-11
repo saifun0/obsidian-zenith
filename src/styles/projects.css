@@ -396,13 +396,13 @@
    continuing the first. */
 @container zenith-card (min-width: 560px) {
     .zenith-pw__list {
-        display: block;
-        columns: 2;
-        column-gap: 40px;
-    }
-    .zenith-pw__item {
-        break-inside: avoid;
-        margin-bottom: 2px;
+        display: grid;
+        grid-auto-flow: column;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(var(--zenith-pw-rows, 1), auto);
+        gap: 2px 40px;
+        /* The two pixels each row used to carry under it, the last row's too. */
+        padding-bottom: 2px;
     }
 }
 

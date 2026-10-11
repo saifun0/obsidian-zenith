@@ -10,17 +10,20 @@
     justify-content: center;
     width: 28px;
     height: 28px;
-    padding: 0 !important;
     margin: 0;
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
     border-radius: 8px;
     cursor: pointer;
     transition: background 0.15s ease, transform 0.1s ease;
 }
+.zenith-status__btn:not(#_) {
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+}
 .zenith-status__btn:active { transform: scale(0.9); }
-.zenith-status__btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--interactive-accent) !important; }
+.zenith-status__btn:focus-visible { outline: none; }
+.zenith-status__btn:focus-visible:not(#_) { box-shadow: 0 0 0 2px var(--interactive-accent); }
 
 /* The ink circle (taskStatusUi.tsx). It says its status by shape and takes the
    colour of the text around it: across a list, the one colour left over is a
@@ -108,8 +111,11 @@
     /* Accent-tinted, solid connector color — visible but calm. */
     --zenith-tree-line: color-mix(in srgb, var(--interactive-accent) 30%, var(--background-modifier-border));
 }
-/* Only add top spacing when there are real subtasks (not just the add row). */
-.zenith-subtasks:has(.zenith-subtask:not(.zenith-subtask--add)) {
+/* Only add top spacing when there are real subtasks (not just the add row):
+   the list says so itself (`has-rows`, SubtaskList). The class twice, so the
+   rule weighs what the selector it replaces weighed and still outranks the
+   nested list's own margin below. */
+.zenith-subtasks.has-rows.has-rows {
     margin-top: 2px;
 }
 .zenith-subtask {
@@ -321,7 +327,7 @@ button.zenith-subtask__action {
     border-left: 1.5px solid var(--zenith-tree-line);
 }
 .zenith-subtask-group:last-child::before,
-.zenith-subtask-group:has(+ .zenith-subtask--add)::before {
+.zenith-subtask-group.is-before-add::before {
     display: none;
 }
 /* Where a branch begins. Left alone, a branch starts at the top of its own
@@ -337,8 +343,8 @@ button.zenith-subtask__action {
     top: calc(-1 * var(--zenith-branch-rise, 0px));
     height: calc(13px + var(--zenith-branch-rise, 0px));
 }
-/* Light the elbow up for the hovered row. */
-.zenith-subtask-group:has(> .zenith-subtask:hover)::after {
+/* Light the elbow up for the hovered row (`is-row-hover`, SubtaskList). */
+.zenith-subtasks > .zenith-subtask-group.is-row-hover::after {
     border-color: var(--interactive-accent);
 }
 /* Tuck each trunk under its parent's checkbox so the branch clearly stems from
@@ -508,8 +514,9 @@ button.zenith-subtask__action {
     font-size: 0.86rem;
     color: var(--text-muted);
     cursor: pointer;
-    text-decoration: underline;
-    text-decoration-color: transparent;
+    /* Underlined, and the line unseen until this is the choice made. */
+    --zenith-underline: underline transparent;
+    text-decoration: var(--zenith-underline);
     text-underline-offset: 4px;
 }
 .zenith-dialog button.zenith-tsheet__choice:hover {
@@ -517,7 +524,7 @@ button.zenith-subtask__action {
 }
 .zenith-dialog button.zenith-tsheet__choice.is-on {
     color: var(--text-normal);
-    text-decoration-color: currentColor;
+    --zenith-underline: underline currentColor;
 }
 .zenith-tsheet__prio.is-p-high,
 .zenith-tsheet__prio.is-p-urgent { font-weight: 600; }
@@ -898,15 +905,21 @@ button.zenith-add-row {
     font: inherit;
     color: var(--text-faint);
     cursor: pointer;
-    text-decoration: underline;
-    text-decoration-color: transparent;
-    text-decoration-thickness: 1px;
+    --zenith-underline: underline 1px transparent;
+    text-decoration: var(--zenith-underline);
     text-underline-offset: 5px;
 }
 .zenith-root button.zenith-trep__range-item:hover { color: var(--text-muted); }
 .zenith-root button.zenith-trep__range-item.is-on {
     color: var(--text-normal);
-    text-decoration-color: currentColor;
+    --zenith-underline: underline 1px currentColor;
+}
+/* See the note on the same in tasks.css: where the engine takes a line only. */
+@supports not (text-decoration: underline dotted) {
+    .zenith-dialog button.zenith-tsheet__choice.is-on,
+    .zenith-root button.zenith-trep__range-item.is-on {
+        text-decoration: underline;
+    }
 }
 
 .zenith-trep__lead {
@@ -1091,8 +1104,10 @@ button.zenith-add-row {
 .zenith-tw .zenith-status__btn {
     width: auto;
     height: auto;
-    padding: 0 !important;
     border-radius: 50%;
+}
+.zenith-tw .zenith-status__btn:not(#_) {
+    padding: 0;
 }
 
 /* ── The sentence ────────────────────────────────── */
@@ -1176,7 +1191,7 @@ button.zenith-add-row {
 .zenith-tw__group-head {
     display: grid;
     grid-template-columns: var(--zenith-twmargin) 1fr;
-    column-gap: 10px;
+    gap: 0 10px;
     align-items: baseline;
     height: 20px;
     flex: 0 0 auto;
@@ -1201,7 +1216,7 @@ button.zenith-add-row {
 .zenith-tw__row {
     display: grid;
     grid-template-columns: var(--zenith-twmargin) auto minmax(0, 1fr) auto;
-    column-gap: 10px;
+    gap: 0 10px;
     align-items: center;
     flex: 0 0 auto;
     /* Air at the end of the line, inside the plate that comes up under it: the
@@ -1287,7 +1302,8 @@ button.zenith-add-row {
     box-shadow: none;
     font: inherit;
     color: var(--zenith-text-normal);
-    text-decoration: underline dotted;
+    --zenith-underline: underline dotted;
+    text-decoration: var(--zenith-underline);
     text-underline-offset: 3px;
     cursor: pointer;
 }

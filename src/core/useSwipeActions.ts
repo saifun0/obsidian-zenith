@@ -104,7 +104,12 @@ export function useSwipeActions({ enabled, onRight, onLeft }: SwipeOptions): Swi
     const place = (dx: number, animate: boolean) => {
         const el = sheet.current;
         if (!el) return;
-        el.style.transition = animate ? 'transform 0.22s cubic-bezier(0.2, 0.7, 0.3, 1)' : 'none';
+        // `zenith-no-motion` is the user's switch for no motion at all. A
+        // transition set here is on the element itself, which the stylesheet's
+        // rule for that switch does not outrank, so the switch is read here.
+        const still = el.ownerDocument.body.classList.contains('zenith-no-motion');
+        el.style.transition =
+            animate && !still ? 'transform 0.22s cubic-bezier(0.2, 0.7, 0.3, 1)' : 'none';
         el.style.transform = dx ? `translateX(${dx}px)` : '';
     };
 

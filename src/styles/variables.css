@@ -179,10 +179,25 @@ body.zenith-no-motion .zenith-settings-wrapper {
     --zenith-transition-slow: 0s;
 }
 
-body.zenith-no-motion .zenith-root *,
-body.zenith-no-motion .zenith-settings-wrapper *,
-body.zenith-no-motion .zenith-dialog,
-body.zenith-no-motion .zenith-dialog * {
-    animation: none !important;
-    transition: none !important;
+/* ── `:not(#_)` ──────────────────────────────────────
+   Nothing has the id `_`, so `:not(#_)` is true of every element — and it
+   carries an id's weight, which is more than any number of classes. It is how
+   a rule here outranks Obsidian's own styles for a control, and a theme's,
+   without `!important`: a button, an input and a checkbox arrive already
+   dressed by `button:not(.clickable-icon)`, `input[type='text']` and their
+   kin, at weights a single class does not beat.
+
+   Where a rule holds both kinds of declaration it stands twice: once as it
+   was, for what never had to outrank anything, and once with the weight, for
+   what does. Giving the weight to the whole rule would let its ordinary
+   declarations start winning arguments they used to lose.
+
+   The switch below is the plainest case: with motion off, nothing of Zenith's
+   moves, whatever the rule that would have moved it. */
+body.zenith-no-motion .zenith-root *:not(#_),
+body.zenith-no-motion .zenith-settings-wrapper *:not(#_),
+body.zenith-no-motion .zenith-dialog:not(#_),
+body.zenith-no-motion .zenith-dialog *:not(#_) {
+    animation: none;
+    transition: none;
 }
