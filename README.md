@@ -1,3 +1,5 @@
+![Zenith](docs/images/logo.svg)
+
 # Zenith
 
 **English** · [Русский](README.ru.md)
@@ -7,11 +9,34 @@ An all-in-one life organizer for [Obsidian](https://obsidian.md): a **Dashboard*
 shows, games…), built on a modular architecture so features can be toggled on and off without leaving your
 vault.
 
+![The dashboard: a clock, the weather, countdowns, tasks, the journal, the library and projects on one board](docs/images/screenshots/desktop-1-dashboard.png)
+
 Your data stays as plain Markdown in your vault. Zenith reads and writes ordinary `.md`
 files; there is no hidden database.
 
 The interface speaks English, Russian and Simplified Chinese — Obsidian's language by default,
 or the one set in *Settings → Zenith → General → Language*.
+
+---
+
+## Screenshots
+
+| Tasks, beside their calendar | The journal |
+| --- | --- |
+| ![The task list, grouped by when things are due, next to the month's calendar](docs/images/screenshots/desktop-2-tasks.png) | ![The journal: a month of habits, the calendar and today's check-in](docs/images/screenshots/desktop-3-journal.png) |
+
+| The library | Arranging the board |
+| --- | --- |
+| ![The content library as a grid of covers](docs/images/screenshots/desktop-4-library.png) | ![The board being arranged, with the list of widgets beside it](docs/images/screenshots/desktop-5-arrange.png) |
+
+On a phone:
+
+| | | | | |
+| --- | --- | --- | --- | --- |
+| ![The dashboard on a phone](docs/images/screenshots/mobile-1-dashboard.png) | ![Tasks on a phone](docs/images/screenshots/mobile-2-tasks.png) | ![The journal on a phone](docs/images/screenshots/mobile-3-journal.png) | ![The library on a phone](docs/images/screenshots/mobile-4-library.png) | ![Further down the board on a phone](docs/images/screenshots/mobile-5-board.png) |
+
+Everything in the pictures is made up: they are taken in the demo vault that comes with each
+[release](https://github.com/saifun0/obsidian-zenith/releases), with a board arranged for the occasion.
 
 ---
 

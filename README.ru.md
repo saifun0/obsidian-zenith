@@ -1,3 +1,5 @@
+![Zenith](docs/images/logo.svg)
+
 # Zenith
 
 [English](README.md) · **Русский**
@@ -7,11 +9,34 @@
 модульной архитектуре — возможности включаются и выключаются по отдельности, не заставляя
 выходить из хранилища.
 
+![Дашборд: часы, погода, обратный отсчёт, задачи, дневник, библиотека и проекты на одной доске](docs/images/screenshots/desktop-1-dashboard.png)
+
 Данные остаются обычным Markdown в вашем хранилище. Zenith читает и пишет простые файлы
 `.md`; никакой скрытой базы данных нет.
 
 Интерфейс — на английском, русском и упрощённом китайском: по умолчанию на языке Obsidian,
 или на том, что выбран в *Настройки → Zenith → Основные → Язык*.
+
+---
+
+## Скриншоты
+
+| Задачи и их календарь | Дневник |
+| --- | --- |
+| ![Список задач по срокам рядом с календарём на месяц](docs/images/screenshots/desktop-2-tasks.png) | ![Дневник: привычки за месяц, календарь и отметки за сегодня](docs/images/screenshots/desktop-3-journal.png) |
+
+| Библиотека | Настройка доски |
+| --- | --- |
+| ![Библиотека контента сеткой обложек](docs/images/screenshots/desktop-4-library.png) | ![Доска в режиме настройки, рядом список виджетов](docs/images/screenshots/desktop-5-arrange.png) |
+
+На телефоне:
+
+| | | | | |
+| --- | --- | --- | --- | --- |
+| ![Дашборд на телефоне](docs/images/screenshots/mobile-1-dashboard.png) | ![Задачи на телефоне](docs/images/screenshots/mobile-2-tasks.png) | ![Дневник на телефоне](docs/images/screenshots/mobile-3-journal.png) | ![Библиотека на телефоне](docs/images/screenshots/mobile-4-library.png) | ![Доска ниже по экрану](docs/images/screenshots/mobile-5-board.png) |
+
+Всё на картинках выдумано: они сняты в демо-хранилище, которое прилагается к каждому
+[релизу](https://github.com/saifun0/obsidian-zenith/releases), с доской, собранной для съёмки.
 
 ---
 
