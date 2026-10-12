@@ -93,6 +93,12 @@ export class Notice {
     hide(): void {}
 }
 
+/** A set of key bindings. The tests press no keys through Obsidian, so it holds none. */
+export class Scope {
+    register(): void {}
+    unregister(): void {}
+}
+
 export const Platform = { isMobile: false, isMobileApp: false, isIosApp: false, isAndroidApp: false };
 
 export function setIcon(): void {}
