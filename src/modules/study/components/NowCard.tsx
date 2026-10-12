@@ -153,15 +153,12 @@ export const NowCard: FC<{
                 </span>
                 <span className="zenith-study-now__title">{slotTitle(current, lessons)}</span>
                 <Places item={current} lessons={lessons} roomy={roomy} />
-                <div className="zenith-study-now__progress">
-                    <span className="zenith-study-now__bar" aria-hidden="true">
-                        <span style={{ width: `${Math.round(state.fraction * 100)}%` }} />
-                    </span>
-                    <span className="zenith-study-now__left">
-                        <b>{t('study.left', { time: duration(state.minutesLeft, t) })}</b>
-                        <span>{t('study.until', { time: timeOf(current.end) })}</span>
-                    </span>
-                </div>
+                {/* In words only. How far into the class it is, the day's line
+                    under the card draws: the class is a stretch of it, filling. */}
+                <span className="zenith-study-now__left">
+                    <b>{t('study.left', { time: duration(state.minutesLeft, t) })}</b>
+                    <span>{t('study.until', { time: timeOf(current.end) })}</span>
+                </span>
                 {roomy && next && (
                     <span className="zenith-study-now__then">
                         <span>{t('study.then')}</span>

@@ -152,6 +152,87 @@ export function slotsOf(lessons: readonly DayLesson[]): DayLesson[][] {
     return out;
 }
 
+/** A stretch of the day's line: a class period, or the break between two. */
+export interface DayLinePart {
+    /** The period's lessons — more than one when subgroups share it. Empty for a break. */
+    lessons: DayLesson[];
+    /** Minutes from midnight. */
+    start: number;
+    end: number;
+    /** Where it lies on the line and how long it is, in percent of the day. */
+    left: number;
+    width: number;
+    /** Behind now, under it, or ahead of it. */
+    state: 'past' | 'now' | 'later';
+    /** How much of it has gone by, in percent: all of what is behind now, none of what is ahead. */
+    done: number;
+}
+
+export interface DayLine {
+    /** The first class's start and the last one's end. */
+    from: number;
+    to: number;
+    /** Periods and the breaks between them, in order, covering the line end to end. */
+    parts: DayLinePart[];
+    /** Where now stands on the line, in percent — null before the first class and after the last. */
+    now: number | null;
+    /** The period now is in, if it is in one. */
+    current?: DayLinePart;
+}
+
+/**
+ * The day laid out as one line, from the first class to the end of the last:
+ * each period a stretch of it, each break the stretch between two, and how
+ * far along every one of them `now` has come. With `now` null the day is
+ * simply drawn, none of it gone.
+ *
+ * Breaks are parts in their own right rather than whatever is left between
+ * the classes, because the line fills as the day goes and a break fills too:
+ * ten minutes into a twenty-minute one, half of it is behind.
+ */
+export function dayLine(lessons: readonly DayLesson[], now: number | null): DayLine | null {
+    if (!lessons.length) return null;
+    const slots = slotsOf(lessons)
+        .map((slot) => ({ lessons: slot, start: slot[0].start, end: slot[0].end }))
+        .sort((a, b) => a.start - b.start || a.end - b.end);
+    const from = slots[0].start;
+    const to = Math.max(...slots.map((s) => s.end));
+    const span = Math.max(1, to - from);
+
+    const part = (lessonsIn: DayLesson[], start: number, end: number): DayLinePart => {
+        const ahead = now === null || now < start;
+        const behind = now !== null && now >= end;
+        return {
+            lessons: lessonsIn,
+            start,
+            end,
+            left: ((start - from) / span) * 100,
+            width: ((end - start) / span) * 100,
+            state: ahead ? 'later' : behind ? 'past' : 'now',
+            done: ahead ? 0 : behind ? 100 : ((now - start) / (end - start)) * 100,
+        };
+    };
+
+    const parts: DayLinePart[] = [];
+    // How far the day has been drawn: a break is what lies between this and
+    // the next period's start. Periods that overlap leave none.
+    let edge = from;
+    for (const slot of slots) {
+        if (slot.start > edge) parts.push(part([], edge, slot.start));
+        parts.push(part(slot.lessons, slot.start, slot.end));
+        edge = Math.max(edge, slot.end);
+    }
+
+    const inDay = now !== null && now >= from && now <= to;
+    return {
+        from,
+        to,
+        parts,
+        now: inDay ? ((now - from) / span) * 100 : null,
+        current: parts.find((p) => p.lessons.length > 0 && p.state === 'now'),
+    };
+}
+
 /** The next day after `date` with lessons, within two weeks — or null. */
 export function nextStudyDay(
     schedule: StudySchedule,

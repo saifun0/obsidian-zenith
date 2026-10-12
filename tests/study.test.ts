@@ -18,6 +18,7 @@ import {
 } from '../src/modules/study/studyImport';
 import {
     anchorFor,
+    dayLine,
     dayState,
     lessonsOn,
     nextOccurrence,
@@ -285,6 +286,70 @@ describe('the day', () => {
             ['Maths'],
             ['Physics', 'Chemistry'],
         ]);
+    });
+
+    it('lays the day out as one line: classes, and the break between them', () => {
+        // Maths 08:30–10:00, a ten-minute break, both subgroups' labs 10:10–11:40.
+        const lessons = lessonsOn(SCHEDULE, TODAY, OPTS);
+        const line = dayLine(lessons, null);
+        expect(line).toMatchObject({ from: 8 * 60 + 30, to: 11 * 60 + 40, now: null });
+        expect(line?.parts.map((p) => p.lessons.map((l) => l.lesson.subject))).toEqual([
+            ['Maths'],
+            [],
+            ['Physics', 'Chemistry'],
+        ]);
+        // End to end, with nothing left over and nothing twice.
+        const parts = line?.parts ?? [];
+        expect(parts[0].left).toBe(0);
+        parts.slice(1).forEach((p, i) => expect(p.left).toBeCloseTo(parts[i].left + parts[i].width));
+        expect(parts.reduce((sum, p) => sum + p.width, 0)).toBeCloseTo(100);
+        // Not drawn against a clock, none of it has gone.
+        expect(parts.map((p) => [p.state, p.done])).toEqual([
+            ['later', 0],
+            ['later', 0],
+            ['later', 0],
+        ]);
+        expect(dayLine([], 9 * 60)).toBeNull();
+    });
+
+    it('fills the line as the day goes, the breaks with it', () => {
+        const lessons = lessonsOn(SCHEDULE, TODAY, OPTS);
+        const at = (h: number, m: number) => dayLine(lessons, h * 60 + m);
+        const states = (line: ReturnType<typeof dayLine>) => line?.parts.map((p) => p.state);
+
+        // A third of the way into the first class.
+        const first = at(9, 0);
+        expect(states(first)).toEqual(['now', 'later', 'later']);
+        expect(first?.parts[0].done).toBeCloseTo(100 / 3);
+        expect(first?.current?.lessons[0].lesson.subject).toBe('Maths');
+        expect(first?.now).toBeCloseTo((30 / 190) * 100);
+
+        // Half way through the break: behind it a class, ahead of it another, and no class under now.
+        const pause = at(10, 5);
+        expect(states(pause)).toEqual(['past', 'now', 'later']);
+        expect(pause?.parts.map((p) => p.done)).toEqual([100, 50, 0]);
+        expect(pause?.current).toBeUndefined();
+
+        // The minute a class ends it is behind, and the break has begun.
+        expect(states(at(10, 0))).toEqual(['past', 'now', 'later']);
+        expect(at(10, 0)?.parts[1].done).toBe(0);
+
+        // The bead is on the line from the first minute to the last, and nowhere else.
+        expect(at(8, 30)?.now).toBe(0);
+        expect(at(11, 40)?.now).toBe(100);
+        expect(states(at(11, 40))).toEqual(['past', 'past', 'past']);
+        expect(at(8, 29)?.now).toBeNull();
+        expect(at(11, 41)?.now).toBeNull();
+    });
+
+    it('draws no break where two classes overlap', () => {
+        const overlapping = [
+            { lesson: SCHEDULE.lessons[0], start: 9 * 60, end: 10 * 60 + 30 },
+            { lesson: SCHEDULE.lessons[4], start: 10 * 60, end: 11 * 60 },
+        ];
+        const line = dayLine(overlapping, null);
+        expect(line?.parts.map((p) => p.lessons.length)).toEqual([1, 1]);
+        expect(line).toMatchObject({ from: 9 * 60, to: 11 * 60 });
     });
 
     it('finds the next day with lessons, and the next class of a subject', () => {

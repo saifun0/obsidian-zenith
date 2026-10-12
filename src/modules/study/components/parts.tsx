@@ -3,7 +3,7 @@ import { ClipboardPaste, Clock, Copy, GraduationCap, MapPin, PencilLine, X } fro
 import { Notice } from 'obsidian';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import { timeOf, type StudyLesson } from '../studyModel';
-import type { DayLesson } from '../studyTime';
+import { dayLine, type DayLesson } from '../studyTime';
 import { aiPrompt } from '../studyPrompt';
 import { clearStudyPreview } from '../previewClock';
 
@@ -96,51 +96,69 @@ export function rowState(item: DayLesson, now: number | null, nextStart: number 
 }
 
 /**
- * The day as one strip: each class a segment in its kind's colour, the
- * breaks the gaps between them, and a needle at now. The shape of the day —
- * how long, where the long break is, how much is left — in one glance.
+ * The day as one line. Each class is a stretch of it in its kind's colour, each
+ * break the thread between two, and a bead stands at now. The line fills as
+ * the day goes: what is behind the bead is inked in, what is ahead is a tint —
+ * so the class that is on is its own progress bar, and no second bar is needed
+ * to say how far into it you are.
  */
 export const DayBand: FC<{ lessons: readonly DayLesson[]; now: number | null }> = ({
     lessons,
     now,
 }) => {
     const t = useTranslation();
-    if (!lessons.length) return null;
-    const from = lessons[0].start;
-    const to = Math.max(...lessons.map((l) => l.end));
-    const span = Math.max(1, to - from);
-    const pos = (m: number) => `${((m - from) / span) * 100}%`;
-    // One segment per slot: two subgroups at once are one stretch of the day.
-    const slots = lessons.filter(
-        (l, i) => lessons.findIndex((x) => x.start === l.start && x.end === l.end) === i
-    );
-    const needle = now !== null && now >= from && now <= to;
+    const line = dayLine(lessons, now);
+    if (!line) return null;
     return (
         <div className="zenith-study-band" aria-hidden="true">
             <div className="zenith-study-band__track">
-                {slots.map((l) => (
+                {line.parts.map((part) => {
+                    const place = { left: `${part.left}%`, width: `${part.width}%` };
+                    // What has gone by of the stretch now is in. The rest need
+                    // no fill: behind and ahead are each one colour.
+                    const fill = part.state === 'now' && (
+                        <span className="zenith-study-band__fill" style={{ width: `${part.done}%` }} />
+                    );
+                    if (!part.lessons.length) {
+                        return (
+                            <span
+                                key={`break-${part.start}`}
+                                className={`zenith-study-band__gap is-${part.state}`}
+                                style={place}
+                            >
+                                {fill}
+                            </span>
+                        );
+                    }
+                    return (
+                        <span
+                            key={`${part.start}-${part.end}`}
+                            className={`zenith-study-band__seg is-kind-${part.lessons[0].lesson.kind} is-${part.state}`}
+                            style={place}
+                            title={`${timeOf(part.start)}–${timeOf(part.end)} · ${[
+                                ...new Set(part.lessons.map((l) => l.lesson.subject)),
+                            ].join(' / ')}`}
+                        >
+                            {fill}
+                        </span>
+                    );
+                })}
+                {line.now !== null && (
                     <span
-                        key={`${l.start}-${l.end}`}
-                        className={`zenith-study-band__seg is-kind-${l.lesson.kind}${
-                            now !== null && l.end <= now ? ' is-past' : ''
-                        }${now !== null && l.start <= now && now < l.end ? ' is-now' : ''}`}
-                        style={{
-                            left: pos(l.start),
-                            width: `${((l.end - l.start) / span) * 100}%`,
-                        }}
-                        title={`${timeOf(l.start)}–${timeOf(l.end)} · ${lessons
-                            .filter((x) => x.start === l.start)
-                            .map((x) => x.lesson.subject)
-                            .join(' / ')}`}
+                        className={`zenith-study-band__now${
+                            line.current ? ` is-kind-${line.current.lessons[0].lesson.kind}` : ''
+                        }`}
+                        style={{ left: `${line.now}%` }}
                     />
-                ))}
-                {needle && (
-                    <span className="zenith-study-band__needle" style={{ left: pos(now) }} />
                 )}
             </div>
             <div className="zenith-study-band__ends">
-                <span>{timeOf(from)}</span>
-                <span>{t('study.todayUntil', { time: timeOf(to) })}</span>
+                <span>{timeOf(line.from)}</span>
+                {/* During the last class the card has just said when it ends,
+                    and that is when the day does: once is enough. */}
+                {line.current?.end !== line.to && (
+                    <span>{t('study.todayUntil', { time: timeOf(line.to) })}</span>
+                )}
             </div>
         </div>
     );

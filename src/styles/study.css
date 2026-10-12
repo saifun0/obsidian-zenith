@@ -227,31 +227,6 @@
     color: var(--zenith-text-muted);
 }
 
-.zenith-study-now__progress {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-top: 4px;
-}
-
-/* The tracks are drawn from the text colour, not a background token: a card
-   may sit on the very background the token names, and the track would vanish. */
-.zenith-study-now__bar {
-    display: block;
-    height: 6px;
-    border-radius: 3px;
-    background: color-mix(in srgb, var(--zenith-text-normal) 10%, transparent);
-    overflow: hidden;
-}
-
-.zenith-study-now__bar > span {
-    display: block;
-    height: 100%;
-    border-radius: 3px;
-    background: var(--study-kind);
-    transition: width var(--zenith-transition-slow);
-}
-
 .zenith-study-now__left,
 .zenith-study-now__countdown {
     display: flex;
@@ -272,6 +247,7 @@
     color: var(--zenith-text-faint);
 }
 
+.zenith-study-now__left,
 .zenith-study-now__countdown {
     margin-top: 4px;
 }
@@ -349,45 +325,110 @@
     color: var(--study-kind);
 }
 
-/* ── The day as a strip ──────────────────────────── */
+/* ── The day as a line ───────────────────────────── */
 .zenith-study-band {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
 }
 
+/* Taller than what is drawn on it: the classes are six pixels and the breaks a
+   thread, but the bead at now is ten and has to ride the middle of both. */
 .zenith-study-band__track {
     position: relative;
-    height: 8px;
-    border-radius: 4px;
-    background: color-mix(in srgb, var(--zenith-text-normal) 8%, transparent);
+    height: 10px;
 }
 
+/* A class. Ahead of now it is a tint of its kind's colour; behind, inked in —
+   but held back, so that the one being filled is the brightest thing on the
+   line. The tints are mixed, not faded: a faded element fades its fill too. */
 .zenith-study-band__seg {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    border-radius: 4px;
-    background: var(--study-kind);
-    opacity: 0.85;
+    top: 2px;
+    bottom: 2px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--study-kind) 30%, transparent);
+    transition: background-color var(--zenith-transition-slow);
 }
 
 .zenith-study-band__seg.is-past {
-    opacity: 0.3;
+    background: color-mix(in srgb, var(--study-kind) 58%, transparent);
 }
 
-.zenith-study-band__seg.is-now {
-    opacity: 1;
-}
-
-.zenith-study-band__needle {
+/* A break: the thread between two classes, short of touching either. Drawn
+   from the text colour, as every track here is — a card may sit on the very
+   background a token names, and the thread would vanish. */
+.zenith-study-band__gap {
     position: absolute;
-    top: -4px;
-    bottom: -4px;
-    width: 2px;
-    margin-left: -1px;
-    border-radius: 1px;
+    top: 4px;
+    bottom: 4px;
+    overflow: hidden;
+    /* The space at either end is a clear border, so that it comes out of the
+       stretch's own length: the thread stays where the break is. */
+    box-sizing: border-box;
+    border-inline: 3px solid transparent;
+    background-color: color-mix(in srgb, var(--zenith-text-normal) 14%, transparent);
+    background-clip: padding-box;
+}
+
+.zenith-study-band__gap.is-past {
+    background-color: color-mix(in srgb, var(--zenith-text-normal) 34%, transparent);
+}
+
+/* What has gone by of the stretch now is in. Brightest at the bead and easing
+   off behind it, the way the clock card's hours dim into the morning: the
+   line keeps a tail pointing at now. */
+.zenith-study-band__fill {
+    display: block;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--study-kind) 58%, transparent),
+        var(--study-kind)
+    );
+    transition: width var(--zenith-transition-slow);
+}
+
+.zenith-study-band__gap > .zenith-study-band__fill {
+    background: color-mix(in srgb, var(--zenith-text-normal) 34%, transparent);
+}
+
+/* Now: a bead on the line, in the colour of the text so that it shows on a
+   class of any colour, with a ring of the class's own around it. In a break
+   there is no class, and the ring is the accent the module falls back to. */
+.zenith-study-band__now {
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
     background: var(--zenith-text-normal);
+    box-shadow:
+        0 1px 3px rgb(0 0 0 / 0.35),
+        0 0 0 3px color-mix(in srgb, var(--study-kind, var(--zenith-accent)) 32%, transparent);
+    /* Longer than a minute's travel needs: the one time the slide is really
+       seen is when the card mounts and the bead finds its place. */
+    transition: left 900ms cubic-bezier(0.4, 0, 0.2, 1);
+    animation: zenith-study-now-breathe 2.8s ease-in-out infinite;
+}
+
+/* The clock card's needle breathes at this pace; the two are the same reading
+   of the same minute, and beat together when they share a board. */
+@keyframes zenith-study-now-breathe {
+    50% {
+        box-shadow:
+            0 1px 3px rgb(0 0 0 / 0.35),
+            0 0 0 6px color-mix(in srgb, var(--study-kind, var(--zenith-accent)) 14%, transparent);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-study-band__now {
+        animation: none;
+        transition: none;
+    }
 }
 
 .zenith-study-band__ends {
