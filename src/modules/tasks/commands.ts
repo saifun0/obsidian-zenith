@@ -1,6 +1,7 @@
 import { useZenithStore } from '../../store';
 import { QuickAddTaskModal } from './QuickAddTaskModal';
 import type ZenithPlugin from '../../main';
+import { translateNow } from '../../core/i18n';
 
 /**
  * Register the global "Quick add task" command in the command palette.
@@ -13,7 +14,7 @@ import type ZenithPlugin from '../../main';
 export function registerQuickAddTaskCommand(plugin: ZenithPlugin): void {
     plugin.addCommand({
         id: 'quick-add-task',
-        name: 'Quick add task',
+        name: translateNow('command.quick-add-task'),
         callback: () => {
             new QuickAddTaskModal(plugin.app, useZenithStore.getState().settings).open();
         },

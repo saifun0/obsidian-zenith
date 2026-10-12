@@ -6,6 +6,7 @@ import { TasksCalendarView } from './TasksCalendarView';
 import { CalendarWidget } from './components/CalendarWidget';
 import { tasksCalendarTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
+import { translateNow } from '../../core/i18n';
 
 /**
  * TasksCalendarModule — the tasks you already track, laid out on a calendar.
@@ -35,7 +36,7 @@ export class TasksCalendarModule extends BaseModule {
 
         this.addViewCommand({
             id: 'open-tasks-calendar',
-            name: 'Open Tasks Calendar',
+            name: translateNow('command.open-tasks-calendar'),
             callback: () => this.activateView(),
         });
 

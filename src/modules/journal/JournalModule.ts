@@ -7,7 +7,7 @@ import { JournalBlockRenderer } from './JournalCodeBlock';
 import { SummaryBlockRenderer } from './SummaryCodeBlock';
 import { YearReviewModal } from './YearReviewModal';
 import { SUMMARY_BLOCK_LANG, openReviewNote } from './services/reviewNotes';
-import { REVIEW_PERIODS, type ReviewPeriod } from './services/reviewPeriods';
+import { REVIEW_PERIODS } from './services/reviewPeriods';
 import { defaultReviewYear } from './services/yearReview';
 import { JournalCheckinWidget } from './components/JournalCheckinWidget';
 import { JournalStatsWidget } from './components/JournalStatsWidget';
@@ -21,6 +21,7 @@ import { openDailyNote } from './services/journalActions';
 import { journalTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
 import { journalSearchSource } from './searchSource';
+import { translateNow } from '../../core/i18n';
 
 /**
  * JournalModule — daily notes: a calendar of the year, a check-in for the day
@@ -67,16 +68,10 @@ export class JournalModule extends BaseModule {
         });
 
         // Review notes: created by these commands, never on their own.
-        const commandName: Record<ReviewPeriod, string> = {
-            week: "Open this week's note",
-            month: "Open this month's note",
-            quarter: "Open this quarter's note",
-            year: "Open this year's note",
-        };
         for (const period of REVIEW_PERIODS) {
             this.addCommand({
                 id: `open-${period}-note`,
-                name: commandName[period],
+                name: translateNow(`command.open-${period}-note`),
                 callback: () =>
                     this.whenOn('journal.reviews', () => {
                         const { settings } = useZenithStore.getState();
@@ -86,7 +81,7 @@ export class JournalModule extends BaseModule {
         }
         this.addCommand({
             id: 'year-in-review',
-            name: 'Year in review',
+            name: translateNow('command.year-in-review'),
             callback: () =>
                 this.whenOn('journal.yearInReview', () =>
                     new YearReviewModal(
@@ -104,7 +99,7 @@ export class JournalModule extends BaseModule {
 
         this.addViewCommand({
             id: 'open-journal',
-            name: 'Open Journal',
+            name: translateNow('command.open-journal'),
             callback: () => this.activateView(),
         });
 
@@ -112,7 +107,7 @@ export class JournalModule extends BaseModule {
         // launcher has the same, as "Today's note", which is what Search lists.
         this.addViewCommand({
             id: 'open-today-note',
-            name: "Open today's note",
+            name: translateNow('command.open-today-note'),
             callback: () => {
                 const { settings } = useZenithStore.getState();
                 void openDailyNote(this.plugin.app, settings, getTodayString());
@@ -121,12 +116,12 @@ export class JournalModule extends BaseModule {
 
         this.addCommand({
             id: 'ritual-morning',
-            name: 'Morning ritual',
+            name: translateNow('command.ritual-morning'),
             callback: () => this.openRitual('morning'),
         });
         this.addCommand({
             id: 'ritual-evening',
-            name: 'Evening review',
+            name: translateNow('command.ritual-evening'),
             callback: () => this.openRitual('evening'),
         });
 

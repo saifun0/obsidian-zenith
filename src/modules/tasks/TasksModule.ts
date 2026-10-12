@@ -10,6 +10,7 @@ import type { SettingsSchema } from '../../settings/schema/types';
 import { tasksTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
 import { tasksSearchSource } from './searchSource';
+import { translateNow } from '../../core/i18n';
 
 /**
  * TasksModule — manages the Tasks view and related commands.
@@ -67,7 +68,7 @@ export class TasksModule extends BaseModule {
         // Register command to open Tasks
         this.addViewCommand({
             id: 'open-tasks',
-            name: 'Open Tasks',
+            name: translateNow('command.open-tasks'),
             callback: () => this.activateView(),
         });
 

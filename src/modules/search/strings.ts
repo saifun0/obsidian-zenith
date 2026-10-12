@@ -2,9 +2,10 @@
  * Search strings, merged into the dictionary in `core/i18n.ts`. The module's
  * name and description are in its own chunk, `i18n.ts`.
  *
- * `command.<id>` names Zenith's commands in Zenith's language. Obsidian shows
- * them in English only, in its own palette; Search shows them translated and
- * finds them by either name. A module can also name its own in its chunk, as
+ * `command.<id>` names Zenith's commands in Zenith's language: it is what a
+ * command is registered under, so Obsidian's own palette and hotkey list show
+ * it, and what Search shows. The commands Search does not list are named in
+ * `core/i18n.ts`. A module can also name its own in its chunk, as
  * `module.<its id>.command.<command id>`.
  */
 export const SEARCH_STRINGS: { en: Record<string, string>; ru: Record<string, string> } = {

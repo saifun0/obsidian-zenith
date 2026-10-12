@@ -251,7 +251,7 @@ export default class ZenithPlugin extends Plugin {
         registerQuickAddTaskCommand(this);
         this.addCommand({
             id: 'open-notifications',
-            name: 'Open notifications',
+            name: translateNow('command.open-notifications'),
             callback: () => new NotificationCenterModal(this).open(),
         });
 

@@ -9,6 +9,7 @@ import type { SettingsSchema } from '../../settings/schema/types';
 import type ZenithPlugin from '../../main';
 import { navigatorTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
+import { translateNow } from '../../core/i18n';
 
 /**
  * NavigatorModule — the launcher widget and the side panel: one button per
@@ -57,7 +58,7 @@ export class NavigatorModule extends BaseModule {
         this.registerView(VIEW_TYPE_NAV_PANEL, (leaf) => new NavPanelView(leaf, this.plugin));
         this.addCommand({
             id: 'open-side-panel',
-            name: 'Open the side panel',
+            name: translateNow('command.open-side-panel'),
             icon: 'compass',
             callback: () => void openNavPanel(this.plugin),
         });

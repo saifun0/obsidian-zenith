@@ -5,6 +5,7 @@ import { VIEW_TYPE_STUDY } from '../../core/constants';
 import { AppContext } from '../../context/AppContext';
 import { StudyApp } from './components/StudyApp';
 import type ZenithPlugin from '../../main';
+import { translateNow } from '../../core/i18n';
 
 /** The timetable as a tab of its own. */
 export class StudyView extends ItemView {
@@ -22,7 +23,7 @@ export class StudyView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Study';
+        return translateNow('module.study.name');
     }
 
     getIcon(): string {

@@ -5,6 +5,7 @@ import { VIEW_TYPE_DASHBOARD } from '../../core/constants';
 import { AppContext } from '../../context/AppContext';
 import { DashboardApp } from './components/DashboardApp';
 import type ZenithPlugin from '../../main';
+import { translateNow } from '../../core/i18n';
 
 /**
  * DashboardView — Obsidian ItemView that hosts the React dashboard.
@@ -26,7 +27,7 @@ export class DashboardView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Dashboard';
+        return translateNow('module.dashboard.name');
     }
 
     getIcon(): string {

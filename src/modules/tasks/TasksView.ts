@@ -5,6 +5,7 @@ import { VIEW_TYPE_TASKS } from '../../core/constants';
 import { AppContext } from '../../context/AppContext';
 import { TasksApp } from './components/TasksApp';
 import type ZenithPlugin from '../../main';
+import { translateNow } from '../../core/i18n';
 
 /**
  * TasksView — Obsidian ItemView that mounts the React TasksApp.
@@ -24,7 +25,7 @@ export class TasksView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Tasks';
+        return translateNow('module.tasks.name');
     }
 
     getIcon(): string {

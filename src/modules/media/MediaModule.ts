@@ -6,6 +6,7 @@ import { openMediaPicker } from './openMediaPicker';
 import type ZenithPlugin from '../../main';
 import { mediaTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
+import { translateNow } from '../../core/i18n';
 
 /**
  * MediaModule — shows a chosen image/GIF as a banner above the file-explorer
@@ -38,7 +39,7 @@ export class MediaModule extends BaseModule {
         // Its launcher button below does the same, and Search lists that.
         this.addViewCommand({
             id: 'open-media-picker',
-            name: 'Open image / GIF picker',
+            name: translateNow('command.open-media-picker'),
             callback: () => openMediaPicker(this.plugin),
         });
 
