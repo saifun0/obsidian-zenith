@@ -467,19 +467,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-.zenith-pw__empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    flex: 1;
-    padding: 16px;
-    color: var(--zenith-text-muted);
-    text-align: center;
-    font-size: 0.82rem;
-}
-
 /* The footer is `.zenith-wfoot` and the button is `.zenith-btn--ghost--sm`,
    both in ui.css. */
 

@@ -444,60 +444,12 @@
 .zenith-type-pill .zenith-obsidian-icon {
     display: inline-flex;
 }
-
-/* ── Add form: poster preview beside the identity fields ── */
-.zenith-form__identity {
-    display: flex;
-    gap: 14px;
-    align-items: flex-start;
-}
-.zenith-form__identity-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    flex: 1;
-    min-width: 0;
-}
-.zenith-form__poster {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-    width: 84px;
-}
-.zenith-form__poster-art {
-    position: relative;
-    width: 84px;
-    aspect-ratio: 2 / 3;
-    border-radius: var(--zenith-radius-sm);
-    border: 1px solid var(--zenith-border);
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
 .zenith-form__poster-hint {
     display: inline-flex;
     align-items: center;
     gap: 3px;
     font-size: 0.62rem;
     color: var(--zenith-text-faint);
-}
-/* A cover is a path or a link typed in, or a picture chosen from the vault. */
-.zenith-form__cover-row {
-    display: flex;
-    gap: var(--zenith-space-sm);
-    align-items: center;
-}
-.zenith-form__cover-row .zenith-field__input {
-    flex: 1;
-    min-width: 0;
-}
-.zenith-form__cover-row .zenith-btn {
-    flex-shrink: 0;
 }
 /* Load probe — present in the DOM only to report onError/onLoad. */
 .zenith-form__poster-probe {
@@ -609,16 +561,6 @@
     font-variant-numeric: tabular-nums;
     min-width: 2.6em;
     text-align: right;
-}
-
-@media (max-width: 560px) {
-    .zenith-form__identity {
-        gap: 10px;
-    }
-    .zenith-form__poster,
-    .zenith-form__poster-art {
-        width: 64px;
-    }
 }
 
 /* ── Gallery controls (type / search / filter / sort) ────
@@ -1539,13 +1481,6 @@ button.zenith-ctype__add {
 
 .zenith-challenge__row.is-behind .zenith-challenge__status {
     color: var(--zenith-warning);
-}
-
-.zenith-challenge__empty {
-    margin: 0;
-    padding: var(--zenith-space-md);
-    color: var(--zenith-text-faint);
-    font-size: 0.82rem;
 }
 
 .zenith-challenge-settings {

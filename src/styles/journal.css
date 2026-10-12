@@ -571,25 +571,6 @@ body.is-phone .zenith-journal__body {
     color: var(--zenith-accent);
 }
 
-.zenith-jw__preview {
-    margin: 0;
-    padding: 10px 12px;
-    max-height: 180px;
-    overflow: hidden;
-    border-radius: var(--zenith-radius-md);
-    background: var(--zenith-bg-secondary);
-    color: var(--zenith-text-muted);
-    font-family: var(--zenith-font);
-    font-size: 0.8rem;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-word;
-    cursor: pointer;
-}
-.zenith-jw__preview:hover {
-    color: var(--zenith-text-normal);
-}
-
 /* ── Tracker rail ──────────────────────────────────────
    `rail` scrolls sideways and never shrinks its children, so every control
    stays clickable at every card size; `wrap` flows onto more lines, for the
@@ -1000,15 +981,6 @@ body.is-phone .zenith-jstats {
 .zenith-jstats__note {
     margin: 0;
     font-size: 0.75rem;
-    color: var(--zenith-text-faint);
-}
-/* States what "done" means, since it differs by tracker kind. */
-.zenith-jstats__legend {
-    margin: 0;
-    padding-top: var(--zenith-space-sm);
-    border-top: 1px solid var(--zenith-border);
-    font-size: 0.72rem;
-    line-height: 1.5;
     color: var(--zenith-text-faint);
 }
 
@@ -1755,44 +1727,6 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
 .zenith-jw--checkin {
     gap: 10px;
 }
-
-/* The CHECK-IN widget's header, and only its: it announces today's entry with
-   a label over a summary.
-
-   The stats card had one too — the coverage, a streak chip and a button, in a
-   bordered row directly under the card's own title bar. That is a header under
-   a header, and the lower one shouted: a chip in a second colour and a bordered
-   button, for two numbers that are footnotes to everything below them. They are
-   at the foot of the card now. See `.zenith-jw__meta`. */
-.zenith-jw__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    min-width: 0;
-    padding-bottom: 6px;
-    margin-bottom: 4px;
-    border-bottom: 1px solid color-mix(in srgb, var(--zenith-border) 70%, transparent);
-}
-
-.zenith-jw__head-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-.zenith-jw__eyebrow {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    font-weight: 600;
-    color: var(--zenith-accent);
-}
-.zenith-jw__summary {
-    font-size: 0.85rem;
-    color: var(--zenith-text-muted);
-}
 /* ── The stats card's footnote ────────────────────────
    Two numbers and a door, on one thin line.
 
@@ -1886,47 +1820,6 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     line-height: 1.3;
     color: var(--zenith-text-muted);
     overflow-wrap: break-word;
-}
-
-.zenith-jw__empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 16px;
-    color: var(--zenith-text-muted);
-    text-align: center;
-    font-size: 0.82rem;
-}
-/* Takes the room the deck would have had, so the footnote stays at the foot. */
-.zenith-jw--stats .zenith-jw__empty {
-    flex: 1;
-    justify-content: center;
-}
-.zenith-jw__more {
-    font-size: 0.75rem;
-    color: var(--zenith-text-faint);
-}
-
-.zenith-root button.zenith-jw__cta {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    align-self: flex-start;
-    padding: 6px 12px;
-    border: 1px solid var(--zenith-border);
-    border-radius: 9px;
-    background: var(--zenith-bg-primary);
-    box-shadow: none;
-    color: var(--zenith-text-normal);
-    font-size: 0.82rem;
-    cursor: pointer;
-}
-.zenith-root button.zenith-jw__cta:hover {
-    border-color: var(--zenith-accent);
-    color: var(--zenith-accent);
-    box-shadow: none;
 }
 
 /* ══════════════════════════════════════════════════════

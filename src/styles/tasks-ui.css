@@ -744,38 +744,6 @@ button.zenith-subtask__action {
 }
 
 .zenith-autocomplete { position: relative; }
-.zenith-autocomplete__menu {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    z-index: 30;
-    max-height: 200px;
-    overflow-y: auto;
-    background: var(--background-secondary);
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
-    padding: 4px;
-}
-button.zenith-autocomplete__item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 6px 10px;
-    border: none;
-    background: transparent;
-    color: var(--text-normal);
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    box-shadow: none;
-}
-.zenith-autocomplete__item:hover { background: var(--background-modifier-hover); }
-.zenith-autocomplete__count { color: var(--text-faint); font-size: 0.78rem; }
-
-.zenith-subtask-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
 button.zenith-icon-ghost {
     display: inline-flex;
     align-items: center;
