@@ -1,6 +1,7 @@
 import { TAbstractFile, TFolder, Menu } from 'obsidian';
 import { useZenithStore } from '../store';
-import { IconPickerModal } from './IconPickerModal';
+import { pickIcon } from './pickIcon';
+import { translateNow } from './i18n';
 import { remapIconPaths, pruneIconPaths } from './iconPaths';
 import { applyIcon } from './icons/applyIcon';
 import { iconRegistry } from './icons';
@@ -208,23 +209,21 @@ export class FolderIconService {
         if (!this.enabled) return;
         const path = file.path;
         const hasIcon = !!this.icons[path];
-        const label = file instanceof TFolder ? 'folder' : 'file';
+        const what = file instanceof TFolder ? 'Folder' : 'File';
 
         menu.addItem((item) =>
             item
-                .setTitle(hasIcon ? `Change ${label} icon` : `Set ${label} icon`)
+                .setTitle(translateNow(`icons.menu.${hasIcon ? 'change' : 'set'}${what}`))
                 .setIcon('image')
                 .onClick(() => {
-                    new IconPickerModal(this.app, this.icons[path], (iconId) =>
-                        this.setIcon(path, iconId)
-                    ).open();
+                    pickIcon(this.plugin, this.icons[path], (iconId) => this.setIcon(path, iconId));
                 })
         );
 
         if (hasIcon) {
             menu.addItem((item) =>
                 item
-                    .setTitle('Remove icon')
+                    .setTitle(translateNow('icons.menu.remove'))
                     .setIcon('trash-2')
                     .onClick(() => this.removeIcon(path))
             );

@@ -854,7 +854,6 @@ const ObsidianDialogFields: React.FC = () => {
     const t = useTranslation();
 
     const prompt = useText(t('dashboard.presets.defaultName'));
-    const iconSearch = useText();
 
     return (
         <Section title={t('debug.inputs.obsidian')}>
@@ -864,14 +863,6 @@ const ObsidianDialogFields: React.FC = () => {
                     className="zenith-input zenith-prompt__input"
                     placeholder={t('dashboard.presets.namePlaceholder')}
                     {...prompt}
-                />
-            </Demo>
-            <Demo label="zenith-icon-picker__search" source="IconPickerModal">
-                <input
-                    type="text"
-                    className="zenith-input zenith-icon-picker__search"
-                    placeholder="Search icons…"
-                    {...iconSearch}
                 />
             </Demo>
             <Demo label="QuickAddForm" source="QuickAddTaskModal" wide>

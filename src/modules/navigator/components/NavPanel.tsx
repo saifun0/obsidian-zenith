@@ -6,7 +6,7 @@ import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
-import { IconPickerModal } from '../../../core/IconPickerModal';
+import { pickIcon } from '../../../core/pickIcon';
 import {
     commandHotkey,
     commandLabel,
@@ -260,7 +260,7 @@ const PanelEditor: React.FC<EditorProps> = ({
     onHidden,
 }) => {
     const t = useTranslation();
-    const { app, plugin } = useApp();
+    const { plugin } = useApp();
 
     const byCommand = useMemo(
         () => new Map(resolved.map((r) => [r.button.command, r])),
@@ -321,9 +321,7 @@ const PanelEditor: React.FC<EditorProps> = ({
                                 className="clickable-icon zenith-panel__icon-btn"
                                 aria-label={t('navigator.panel.icon')}
                                 onClick={() =>
-                                    new IconPickerModal(app, item.icon, (icon) =>
-                                        patch(command, { icon })
-                                    ).open()
+                                    pickIcon(plugin, item.icon, (icon) => patch(command, { icon }))
                                 }
                             >
                                 <ObsidianIcon name={item.icon} size={16} />

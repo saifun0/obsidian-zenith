@@ -22,7 +22,7 @@ import { CheckboxCard } from '../../components/ui/CheckboxCard';
 import { DynamicIcon } from '../../components/shared/DynamicIcon';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
 import { VaultScaffoldModal } from '../../core/VaultScaffoldModal';
-import { IconPickerModal } from '../../core/IconPickerModal';
+import { pickIcon } from '../../core/pickIcon';
 import { JournalSettings } from './JournalSettings';
 import { ProfilesSettings } from './ProfilesSettings';
 import { IconPacksSettings } from './IconPacksSettings';
@@ -237,9 +237,9 @@ export const SettingsApp: React.FC = () => {
                                         className="zenith-settings__icon-btn"
                                         aria-label={t('a11y.changeIcon')}
                                         onClick={() =>
-                                            new IconPickerModal(app, iconId, (id) =>
+                                            pickIcon(plugin, iconId, (id) =>
                                                 plugin.folderIconService.setIcon(path, id)
-                                            ).open()
+                                            )
                                         }
                                     >
                                         <Pencil size={14} />
