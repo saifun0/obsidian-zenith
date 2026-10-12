@@ -8,6 +8,7 @@ import { SyncSection } from './SyncSection';
 import { groupHistory, type HistoryGroup } from './historyGroups';
 import type { SyncStatus } from '../services/settingsSync';
 import type { DevicePlatform, JournalEntry } from '../syncTypes';
+import { detectPlatform } from '../services/deviceRegistry';
 
 /**
  * What sync is doing, in terms of devices rather than of files.
@@ -120,7 +121,8 @@ export const SyncApp: React.FC = () => {
             <SyncSection title={t('sync.devices')}>
                 <ul className="zenith-sync__list">
                     <li className="zenith-sync__peer is-self">
-                        <PlatformIcon platform="desktop" />
+                        {/* What it is, not what most are: on a phone this row drew a laptop. */}
+                        <PlatformIcon platform={detectPlatform()} />
                         <input
                             id="zenith-sync-name"
                             type="text"

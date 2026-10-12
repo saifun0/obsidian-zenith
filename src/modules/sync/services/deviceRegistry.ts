@@ -16,7 +16,8 @@ import { isSafeDeviceId, type DevicePlatform, type DeviceRecord } from '../syncT
 const ID_KEY = 'zenith:sync:deviceId';
 const NAME_KEY = 'zenith:sync:deviceName';
 
-function detectPlatform(): DevicePlatform {
+/** What this device is — for its own record, and for drawing it in the list of devices. */
+export function detectPlatform(): DevicePlatform {
     if (Platform.isIosApp) return 'ios';
     if (Platform.isAndroidApp) return 'android';
     if (Platform.isMobileApp) return 'mobile';

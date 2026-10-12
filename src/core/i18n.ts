@@ -1499,8 +1499,8 @@ const EN: Dict = {
     'sync.settings.stateGroup': 'Zenith settings',
     'sync.settings.statusGroup': 'State',
     'sync.settings.statusGroup.desc': 'What sync is doing right now, and what it did last.',
-    'sync.settings.openTab': 'Open in a tab',
-    'sync.settings.openTab.desc': 'The same page, beside your notes rather than in this dialog.',
+    'sync.settings.openTab': 'Devices and history',
+    'sync.settings.openTab.desc': 'This device, the others, and what was synced when.',
     'sync.settings.filesGroup': 'Note storage',
     'sync.settings.filesGroup.desc':
         'Sync the vault itself to storage you control. Separate from settings sync, and off until you ask for it.',
@@ -3252,8 +3252,8 @@ const RU: Dict = {
     'sync.settings.statusGroup': 'Состояние',
     'sync.settings.statusGroup.desc':
         'Что синхронизация делает сейчас и что сделала в прошлый раз.',
-    'sync.settings.openTab': 'Открыть вкладкой',
-    'sync.settings.openTab.desc': 'Та же страница, но рядом с заметками, а не в этом окне.',
+    'sync.settings.openTab': 'Устройства и история',
+    'sync.settings.openTab.desc': 'Это устройство, остальные и что когда синхронизировалось.',
     'sync.settings.filesGroup': 'Хранилище заметок',
     'sync.settings.filesGroup.desc':
         'Синхронизация самого волта с хранилищем, которым вы управляете. Отдельно от настроек и выключена, пока не попросите.',

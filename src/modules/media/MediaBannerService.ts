@@ -17,7 +17,8 @@ import { translateNow } from '../../core/i18n';
 export class MediaBannerService {
     private observers: MutationObserver[] = [];
     private disposers: Array<() => void> = [];
-    private scheduled = false;
+    /** The redraw that is waiting, if one is. */
+    private timer: number | null = null;
 
     constructor(private readonly plugin: ZenithPlugin) {}
 
@@ -47,6 +48,10 @@ export class MediaBannerService {
     }
 
     stop(): void {
+        // A redraw still waiting would put the banner back a moment after the
+        // module was switched off, with nothing left to take it away again.
+        if (this.timer !== null) window.clearTimeout(this.timer);
+        this.timer = null;
         this.detachObservers();
         this.disposers.forEach((d) => d());
         this.disposers = [];
@@ -56,10 +61,9 @@ export class MediaBannerService {
     // ── Rendering ───────────────────────────────────────────────────────────
 
     private schedule(): void {
-        if (this.scheduled) return;
-        this.scheduled = true;
-        window.setTimeout(() => {
-            this.scheduled = false;
+        if (this.timer !== null) return;
+        this.timer = window.setTimeout(() => {
+            this.timer = null;
             this.render();
         }, 50);
     }
@@ -98,7 +102,9 @@ export class MediaBannerService {
             banner.removeClass('zenith-media-banner--empty');
             const img = banner.createEl('img', { cls: 'zenith-media-banner__img' });
             img.src = src;
-            img.addEventListener('error', () => banner.addClass('zenith-media-banner--broken'));
+            // A picture that cannot be shown — the file deleted, the link dead —
+            // leaves the banner as it is when there is none: a way to choose one.
+            img.addEventListener('error', () => this.fillBanner(banner, null));
 
             const edit = banner.createDiv('zenith-media-banner__edit');
             setIcon(edit, 'image');
