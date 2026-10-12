@@ -1,0 +1,427 @@
+{
+  "settings": {
+    "settingsVersion": 12,
+    "profilesOnboarded": true,
+    "tasksFolderPath": "10 Inbox/Tasks",
+    "location": {
+      "lat": 55.7963,
+      "lon": 49.1088,
+      "name": "Kazan",
+      "admin1": "Tatarstan",
+      "country": "RU",
+      "timezone": "Europe/Moscow"
+    },
+    "prayerMethod": "russia",
+    "prayerMethodChosen": true,
+    "prayerSource": "api",
+    "journalTrackers": [
+      {
+        "id": "mood",
+        "label": "Mood",
+        "icon": "smile",
+        "color": "#eab308",
+        "kind": "scale"
+      },
+      {
+        "id": "energy",
+        "label": "Energy",
+        "icon": "zap",
+        "color": "#84cc16",
+        "kind": "scale"
+      },
+      {
+        "id": "sport",
+        "label": "Exercise",
+        "icon": "dumbbell",
+        "color": "#ef4444",
+        "kind": "check",
+        "goalPeriod": "week",
+        "goalCount": 3
+      },
+      {
+        "id": "reading",
+        "label": "Reading",
+        "icon": "book-open",
+        "color": "#8b5cf6",
+        "kind": "check"
+      },
+      {
+        "id": "water",
+        "label": "Water",
+        "icon": "droplet",
+        "color": "#3b82f6",
+        "kind": "number",
+        "unit": "glasses",
+        "step": 1,
+        "max": 8
+      },
+      {
+        "id": "coffee",
+        "label": "Coffee",
+        "icon": "coffee",
+        "color": "#a16207",
+        "kind": "number",
+        "unit": "cups",
+        "step": 1,
+        "max": 2,
+        "goalDirection": "atMost"
+      },
+      {
+        "id": "sugar",
+        "label": "Sweets",
+        "icon": "candy",
+        "color": "#f472b6",
+        "kind": "check",
+        "mode": "quit"
+      },
+      {
+        "id": "meditation",
+        "label": "Meditation",
+        "icon": "flower-2",
+        "color": "#f59e0b",
+        "kind": "check"
+      }
+    ],
+    "journalReviewNotes": {
+      "week": {
+        "folder": "15 Journal/Reviews",
+        "format": "GGGG-[W]WW",
+        "template": ""
+      },
+      "month": {
+        "folder": "15 Journal/Reviews",
+        "format": "YYYY-MM",
+        "template": ""
+      },
+      "quarter": {
+        "folder": "15 Journal/Reviews",
+        "format": "YYYY-[Q]Q",
+        "template": ""
+      },
+      "year": {
+        "folder": "15 Journal/Reviews",
+        "format": "YYYY",
+        "template": ""
+      }
+    },
+    "contentChallenges": {
+      "2026": {
+        "book": 6,
+        "movie": 6
+      }
+    },
+    "dashboardHeading": "greeting",
+    "dashboardShowDate": true,
+    "dashboardBgSource": "vault",
+    "dashboardBgPath": "00 Files/Images/Wallpaper zenith.webp",
+    "dashboardBirthDate": "1994-03-15",
+    "dashboardLifeYears": 80,
+    "features": {
+      "journal.dailyPrompt": true,
+      "dashboard.lifeWeeks": true
+    },
+    "widgetConfig": {
+      "picture.frame": {
+        "pictureSource": "vault",
+        "picturePath": "00 Files/Images/Picture frame 1.png",
+        "pictureFit": "cover"
+      },
+      "dashboard.progress": {
+        "hijri": true
+      },
+      "dashboard.countdowns": {
+        "hijri": true,
+        "events": [
+          {
+            "title": "Mum’s birthday",
+            "date": "1962-10-19",
+            "yearly": true
+          },
+          {
+            "title": "Trip to Istanbul",
+            "date": "2026-11-12",
+            "yearly": false
+          }
+        ]
+      }
+    },
+    "activeModuleIds": [
+      "dashboard",
+      "navigator",
+      "weather",
+      "tasks",
+      "tasks-calendar",
+      "projects",
+      "content",
+      "journal",
+      "prayer",
+      "study",
+      "media",
+      "sync",
+      "picture"
+    ],
+    "studySchedule": {
+      "bells": [
+        {
+          "n": 1,
+          "start": "09:00",
+          "end": "10:30"
+        },
+        {
+          "n": 2,
+          "start": "10:40",
+          "end": "12:10"
+        },
+        {
+          "n": 3,
+          "start": "12:50",
+          "end": "14:20"
+        },
+        {
+          "n": 4,
+          "start": "18:30",
+          "end": "20:00"
+        },
+        {
+          "n": 5,
+          "start": "20:10",
+          "end": "21:40"
+        }
+      ],
+      "lessons": [
+        {
+          "id": "ml-lec",
+          "day": 1,
+          "n": 4,
+          "week": 0,
+          "subject": "Machine Learning",
+          "kind": "lecture",
+          "room": "B-214",
+          "teacher": "Dr. Hale"
+        },
+        {
+          "id": "ml-lab-1",
+          "day": 1,
+          "n": 5,
+          "week": 1,
+          "subject": "Machine Learning",
+          "kind": "lab",
+          "room": "Lab 3",
+          "subgroup": 1,
+          "teacher": "A. Novak"
+        },
+        {
+          "id": "ml-lab-2",
+          "day": 1,
+          "n": 5,
+          "week": 1,
+          "subject": "Machine Learning",
+          "kind": "lab",
+          "room": "Lab 4",
+          "subgroup": 2,
+          "teacher": "A. Novak"
+        },
+        {
+          "id": "eng",
+          "day": 1,
+          "n": 5,
+          "week": 2,
+          "subject": "Academic English",
+          "kind": "practice",
+          "room": "C-12"
+        },
+        {
+          "id": "stat-sem",
+          "day": 2,
+          "n": 4,
+          "week": 0,
+          "subject": "Statistics",
+          "kind": "seminar",
+          "room": "A-105",
+          "teacher": "Prof. Ruiz"
+        },
+        {
+          "id": "phil",
+          "day": 2,
+          "n": 5,
+          "week": 2,
+          "subject": "Philosophy of Science",
+          "kind": "lecture",
+          "room": "Online"
+        },
+        {
+          "id": "de-lec",
+          "day": 4,
+          "n": 4,
+          "week": 0,
+          "subject": "Data Engineering",
+          "kind": "lecture",
+          "room": "B-214",
+          "teacher": "M. Sato"
+        },
+        {
+          "id": "de-lab-1",
+          "day": 4,
+          "n": 5,
+          "week": 1,
+          "subject": "Data Engineering",
+          "kind": "lab",
+          "room": "Lab 1",
+          "subgroup": 1
+        },
+        {
+          "id": "de-lab-2",
+          "day": 4,
+          "n": 5,
+          "week": 1,
+          "subject": "Data Engineering",
+          "kind": "lab",
+          "room": "Lab 2",
+          "subgroup": 2
+        },
+        {
+          "id": "research",
+          "day": 4,
+          "n": 5,
+          "week": 2,
+          "subject": "Research Seminar",
+          "kind": "seminar",
+          "room": "A-301"
+        },
+        {
+          "id": "stat-lec",
+          "day": 6,
+          "n": 1,
+          "week": 0,
+          "subject": "Statistics",
+          "kind": "lecture",
+          "room": "Online",
+          "teacher": "Prof. Ruiz"
+        },
+        {
+          "id": "stat-prac",
+          "day": 6,
+          "n": 2,
+          "week": 1,
+          "subject": "Statistics",
+          "kind": "practice",
+          "room": "A-105"
+        },
+        {
+          "id": "ml-prac",
+          "day": 6,
+          "n": 2,
+          "week": 2,
+          "subject": "Machine Learning",
+          "kind": "practice",
+          "room": "Lab 3"
+        },
+        {
+          "id": "thesis",
+          "day": 6,
+          "n": 3,
+          "week": 1,
+          "subject": "Thesis consultation",
+          "kind": "consultation",
+          "room": "Room 410",
+          "note": "Bring the outline."
+        }
+      ]
+    },
+    "studyTwoWeeks": true,
+    "studyWeekAnchor": "2026-09-21",
+    "studyWeekNames": "numerator",
+    "studySubgroup": 0,
+    "studyTermStart": "2026-09-01",
+    "studyTermEnd": "2026-12-27",
+    "dashboardGrid": {
+      "columns": 6,
+      "rowHeight": 114,
+      "gap": 16,
+      "maxWidth": 1200
+    },
+    "dashboardLayout": [
+      {
+        "id": "dashboard.clock",
+        "size": "sm",
+        "x": 0,
+        "y": 0,
+        "w": 2,
+        "h": 2,
+        "fixed": true
+      },
+      {
+        "id": "weather.forecast",
+        "size": "sm",
+        "x": 2,
+        "y": 0,
+        "w": 2,
+        "h": 2,
+        "fixed": true
+      },
+      {
+        "id": "dashboard.countdowns",
+        "size": "sm",
+        "x": 4,
+        "y": 0,
+        "w": 2,
+        "h": 2,
+        "fixed": true
+      },
+      {
+        "id": "tasks.overview",
+        "size": "sm",
+        "x": 0,
+        "y": 2,
+        "w": 2,
+        "h": 4,
+        "fixed": true
+      },
+      {
+        "id": "journal.stats",
+        "size": "sm",
+        "x": 2,
+        "y": 2,
+        "w": 4,
+        "h": 2,
+        "fixed": true
+      },
+      {
+        "id": "content.overview",
+        "size": "sm",
+        "x": 2,
+        "y": 4,
+        "w": 2,
+        "h": 2
+      },
+      {
+        "id": "projects.overview",
+        "size": "sm",
+        "x": 4,
+        "y": 4,
+        "w": 2,
+        "h": 2,
+        "fixed": true
+      }
+    ],
+    "hiddenWidgetIds": [
+      "navigator.launcher",
+      "dashboard.progress",
+      "dashboard.lifeWeeks",
+      "content.challenge",
+      "prayer.times",
+      "tasks-calendar.week",
+      "study.today",
+      "journal.checkin",
+      "journal.ritual",
+      "picture.text",
+      "picture.frame",
+      "picture.links",
+      "picture.recent",
+      "picture.capture",
+      "picture.timer"
+    ],
+    "dashboardBgDim": 30,
+    "dashboardCardOpacity": 72
+  }
+}

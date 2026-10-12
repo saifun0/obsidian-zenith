@@ -9,9 +9,12 @@
 #   zenith-<version>.zip                 the plugin folder, to unzip into plugins/
 #   zenith-demo-vault-<version>.zip      the demo vault with this build in it
 #
-# The demo vault is carried forward: the previous release's vault, with this
-# build put in place of the one it had. When the vault itself should change,
-# attach a new one to the release by hand afterwards.
+# The demo vault is built from `demo-vault/` in the repository, its dates moved
+# forward to the day of the release (scripts/demo-vault.mjs). To change the
+# vault, change it there.
+#
+# The three files Obsidian downloads are attested: anyone can check they were
+# built here, from this commit, with `gh attestation verify`.
 
 name: Release
 
@@ -27,6 +30,9 @@ on:
 
 permissions:
     contents: write
+    # For the attestation: a signing identity, and leave to store what it signs.
+    id-token: write
+    attestations: write
 
 concurrency:
     group: release
@@ -79,15 +85,42 @@ jobs:
                   cp dist/main.js dist/manifest.json dist/styles.css out/zenith/
                   (cd out && zip -q -r -X -D "../zenith-$VERSION.zip" zenith)
 
-            - name: Carry the demo vault forward with this build
+            - name: Build the demo vault, with this build in it
               run: |
-                  previous=$(gh release view --json tagName --jq .tagName)
-                  gh release download "$previous" --pattern 'zenith-demo-vault-*.zip' --dir previous
-                  unzip -q previous/*.zip -d demo
-                  plugin=demo/zenith-demo-vault/.obsidian/plugins/zenith
-                  test -d "$plugin"
-                  cp dist/main.js dist/manifest.json dist/styles.css "$plugin/"
-                  (cd demo && zip -q -r -X -D "../zenith-demo-vault-$VERSION.zip" zenith-demo-vault)
+                  node scripts/demo-vault.mjs --out demo --build dist
+                  # Packed by Python rather than `zip`: it marks the names as UTF-8, so the
+                  # Russian start note keeps its name wherever the archive is opened. The
+                  # vault was once carried from release to release through unzip and zip,
+                  # and came out of that with the note renamed to mojibake.
+                  python3 - "$VERSION" <<'PY'
+                  import os, sys, zipfile
+
+                  out = f"zenith-demo-vault-{sys.argv[1]}.zip"
+                  with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+                      for folder, folders, names in os.walk("demo/zenith-demo-vault"):
+                          folders.sort()
+                          for name in sorted(names):
+                              path = os.path.join(folder, name)
+                              archive.write(path, os.path.relpath(path, "demo"))
+
+                  names = zipfile.ZipFile(out).namelist()
+                  for wanted in (
+                      "zenith-demo-vault/Start here.md",
+                      "zenith-demo-vault/Начните здесь.md",
+                      "zenith-demo-vault/.obsidian/plugins/zenith/main.js",
+                      "zenith-demo-vault/.obsidian/plugins/zenith/data.json",
+                  ):
+                      assert wanted in names, f"the demo vault has no {wanted}"
+                  print(out, len(names), "files")
+                  PY
+
+            - name: Attest where the plugin's files were built
+              uses: actions/attest-build-provenance@v4
+              with:
+                  subject-path: |
+                      dist/main.js
+                      dist/manifest.json
+                      dist/styles.css
 
             - name: Publish
               env:
