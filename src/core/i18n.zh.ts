@@ -2273,6 +2273,7 @@ export const ZH: Record<string, string> = {
     'search.created.journal': 'Zenith：已写入今天的笔记。',
     'search.journal.note': '{date} 的笔记',
     'search.done': '完成',
+    'search.reveal': '打开笔记',
     'search.hint.move': '移动',
     'search.hint.open': '打开',
     'search.hint.create': '创建',

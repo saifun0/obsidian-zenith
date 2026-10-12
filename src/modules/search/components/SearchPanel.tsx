@@ -183,6 +183,23 @@ export const SearchPanel: FC<{ close: () => void }> = ({ close }) => {
                 <div className="suggestion-aux">
                     {item.detail && <span className="zenith-search__detail">{item.detail}</span>}
                     {item.hotkey && <kbd className="suggestion-hotkey">{item.hotkey}</kbd>}
+                    {/* What Alt+Enter does, for where there is no Alt: the note a
+                        task or a library item is written in. */}
+                    {item.reveal && (
+                        <button
+                            type="button"
+                            className="clickable-icon zenith-search__done"
+                            aria-label={t('search.reveal')}
+                            title={t('search.reveal')}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                choose(row, 'reveal');
+                            }}
+                        >
+                            <ObsidianIcon name="file-text" />
+                        </button>
+                    )}
                     {item.complete && (
                         <button
                             type="button"
