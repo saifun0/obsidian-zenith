@@ -2,7 +2,7 @@ import { BaseModule } from '../../core/IModule';
 import { mediaSettingsSchema } from './settings.schema';
 import type { SettingsSchema } from '../../settings/schema/types';
 import { MediaBannerService } from './MediaBannerService';
-import { MediaPickerModal } from './MediaPickerModal';
+import { openMediaPicker } from './openMediaPicker';
 import type ZenithPlugin from '../../main';
 import { mediaTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
@@ -39,7 +39,7 @@ export class MediaModule extends BaseModule {
         this.addViewCommand({
             id: 'open-media-picker',
             name: 'Open image / GIF picker',
-            callback: () => new MediaPickerModal(this.plugin.app).open(),
+            callback: () => openMediaPicker(this.plugin),
         });
 
         // No view to open, so the launcher button opens the picker — the same
@@ -51,9 +51,7 @@ export class MediaModule extends BaseModule {
                 descriptionKey: 'nav.media.desc',
                 icon: 'image',
                 order: 60,
-                onClick: ({ app }) => {
-                    new MediaPickerModal(app).open();
-                },
+                onClick: () => openMediaPicker(this.plugin),
             })
         );
     }
@@ -66,7 +64,7 @@ export class MediaModule extends BaseModule {
     }
 
     async activateView(): Promise<void> {
-        new MediaPickerModal(this.plugin.app).open();
+        openMediaPicker(this.plugin);
     }
 
     getSettingsSchema(): SettingsSchema {

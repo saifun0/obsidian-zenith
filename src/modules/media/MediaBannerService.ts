@@ -1,7 +1,7 @@
 import { setIcon } from 'obsidian';
 import { useZenithStore } from '../../store';
 import { resolveMediaSrc } from './mediaService';
-import { MediaPickerModal } from './MediaPickerModal';
+import { openMediaPicker } from './openMediaPicker';
 import type ZenithPlugin from '../../main';
 import { translateNow } from '../../core/i18n';
 
@@ -92,7 +92,7 @@ export class MediaBannerService {
 
     private fillBanner(banner: HTMLElement, src: string | null): void {
         banner.empty();
-        banner.onclick = () => new MediaPickerModal(this.app).open();
+        banner.onclick = () => openMediaPicker(this.plugin);
 
         if (src) {
             banner.removeClass('zenith-media-banner--empty');

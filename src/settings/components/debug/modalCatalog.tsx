@@ -28,7 +28,7 @@ import { groupSeries } from '../../../modules/content/services/series';
 import { ProjectFormModal } from '../../../modules/projects/ProjectFormModal';
 import { PrayerModal } from '../../../modules/prayer/PrayerModal';
 import { SyncQuickModal } from '../../../modules/sync/SyncQuickModal';
-import { MediaPickerModal } from '../../../modules/media/MediaPickerModal';
+import { MediaPicker } from '../../../modules/media/components/MediaPicker';
 import { WeatherExpanded } from '../../../modules/weather/components/WeatherExpanded';
 import { getCachedWeather } from '../../../modules/weather/weatherService';
 import type {
@@ -485,11 +485,11 @@ export const MODAL_CATALOG: readonly ModalEntry[] = [
     },
     {
         id: 'mediaPicker',
-        name: 'MediaPickerModal',
+        name: 'MediaPicker',
         owner: 'media',
-        kind: 'obsidian',
+        kind: 'react',
         writes: true,
-        create: ({ app }) => new MediaPickerModal(app),
+        render: (_ctx, onClose) => <MediaPicker onClose={onClose} />,
     },
     {
         id: 'weather',
