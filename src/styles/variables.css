@@ -40,8 +40,10 @@
     /* ── Typography ─────────────────────────────── */
     --zenith-font: var(--font-text);
     --zenith-font-mono: var(--font-monospace);
-    --zenith-font-serif: "Newsreader", "Georgia", "Times New Roman", serif;
-    /* The planner's hand: dates in the margin, the day, a note. fonts.css. */
+    /* The planner's hand: dates in the margin, the day, a note. fonts.css.
+       The one serif. There was a second token beside it, naming a face that
+       is not in the bundle — so the prayer times were set in whatever serif
+       the system had, next to dates set in this one. */
     --zenith-font-ink: "Zenith Spectral", "Georgia", "Times New Roman", serif;
 
     /* ── Shadows ────────────────────────────────── */
