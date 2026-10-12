@@ -13,7 +13,7 @@ import { useLibraryItems } from '../useContentTypes';
 import { resolveCover } from '../services/coverUrl';
 import { useFeature } from '../../../core/useFeature';
 import { bumpProgress } from '../services/contentActions';
-import { buildContentShelf, shelfRows } from '../services/contentShelf';
+import { buildContentShelf, shelfBudget, shelfRows } from '../services/contentShelf';
 import { STALE_DAYS } from '../services/contentStats';
 import { formatProgress, progressPercent, shortUnit } from '../services/progress';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
@@ -180,18 +180,20 @@ export const ContentWidget: React.FC<DashboardWidgetProps> = () => {
 
     const rowBudget = useMemo(() => {
         if (card.height <= 0 || room.other <= 0) return FIRST_ROWS;
-        const rowH = room.row > 0 ? room.row : ROW_H;
-        // Only the "up next" group is labelled, and it exists only when the
-        // shelf left room for it — so this is short by at most half a row and
-        // never long by any.
-        const free =
-            card.height - room.other - (shelf.upNext.length > 0 ? SECTION_H + SECTION_GAP : 0);
-        const fits = Math.floor((free + ROW_GAP) / (rowH + ROW_GAP));
+        const fits = shelfBudget({
+            free: card.height - room.other,
+            row: room.row > 0 ? room.row : ROW_H,
+            gap: ROW_GAP,
+            heading: SECTION_H + SECTION_GAP,
+            // Without a spotlight the leading item is a row like the others.
+            underWay: shelf.continuing.length + (!layout.spotlight && shelf.spotlight ? 1 : 0),
+            backlog: shelf.upNext.length,
+        });
         // A card drawing the spotlight has already shown the thing it exists
         // to show, so it may honestly show no rows at all. One that is not
         // must never draw nothing.
         return Math.max(layout.spotlight ? 0 : 1, fits);
-    }, [card.height, room, layout, shelf.upNext.length]);
+    }, [card.height, room, layout, shelf]);
 
     /**
      * The rows the spotlight left room for.
