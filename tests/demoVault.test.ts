@@ -14,6 +14,8 @@ import * as demo from '../scripts/demoDates.mjs';
 const {
     DEMO_TODAY,
     mondayOf,
+    movePeriod,
+    settlePeriodNote,
     shiftFor,
     shiftIso,
     shiftName,
@@ -23,6 +25,8 @@ const {
 }: {
     DEMO_TODAY: string;
     mondayOf: (iso: string) => string;
+    movePeriod: (name: string, from: string, to: string) => { name: string; start: string; end: string } | null;
+    settlePeriodNote: (text: string, nameBefore: string, days: number) => string;
     shiftFor: (releaseDay: string, demoToday?: string) => number;
     shiftIso: (iso: string, days: number) => string;
     shiftName: (name: string, days: number) => string;
@@ -76,19 +80,50 @@ describe('moving the demo vault forward', () => {
         expect(shiftText(task, 0)).toBe(task);
     });
 
-    it('renames a note that is named after a time, to the time it moved to', () => {
+    it('moves a week’s, a month’s and a year’s note by periods, so "last month" stays last month', () => {
+        // Written on 24 September: last week is W38, last month is August.
+        // Two weeks on it is 8 October — last week is W40, last month is September.
         expect(shiftName('2026-09-24.md', 14)).toBe('2026-10-08.md');
         expect(shiftName('2026-W38.md', 14)).toBe('2026-W40.md');
-        // A month goes where its fifteenth goes; a quarter and a year, where their middle does.
-        expect(shiftName('2026-08.md', 14)).toBe('2026-08.md');
-        expect(shiftName('2026-08.md', 21)).toBe('2026-09.md');
-        expect(shiftName('2026-Q3.md', 49)).toBe('2026-Q4.md');
+        expect(shiftName('2026-08.md', 14)).toBe('2026-09.md');
+        expect(shiftName('2026-Q3.md', 14)).toBe('2026-Q4.md');
         expect(shiftName('2026.md', 14)).toBe('2026.md');
-        expect(shiftName('2026.md', 210)).toBe('2027.md');
+        // Six days on it is still September, the same quarter, and the next week.
+        expect(shiftName('2026-08.md', 6)).toBe('2026-08.md');
+        expect(shiftName('2026-Q3.md', 6)).toBe('2026-Q3.md');
+        expect(shiftName('2026-W38.md', 6)).toBe('2026-W39.md');
+        // Into the next year.
+        expect(shiftName('2026.md', 100)).toBe('2027.md');
+        expect(shiftName('2026-08.md', 100)).toBe('2026-12.md');
+        expect(shiftName('2026-W38.md', 100)).toBe('2026-W52.md');
+        // The links to them move the same way.
+        expect(
+            shiftText('[[2026-W38]] is last week, [[2026-08]] last month, [[2026]] the year, [[2026-08|Aug]]', 14)
+        ).toBe('[[2026-W40]] is last week, [[2026-09]] last month, [[2026]] the year, [[2026-09|Aug]]');
         // A title with a year in it is not a date.
         expect(shiftName('Tax Return 2026.md', 400)).toBe('Tax Return 2026.md');
         expect(shiftName('Photo Book 2025.md', 400)).toBe('Photo Book 2025.md');
         expect(shiftName('Wallpaper night.png', 400)).toBe('Wallpaper night.png');
+    });
+
+    it('gives a period’s note the first and last day of the period it moved to', () => {
+        const month =
+            '---\nreview: month\nstart: 2026-08-01\nend: 2026-08-31\n---\n```zenith-summary\nperiod: month\ndate: 2026-08-01\n```\n';
+        expect(settlePeriodNote(shiftText(month, 14), '2026-08.md', 14)).toBe(
+            '---\nreview: month\nstart: 2026-09-01\nend: 2026-09-30\n---\n```zenith-summary\nperiod: month\ndate: 2026-09-01\n```\n'
+        );
+        const week = 'start: 2026-09-14\nend: 2026-09-20\ndate: 2026-09-14\n';
+        expect(settlePeriodNote(shiftText(week, 18), '2026-W38.md', 18)).toBe(
+            'start: 2026-10-05\nend: 2026-10-11\ndate: 2026-10-05\n'
+        );
+        // A February in a leap year ends on the 29th.
+        expect(movePeriod('2026-08', '2026-09-24', '2028-03-10')).toMatchObject({
+            name: '2028-02',
+            start: '2028-02-01',
+            end: '2028-02-29',
+        });
+        // A note that is not a period's is left to the days.
+        expect(settlePeriodNote('start: 2026-08-01', '2026-09-24.md', 14)).toBe('start: 2026-08-01');
     });
 
     it('knows the ISO week of a date, at the turn of a year too', () => {

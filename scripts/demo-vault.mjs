@@ -12,7 +12,16 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DEMO_TODAY, fillDemoDay, mondayOf, shiftFor, shiftIso, shiftName, shiftText } from './demoDates.mjs';
+import {
+    DEMO_TODAY,
+    fillDemoDay,
+    mondayOf,
+    settlePeriodNote,
+    shiftFor,
+    shiftIso,
+    shiftName,
+    shiftText,
+} from './demoDates.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = join(root, 'demo-vault');
@@ -71,7 +80,8 @@ let renamed = 0;
             copyFileSync(from, to);
             continue;
         }
-        let text = fillDemoDay(shiftText(readFileSync(from, 'utf8'), days), today, CYRILLIC.test(name) ? 'ru' : 'en');
+        let text = settlePeriodNote(shiftText(readFileSync(from, 'utf8'), days), name, days);
+        text = fillDemoDay(text, today, CYRILLIC.test(name) ? 'ru' : 'en');
         if (to.endsWith(join('plugins', 'zenith', 'data.json'))) text = settled(text);
         writeFileSync(to, text);
     }

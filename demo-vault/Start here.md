@@ -150,7 +150,7 @@ project's `taskTags`.
 
 - Notes in `15 Journal/Reviews`:
   - [[2026-W38]] is last week, marked *reviewed*.
-  - [[2026-08]] is August.
+  - [[2026-08]] is last month.
   - [[2026]] is the year so far.
 - Each one has a live `zenith-summary` block. **Freeze** writes its numbers into
   the note.
