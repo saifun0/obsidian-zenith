@@ -7,6 +7,5 @@ export { IconButton } from './IconButton';
 export { StarRating } from './StarRating';
 export { Modal } from './Modal';
 export { Meter } from './Meter';
-export { ViewHeader } from './ViewHeader';
 export { PageHead, PageHeadButton } from './PageHead';
 export { Popover, usePopover } from './Popover';
