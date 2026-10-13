@@ -642,13 +642,26 @@
         calc(var(--zenith-space-lg) + var(--zenith-inset-bottom, 0px));
 }
 
-/* In a narrow pane the caption takes the line under the title, as in the
-   projects view: the actions stay beside the name they act on. */
-@container zenith-study (max-width: 560px) {
-    .zenith-study-view .zenith-vhead__caption {
-        order: 3;
-        flex-basis: 100%;
-    }
+/* The head is `.zenith-phead` in ui.css; its own bottom margin is for views
+   that stack by margin, and this one stacks by gap. */
+.zenith-study-view > .zenith-phead {
+    margin-bottom: 4px;
+}
+
+/* What is on now, as the page says it: the subject in the planner's hand, and
+   the room as a word beside its pin rather than in a tinted pill. The card on
+   the dashboard keeps its own, smaller setting of the same parts. */
+.zenith-study-view .zenith-study-now__title {
+    font-family: var(--zenith-font-ink);
+    font-size: 1.7rem;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.008em;
+}
+.zenith-study-view .zenith-study-now .zenith-study-room.is-strong {
+    padding: 0;
+    border-radius: 0;
+    background: none;
 }
 
 .zenith-study-view__today {
@@ -665,6 +678,48 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 10px 16px;
+}
+
+/* The weeks of the cycle, as words. */
+.zenith-study-view__weeks {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 18px;
+}
+
+.zenith-study .zenith-study-view__week {
+    height: auto;
+    padding: 2px 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    font-size: 0.86rem;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+    /* The underline is there, a pixel thick, and unseen until this is the week
+       shown. One value, restated whole by the state that shows it. */
+    --zenith-underline: underline 1px transparent;
+    text-decoration: var(--zenith-underline);
+    text-underline-offset: 5px;
+    transition: color var(--zenith-transition-fast);
+}
+
+.zenith-study .zenith-study-view__week:hover {
+    color: var(--zenith-text-muted);
+    background: none;
+}
+
+.zenith-study .zenith-study-view__week.is-on {
+    color: var(--zenith-text-normal);
+    --zenith-underline: underline 1px currentColor;
+}
+
+.zenith-study .zenith-study-view__week:focus-visible {
+    outline: none;
+    border-radius: 3px;
+    box-shadow: 0 0 0 2px var(--zenith-accent);
 }
 
 .zenith-study .zenith-study-view__swap {
@@ -763,13 +818,17 @@
     cursor: pointer;
 }
 
+/* A class is a rule in the colour of its kind, and what is written beside it:
+   no tile under it. The grid is what holds the classes in place; a plate under
+   each one made thirteen boxes of a week. */
 .zenith-study .zenith-study-cell {
     height: auto;
     overflow: hidden;
     white-space: normal;
     border: none;
-    border-left: 3px solid var(--study-kind);
-    background: var(--zenith-bg-secondary);
+    border-left: 2px solid var(--study-kind);
+    border-radius: 0;
+    background: none;
     box-shadow: none;
 }
 
@@ -777,9 +836,9 @@
     background: var(--zenith-bg-hover);
 }
 
-.zenith-study-cell.is-now {
-    outline: 2px solid var(--zenith-accent);
-    outline-offset: -1px;
+/* The one that is on: a wash of the accent behind it, not a frame around it. */
+.zenith-study .zenith-study-cell.is-now {
+    background: color-mix(in srgb, var(--zenith-accent) 12%, transparent);
 }
 
 .zenith-study-cell.is-past {
@@ -824,6 +883,8 @@
     gap: 18px;
 }
 
+/* A day is named as a group of tasks is: in the planner's hand, its date
+   after it in italics. "Today" is a word in the accent, not a pill. */
 .zenith-study-view__day h3,
 .zenith-study-view__bells h3 {
     display: flex;
@@ -831,23 +892,25 @@
     flex-wrap: wrap;
     gap: 8px;
     margin: 0 0 6px;
-    font-size: 15px;
+    font-family: var(--zenith-font-ink);
+    font-size: 1.12rem;
+    font-weight: 400;
+    letter-spacing: 0.002em;
 }
 
 .zenith-study-view__day h3 span {
-    font-size: 12px;
-    font-weight: 400;
+    font-style: italic;
+    font-size: 0.9rem;
     color: var(--zenith-text-faint);
+    font-variant-numeric: oldstyle-nums;
 }
 
 .zenith-study-view__day h3 em {
-    padding: 0 8px;
-    border-radius: 999px;
-    font-size: 11px;
+    font-family: var(--font-interface, inherit);
+    font-size: 0.8rem;
     font-style: normal;
-    font-weight: 600;
+    letter-spacing: 0;
     color: var(--zenith-accent);
-    background: color-mix(in srgb, var(--zenith-accent) 14%, transparent);
 }
 
 /* In the view there is room for a long subject: two lines, not an ellipsis. */
