@@ -9,6 +9,7 @@ import {
     type JournalTracker,
 } from '../../../core/journalConfig';
 import type { TrackerValue } from '../../../store/journalSlice';
+import { AmountInput, useLiveAmount } from './AmountInput';
 
 export interface PickerAnchor {
     tracker: JournalTracker;
@@ -37,8 +38,9 @@ interface HabitValuePickerProps {
  *
  * A grid cell can only cycle: click, click, click until the number is right,
  * which is fine for a tick and absurd for "sixty reps, step five". So a scale
- * offers its five steps and a number offers a stepper with its target one
- * button away — one gesture instead of twelve.
+ * offers its five steps, and a number offers a stepper whose figure is a field
+ * to type into, with its target one button away — one gesture instead of
+ * twelve.
  *
  * It is positioned against the grid rather than portalled to the body: the
  * scroll container clips anything inside it (a horizontal `overflow` forces the
@@ -78,7 +80,13 @@ export const HabitValuePicker: FC<HabitValuePickerProps> = ({ anchor, onPick, on
     const goal = trackerGoal(tracker);
     const decimals = Number.isInteger(step) ? 0 : 1;
     const round = (n: number) => Number(n.toFixed(decimals));
-    const amount = typeof current === 'number' ? current : 0;
+    const recorded = typeof current === 'number' ? current : undefined;
+    const live = useLiveAmount(recorded);
+    /** A step, or a typed amount, on the way to another: the popover stays. */
+    const stepTo = (next: number | null) => {
+        live.current = next ?? undefined;
+        onPick(next, true);
+    };
 
     return (
         <div
@@ -131,21 +139,30 @@ export const HabitValuePicker: FC<HabitValuePickerProps> = ({ anchor, onPick, on
                         type="button"
                         className="zenith-hpick__round"
                         aria-label={`${tracker.label} −${step}`}
-                        onClick={() =>
-                            onPick(amount - step <= 0 ? null : round(amount - step), true)
-                        }
+                        onClick={() => {
+                            const from = live.current ?? 0;
+                            stepTo(from - step <= 0 ? null : round(from - step));
+                        }}
                     >
                         <Minus size={14} />
                     </button>
                     <span className="zenith-hpick__amount">
-                        {current === undefined ? '—' : amount}
+                        {/* Typed, not stepped to: "sixty reps, step five" was
+                            twelve taps of the +. */}
+                        <AmountInput
+                            className="zenith-hpick__amount-input"
+                            amount={recorded}
+                            placeholder="—"
+                            label={tracker.label}
+                            onCommit={stepTo}
+                        />
                         {tracker.unit && <span className="zenith-hpick__unit">{tracker.unit}</span>}
                     </span>
                     <button
                         type="button"
                         className="zenith-hpick__round"
                         aria-label={`${tracker.label} +${step}`}
-                        onClick={() => onPick(round(amount + step), true)}
+                        onClick={() => stepTo(round((live.current ?? 0) + step))}
                     >
                         <Plus size={14} />
                     </button>

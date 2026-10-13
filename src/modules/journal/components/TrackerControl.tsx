@@ -9,6 +9,7 @@ import {
     type JournalTracker,
 } from '../../../core/journalConfig';
 import type { TrackerValue } from '../../../store/journalSlice';
+import { AmountInput, useLiveAmount } from './AmountInput';
 
 export interface TrackerControlProps {
     tracker: JournalTracker;
@@ -38,8 +39,9 @@ const tint = (color: string, pct: number) => `color-mix(in srgb, ${color} ${pct}
  *   route back to "not recorded" and has to stay reachable, because an average
  *   over days you didn't rate is a different number from one that counts them
  *   as neutral.
- * * `number` — a −/+ stepper; stepping below zero clears rather than going
- *   negative, so the same "un-record" gesture exists here too.
+ * * `number` — a −/+ stepper around a field you can type the amount into;
+ *   stepping below zero clears rather than going negative, and so does
+ *   emptying the field, so the same "un-record" gesture exists here too.
  */
 export const TrackerControl: FC<TrackerControlProps> = ({
     tracker,
@@ -124,16 +126,54 @@ export const TrackerControl: FC<TrackerControlProps> = ({
         );
     }
 
-    // ── number ──
+    return (
+        <NumberStepper
+            tracker={tracker}
+            amount={typeof current === 'number' ? current : undefined}
+            onChange={onChange}
+            className={cls}
+            compact={compact}
+            row={row}
+            named={named}
+        />
+    );
+};
+
+interface NumberStepperProps {
+    tracker: JournalTracker;
+    amount: number | undefined;
+    onChange: (next: TrackerValue | null) => void;
+    className: string;
+    compact: boolean;
+    row: boolean;
+    named: boolean;
+}
+
+/** A number tracker's control: − and + by its step, around the amount itself. */
+const NumberStepper: FC<NumberStepperProps> = ({
+    tracker,
+    amount,
+    onChange,
+    className,
+    compact,
+    row,
+    named,
+}) => {
+    const t = useTranslation();
+    const live = useLiveAmount(amount);
     const step = tracker.step && tracker.step > 0 ? tracker.step : 1;
-    const amount = typeof current === 'number' ? current : undefined;
     const decimals = Number.isInteger(step) ? 0 : 1;
     // Steps can be fractional, so round to the step's own precision rather than
     // letting 0.1 + 0.2 surface as 0.30000000000000004 in the note.
     const round = (n: number) => Number(n.toFixed(decimals));
 
+    const record = (next: number | null) => {
+        live.current = next ?? undefined;
+        onChange(next);
+    };
+
     return (
-        <div className={cls}>
+        <div className={className}>
             {!row && (
                 <span className="zenith-tracker__head" title={tracker.label}>
                     <DynamicIcon name={tracker.icon} size={14} style={{ color: tracker.color }} />
@@ -150,8 +190,9 @@ export const TrackerControl: FC<TrackerControlProps> = ({
                             : `${tracker.label} −${step}`
                     }
                     onClick={() => {
-                        const next = round((amount ?? 0) - step);
-                        onChange(amount === undefined || next < 0 ? null : next);
+                        const from = live.current;
+                        const next = round((from ?? 0) - step);
+                        record(from === undefined || next < 0 ? null : next);
                     }}
                 >
                     <Minus size={13} />
@@ -160,7 +201,13 @@ export const TrackerControl: FC<TrackerControlProps> = ({
                     className={`zenith-tracker__amount ${amount === undefined ? 'is-empty' : ''}`}
                     style={amount !== undefined ? { color: tracker.color } : undefined}
                 >
-                    {amount === undefined ? t('journal.tracker.unset') : amount}
+                    <AmountInput
+                        className="zenith-tracker__amount-input"
+                        amount={amount}
+                        placeholder={t('journal.tracker.unset')}
+                        label={tracker.label}
+                        onCommit={record}
+                    />
                     {amount !== undefined && tracker.unit && !compact && (
                         <span className="zenith-tracker__unit">{tracker.unit}</span>
                     )}
@@ -169,7 +216,7 @@ export const TrackerControl: FC<TrackerControlProps> = ({
                     type="button"
                     className="zenith-tracker__step-btn"
                     aria-label={`${tracker.label} +${step}`}
-                    onClick={() => onChange(round((amount ?? 0) + step))}
+                    onClick={() => record(round((live.current ?? 0) + step))}
                 >
                     <Plus size={13} />
                 </button>

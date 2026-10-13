@@ -747,15 +747,55 @@ body.is-phone .zenith-journal {
     box-shadow: none;
 }
 .zenith-tracker__amount {
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: center;
     min-width: 34px;
     padding: 0 4px;
-    text-align: center;
     font-size: 0.82rem;
     font-variant-numeric: tabular-nums;
     color: var(--zenith-text-normal);
 }
 .zenith-tracker__amount.is-empty {
     color: var(--zenith-text-faint);
+}
+
+/* The amount is a field (`AmountInput`): click the figure and type it, where
+   the + alone made "sixty reps" sixty clicks. It looks like the figure it
+   was until it is pointed at or typed in — then a line under it, the way a
+   field on this page is drawn. Scoped through the stepper and the tag to
+   outrank Obsidian's own `input[type='text']`, which would give it a box. */
+.zenith-tracker__stepper input.zenith-tracker__amount-input,
+.zenith-hpick__stepper input.zenith-hpick__amount-input {
+    box-sizing: content-box;
+    height: auto;
+    min-width: 0;
+    padding: 1px 2px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: inset 0 -1px 0 transparent;
+    color: inherit;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    cursor: text;
+    transition: box-shadow var(--zenith-transition-fast);
+}
+.zenith-tracker__stepper input.zenith-tracker__amount-input:hover,
+.zenith-hpick__stepper input.zenith-hpick__amount-input:hover {
+    box-shadow: inset 0 -1px 0 var(--zenith-text-faint);
+}
+.zenith-tracker__stepper input.zenith-tracker__amount-input:focus,
+.zenith-hpick__stepper input.zenith-hpick__amount-input:focus {
+    outline: none;
+    box-shadow: inset 0 -1px 0 var(--zenith-accent);
+    color: var(--zenith-text-normal);
+}
+.zenith-tracker__amount-input::placeholder,
+.zenith-hpick__amount-input::placeholder {
+    color: var(--zenith-text-faint);
+    opacity: 1;
 }
 .zenith-tracker__unit {
     margin-left: 3px;
