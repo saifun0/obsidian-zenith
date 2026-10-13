@@ -23,7 +23,7 @@ import {
 import { marginText } from '../services/taskMargin';
 import { isClosingOf, useClosingTasks, type Closing } from '../services/closingTasks';
 import { undoClosing, useTaskActions } from './useTaskActions';
-import { ProgressArc } from './TaskItem';
+import { SubtaskTally } from './TaskItem';
 import { withFigures } from './inkFigures';
 import { SubtasksDialog } from './SubtasksDialog';
 
@@ -151,8 +151,7 @@ const WidgetRow: FC<RowProps> = ({
                             title={t('tasks.subtasks.progress', { done, total })}
                             onClick={onSubtasks}
                         >
-                            <ProgressArc done={done} total={total} size={11} />
-                            {done}/{total}
+                            <SubtaskTally done={done} total={total} />
                         </button>
                     )}
                 </span>

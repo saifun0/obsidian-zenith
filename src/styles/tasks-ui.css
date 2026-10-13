@@ -41,7 +41,31 @@
     stroke-width: 1.5;
     transition: stroke 0.15s ease;
 }
-.zenith-status__half { fill: currentColor; }
+/* Under way: the ring fades back and a quarter of it, at full strength, goes
+   round — one turn in about five seconds, slow enough to be seen out of the
+   corner of the eye and not looked at. Every arc on the screen is at the same
+   point of its turn (`orbitPhase`). With motion off it is the same picture,
+   standing still. */
+.zenith-status__box.is-in-progress .zenith-status__ring {
+    stroke: color-mix(in srgb, currentColor 32%, transparent);
+}
+.zenith-status__orbit {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    transform-origin: 10px 10px;
+}
+body:not(.zenith-no-motion) .zenith-status__orbit {
+    animation: zenith-status-orbit 4.8s linear infinite;
+}
+/* In the menu of statuses it is a picture of the status, not a task going on. */
+body:not(.zenith-no-motion) .zenith-pop .zenith-status__orbit {
+    animation: none;
+}
+@keyframes zenith-status-orbit {
+    to { transform: rotate(360deg); }
+}
 .zenith-status__slash {
     fill: none;
     stroke: currentColor;
@@ -95,6 +119,9 @@
     .zenith-status__box.is-inked .zenith-status__tick {
         animation: none;
         stroke-dashoffset: 0;
+    }
+    body:not(.zenith-no-motion) .zenith-status__orbit {
+        animation: none;
     }
 }
 /* The menu itself is `.zenith-pop` in ui.css now — it was this block, and six
