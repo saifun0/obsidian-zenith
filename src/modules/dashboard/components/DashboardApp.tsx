@@ -277,6 +277,21 @@ export const DashboardApp: React.FC = () => {
     );
     const bgClasses = backgroundClasses(bg, bgStyle !== null);
 
+    // How tall the pane is: the wallpaper is drawn that size and holds still
+    // while the board scrolls over it, and a stylesheet cannot ask how tall
+    // its scroller is. Measured only while there is a wallpaper to size.
+    const [viewHeight, setViewHeight] = useState(0);
+    const hasWallpaper = bgStyle !== null;
+    useEffect(() => {
+        const pane = hasWallpaper ? rootRef.current?.closest<HTMLElement>('.view-content') : null;
+        if (!pane) return;
+        const measure = () => setViewHeight(pane.clientHeight);
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(pane);
+        return () => observer.disconnect();
+    }, [hasWallpaper]);
+
     return (
         <div
             ref={rootRef}
@@ -287,6 +302,7 @@ export const DashboardApp: React.FC = () => {
             style={
                 {
                     '--zenith-dash-canvas': `${grid.maxWidth > 0 ? grid.maxWidth : 100000}px`,
+                    ...(viewHeight > 0 ? { '--zenith-dash-view-h': `${viewHeight}px` } : {}),
                 } as CSSProperties
             }
         >

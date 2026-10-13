@@ -15,6 +15,7 @@ import { StudyReminderService } from './studyReminders';
 import { studySettingsSchema } from './settings.schema';
 import { studyTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
+import { translateNow } from '../../core/i18n';
 
 /**
  * Study — the class timetable: a view of the week, a dashboard card for the
@@ -42,12 +43,12 @@ export class StudyModule extends BaseModule {
 
         this.addViewCommand({
             id: 'open-study',
-            name: 'Open the timetable',
+            name: translateNow('command.open-study'),
             callback: () => void this.activateView(),
         });
         this.addCommand({
             id: 'study-import',
-            name: 'Paste a timetable',
+            name: translateNow('command.study-import'),
             callback: () =>
                 openStudyDialog(this.plugin, (close) =>
                     createElement(ImportDialog, { onClose: close })
@@ -55,7 +56,7 @@ export class StudyModule extends BaseModule {
         });
         this.addCommand({
             id: 'study-edit',
-            name: 'Edit the timetable',
+            name: translateNow('command.study-edit'),
             callback: () =>
                 openStudyDialog(this.plugin, (close) =>
                     createElement(EditorDialog, { onClose: close })
@@ -63,7 +64,7 @@ export class StudyModule extends BaseModule {
         });
         this.addCommand({
             id: 'study-edit-json',
-            name: 'Edit the timetable as JSON',
+            name: translateNow('command.study-edit-json'),
             callback: () =>
                 openStudyDialog(this.plugin, (close) =>
                     createElement(ImportDialog, { onClose: close, json: true })
@@ -71,7 +72,7 @@ export class StudyModule extends BaseModule {
         });
         this.addCommand({
             id: 'study-copy-prompt',
-            name: 'Copy the AI prompt for a timetable',
+            name: translateNow('command.study-copy-prompt'),
             callback: () =>
                 void copyPrompt(
                     translatorFor(resolveLocale(useZenithStore.getState().settings.language))

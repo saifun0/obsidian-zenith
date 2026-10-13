@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildContentShelf, shelfRows } from '../src/modules/content/services/contentShelf';
+import { buildContentShelf, shelfBudget, shelfRows } from '../src/modules/content/services/contentShelf';
 import type { ContentItem } from '../src/store/contentSlice';
 import type { ContentStatus } from '../src/core/constants';
 
@@ -137,5 +137,42 @@ describe('shelfRows', () => {
         expect(rows.continuing).toEqual([]);
         expect(rows.upNext).toEqual([]);
         expect(rows.hidden).toBe(2);
+    });
+});
+
+describe('shelfBudget', () => {
+    // A row of 35 with 2 between, as the card draws them; the backlog's heading takes 34.
+    const card = { row: 35, gap: 2, heading: 34 };
+
+    it('counts whole rows, the gaps between them included', () => {
+        expect(shelfBudget({ ...card, free: 35, underWay: 9, backlog: 0 })).toBe(1);
+        expect(shelfBudget({ ...card, free: 71, underWay: 9, backlog: 0 })).toBe(1);
+        expect(shelfBudget({ ...card, free: 72, underWay: 9, backlog: 0 })).toBe(2);
+        expect(shelfBudget({ ...card, free: 0, underWay: 9, backlog: 0 })).toBe(0);
+        expect(shelfBudget({ ...card, free: -40, underWay: 9, backlog: 0 })).toBe(0);
+    });
+
+    it('sets nothing aside for a heading that will not be drawn', () => {
+        // Six things under way, a backlog behind them, and room for three rows:
+        // the three are all under way, so no "up next" heading appears — and
+        // the card is not left a row short for it, as it was at 123 pixels.
+        expect(shelfBudget({ ...card, free: 123, underWay: 6, backlog: 5 })).toBe(3);
+        expect(shelfBudget({ ...card, free: 123, underWay: 3, backlog: 5 })).toBe(3);
+    });
+
+    it('takes the heading out of the room when the backlog does get a row', () => {
+        // One under way, room for three plain rows: with the heading, two —
+        // the one under way and one from the backlog under its heading.
+        expect(shelfBudget({ ...card, free: 123, underWay: 1, backlog: 5 })).toBe(2);
+        // Nothing under way: the backlog is all there is, and it is headed.
+        expect(shelfBudget({ ...card, free: 123, underWay: 0, backlog: 5 })).toBe(2);
+    });
+
+    it('never drops a row that is under way to make room for a heading', () => {
+        // Two under way and room for three plain rows, but only two once a
+        // heading is set aside: both stay, and the heading goes undrawn.
+        expect(shelfBudget({ ...card, free: 110, underWay: 2, backlog: 5 })).toBe(2);
+        // Room for two plain rows and one with the heading: the one under way is not lost.
+        expect(shelfBudget({ ...card, free: 80, underWay: 1, backlog: 5 })).toBe(1);
     });
 });

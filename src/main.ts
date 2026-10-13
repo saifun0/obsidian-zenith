@@ -31,6 +31,7 @@ import { PendingAuthStore } from './modules/sync/services/remotes/oauthPending';
 import { ZenithSettingTab } from './settings/ZenithSettingTab';
 import { registerUriCapture } from './core/uri/uriCapture';
 import { scheduleUpdateCheck } from './core/updateCheck';
+import { closeOpenDialogs } from './core/openDialog';
 import { ZENITH_ICON, registerZenithIcon } from './core/brandIcon';
 import { registerQuickAddTaskCommand } from './modules/tasks/commands';
 import { dashboardWidgets, type DashboardWidgetDefinition } from './modules/dashboard/widgets';
@@ -250,7 +251,7 @@ export default class ZenithPlugin extends Plugin {
         registerQuickAddTaskCommand(this);
         this.addCommand({
             id: 'open-notifications',
-            name: 'Open notifications',
+            name: translateNow('command.open-notifications'),
             callback: () => new NotificationCenterModal(this).open(),
         });
 
@@ -396,6 +397,9 @@ export default class ZenithPlugin extends Plugin {
      * own the ordering because it is the one Obsidian waits for.
      */
     onunload(): void {
+        // A dialog still on screen is drawn on `<body>`, out of every view's reach.
+        closeOpenDialogs();
+
         // Stop listening BEFORE tearing down so late store writes don't persist.
         this.disposers.forEach((d) => d());
         this.disposers = [];

@@ -12,7 +12,7 @@ export const searchTranslations: TranslationTable = {
             'Find any view, action, task, project or library item, and add a task, straight from one line.',
     },
     ru: {
-        'module.search.name': 'Search',
+        'module.search.name': 'Поиск',
         'module.search.desc':
             'Найти любой вид, действие, задачу, проект или материал и добавить задачу прямо из одной строки.',
     },

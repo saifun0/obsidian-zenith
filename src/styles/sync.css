@@ -412,26 +412,6 @@
     cursor: default;
 }
 
-/* ── The escape hatch ─────────────────────────────
-   Forcing one side over the other. Set off by a rule and its own label so it
-   reads as a different kind of action from the sync above it, but on the page
-   rather than behind a disclosure — the first version folded these away and
-   they turned out to be unfindable rather than discreet. */
-.zenith-sync__force {
-    margin-top: var(--zenith-space-md);
-    padding-top: var(--zenith-space-sm);
-    border-top: 1px solid var(--zenith-border);
-}
-
-.zenith-sync__forceLabel {
-    display: block;
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--zenith-text-faint);
-}
-
 /* Outlined, not filled. These sit on screen permanently, and two solid red
    plates beside the primary action would read as the page's main business.
    The filled danger treatment is kept for the confirmation, which is the
@@ -455,78 +435,6 @@
     border-color: transparent;
     background: var(--zenith-danger);
     color: #fff;
-}
-
-/* ── File engine: the plan ───────────────────────── */
-.zenith-sync__plan {
-    margin-top: var(--zenith-space-md);
-}
-
-.zenith-sync__planList {
-    margin: var(--zenith-space-sm) 0 0;
-    padding: 0;
-    list-style: none;
-    /* The list can run to hundreds of rows; capping it keeps the actions below
-       reachable without scrolling past the whole vault. */
-    max-height: 22rem;
-    overflow-y: auto;
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-md);
-    background: var(--zenith-bg-primary);
-}
-
-.zenith-sync__planRow {
-    display: grid;
-    /* Action column fixed, path takes the slack, reason trails. On a narrow
-       screen the whole thing collapses to one column rather than truncating the
-       path, which is the part that identifies the file. */
-    grid-template-columns: 11rem minmax(0, 1fr) auto;
-    align-items: baseline;
-    gap: var(--zenith-space-sm);
-    padding: var(--zenith-space-xs) var(--zenith-space-sm);
-    border-bottom: 1px solid var(--zenith-border);
-    font-size: 0.8rem;
-}
-
-.zenith-sync__planRow:last-child {
-    border-bottom: none;
-}
-
-@media (max-width: 640px) {
-    .zenith-sync__planRow {
-        grid-template-columns: 1fr;
-        gap: 2px;
-    }
-}
-
-.zenith-sync__planAction {
-    font-weight: 500;
-}
-
-/* Deletions read red and conflicts amber; everything else stays neutral, so the
-   two decisions worth reading carefully are the two that stand out. */
-.zenith-sync__planRow.is-danger .zenith-sync__planAction {
-    color: var(--zenith-danger);
-}
-
-.zenith-sync__planRow.is-warn .zenith-sync__planAction {
-    color: var(--zenith-warning);
-}
-
-.zenith-sync__planKey {
-    min-width: 0;
-    overflow-wrap: anywhere;
-    font-family: var(--zenith-font-mono);
-}
-
-.zenith-sync__planRow .zenith-sync__peerMeta {
-    text-align: right;
-}
-
-@media (max-width: 640px) {
-    .zenith-sync__planRow .zenith-sync__peerMeta {
-        text-align: left;
-    }
 }
 
 /* Undo sits at the end of a history row and stays quiet: it is available on

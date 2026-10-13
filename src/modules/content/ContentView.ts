@@ -5,6 +5,7 @@ import { VIEW_TYPE_CONTENT } from '../../core/constants';
 import { AppContext } from '../../context/AppContext';
 import { ContentApp } from './components/ContentApp';
 import type ZenithPlugin from '../../main';
+import { translateNow } from '../../core/i18n';
 
 /**
  * ContentView — Obsidian ItemView that mounts the React Content UI.
@@ -23,7 +24,7 @@ export class ContentView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Content';
+        return translateNow('module.content.name');
     }
 
     getIcon(): string {

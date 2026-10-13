@@ -24,7 +24,7 @@ import { ReviewNotesSettings } from '../../modules/journal/components/ReviewNote
 import { DEFAULT_JOURNAL_FOLDER } from '../../core/constants';
 import type { JournalWeekStart } from '../../store/settingsSlice';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
-import { IconPickerModal } from '../../core/IconPickerModal';
+import { pickIcon } from '../../core/pickIcon';
 import { ColorField, Dropdown } from '../../components/ui/fields';
 import { journalNotePath, isoToDate } from '../../modules/journal/services/journalDates';
 import { translateNow } from '../../core/i18n';
@@ -49,7 +49,7 @@ import {
  * than adopting its settings behind the user's back.
  */
 export const JournalSettings: React.FC = () => {
-    const { app } = useApp();
+    const { app, plugin } = useApp();
     const t = useTranslation();
     const settings = useZenithStore((s) => s.settings);
     const updateSettings = useZenithStore((s) => s.updateSettings);
@@ -170,9 +170,7 @@ export const JournalSettings: React.FC = () => {
                         style={{ color: tracker.color }}
                         aria-label={t('a11y.changeIcon')}
                         onClick={() =>
-                            new IconPickerModal(app, tracker.icon, (icon) =>
-                                patch(index, { icon })
-                            ).open()
+                            pickIcon(plugin, tracker.icon, (icon) => patch(index, { icon }))
                         }
                     >
                         <ObsidianIcon name={tracker.icon} size={18} />

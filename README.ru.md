@@ -35,8 +35,8 @@
 | --- | --- | --- | --- | --- |
 | ![Дашборд на телефоне](docs/images/screenshots/mobile-1-dashboard.png) | ![Задачи на телефоне](docs/images/screenshots/mobile-2-tasks.png) | ![Дневник на телефоне](docs/images/screenshots/mobile-3-journal.png) | ![Библиотека на телефоне](docs/images/screenshots/mobile-4-library.png) | ![Доска ниже по экрану](docs/images/screenshots/mobile-5-board.png) |
 
-Всё на картинках выдумано: они сняты в демо-хранилище, которое прилагается к каждому
-[релизу](https://github.com/saifun0/obsidian-zenith/releases), с доской, собранной для съёмки.
+Всё на картинках выдумано: это демо-хранилище, которое прилагается к каждому
+[релизу](https://github.com/saifun0/obsidian-zenith/releases).
 
 ---
 

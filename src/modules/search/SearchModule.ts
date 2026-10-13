@@ -39,7 +39,7 @@ export class SearchModule extends BaseModule {
     onload(): Promise<void> {
         this.addCommand({
             id: SEARCH_COMMAND_ID,
-            name: 'Search',
+            name: translateNow('command.search'),
             icon: 'search',
             // A command stays registered when the module is switched off; it
             // is only offered while the module is on.

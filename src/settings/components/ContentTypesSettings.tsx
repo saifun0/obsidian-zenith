@@ -9,7 +9,7 @@ import {
     type ContentFieldId,
 } from '../../core/contentTypes';
 import { ObsidianIcon } from '../../components/shared/ObsidianIcon';
-import { IconPickerModal } from '../../core/IconPickerModal';
+import { pickIcon } from '../../core/pickIcon';
 import { ColorField } from '../../components/ui/fields';
 import { translateNow, useTranslation } from '../../core/i18n';
 import { localizeType } from '../../modules/content/contentLabels';
@@ -25,7 +25,7 @@ import { localizeType } from '../../modules/content/contentLabels';
  * was written, and a type nobody renamed goes on following the language.
  */
 export const ContentTypesSettings: React.FC = () => {
-    const { app } = useApp();
+    const { plugin } = useApp();
     const t = useTranslation();
     const saved = useZenithStore((s) => s.settings.contentTypes);
     const updateSettings = useZenithStore((s) => s.updateSettings);
@@ -84,9 +84,7 @@ export const ContentTypesSettings: React.FC = () => {
                                 style={{ color: type.color }}
                                 aria-label={t('a11y.changeIcon')}
                                 onClick={() =>
-                                    new IconPickerModal(app, type.icon, (icon) =>
-                                        patch(type.id, { icon })
-                                    ).open()
+                                    pickIcon(plugin, type.icon, (icon) => patch(type.id, { icon }))
                                 }
                             >
                                 <ObsidianIcon name={type.icon} size={18} />

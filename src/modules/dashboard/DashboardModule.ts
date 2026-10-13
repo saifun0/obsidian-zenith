@@ -16,6 +16,7 @@ import { holdWidgetBodies, releaseWidgetBodies } from './startupGate';
 import type ZenithPlugin from '../../main';
 import { dashboardTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
+import { translateNow } from '../../core/i18n';
 
 /**
  * DashboardModule — Entry point for the Dashboard feature.
@@ -54,7 +55,7 @@ export class DashboardModule extends BaseModule {
 
         this.addViewCommand({
             id: 'open-dashboard',
-            name: 'Open Dashboard',
+            name: translateNow('command.open-dashboard'),
             callback: () => this.activateView(),
         });
 
@@ -63,7 +64,7 @@ export class DashboardModule extends BaseModule {
         // through that a line in Search, rather than a control always on screen.
         this.addCommand({
             id: 'refresh-data',
-            name: 'Refresh data',
+            name: translateNow('command.refresh-data'),
             callback: () => void this.plugin.dataService.reloadAll(),
         });
 

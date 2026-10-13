@@ -156,7 +156,8 @@
 }
 
 .zenith-prayer__tile-time {
-    font-family: var(--zenith-font-serif);
+    font-family: var(--zenith-font-ink);
+    font-weight: 400;
     font-size: 22px;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
@@ -366,7 +367,8 @@
 }
 
 .zenith-prayer__hero-time {
-    font-family: var(--zenith-w-fig-font, var(--zenith-font-serif));
+    font-family: var(--zenith-w-fig-font, var(--zenith-font-ink));
+    font-weight: 400;
     font-size: 54px;
     line-height: 1;
     letter-spacing: -0.015em;
@@ -655,7 +657,8 @@
 }
 
 .zenith-prayer__week-num {
-    font-family: var(--zenith-font-serif);
+    font-family: var(--zenith-font-ink);
+    font-weight: 400;
     font-size: 11px;
     color: var(--zenith-text-faint);
 }
@@ -829,7 +832,7 @@
 .zenith-prayer__date {
     margin: 0;
     padding: 0 2px;
-    font-family: var(--zenith-font-serif);
+    font-family: var(--zenith-font-ink);
     font-size: 19px;
     font-weight: 400;
     line-height: 1.2;
@@ -936,7 +939,8 @@
 
 .zenith-prayer__next-time {
     margin-left: auto;
-    font-family: var(--zenith-font-serif);
+    font-family: var(--zenith-font-ink);
+    font-weight: 400;
     font-size: 27px;
     line-height: 1;
     letter-spacing: -0.01em;
@@ -1073,7 +1077,8 @@
 
 .zenith-prayer__row-time {
     margin-left: auto;
-    font-family: var(--zenith-font-serif);
+    font-family: var(--zenith-font-ink);
+    font-weight: 400;
     font-size: 16px;
     font-variant-numeric: tabular-nums;
 }
@@ -1201,7 +1206,8 @@
 }
 
 .zenith-prayer__stats-value {
-    font-family: var(--zenith-font-serif);
+    font-family: var(--zenith-font-ink);
+    font-weight: 400;
     font-size: 27px;
     line-height: 1;
     letter-spacing: -0.01em;
@@ -1353,7 +1359,7 @@
 }
 
 .zenith-prayer__block-head b {
-    font-family: var(--zenith-font-serif);
+    font-family: var(--zenith-font-ink);
     font-size: 15px;
     font-weight: 400;
     color: var(--zenith-text-normal);

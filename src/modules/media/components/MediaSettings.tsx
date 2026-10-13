@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
-import { MediaPickerModal } from '../MediaPickerModal';
+import { openMediaPicker } from '../openMediaPicker';
 import { resolveMediaSrc } from '../mediaService';
 
 /**
@@ -15,7 +15,7 @@ import { resolveMediaSrc } from '../mediaService';
  */
 export const MediaSettings: React.FC = () => {
     const t = useTranslation();
-    const { app } = useApp();
+    const { app, plugin } = useApp();
     const selected = useZenithStore((s) => s.settings.mediaSelected);
     const saved = useZenithStore((s) => s.settings.mediaSaved);
     const updateSettings = useZenithStore((s) => s.updateSettings);
@@ -42,7 +42,7 @@ export const MediaSettings: React.FC = () => {
             <div className="zenith-settings__color-control">
                 <button
                     className="zenith-settings__inline-btn"
-                    onClick={() => new MediaPickerModal(app).open()}
+                    onClick={() => openMediaPicker(plugin)}
                 >
                     {selected ? t('settings.mediaChange') : t('settings.mediaChoose')}
                 </button>

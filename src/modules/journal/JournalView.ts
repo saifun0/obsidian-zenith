@@ -5,6 +5,7 @@ import { VIEW_TYPE_JOURNAL } from '../../core/constants';
 import { AppContext } from '../../context/AppContext';
 import { JournalApp } from './components/JournalApp';
 import type ZenithPlugin from '../../main';
+import { translateNow } from '../../core/i18n';
 
 /**
  * JournalView — Obsidian ItemView that mounts the React JournalApp.
@@ -24,7 +25,7 @@ export class JournalView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Journal';
+        return translateNow('module.journal.name');
     }
 
     getIcon(): string {

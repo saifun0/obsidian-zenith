@@ -68,11 +68,12 @@
 }
 
 /* ── Wallpaper ─────────────────────────────────────
-   One layer over the board's padding box, so it covers the whole scroll height
-   including the inset. Not `background-attachment: fixed`, which is the obvious
-   way to get a wallpaper that holds still and is broken on iOS — Obsidian runs
-   on phones, and an effect that only works on a desktop is not the effect to
-   build.
+   One layer over the board's padding box, the whole scroll height including
+   the inset — and inside it the picture, the size of the pane, holding still
+   while the board goes by (see "The picture holds still", below). Not
+   `background-attachment: fixed`, which is the obvious way to get a wallpaper
+   that holds still and is broken on iOS — Obsidian runs on phones, and an
+   effect that only works on a desktop is not the effect to build.
 
    Three elements where one looks like it would do, and each earns its place:
 
@@ -123,6 +124,50 @@
 .zenith-dashboard.has-bg-blur .zenith-dashboard__bg::before {
     filter: blur(var(--zenith-dash-bg-blur, 0));
     inset: calc(var(--zenith-dash-bg-blur, 0px) * -2);
+}
+
+/* The picture holds still.
+
+   It used to be stretched over the board from top to bottom, and a board is
+   long: on the one a new vault starts with, five panes of it. So a wallpaper
+   was drawn five times its size, and a pane showed a blurred fifth of it —
+   whichever fifth the scroll happened to be at.
+
+   It is the size of the pane now, and stays at the top of it. The layer still
+   runs the board's length, because that is what its clipping is for; the
+   picture and the scrim are stuck inside it, one over the other in a single
+   grid cell so that neither pushes the other down. The pane's height is
+   measured by the component (`--zenith-dash-view-h`) — a stylesheet cannot ask
+   how tall its scroller is.
+
+   `overflow: clip` rather than `hidden`, which would make the layer a scroller
+   of its own and give the picture nothing to hold still against. Where `clip`
+   is not known — iOS before 16 — none of this applies and the picture is
+   stretched over the board as before. */
+@supports (overflow: clip) {
+    .zenith-dashboard__bg {
+        display: grid;
+        overflow: clip;
+    }
+
+    .zenith-dashboard__bg::before,
+    .zenith-dashboard__bg::after {
+        position: sticky;
+        inset: auto;
+        top: 0;
+        grid-area: 1 / 1;
+        align-self: start;
+        height: var(--zenith-dash-view-h, 100vh);
+    }
+
+    /* Grown past the pane on every side, as it was past the board: a blur
+       samples beyond the element's edge and finds nothing there. */
+    .zenith-dashboard.has-bg-blur .zenith-dashboard__bg::before {
+        inset: auto;
+        top: calc(var(--zenith-dash-bg-blur, 0px) * -2);
+        height: calc(var(--zenith-dash-view-h, 100vh) + var(--zenith-dash-bg-blur, 0px) * 4);
+        margin: 0 calc(var(--zenith-dash-bg-blur, 0px) * -2);
+    }
 }
 
 /* The board above its own wallpaper. Each needs a stacking position of its
@@ -531,25 +576,6 @@ body.is-phone .zenith-dashboard__bg::before {
     text-align: center;
     color: var(--zenith-text-muted);
     font-size: 0.9rem;
-}
-
-/* ── Widget Grid ─────────────────────────────────── */
-.zenith-dashboard__grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--zenith-space-md);
-    align-items: start;
-}
-
-@media (min-width: 720px) {
-    .zenith-dashboard__grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--zenith-space-lg);
-    }
-}
-
-.zenith-widget--full {
-    grid-column: 1 / -1;
 }
 
 /* ── Widget Card ─────────────────────────────────── */
@@ -4214,83 +4240,6 @@ button.zenith-cw__cta {
     color: var(--zenith-text-muted);
     text-align: center;
     font-size: 0.9rem;
-}
-
-/* ── Quick Add widget ───────────────────────────── */
-.zenith-qa {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-}
-
-.zenith-qa__input {
-    flex: 1;
-    min-width: 0;
-    height: 36px;
-    padding: 0 12px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-    font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.zenith-qa__input:focus {
-    border-color: var(--zenith-accent);
-}
-
-.zenith-qa__priority {
-    height: 36px;
-    padding: 0 8px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 8px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-    font-size: 0.85rem;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-.zenith-qa__add,
-.zenith-qa__more {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 1px solid var(--background-modifier-border);
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 0.15s ease;
-}
-
-.zenith-qa__add {
-    background: var(--zenith-accent);
-    color: white;
-    border-color: transparent;
-}
-
-.zenith-qa__add:hover:not(:disabled) {
-    background: var(--zenith-accent-hover);
-}
-
-.zenith-qa__add:disabled {
-    opacity: 0.5;
-    cursor: default;
-}
-
-.zenith-qa__more {
-    background: var(--background-primary);
-    color: var(--text-muted);
-}
-
-.zenith-qa__more:hover {
-    background: var(--background-modifier-hover);
-    color: var(--text-normal);
 }
 
 /* ── Period progress ─────────────────────────────── */

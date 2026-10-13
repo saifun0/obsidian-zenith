@@ -9,7 +9,7 @@ import { effectiveContentTypes, resolveContentType } from '../../../core/content
 import { getTodayString, toLocalIsoDate } from '../../../core/dateUtils';
 import { IMAGE_EXTENSIONS } from '../../../core/imageSource';
 import { preferredPlace } from '../../../services/geocode';
-import { IconPickerModal } from '../../../core/IconPickerModal';
+import { IconPicker } from '../../../components/shared/IconPicker';
 import { PromptModal } from '../../../core/PromptModal';
 import { VaultScaffoldModal } from '../../../core/VaultScaffoldModal';
 import { ImagePickerModal } from '../../../components/shared/ImagePickerModal';
@@ -28,7 +28,7 @@ import { groupSeries } from '../../../modules/content/services/series';
 import { ProjectFormModal } from '../../../modules/projects/ProjectFormModal';
 import { PrayerModal } from '../../../modules/prayer/PrayerModal';
 import { SyncQuickModal } from '../../../modules/sync/SyncQuickModal';
-import { MediaPickerModal } from '../../../modules/media/MediaPickerModal';
+import { MediaPicker } from '../../../modules/media/components/MediaPicker';
 import { WeatherExpanded } from '../../../modules/weather/components/WeatherExpanded';
 import { getCachedWeather } from '../../../modules/weather/weatherService';
 import type {
@@ -320,10 +320,12 @@ export const MODAL_CATALOG: readonly ModalEntry[] = [
     },
     {
         id: 'iconPicker',
-        name: 'IconPickerModal',
+        name: 'IconPicker',
         owner: 'core',
-        kind: 'obsidian',
-        create: ({ app, report }) => new IconPickerModal(app, 'sparkles', report),
+        kind: 'react',
+        render: ({ report }, onClose) => (
+            <IconPicker current="sparkles" onChoose={report} onClose={onClose} />
+        ),
     },
     {
         id: 'imagePicker',
@@ -485,11 +487,11 @@ export const MODAL_CATALOG: readonly ModalEntry[] = [
     },
     {
         id: 'mediaPicker',
-        name: 'MediaPickerModal',
+        name: 'MediaPicker',
         owner: 'media',
-        kind: 'obsidian',
+        kind: 'react',
         writes: true,
-        create: ({ app }) => new MediaPickerModal(app),
+        render: (_ctx, onClose) => <MediaPicker onClose={onClose} />,
     },
     {
         id: 'weather',

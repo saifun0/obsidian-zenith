@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Scope } from 'obsidian';
 import { X } from 'lucide-react';
 import { translateNow } from '../../core/i18n';
+import { AppContext } from '../../context/AppContext';
 
 interface ModalProps {
     /** Accessible name; rendered as the header title unless `header` is given. */
@@ -78,6 +80,9 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
     const panelRef = useRef<HTMLDivElement>(null);
     const inline = useContext(DialogInlineContext);
+    // Not `useApp()`: the shell is also drawn where there is no app to ask —
+    // a test, a specimen — and has nothing to tell Obsidian there.
+    const keymap = useContext(AppContext)?.app.keymap;
     // The window the user is working in, fixed for the dialog's life. Not the
     // global `document`, which is always the main window's: a dialog opened
     // from the settings window would otherwise open behind it.
@@ -122,6 +127,18 @@ export const Modal: React.FC<ModalProps> = ({
         // dropdown) can then take Escape for itself via stopPropagation. In
         // capture phase the dialog would always win and close out from under it.
         win.addEventListener('keydown', onKey);
+
+        // Obsidian hears a key before the page does, and gives it to whatever is
+        // on top of its own stack — which this dialog was not on. So Escape
+        // here also closed the Obsidian modal underneath: a project's form,
+        // with everything typed into it, when its icon picker was dismissed.
+        // And every hotkey still fired, into the note behind.
+        //
+        // An empty scope on top of the stack says "this is the top now". It
+        // binds nothing itself — the keys are heard above, in the page — it
+        // only stops them reaching what is below.
+        const scope = keymap ? new Scope() : null;
+        if (scope) keymap?.pushScope(scope);
         const prevOverflow = host.body.style.overflow;
         host.body.setCssStyles({ overflow: 'hidden' });
 
@@ -136,10 +153,11 @@ export const Modal: React.FC<ModalProps> = ({
 
         return () => {
             win.removeEventListener('keydown', onKey);
+            if (scope) keymap?.popScope(scope);
             host.body.setCssStyles({ overflow: prevOverflow });
             win.clearTimeout(timer);
         };
-    }, [inline, host]);
+    }, [inline, host, keymap]);
 
     const dialog = (
         <div

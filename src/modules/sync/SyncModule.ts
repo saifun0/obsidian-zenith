@@ -114,13 +114,13 @@ export class SyncModule extends BaseModule {
 
         this.addViewCommand({
             id: 'open-sync',
-            name: 'Open sync',
+            name: translateNow('command.open-sync'),
             callback: () => this.activateView(),
         });
 
         this.addCommand({
             id: 'sync-now',
-            name: 'Sync settings now',
+            name: translateNow('command.sync-now'),
             callback: () => {
                 void this.syncNow();
             },
@@ -128,7 +128,7 @@ export class SyncModule extends BaseModule {
 
         this.addCommand({
             id: 'sync-files-now',
-            name: 'Sync note files now',
+            name: translateNow('command.sync-files-now'),
             callback: () => {
                 void this.auto?.run(true);
             },
@@ -255,7 +255,9 @@ export class SyncModule extends BaseModule {
         if (params.error) {
             pending.cancel();
             new Notice(
-                `Zenith: Dropbox did not authorize this device — ${params.error_description || params.error}`
+                translateNow('notice.dropboxDenied', {
+                    error: params.error_description || params.error,
+                })
             );
             return;
         }
@@ -265,9 +267,7 @@ export class SyncModule extends BaseModule {
             // Either nothing was in flight, or this callback answers a request
             // we never made. Both are the same instruction to the user, and
             // saying which would tell whoever sent it how close they got.
-            new Notice(
-                'Zenith: that Dropbox link does not match an authorization started here. Press connect again.'
-            );
+            new Notice(translateNow('notice.dropboxMismatch'));
             return;
         }
 
@@ -302,6 +302,10 @@ export class SyncModule extends BaseModule {
         // merged as they arrive.
         if (this.files?.getStatus().configured) await this.auto?.run(true);
         const { error } = this.service.getStatus();
-        new Notice(error ? `Zenith: sync failed — ${error}` : 'Zenith: settings synced.');
+        new Notice(
+            error
+                ? translateNow('notice.settingsSyncFailed', { error })
+                : translateNow('notice.settingsSynced')
+        );
     }
 }

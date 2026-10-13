@@ -67,192 +67,310 @@
     align-items: center;
 }
 
-/* ── Picker modal ───────────────────────────────── */
-.zenith-media-picker-modal:not(#_) {
-    width: min(920px, 92vw);
-    max-width: 920px;
-}
-.zenith-media-picker {
+/* ── The picker ─────────────────────────────────── */
+.zenith-media {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 18px;
 }
 
-.zenith-media-picker__eyebrow,
-.zenith-media-picker__section-label {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    font-weight: 600;
-}
-.zenith-media-picker__current {
-    padding: 10px 12px;
-    border-radius: 10px;
-    background: var(--background-secondary);
-    border: 1px solid var(--background-modifier-border);
+.zenith-media section {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-}
-.zenith-media-picker__current-value {
-    font-family: var(--font-monospace, monospace);
-    font-size: 0.82rem;
-    color: var(--text-normal);
-    word-break: break-all;
-}
-.zenith-media-picker__current-value.is-empty {
-    color: var(--text-faint);
-    font-style: italic;
-}
-
-.zenith-media-picker__quick {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-.zenith-media-picker__hint {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-}
-.zenith-media-picker__quick-row {
-    display: flex;
-    gap: 8px;
-}
-.zenith-media-picker__input,
-.zenith-media-picker__search {
-    flex: 1;
     min-width: 0;
 }
-.zenith-media-picker__search {
-    width: 100%;
-}
-/* Element + class: Obsidian's `button:not(.clickable-icon)` outranks a bare
-   class, and would paint this its own grey instead of the accent. */
-button.zenith-media-picker__add-btn {
-    flex-shrink: 0;
-    padding: 0 16px;
-    border: none;
-    border-radius: 8px;
-    background: var(--interactive-accent);
-    color: var(--text-on-accent, #fff);
-    font-size: 0.86rem;
-    font-weight: 500;
-    cursor: pointer;
-}
-button.zenith-media-picker__add-btn:hover {
-    background: var(--interactive-accent-hover);
-}
 
-.zenith-media-picker__grids {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-.zenith-media-picker__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 6px;
-}
-.zenith-media-picker__empty {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    padding: 8px 2px;
-}
-
-/* ── Image card ─────────────────────────────────── */
-.zenith-media-card {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 10px;
-    overflow: hidden;
-    background: var(--background-primary);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.zenith-media-card:hover {
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-}
-.zenith-media-card.is-selected {
-    border-color: var(--interactive-accent);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 35%, transparent);
-}
-.zenith-media-card__thumb {
-    position: relative;
-    aspect-ratio: 16 / 10;
-    background: var(--background-secondary);
-    overflow: hidden;
-}
-.zenith-media-card__thumb.is-broken::after {
-    content: '🖼';
-    position: absolute;
-    inset: 0;
+/* A heading over a group, as the library heads its shelves: small, quiet, and
+   a rule to the edge. It introduces pictures and must not compete with them. */
+.zenith-media__heading {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 1.6rem;
-    opacity: 0.4;
+    gap: 10px;
+    margin: 0 0 10px;
+    font-size: 0.66rem;
+    font-weight: 650;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--zenith-text-faint);
 }
-.zenith-media-card__img {
+
+.zenith-media__heading::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--zenith-border);
+}
+
+.zenith-media__heading > span {
+    font-weight: 600;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.zenith-media__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: 14px 12px;
+}
+
+.zenith-media__note {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    color: var(--zenith-text-faint);
+}
+
+/* ── What a pasted link leads to ────────────────── */
+.zenith-media__found {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+.zenith-media__found > .zenith-media-thumb {
+    flex: none;
+    width: min(240px, 46%);
+}
+
+.zenith-media__found-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-width: 0;
+}
+
+.zenith-media__found-text > b {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zenith-media__found-text > span {
+    font-size: 12.5px;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-media__found-text > .zenith-btn {
+    margin-top: 10px;
+}
+
+/* ── What is on the banner now ──────────────────── */
+.zenith-media__current {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.zenith-media__current > .zenith-media-thumb {
+    flex: none;
+    width: 72px;
+}
+
+.zenith-media__current-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.zenith-media__current-text > span {
+    font-size: 11.5px;
+    color: var(--zenith-text-faint);
+}
+
+.zenith-media__current-text > b {
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Words, not a button: it undoes a choice, and should not be the loudest thing
+   in a dialog for making one. Element and class, since Obsidian styles every
+   `button` and a bare class does not outrank it. */
+button.zenith-media__clear {
+    flex: none;
+    height: auto;
+    padding: 4px 2px;
+    border: none;
+    background: none;
+    box-shadow: none;
+    font-size: 12.5px;
+    color: var(--zenith-text-muted);
+    cursor: pointer;
+}
+
+button.zenith-media__clear:hover,
+button.zenith-media__clear:focus-visible {
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-danger);
+}
+
+/* ── A picture, shown small ─────────────────────── */
+.zenith-media-thumb {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--zenith-radius-md);
+    /* From the text colour, not a background token: the dialog may be the very
+       colour the token names, and an empty frame would have no edge. */
+    background: color-mix(in srgb, var(--zenith-text-normal) 7%, transparent);
+}
+
+.zenith-media-thumb > img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
 }
-.zenith-media-card__name {
-    padding: 8px 10px 0;
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--text-normal);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+
+.zenith-media-thumb.is-broken {
+    display: grid;
+    place-items: center;
+    color: var(--zenith-text-faint);
 }
-.zenith-media-card__path {
-    padding: 2px 10px 8px;
-    font-size: 0.72rem;
-    color: var(--text-faint);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+
+/* ── A picture to choose ────────────────────────── */
+.zenith-media-tile {
+    position: relative;
+    min-width: 0;
 }
-.zenith-media-card__actions {
+
+/* The picture is the button. */
+button.zenith-media-tile__pick {
     display: flex;
+    flex-direction: column;
+    /* Obsidian centres a button's contents and keeps them on one line; this
+       one is a picture over its name. */
+    align-items: stretch;
+    justify-content: flex-start;
     gap: 6px;
-    padding: 0 8px 8px;
-    margin-top: auto;
-}
-.zenith-media-card__btn {
-    flex: 1;
-    padding: 5px 8px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 7px;
-    background: var(--background-primary);
-    color: var(--text-normal);
-    font-size: 0.78rem;
+    width: 100%;
+    height: auto;
+    padding: 0;
+    white-space: normal;
+    border: none;
+    border-radius: var(--zenith-radius-md);
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
+    text-align: left;
     cursor: pointer;
-    transition: background 0.15s ease;
 }
-.zenith-media-card__btn:hover:not(:disabled) {
-    background: var(--background-modifier-hover);
+
+button.zenith-media-tile__pick:hover,
+button.zenith-media-tile__pick:focus-visible {
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
 }
-.zenith-media-card__btn:disabled {
-    opacity: 0.55;
-    cursor: default;
+
+/* A ring drawn outside the picture, so that it costs the picture nothing. */
+.zenith-media-tile__pick > .zenith-media-thumb {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition:
+        outline-color var(--zenith-transition-fast),
+        transform var(--zenith-transition-fast);
 }
-.zenith-media-card__btn--select {
-    background: var(--interactive-accent);
+
+.zenith-media-tile__pick:hover > .zenith-media-thumb {
+    outline-color: color-mix(in srgb, var(--zenith-text-normal) 22%, transparent);
+}
+
+.zenith-media-tile__pick:focus-visible > .zenith-media-thumb {
+    outline-color: var(--zenith-accent);
+}
+
+.zenith-media-tile__pick:active > .zenith-media-thumb {
+    transform: scale(0.985);
+}
+
+.zenith-media-tile.is-selected .zenith-media-thumb {
+    outline-color: var(--zenith-accent);
+}
+
+.zenith-media-tile.is-selected .zenith-media-tile__name {
+    color: var(--zenith-text-normal);
+}
+
+.zenith-media-tile__name {
+    overflow: hidden;
+    padding: 0 2px;
+    font-size: 12.5px;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The one on the banner. */
+.zenith-media-tile__check {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--zenith-accent);
     color: var(--text-on-accent, #fff);
-    border-color: transparent;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+    pointer-events: none;
 }
-.zenith-media-card__btn--select:hover:not(:disabled) {
-    background: var(--interactive-accent-hover);
+
+/* The bookmark: in the picture's corner, out of the way until the pointer is
+   on the picture — except on one that is saved, where it is the mark that says
+   so, and on a touch screen, where there is no pointer to wait for. */
+button.zenith-media-tile__keep {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgb(0 0 0 / 0.5);
+    box-shadow: none;
+    color: #fff;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--zenith-transition-fast);
 }
-.zenith-media-card__btn--danger {
-    color: var(--text-error, #e5534b);
-    border-color: color-mix(in srgb, var(--text-error, #e5534b) 40%, transparent);
+
+.zenith-media-tile:hover > .zenith-media-tile__keep,
+.zenith-media-tile.is-saved > .zenith-media-tile__keep,
+button.zenith-media-tile__keep:focus-visible {
+    opacity: 1;
 }
-.zenith-media-card__btn--danger:hover {
-    background: color-mix(in srgb, var(--text-error, #e5534b) 14%, transparent);
+
+button.zenith-media-tile__keep:hover {
+    background: rgb(0 0 0 / 0.7);
+    box-shadow: none;
+    color: #fff;
+}
+
+@media (hover: none) {
+    button.zenith-media-tile__keep {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .zenith-media__grid {
+        grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+        gap: 12px 10px;
+    }
 }

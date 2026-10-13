@@ -854,9 +854,6 @@ const ObsidianDialogFields: React.FC = () => {
     const t = useTranslation();
 
     const prompt = useText(t('dashboard.presets.defaultName'));
-    const iconSearch = useText();
-    const mediaRef = useText();
-    const mediaSearch = useText();
 
     return (
         <Section title={t('debug.inputs.obsidian')}>
@@ -866,35 +863,6 @@ const ObsidianDialogFields: React.FC = () => {
                     className="zenith-input zenith-prompt__input"
                     placeholder={t('dashboard.presets.namePlaceholder')}
                     {...prompt}
-                />
-            </Demo>
-            <Demo label="zenith-icon-picker__search" source="IconPickerModal">
-                <input
-                    type="text"
-                    className="zenith-input zenith-icon-picker__search"
-                    placeholder="Search icons…"
-                    {...iconSearch}
-                />
-            </Demo>
-            <Demo label="zenith-media-picker__input" source="MediaPickerModal" wide>
-                <div className="zenith-media-picker__quick-row">
-                    <input
-                        type="text"
-                        className="zenith-input zenith-media-picker__input"
-                        placeholder="https://… or path/to/image.png"
-                        {...mediaRef}
-                    />
-                    <button type="button" className="zenith-media-picker__add-btn">
-                        Add &amp; select
-                    </button>
-                </div>
-            </Demo>
-            <Demo label="zenith-media-picker__search" source="MediaPickerModal" wide>
-                <input
-                    type="text"
-                    className="zenith-input zenith-media-picker__search"
-                    placeholder="Search by name or path…"
-                    {...mediaSearch}
                 />
             </Demo>
             <Demo label="QuickAddForm" source="QuickAddTaskModal" wide>

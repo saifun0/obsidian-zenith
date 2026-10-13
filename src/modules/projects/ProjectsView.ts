@@ -5,6 +5,7 @@ import { VIEW_TYPE_PROJECTS } from '../../core/constants';
 import { AppContext } from '../../context/AppContext';
 import { ProjectsApp } from './components/ProjectsApp';
 import type ZenithPlugin from '../../main';
+import { translateNow } from '../../core/i18n';
 
 /**
  * ProjectsView — Obsidian ItemView that mounts the React Projects UI.
@@ -23,7 +24,7 @@ export class ProjectsView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Projects';
+        return translateNow('module.projects.name');
     }
 
     getIcon(): string {

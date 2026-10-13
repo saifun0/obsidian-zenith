@@ -95,7 +95,7 @@ body.is-hidden-nav .view-content.zenith-root {
 }
 
 .zenith-serif {
-    font-family: var(--zenith-font-serif);
+    font-family: var(--zenith-font-ink);
 }
 
 .zenith-text {
@@ -230,72 +230,81 @@ body.is-hidden-nav .view-content.zenith-root {
     color: var(--text-normal);
 }
 
-/* ── Icon picker modal ──────────────────────────────── */
-input.zenith-input.zenith-icon-picker__search {
-    width: 100%;
-    margin-bottom: 12px;
+/* ── Icon picker ────────────────────────────────────── */
+.zenith-icons {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
-/* The picker is sectioned now (packs, then built-ins), so the scroll belongs to
-   the wrapper — a per-section scroller would give every pack its own tiny
-   scrollbar and hide the built-in set below the fold. */
-.zenith-icon-picker__grid-wrap {
-    max-height: 340px;
-    overflow-y: auto;
-    padding-right: 4px;
+
+.zenith-icons section {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
 }
-.zenith-icon-picker__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-    gap: 6px;
-}
-.zenith-icon-picker__section {
+
+/* A pack's name over its icons, and who made it. Headed as the library and
+   the picture picker head their groups. */
+.zenith-icons__heading {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    margin: 14px 0 7px;
-}
-.zenith-icon-picker__grid-wrap > .zenith-icon-picker__section:first-child {
-    margin-top: 0;
-}
-.zenith-icon-picker__section-title {
-    font-size: 0.68rem;
+    gap: 10px;
+    margin: 0 0 8px;
+    font-size: 0.66rem;
     font-weight: 650;
-    letter-spacing: 0.09em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--text-muted);
+    color: var(--zenith-text-faint);
 }
-.zenith-icon-picker__section-sub {
-    font-size: 0.72rem;
-    color: var(--text-faint);
+
+.zenith-icons__heading > span {
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
 }
-.zenith-icon-picker__item {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 40px;
-    border-radius: 6px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary);
-    color: var(--text-normal);
+
+.zenith-icons__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+    gap: 4px;
+}
+
+/* An icon is a mark on the dialog, not a tile on it: no box until the pointer
+   is on it. Element and class, as Obsidian styles every `button`. */
+button.zenith-icons__item {
+    display: grid;
+    place-items: center;
+    width: auto;
+    height: 38px;
+    padding: 0;
+    border: none;
+    border-radius: var(--zenith-radius-sm);
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-muted);
     cursor: pointer;
-    transition: all 0.12s ease;
+    transition:
+        background-color var(--zenith-transition-fast),
+        color var(--zenith-transition-fast);
 }
-.zenith-icon-picker__item svg:not(#_) {
-    width: 20px;
-    height: 20px;
+
+button.zenith-icons__item:hover,
+button.zenith-icons__item:focus-visible {
+    background: color-mix(in srgb, var(--zenith-text-normal) 8%, transparent);
+    box-shadow: none;
+    color: var(--zenith-text-normal);
 }
-.zenith-icon-picker__item:hover {
-    background: var(--background-modifier-hover);
-    border-color: var(--interactive-accent);
+
+button.zenith-icons__item.is-current {
+    background: color-mix(in srgb, var(--zenith-accent) 18%, transparent);
+    box-shadow: inset 0 0 0 1.5px var(--zenith-accent);
+    color: var(--zenith-text-normal);
 }
-.zenith-icon-picker__item.is-current {
-    border-color: var(--interactive-accent);
-    background: color-mix(in srgb, var(--interactive-accent) 15%, transparent);
-}
-.zenith-icon-picker__empty {
-    padding: 24px;
-    text-align: center;
-    color: var(--text-muted);
+
+.zenith-icons__note {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    color: var(--zenith-text-faint);
 }
 
 /* ── Custom icons (packs and modules) ───────────────── */

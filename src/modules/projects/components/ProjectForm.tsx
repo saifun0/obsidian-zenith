@@ -4,7 +4,7 @@ import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
 import { PRIORITIES, type Priority } from '../../../core/constants';
-import { IconPickerModal } from '../../../core/IconPickerModal';
+import { pickIcon } from '../../../core/pickIcon';
 import { ColorInput, Select, SettingRow, TextInput, useFieldIds } from '../../../settings/controls';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { DateField } from '../../../components/ui/fields';
@@ -305,14 +305,14 @@ const DateInput: FC<{ value: string; onChange: (v: string) => void }> = ({ value
  */
 const IconField: FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => {
     const t = useTranslation();
-    const { app } = useApp();
+    const { plugin } = useApp();
 
     return (
         <div className="zenith-project-form__icon">
             <button
                 type="button"
                 className="zenith-settings__inline-btn"
-                onClick={() => new IconPickerModal(app, value || undefined, onChange).open()}
+                onClick={() => pickIcon(plugin, value || undefined, onChange)}
             >
                 {value ? <DynamicIcon name={value} size={15} /> : null}
                 <span>{value || t('projects.form.icon.none')}</span>

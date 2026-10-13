@@ -11,6 +11,7 @@ import type { TranslationTable } from '../../core/i18n';
 import { contentSearchSource } from './searchSource';
 import { useZenithStore } from '../../store';
 import { featureEnabled } from '../../core/features';
+import { translateNow } from '../../core/i18n';
 
 /**
  * ContentModule — gallery-style content tracker.
@@ -37,13 +38,13 @@ export class ContentModule extends BaseModule {
 
         this.addViewCommand({
             id: 'open-content',
-            name: 'Open Content Library',
+            name: translateNow('command.open-content'),
             callback: () => this.activateView(),
         });
 
         this.addCommand({
             id: 'find-content-series',
-            name: 'Find series in the content library',
+            name: translateNow('command.find-content-series'),
             checkCallback: (checking) => {
                 if (!featureEnabled(useZenithStore.getState().settings, 'content.series')) return false;
                 if (!checking) {

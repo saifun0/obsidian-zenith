@@ -2,9 +2,10 @@
  * Search strings, merged into the dictionary in `core/i18n.ts`. The module's
  * name and description are in its own chunk, `i18n.ts`.
  *
- * `command.<id>` names Zenith's commands in Zenith's language. Obsidian shows
- * them in English only, in its own palette; Search shows them translated and
- * finds them by either name. A module can also name its own in its chunk, as
+ * `command.<id>` names Zenith's commands in Zenith's language: it is what a
+ * command is registered under, so Obsidian's own palette and hotkey list show
+ * it, and what Search shows. The commands Search does not list are named in
+ * `core/i18n.ts`. A module can also name its own in its chunk, as
  * `module.<its id>.command.<command id>`.
  */
 export const SEARCH_STRINGS: { en: Record<string, string>; ru: Record<string, string> } = {
@@ -21,6 +22,7 @@ export const SEARCH_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'search.created.journal': 'Zenith: written to today’s note.',
         'search.journal.note': 'Note for {date}',
         'search.done': 'Done',
+        'search.reveal': 'Open the note',
         'search.hint.move': 'to move',
         'search.hint.open': 'to open',
         'search.hint.create': 'to create',
@@ -69,6 +71,7 @@ export const SEARCH_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'search.created.journal': 'Zenith: записано в заметку дня.',
         'search.journal.note': 'Заметка за {date}',
         'search.done': 'Выполнено',
+        'search.reveal': 'Открыть заметку',
         'search.hint.move': 'выбрать',
         'search.hint.open': 'открыть',
         'search.hint.create': 'создать',

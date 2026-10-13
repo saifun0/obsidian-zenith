@@ -9,6 +9,7 @@ import { isJournalled } from '../services/journalStats';
 import { keptOn } from '../services/habitMonth';
 import { monthGrid, weekdayLabels, monthLabel, isoToDate, sameMonth } from '../services/journalDates';
 import { weekOfRange } from '../services/reviewPeriods';
+import { Platform } from 'obsidian';
 
 interface JournalCalendarProps {
     /** Any date inside the month being shown. */
@@ -186,7 +187,13 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
                             <button
                                 className={classes}
                                 style={{ ['--jcal-ring' as string]: `${ring}%` }}
-                                onClick={() => onSelect(date)}
+                                // A second tap on the day already chosen opens its
+                                // note: a phone has no double-click to do it with.
+                                onClick={() =>
+                                    Platform.isMobile && date === selected
+                                        ? onOpen(date)
+                                        : onSelect(date)
+                                }
                                 onDoubleClick={() => onOpen(date)}
                                 aria-current={date === today ? 'date' : undefined}
                                 aria-pressed={date === selected}

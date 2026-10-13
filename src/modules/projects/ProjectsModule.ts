@@ -9,6 +9,7 @@ import type ZenithPlugin from '../../main';
 import { projectsTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
 import { projectsSearchSource } from './searchSource';
+import { translateNow } from '../../core/i18n';
 
 /**
  * ProjectsModule — Project management, task aggregation and progress tracking.
@@ -34,7 +35,7 @@ export class ProjectsModule extends BaseModule {
 
         this.addViewCommand({
             id: 'open-projects',
-            name: 'Open Projects',
+            name: translateNow('command.open-projects'),
             callback: () => this.activateView(),
         });
 
@@ -43,7 +44,7 @@ export class ProjectsModule extends BaseModule {
         // wanting to look at the other six first.
         this.addCommand({
             id: 'new-project',
-            name: 'New project',
+            name: translateNow('command.new-project'),
             callback: () => new ProjectFormModal(this.plugin.app, this.plugin).open(),
         });
 

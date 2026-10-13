@@ -5,6 +5,7 @@ import { VIEW_TYPE_TASKS_CALENDAR } from '../../core/constants';
 import { AppContext } from '../../context/AppContext';
 import { TasksCalendarApp } from './components/TasksCalendarApp';
 import type ZenithPlugin from '../../main';
+import { translateNow } from '../../core/i18n';
 
 /**
  * TasksCalendarView — Obsidian ItemView that mounts the React calendar.
@@ -24,7 +25,7 @@ export class TasksCalendarView extends ItemView {
     }
 
     getDisplayText(): string {
-        return 'Tasks calendar';
+        return translateNow('module.tasks-calendar.name');
     }
 
     getIcon(): string {

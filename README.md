@@ -35,8 +35,8 @@ On a phone:
 | --- | --- | --- | --- | --- |
 | ![The dashboard on a phone](docs/images/screenshots/mobile-1-dashboard.png) | ![Tasks on a phone](docs/images/screenshots/mobile-2-tasks.png) | ![The journal on a phone](docs/images/screenshots/mobile-3-journal.png) | ![The library on a phone](docs/images/screenshots/mobile-4-library.png) | ![Further down the board on a phone](docs/images/screenshots/mobile-5-board.png) |
 
-Everything in the pictures is made up: they are taken in the demo vault that comes with each
-[release](https://github.com/saifun0/obsidian-zenith/releases), with a board arranged for the occasion.
+Everything in the pictures is made up: they are of the demo vault that comes with each
+[release](https://github.com/saifun0/obsidian-zenith/releases).
 
 ---
 

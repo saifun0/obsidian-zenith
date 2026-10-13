@@ -148,3 +148,33 @@ export function shelfRows(
     const upNext = shelf.upNext.slice(0, Math.max(0, room - continuing.length));
     return { continuing, upNext, hidden: shelf.continuing.length - continuing.length };
 }
+
+/**
+ * How many rows fit in what a card has left for them.
+ *
+ * The backlog — "up next" — is drawn under a heading of its own, and the
+ * heading takes room. It used to be set aside whenever there was a backlog at
+ * all, including on a card that what is under way already fills: there the
+ * heading is never drawn, so a row's worth of the card stood empty under two
+ * rows with "+4 more" beside them. The room is now set aside only when a row
+ * from the backlog will actually be drawn under it.
+ */
+export function shelfBudget(o: {
+    /** Pixels left for rows. */
+    free: number;
+    /** A row's height, and the gap between two. */
+    row: number;
+    gap: number;
+    /** The backlog's heading, with the gap over it. */
+    heading: number;
+    /** How many items are under way, and how many wait in the backlog. */
+    underWay: number;
+    backlog: number;
+}): number {
+    const rowsIn = (px: number) => Math.max(0, Math.floor((px + o.gap) / (o.row + o.gap)));
+    const plain = rowsIn(o.free);
+    if (o.backlog === 0 || o.underWay >= plain) return plain;
+    // Some of the card is the backlog's: its heading comes out of the room.
+    // Never fewer rows than are under way, though — those need no heading.
+    return Math.max(o.underWay, rowsIn(o.free - o.heading));
+}

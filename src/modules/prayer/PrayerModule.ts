@@ -20,6 +20,7 @@ import { currentPrayer, formatClock, minutesOfDay } from './prayerTimes';
 import type ZenithPlugin from '../../main';
 import { prayerTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
+import { translateNow } from '../../core/i18n';
 
 /**
  * PrayerModule — prayer times and a record of what was prayed.
@@ -68,7 +69,7 @@ export class PrayerModule extends BaseModule {
 
         this.addViewCommand({
             id: 'open-prayer',
-            name: 'Open Prayer tracker',
+            name: translateNow('command.open-prayer'),
             callback: () => this.activateView(),
         });
 
@@ -76,13 +77,13 @@ export class PrayerModule extends BaseModule {
         // anything — which is the whole interaction, most days.
         this.addCommand({
             id: 'mark-current-prayer',
-            name: 'Mark the current prayer as prayed',
+            name: translateNow('command.mark-current-prayer'),
             callback: () => void this.markCurrent(),
         });
 
         this.addCommand({
             id: 'prayer-times-today',
-            name: "Show today's prayer times",
+            name: translateNow('command.prayer-times-today'),
             callback: () => this.showTimes(),
         });
 
