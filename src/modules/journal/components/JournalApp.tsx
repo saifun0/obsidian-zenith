@@ -1,32 +1,39 @@
 import React, { useCallback, useMemo, useState, type FC } from 'react';
 import { Notice } from 'obsidian';
-import { RotateCw, CalendarDays, CalendarCheck, Info } from 'lucide-react';
+import { RotateCw, CalendarCheck, Info } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import type { JournalTracker } from '../../../core/journalConfig';
 import { usableTrackers } from '../services/usableTrackers';
 import type { TrackerValue } from '../../../store/journalSlice';
-import { IconButton } from '../../../components/shared/IconButton';
-import { ViewHeader } from '../../../components/shared';
-import { entriesByDate } from '../services/journalStats';
+import { PageHead, PageHeadButton } from '../../../components/shared';
+import { entriesByDate, journalStats } from '../services/journalStats';
+import { journalTally } from '../services/journalTally';
 import { setTrackerValue, openDailyNote, createDailyNote } from '../services/journalActions';
-import { addDays } from '../services/journalDates';
+import { addDays, monthTitle } from '../services/journalDates';
 import { useFeature } from '../../../core/useFeature';
 import { openReviewNote } from '../services/reviewNotes';
 import { JournalCalendar } from './JournalCalendar';
 import { YearPixels } from './YearPixels';
 import { DayPanel } from './DayPanel';
-import { JournalStats } from './JournalStats';
+import { CoverageStrip } from './CoverageStrip';
+import { HabitMonth } from './HabitMonth';
+
+const WINDOW_DAYS = 30;
 
 /**
  * JournalApp — the Journal view: a month at a time, with the selected day's
  * check-in, tasks and note preview beside it.
+ *
+ * The page is titled with the month it shows, as the Tasks page is with the
+ * day: the tab above it already says "Journal".
  */
 export const JournalApp: FC = () => {
     const { app, plugin } = useApp();
     const t = useTranslation();
+    const locale = intlLocale(t.locale);
 
     const entries = useZenithStore((s) => s.journalEntries);
     const journalLoading = useZenithStore((s) => s.journalLoading);
@@ -41,6 +48,11 @@ export const JournalApp: FC = () => {
     const trackers = useMemo(() => usableTrackers(settings), [settings]);
     const byDate = useMemo(() => entriesByDate(entries), [entries]);
     const entry = byDate.get(selected);
+    /** The last thirty days — the line under the title, whatever month is shown. */
+    const stats = useMemo(
+        () => journalStats(entries, trackers, today, WINDOW_DAYS, settings.journalWeekStart),
+        [entries, trackers, today, settings.journalWeekStart]
+    );
 
     const statsOn = useFeature('journal.stats');
     const wordsOn = useFeature('journal.wordCount');
@@ -129,51 +141,55 @@ export const JournalApp: FC = () => {
 
     return (
         <div className="zenith-journal">
-            <ViewHeader icon={CalendarDays} title={t('journal.title')}>
-                <IconButton
-                    icon={CalendarCheck}
-                    tooltip={t('journal.goToday')}
-                    onClick={goToday}
-                    variant="ghost"
-                    size="md"
-                />
-                {/* A notice, not a panel: reading it moves nothing on the
+            <div className="zenith-journal__top">
+                <PageHead
+                    title={monthTitle(monthAnchor, locale)}
+                    tally={statsOn ? journalTally(stats, today, t, { words: wordsOn }) : undefined}
+                >
+                    <PageHeadButton
+                        icon={CalendarCheck}
+                        label={t('journal.goToday')}
+                        onClick={goToday}
+                    />
+                    {/* A notice, not a panel: reading it moves nothing on the
                         page, and it goes away by itself once read. A toggle
                         pushed the whole calendar down and had to be turned off
                         again by hand. */}
-                <IconButton
-                    icon={Info}
-                    tooltip={t('habits.explain')}
-                    onClick={() => new Notice(t('habits.legend'), 12000)}
-                    variant="ghost"
-                    size="md"
-                />
-                <IconButton
-                    icon={RotateCw}
-                    tooltip={t('common.refresh')}
-                    onClick={() => void refresh()}
-                    disabled={journalLoading}
-                    variant="ghost"
-                    size="md"
-                />
-            </ViewHeader>
+                    <PageHeadButton
+                        icon={Info}
+                        label={t('habits.explain')}
+                        onClick={() => new Notice(t('habits.legend'), 12000)}
+                    />
+                    <PageHeadButton
+                        icon={RotateCw}
+                        label={t('common.refresh')}
+                        onClick={() => void refresh()}
+                        disabled={journalLoading}
+                    />
+                </PageHead>
+                {/* Where the tally's days fall, oldest on the left: the line
+                    under the head, drawn out of the thirty days themselves. */}
+                {statsOn && <CoverageStrip stats={stats} today={today} height={3} />}
+            </div>
 
             {/* Always on screen. It used to hide behind a toggle, which meant
                 the month you are actually keeping was one click further away
-                than the month you are only looking at. */}
-            {(statsOn || monthOn) && (
-                <JournalStats
-                    entries={entries}
-                    trackers={trackers}
-                    today={today}
-                    monthAnchor={monthAnchor}
-                    animate={settings.uiAnimations}
-                    replay={replay}
-                    onSetValue={setHabit}
-                    showOverview={statsOn}
-                    showWords={wordsOn}
-                    showMonth={monthOn}
-                />
+                than the month you are only looking at.
+
+                The wrapper is the container the grid's narrow layout asks the
+                width of. */}
+            {monthOn && (
+                <div className="zenith-jstats">
+                    <HabitMonth
+                        byDate={byDate}
+                        trackers={trackers}
+                        anchor={monthAnchor}
+                        today={today}
+                        animate={settings.uiAnimations}
+                        replay={replay}
+                        onSetValue={setHabit}
+                    />
+                </div>
             )}
 
             <div className="zenith-journal__body">

@@ -1,14 +1,6 @@
 import React, { type FC } from 'react';
 import { Notice } from 'obsidian';
-import {
-    FileText,
-    Plus,
-    ExternalLink,
-    ListChecks,
-    ChevronLeft,
-    ChevronRight,
-    PenLine,
-} from 'lucide-react';
+import { Plus, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { intlLocale, useTranslation } from '../../../core/i18n';
 import type { JournalTracker } from '../../../core/journalConfig';
@@ -23,7 +15,7 @@ import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import { keptOn } from '../services/habitMonth';
 import { notesSection } from '../services/journalParser';
 import { TrackerControl } from './TrackerControl';
-import { dayLabel } from '../services/journalDates';
+import { dayTitle } from '../services/journalDates';
 
 interface DayPanelProps {
     date: string;
@@ -63,6 +55,12 @@ export const DayPanel: FC<DayPanelProps> = ({
     const locale = intlLocale(t.locale);
 
     const { kept, total } = keptOn(entry, trackers);
+    /** What the day says about its note: that there is none, or how long it is. */
+    const about = !entry
+        ? t('journal.noNote')
+        : wordsOn
+          ? t.plural('journal.words', entry.words)
+          : null;
     /** What was actually written, as opposed to what the template laid down. */
     const prose = notesSection(entry?.body ?? '')?.trim() || '';
 
@@ -101,7 +99,7 @@ export const DayPanel: FC<DayPanelProps> = ({
                         >
                             <ChevronLeft size={15} />
                         </button>
-                        <h3 className="zenith-jday__title">{dayLabel(date, locale)}</h3>
+                        <h2 className="zenith-jday__title">{dayTitle(date, locale)}</h2>
                         <button
                             type="button"
                             className="zenith-jday__step"
@@ -112,16 +110,15 @@ export const DayPanel: FC<DayPanelProps> = ({
                             <ChevronRight size={15} />
                         </button>
                     </div>
-                    <span className="zenith-jday__sub">
-                        {date === today && (
-                            <span className="zenith-jday__badge">{t('journal.today')}</span>
-                        )}
-                        {!entry
-                            ? t('journal.noNote')
-                            : wordsOn
-                              ? t.plural('journal.words', entry.words)
-                              : null}
-                    </span>
+                    {(date === today || about) && (
+                        <span className="zenith-jday__sub">
+                            {date === today && (
+                                <span className="zenith-jday__today">{t('journal.today')}</span>
+                            )}
+                            {date === today && about && <span aria-hidden="true">·</span>}
+                            {about}
+                        </span>
+                    )}
                 </div>
                 {/* Icon only, at every width. The label was the first thing to
                     wrap in a narrow pane, pushing the date onto three lines —
@@ -187,7 +184,6 @@ export const DayPanel: FC<DayPanelProps> = ({
 
             <div className="zenith-jday__section">
                 <span className="zenith-jday__section-title">
-                    <ListChecks size={13} />
                     {t('journal.dayTasks')}
                     {tasks.length > 0 && <span className="zenith-jday__count">{tasks.length}</span>}
                 </span>
@@ -223,10 +219,7 @@ export const DayPanel: FC<DayPanelProps> = ({
                 on precisely the days that had nothing in them. Only the section
                 the word count is taken from is shown, so the two agree. */}
             <div className="zenith-jday__section">
-                <span className="zenith-jday__section-title">
-                    <FileText size={13} />
-                    {t('journal.preview')}
-                </span>
+                <span className="zenith-jday__section-title">{t('journal.preview')}</span>
                 {prose ? (
                     <p className="zenith-jday__note" onClick={entry ? onOpen : onCreate}>
                         {prose}
@@ -236,8 +229,7 @@ export const DayPanel: FC<DayPanelProps> = ({
                         className="zenith-jday__note zenith-jday__note--empty"
                         onClick={entry ? onOpen : onCreate}
                     >
-                        <PenLine size={16} />
-                        <span>{t('journal.writeInvite')}</span>
+                        {t('journal.writeInvite')}
                     </button>
                 )}
             </div>

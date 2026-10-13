@@ -131,6 +131,27 @@ export function dayLabel(iso: string, locale: string): string {
     }).format(isoToDate(iso));
 }
 
+/**
+ * A date's words as the title of a page: the first letter a capital, the rest
+ * as the language writes them.
+ *
+ * CSS's `capitalize` is not this. It lifts every word, and Russian got
+ * "Четверг, 24 Сентября" and "Сентябрь 2026 Г." out of it.
+ */
+function asTitle(text: string, locale: string): string {
+    return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
+}
+
+/** "September 2026" as a title — without the "г." Russian ends a bare year with. */
+export function monthTitle(iso: string, locale: string): string {
+    return asTitle(monthLabel(iso, locale).replace(/\s*г\.$/, ''), locale);
+}
+
+/** "Tuesday, 28 July" as a title. */
+export function dayTitle(iso: string, locale: string): string {
+    return asTitle(dayLabel(iso, locale), locale);
+}
+
 /** Localized "28 Jul" — the compact form for a chip or a column header. */
 export function shortDayLabel(iso: string, locale: string): string {
     return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(

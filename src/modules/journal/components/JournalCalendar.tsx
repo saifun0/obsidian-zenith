@@ -7,7 +7,7 @@ import type { JournalEntry } from '../../../store/journalSlice';
 import type { JournalWeekStart } from '../../../store/settingsSlice';
 import { isJournalled } from '../services/journalStats';
 import { keptOn } from '../services/habitMonth';
-import { monthGrid, weekdayLabels, monthLabel, isoToDate, sameMonth } from '../services/journalDates';
+import { monthGrid, weekdayLabels, monthTitle, isoToDate, sameMonth } from '../services/journalDates';
 import { weekOfRange } from '../services/reviewPeriods';
 import { Platform } from 'obsidian';
 
@@ -119,7 +119,7 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
                     onClick={() => onMonthChange(today)}
                     title={t('clock.thisMonth')}
                 >
-                    {monthLabel(monthAnchor, locale)}
+                    {monthTitle(monthAnchor, locale)}
                 </button>
                 <button
                     className="zenith-jcal__nav"

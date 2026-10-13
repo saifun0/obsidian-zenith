@@ -418,6 +418,90 @@
 }
 
 /* ══════════════════════════════════════════════════════
+   The page head
+   ──────────────────────────────────────────────────────
+   The top of a view as the top of a page — the head the Tasks view has, for
+   the rest: a title in the planner's hand that says what the page is of, one
+   line of figures under it, and a few quiet marks at the far end. No glyph,
+   and not the module's name: the tab above says that.
+   ══════════════════════════════════════════════════════ */
+.zenith-phead {
+    margin-bottom: 22px;
+}
+
+.zenith-phead__top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.zenith-phead__title {
+    min-width: 0;
+    margin: 0;
+    font-family: var(--zenith-font-ink);
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.012em;
+    color: var(--text-normal);
+    text-wrap: balance;
+}
+
+.zenith-phead__actions {
+    display: flex;
+    flex: none;
+    gap: 2px;
+    align-self: center;
+}
+
+.zenith-root button.zenith-phead__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    transition: color var(--zenith-transition-fast), background var(--zenith-transition-fast);
+}
+.zenith-root button.zenith-phead__btn:hover,
+.zenith-root button.zenith-phead__btn.is-on {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+.zenith-root button.zenith-phead__btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+/* A thumb needs more than a pointer does. */
+body.is-mobile .zenith-root button.zenith-phead__btn {
+    width: 36px;
+    height: 36px;
+}
+
+/* "27 of the last 30 days · streak 5 · 613 words". */
+.zenith-phead__tally {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    margin: 6px 0 0;
+    color: var(--text-faint);
+    font-size: 0.86rem;
+    font-variant-numeric: tabular-nums;
+}
+/* A figure is one fact and does not break across two lines. */
+.zenith-phead__figure {
+    white-space: nowrap;
+}
+
+/* ══════════════════════════════════════════════════════
    The widget footer
    ──────────────────────────────────────────────────────
    A note about what is not shown, and one way out. Three cards had converged
