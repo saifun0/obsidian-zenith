@@ -19,7 +19,7 @@ and the projects — so the tasks written in those show up too.
     - [/] Draft the introduction
     - [ ] Send to review 📅 2026-09-27
 - [ ] Starts next week 🛫 2026-09-29 📅 2026-10-06
-- [ ] Scheduled for Sunday ⏳ 2026-09-27
+- [ ] Scheduled, with no deadline ⏳ 2026-09-27
 - [ ] Visa appointment #countdown 📅 2026-10-08
 - [ ] Renew the passport #countdown 📅 2026-11-20
 
