@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, type CSSProperties, type FC } from 'react';
+import React, { useEffect, useRef, useState, type FC } from 'react';
 import { parseAmount } from '../services/amountInput';
 
 interface AmountInputProps {
@@ -63,7 +63,7 @@ export const AmountInput: FC<AmountInputProps> = ({
             className={className}
             // As wide as what it holds: a field with room for eight digits
             // would push the − and the + apart around a "2".
-            style={{ width: `${Math.max(shown.length || placeholder.length, 2)}ch` } as CSSProperties}
+            style={{ width: `${Math.max(shown.length || placeholder.length, 2)}ch` }}
             aria-label={label}
             placeholder={placeholder}
             value={shown}
