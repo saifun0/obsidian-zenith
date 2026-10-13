@@ -448,11 +448,17 @@
     text-wrap: balance;
 }
 
+/* On the title's first line, not half-way down a title that took two: a
+   phone gives "Content Library" two lines beside five marks. */
 .zenith-phead__actions {
     display: flex;
     flex: none;
     gap: 2px;
-    align-self: center;
+    align-self: flex-start;
+    margin-top: 3px;
+}
+body.is-mobile .zenith-phead__actions {
+    margin-top: 0;
 }
 
 .zenith-root button.zenith-phead__btn {
@@ -499,6 +505,25 @@ body.is-mobile .zenith-root button.zenith-phead__btn {
 /* A figure is one fact and does not break across two lines. */
 .zenith-phead__figure {
     white-space: nowrap;
+}
+
+/* A page with nothing on it says so the way the Tasks page does: one line in
+   the planner's hand, and under it what to do about it. Not a pictogram in
+   the middle of the pane. */
+.zenith-pempty {
+    padding: 28px 0 0;
+}
+.zenith-pempty__lead {
+    margin: 0 0 6px;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--text-muted);
+}
+.zenith-pempty__hint {
+    margin: 0;
+    font-size: 0.84rem;
+    color: var(--text-faint);
 }
 
 /* ══════════════════════════════════════════════════════

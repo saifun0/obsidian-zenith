@@ -1,6 +1,6 @@
 import { useFeature } from '../../../core/useFeature';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { RotateCw, BarChart3, LayoutGrid, Layers, Library, Star, FileUp } from 'lucide-react';
+import { RotateCw, BarChart3, LayoutGrid, Layers, Star, FileUp } from 'lucide-react';
 import { Notice } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
@@ -8,8 +8,7 @@ import { useTranslation } from '../../../core/i18n';
 import { ContentForm } from './ContentForm';
 import { ContentImportModal } from './ContentImportModal';
 import { SeriesSuggestModal } from './SeriesSuggestModal';
-import { IconButton } from '../../../components/shared/IconButton';
-import { ViewHeader } from '../../../components/shared';
+import { PageHead, PageHeadButton } from '../../../components/shared';
 import { ContentGallery } from './ContentGallery';
 import { ContentStats } from './ContentStats';
 import { Plus } from 'lucide-react';
@@ -53,7 +52,7 @@ export const ContentApp: React.FC = () => {
         }
     }, [request, setRequest, seriesOn]);
 
-    /** One-line pulse of the library, so the header says more than a raw count. */
+    /** The library in one line, under the page's title. */
     const summary = useMemo(() => {
         const rated = contentItems.filter((i) => i.rating > 0);
         return {
@@ -69,71 +68,55 @@ export const ContentApp: React.FC = () => {
 
     return (
         <div className="zenith-content">
-            <ViewHeader
-                icon={Library}
+            <PageHead
                 title={t('content.title')}
-                caption={
-                    <>
-                        <span>{t.plural('common.items', contentItems.length)}</span>
-                        {summary.inProgress > 0 && (
-                            <span className="zenith-content__summary-stat">
-                                <span className="zenith-content__summary-dot is-in-progress" />
-                                {t('content.summary.inProgress', { count: summary.inProgress })}
-                            </span>
-                        )}
-                        {summary.completed > 0 && (
-                            <span className="zenith-content__summary-stat">
-                                <span className="zenith-content__summary-dot is-completed" />
-                                {t('content.summary.completed', { count: summary.completed })}
-                            </span>
-                        )}
-                        {summary.avgRating > 0 && (
-                            <span className="zenith-content__summary-stat" title={t('content.stats.avgRating')}>
-                                <Star size={11} fill="#f59e0b" stroke="#f59e0b" />
-                                {summary.avgRating.toFixed(1)}
-                            </span>
-                        )}
-                    </>
-                }
+                tally={[
+                    t.plural('common.items', contentItems.length),
+                    summary.inProgress > 0 &&
+                        t('content.summary.inProgress', { count: summary.inProgress }),
+                    summary.completed > 0 &&
+                        t('content.summary.completed', { count: summary.completed }),
+                    summary.avgRating > 0 && (
+                        <span className="zenith-content__rating" title={t('content.stats.avgRating')}>
+                            <Star size={11} fill="#f59e0b" stroke="#f59e0b" />
+                            {summary.avgRating.toFixed(1)}
+                        </span>
+                    ),
+                ]}
             >
-                    <IconButton
-                        icon={Plus}
-                        tooltip={t('content.addItem')}
-                        onClick={() => setShowForm(true)}
-                        variant="default"
+                <PageHeadButton
+                    icon={Plus}
+                    label={t('content.addItem')}
+                    onClick={() => setShowForm(true)}
+                />
+                {seriesOn && (
+                    <PageHeadButton
+                        icon={Layers}
+                        label={t('content.series.find')}
+                        onClick={() => setShowFindSeries(true)}
                     />
-                    {seriesOn && (
-                        <IconButton
-                            icon={Layers}
-                            tooltip={t('content.series.find')}
-                            onClick={() => setShowFindSeries(true)}
-                            variant="ghost"
-                        />
-                    )}
-                    {importOn && (
-                        <IconButton
-                            icon={FileUp}
-                            tooltip={t('content.import.title')}
-                            onClick={() => setShowImport(true)}
-                            variant="ghost"
-                        />
-                    )}
-                    {statsOn && (
-                        <IconButton
-                            icon={showStats ? LayoutGrid : BarChart3}
-                            tooltip={t(showStats ? 'content.galleryView' : 'common.statistics')}
-                            onClick={() => setShowStats(!showStats)}
-                            variant="ghost"
-                        />
-                    )}
-                    <IconButton
-                        icon={RotateCw}
-                        tooltip={t('common.refresh')}
-                        onClick={() => void loadContent()}
-                        variant="ghost"
-                        disabled={contentLoading}
+                )}
+                {importOn && (
+                    <PageHeadButton
+                        icon={FileUp}
+                        label={t('content.import.title')}
+                        onClick={() => setShowImport(true)}
                     />
-            </ViewHeader>
+                )}
+                {statsOn && (
+                    <PageHeadButton
+                        icon={showStats ? LayoutGrid : BarChart3}
+                        label={t(showStats ? 'content.galleryView' : 'common.statistics')}
+                        onClick={() => setShowStats(!showStats)}
+                    />
+                )}
+                <PageHeadButton
+                    icon={RotateCw}
+                    label={t('common.refresh')}
+                    onClick={() => void loadContent()}
+                    disabled={contentLoading}
+                />
+            </PageHead>
 
             {showForm && (
                 <ContentForm

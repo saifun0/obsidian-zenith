@@ -703,9 +703,8 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
             )}
 
             {filteredItems.length === 0 ? (
-                <div className="zenith-empty-state">
-                    <span className="zenith-empty-state__icon">🎬</span>
-                    <p className="zenith-empty-state__text">
+                <div className="zenith-pempty">
+                    <p className="zenith-pempty__lead">
                         {t(filtersActive ? 'content.noMatch' : 'content.empty')}
                     </p>
                     {filtersActive ? (
@@ -713,7 +712,7 @@ export const ContentGallery: React.FC<ContentGalleryProps> = ({ items, types, lo
                             <X size={12} /> {t('common.clearFilters')}
                         </button>
                     ) : (
-                        <p className="zenith-text--muted">{t('content.emptyHint')}</p>
+                        <p className="zenith-pempty__hint">{t('content.emptyHint')}</p>
                     )}
                 </div>
             ) : layout === 'list' ? (
