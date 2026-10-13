@@ -45,6 +45,7 @@ export class PromptModal extends Modal {
 
     onOpen(): void {
         const { contentEl, titleEl } = this;
+        this.modalEl.addClass('zenith-ask');
         titleEl.setText(this.opts.title);
         contentEl.addClass('zenith-prompt');
 

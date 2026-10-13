@@ -21,6 +21,8 @@ export class ConfirmModal extends Modal {
             body?: string;
             confirmText: string;
             cancelText: string;
+            /** The answer destroys something: the button says so in the theme's warning colour. */
+            danger?: boolean;
         }
     ) {
         super(app);
@@ -36,13 +38,17 @@ export class ConfirmModal extends Modal {
 
     onOpen(): void {
         const { contentEl, titleEl } = this;
+        this.modalEl.addClass('zenith-ask');
         titleEl.setText(this.opts.title);
         contentEl.addClass('zenith-prompt');
         if (this.opts.body) contentEl.createEl('p', { text: this.opts.body });
 
         const actions = contentEl.createDiv({ cls: 'zenith-prompt__actions' });
         const cancel = actions.createEl('button', { text: this.opts.cancelText });
-        const confirm = actions.createEl('button', { text: this.opts.confirmText, cls: 'mod-cta' });
+        const confirm = actions.createEl('button', {
+            text: this.opts.confirmText,
+            cls: this.opts.danger ? 'mod-warning' : 'mod-cta',
+        });
         confirm.addEventListener('click', () => {
             this.accepted = true;
             this.close();
@@ -58,13 +64,18 @@ export class ConfirmModal extends Modal {
     }
 }
 
-/** Ask before deleting: the question as the dialog's text, with Delete and Cancel. */
+/**
+ * Ask before deleting: the question, with Delete and Cancel.
+ *
+ * The question is the dialog's title. It used to stand under a title that
+ * said "Delete", over a button that said "Delete".
+ */
 export function confirmDelete(app: App, question: string): Promise<boolean> {
     const t = translatorNow();
     return new ConfirmModal(app, {
-        title: t('common.delete'),
-        body: question,
+        title: question,
         confirmText: t('common.delete'),
         cancelText: t('common.cancel'),
+        danger: true,
     }).ask();
 }
