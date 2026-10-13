@@ -360,6 +360,7 @@ export const TaskItem: FC<TaskItemProps> = ({
                             role="button"
                             tabIndex={closing ? -1 : 0}
                             data-task-head=""
+                            data-task-key={key}
                             onClick={openEditor}
                             onKeyDown={(e) => {
                                 if (closing) return;

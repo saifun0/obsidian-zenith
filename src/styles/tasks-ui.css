@@ -1513,6 +1513,62 @@ button.zenith-add-row {
     color: var(--zenith-text-faint);
     text-decoration: line-through;
 }
+/* The pencil that turns a name into a field: at the end of the row, there
+   when the row is pointed at or reached by the keyboard — and always where
+   there is no pointer to point with. */
+.zenith-subdlg__row button.zenith-subdlg__edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--zenith-transition-fast), color var(--zenith-transition-fast),
+        background var(--zenith-transition-fast);
+}
+.zenith-subdlg__row:hover button.zenith-subdlg__edit,
+.zenith-subdlg__row button.zenith-subdlg__edit:focus-visible {
+    opacity: 1;
+}
+.zenith-subdlg__row button.zenith-subdlg__edit:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+@media (pointer: coarse) {
+    .zenith-subdlg__row button.zenith-subdlg__edit {
+        width: 32px;
+        height: 32px;
+        opacity: 1;
+    }
+}
+/* The name as a field: the same line it stood on, with a rule under it while
+   it is being written. */
+.zenith-subdlg__row input.zenith-subdlg__rename {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: inset 0 -1px 0 var(--zenith-accent);
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--zenith-text-normal);
+}
+.zenith-subdlg__row input.zenith-subdlg__rename:focus {
+    outline: none;
+    box-shadow: inset 0 -1px 0 var(--zenith-accent);
+}
+
 .zenith-subdlg__time {
     flex: none;
     font-family: var(--zenith-font-ink);
@@ -1546,6 +1602,7 @@ button.zenith-add-row {
     border-radius: 0;
     background: transparent;
     box-shadow: none;
+    font-family: inherit;
     font-size: 0.95rem;
     color: var(--zenith-text-normal);
 }

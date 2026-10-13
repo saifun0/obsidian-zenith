@@ -6,6 +6,7 @@ import { AppContext } from '../src/context/AppContext';
 import { useZenithStore } from '../src/store';
 import type { SubTask, Task } from '../src/store/taskSlice';
 import { SubtasksDialog } from '../src/modules/tasks/components/SubtasksDialog';
+import { askForTask, detailKey } from '../src/modules/tasks/services/taskViewState';
 
 /**
  * A task's subtasks open in a dialog of their own from the dashboard's card.
@@ -140,5 +141,69 @@ describe('the subtasks dialog', () => {
         act(() => useZenithStore.setState({ tasks: [] }));
         expect(onClose).toHaveBeenCalled();
         expect(panel()).toBeNull();
+    });
+
+    it('turns a name into a field at its pencil, and Escape there keeps the dialog', () => {
+        open();
+        const pencils = () => [...document.querySelectorAll<HTMLElement>('.zenith-subdlg__edit')];
+        expect(pencils()).toHaveLength(4);
+        act(() => pencils()[1].click());
+
+        const field = rows()[1].querySelector<HTMLInputElement>('input.zenith-subdlg__rename');
+        expect(field?.value).toBe('Draft the introduction');
+        // One row is being renamed; the others still have their pencils.
+        expect(pencils()).toHaveLength(3);
+
+        act(() => {
+            field?.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+            );
+        });
+        expect(rows()[1].querySelector('input')).toBeNull();
+        expect(rows()[1].querySelector('.zenith-subdlg__name')?.textContent).toBe(
+            'Draft the introduction'
+        );
+        // The Escape was the field's: the dialog is still there.
+        expect(onClose).not.toHaveBeenCalled();
+        expect(panel()).not.toBeNull();
+    });
+
+    it('has a way to the Tasks view, beside the close button', () => {
+        open();
+        const activateView = vi.fn();
+        // The same dialog, with a plugin that has a tasks view to open.
+        const value = {
+            app: { keymap: undefined },
+            plugin: {
+                dataService: { reloadTasks: vi.fn() },
+                moduleManager: { get: () => ({ activateView }) },
+            },
+        };
+        act(() =>
+            root.render(
+                React.createElement(
+                    AppContext.Provider,
+                    { value: value as never },
+                    React.createElement(SubtasksDialog, { taskId: TASK.id, onClose })
+                )
+            )
+        );
+        act(() => document.querySelector<HTMLElement>('.zenith-subdlg__open')?.click());
+        expect(onClose).toHaveBeenCalledTimes(1);
+        expect(activateView).toHaveBeenCalledTimes(1);
+        // The list has been asked for this task, and to have it unfolded.
+        expect(useZenithStore.getState().taskFocus).toBe(detailKey(TASK));
+        expect(useZenithStore.getState().settings.taskView.open).toContain(detailKey(TASK));
+        act(() => useZenithStore.getState().setTaskFocus(null));
+    });
+});
+
+describe('asking the list for a task', () => {
+    it('unfolds the task and leaves the request for the list to answer', () => {
+        act(() => askForTask({ filePath: 'Inbox.md', title: 'Pack the books' }));
+        const state = useZenithStore.getState();
+        expect(state.taskFocus).toBe('Inbox.md::Pack the books');
+        expect(state.settings.taskView.open?.[0]).toBe('Inbox.md::Pack the books');
+        act(() => state.setTaskFocus(null));
     });
 });

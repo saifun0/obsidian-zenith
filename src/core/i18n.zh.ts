@@ -2332,6 +2332,8 @@ export const ZH: Record<string, string> = {
     'tasks.swipe.tomorrow': '明天',
     'tasks.subtasks.progress': '子任务 {done}/{total}',
     'tasks.subtasks.write': '写下一个子任务…',
+    'tasks.subtasks.rename': '重命名“{name}”',
+    'tasks.subtasks.openInList': '在任务中打开',
     'tasks.repeats': '重复：{rule}',
     'tasks.group.tomorrow': '明天',
     'tasks.group.week': '未来一周',
