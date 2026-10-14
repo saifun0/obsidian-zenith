@@ -1,0 +1,5 @@
+- Home — the latest five pieces
+- Writing — everything, by year
+  - one page per piece, on the article template
+- About
+- Now — what I am working on this month

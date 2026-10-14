@@ -11,7 +11,6 @@ export interface ProjectSlice {
     setProjectsLoading: (loading: boolean) => void;
     setProjectStatusFilter: (status: ProjectStatus | 'all') => void;
     setProjectSearchQuery: (query: string) => void;
-    replaceProjectForFile: (filePath: string, project: Project | null) => void;
 }
 
 export const createProjectSlice: ZenithSliceCreator<ProjectSlice> = (set) => ({
@@ -24,11 +23,4 @@ export const createProjectSlice: ZenithSliceCreator<ProjectSlice> = (set) => ({
     setProjectsLoading: (loading) => set(() => ({ projectsLoading: loading })),
     setProjectStatusFilter: (status) => set(() => ({ projectStatusFilter: status })),
     setProjectSearchQuery: (query) => set(() => ({ projectSearchQuery: query })),
-    replaceProjectForFile: (filePath, project) =>
-        set((state) => ({
-            projects: [
-                ...state.projects.filter((p) => p.filePath !== filePath),
-                ...(project ? [project] : []),
-            ],
-        })),
 });

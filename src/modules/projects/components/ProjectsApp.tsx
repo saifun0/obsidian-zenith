@@ -8,6 +8,7 @@ import { PromptModal } from '../../../core/PromptModal';
 import type { Project, ProjectStatus } from '../projectsTypes';
 import { filterTasksForProject } from '../services/projectParser';
 import { ProjectWriter } from '../services/projectWriter';
+import { moveProjectIntoFolder, revealFolder } from '../services/projectFolders';
 import { ProjectFormModal } from '../ProjectFormModal';
 import { ProjectCard } from './ProjectCard';
 import { TaskWriter } from '../../tasks/services/taskWriter';
@@ -79,6 +80,14 @@ export const ProjectsApp: FC = () => {
             void app.workspace.openLinkText(project.filePath, '', false);
         },
         [app]
+    );
+
+    /** The project's folder in the file tree; its note, where there is no tree to show it in. */
+    const reveal = useCallback(
+        (project: Project) => {
+            if (!project.folderPath || !revealFolder(app, project.folderPath)) openNote(project);
+        },
+        [app, openNote]
     );
 
     const openForm = useCallback(
@@ -248,6 +257,8 @@ export const ProjectsApp: FC = () => {
                                 onEdit={() => openForm(project)}
                                 onStatus={(s) => void changeProjectStatus(project, s)}
                                 onAddTask={() => void addTask(project)}
+                                onReveal={() => reveal(project)}
+                                onMoveToFolder={() => void moveProjectIntoFolder(plugin, project)}
                                 onTaskStatus={(task, next) => void changeTaskStatus(task, next)}
                             />
                         ))}

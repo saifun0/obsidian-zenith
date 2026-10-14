@@ -10,6 +10,8 @@ import { projectsTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
 import { projectsSearchSource } from './searchSource';
 import { translateNow } from '../../core/i18n';
+import { useZenithStore } from '../../store';
+import { keepNamesPaired } from './services/projectFolders';
 
 /**
  * ProjectsModule — Project management, task aggregation and progress tracking.
@@ -67,6 +69,22 @@ export class ProjectsModule extends BaseModule {
         );
 
         this.disposers.push(this.plugin.registerSearchSource(projectsSearchSource(this.plugin)));
+
+        // A project that is a folder is known by its folder and its main note
+        // having one name. Renamed in the file tree, one of the two would no
+        // longer match — so the other is renamed after it.
+        //
+        // A moment later, not at once: a folder's rename is announced before
+        // the notes inside it have been given their new paths, and the note
+        // to rename is looked for by its path.
+        const { vault } = this.plugin.app;
+        const renamed = vault.on('rename', (file, oldPath) => {
+            window.setTimeout(() => {
+                const root = useZenithStore.getState().settings.projectsFolderPath;
+                void keepNamesPaired(this.plugin.app, root, file, oldPath);
+            }, 50);
+        });
+        this.disposers.push(() => vault.offref(renamed));
 
         // Register Projects navigation action in the Navigator
         this.disposers.push(

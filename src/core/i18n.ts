@@ -69,6 +69,18 @@ const EN: Dict = {
     'settings.taskImageSize': 'Image size',
     'settings.contentFolder': 'Content Folder',
     'settings.projectsFolder': 'Projects Folder',
+    'settings.projectsMoveAll': 'Projects as folders',
+    'settings.projectsMoveAll.desc':
+        'Give every project that is still a single note a folder of its own: Name.md becomes Name/Name.md. Links keep working. A new project is made as a folder already.',
+    'settings.projectsMoveAll.button': 'Move all',
+    // Counted, so here rather than in the projects' own strings: a module's
+    // table has the same keys in every language, and Russian counts in three.
+    'projects.card.notes.one': '{count} note',
+    'projects.card.notes.other': '{count} notes',
+    'projects.card.files.one': '{count} file',
+    'projects.card.files.other': '{count} files',
+    'projects.notice.movedAll.one': '{count} project moved into a folder of its own.',
+    'projects.notice.movedAll.other': '{count} projects moved into folders of their own.',
     'settings.folderMissing': "This folder doesn't exist yet.",
     'settings.createFolder': 'Create',
 
@@ -1835,6 +1847,19 @@ const RU: Dict = {
     'settings.taskImageSize': 'Размер картинок',
     'settings.contentFolder': 'Папка контента',
     'settings.projectsFolder': 'Папка проектов',
+    'settings.projectsMoveAll': 'Проекты папками',
+    'settings.projectsMoveAll.desc':
+        'Дать каждому проекту, который пока одна заметка, свою папку: Имя.md станет Имя/Имя.md. Ссылки сохранятся. Новые проекты создаются папками сразу.',
+    'settings.projectsMoveAll.button': 'Перенести все',
+    'projects.card.notes.one': '{count} заметка',
+    'projects.card.notes.few': '{count} заметки',
+    'projects.card.notes.many': '{count} заметок',
+    'projects.card.files.one': '{count} файл',
+    'projects.card.files.few': '{count} файла',
+    'projects.card.files.many': '{count} файлов',
+    'projects.notice.movedAll.one': '{count} проект перенесён в свою папку.',
+    'projects.notice.movedAll.few': '{count} проекта перенесены в свои папки.',
+    'projects.notice.movedAll.many': '{count} проектов перенесены в свои папки.',
     'settings.folderMissing': 'Эта папка ещё не существует.',
     'settings.createFolder': 'Создать',
 

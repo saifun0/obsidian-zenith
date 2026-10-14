@@ -40,6 +40,13 @@ export const ZH: Record<string, string> = {
     'settings.taskImageSize': '图片大小',
     'settings.contentFolder': '内容文件夹',
     'settings.projectsFolder': '项目文件夹',
+    'settings.projectsMoveAll': '项目用文件夹',
+    'settings.projectsMoveAll.desc':
+        '为仍是单篇笔记的每个项目建一个自己的文件夹：Name.md 变为 Name/Name.md，链接保持有效。新项目创建时就是文件夹。',
+    'settings.projectsMoveAll.button': '全部移动',
+    'projects.card.notes.other': '{count} 篇笔记',
+    'projects.card.files.other': '{count} 个文件',
+    'projects.notice.movedAll.other': '已将 {count} 个项目移到各自的文件夹。',
     'settings.folderMissing': '这个文件夹还不存在。',
     'settings.createFolder': '创建',
     'settings.accentColor': '强调色',

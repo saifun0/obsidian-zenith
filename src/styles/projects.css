@@ -230,6 +230,31 @@
     color: var(--zenith-text-faint);
 }
 
+/* What is in the project's folder — "3 notes · 2 files" — at the end of the
+   line, and the way into it: a word, like the rest of the line, underlined
+   when pointed at. */
+.zenith-project-card button.zenith-project-card__stuff {
+    height: auto;
+    margin-left: auto;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.zenith-project-card button.zenith-project-card__stuff:hover {
+    background: none;
+    color: var(--zenith-text-normal);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
 /* ── How far along ───────────────────────────────
    The bar IS the percentage. It used to be drawn under a line reading
    "1 / 3 completed" on the left and "33%" on the right: the same fraction
@@ -677,6 +702,40 @@
     flex-direction: column;
 }
 
+/* The form, set as the pages are: what it is for in the planner's hand, its
+   fields on ruled lines rather than in three boxes, "Cancel" a word and the
+   answer the one button. Scoped to this dialog — the same controls make the
+   settings page, which keeps its own look. */
+/* Named rather than `--zenith-font-ink`: the title is the modal's own, outside
+   the content where Zenith's tokens are declared. */
+.zenith-project-modal .modal-title {
+    font-family: "Zenith Spectral", "Georgia", "Times New Roman", serif;
+    font-size: 1.45rem;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.006em;
+}
+.zenith-project-modal .zenith-settings__card {
+    border: none;
+    border-top: 1px solid var(--background-modifier-border);
+    border-radius: 0;
+    background: none;
+}
+.zenith-project-modal .zenith-settings__card > .zenith-settings__item {
+    padding-right: 0;
+    padding-left: 0;
+}
+.zenith-project-modal .zenith-project-form__actions button.zenith-btn:not(.zenith-btn--cta) {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-muted);
+}
+.zenith-project-modal .zenith-project-form__actions button.zenith-btn:not(.zenith-btn--cta):hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
 /* The card, as an example of itself. It sits above the fields rather than
    beside them because the window is a column on a phone either way, and a
    preview below the form it previews is a preview nobody scrolls back to. */
@@ -684,9 +743,20 @@
     margin-bottom: var(--zs-gap-section, 24px);
 }
 
+/* "Preview" is a caption over an example, not a section of the settings: no
+   capitals, no rule in the accent under it. */
 .zenith-project-form__preview .zenith-settings__section-label {
     display: block;
     margin: 0 0 var(--zs-gap-label, 8px);
+}
+.zenith-project-modal .zenith-project-form__preview .zenith-settings__section-label:not(#_) {
+    border: none;
+    box-shadow: none;
+    font-size: 0.8rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-faint);
 }
 
 /* Nothing in it is live, so nothing in it should invite a press. */

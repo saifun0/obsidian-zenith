@@ -12,8 +12,8 @@ import type { TaskStatus } from '../../../core/constants';
 /** Priorities worth a word on the card. The other three are the ordinary case. */
 const LOUD_PRIORITIES = new Set(['urgent', 'high']);
 
-const MENU_WIDTH = 210;
-const MENU_HEIGHT = 240;
+const MENU_WIDTH = 220;
+const MENU_HEIGHT = 272;
 
 export interface ProjectCardProps {
     project: Project;
@@ -25,6 +25,10 @@ export interface ProjectCardProps {
     onStatus?: (status: ProjectStatus) => void;
     onAddTask?: () => void;
     onTaskStatus?: (task: Task, next: TaskStatus) => void;
+    /** Show the project's folder in the file tree. Only for a project that has one. */
+    onReveal?: () => void;
+    /** Give a project that is a note by itself a folder of its own. */
+    onMoveToFolder?: () => void;
     /**
      * Drawn as an example of itself, inside the form.
      *
@@ -67,10 +71,17 @@ export const ProjectCard: FC<ProjectCardProps> = ({
     onStatus,
     onAddTask,
     onTaskStatus,
+    onReveal,
+    onMoveToFolder,
     preview = false,
     showTasks = true,
 }) => {
     const t = useTranslation();
+    // What is in the project's folder beside its main note: "3 notes · 2 files".
+    const stuff = [
+        project.notes > 0 && t.plural('projects.card.notes', project.notes),
+        project.files > 0 && t.plural('projects.card.files', project.files),
+    ].filter(Boolean);
 
     const due = dueLabel(project, t);
     const starts = startLabel(project, t);
@@ -121,6 +132,8 @@ export const ProjectCard: FC<ProjectCardProps> = ({
                         onEdit={onEdit}
                         onOpenNote={onOpenNote}
                         onStatus={onStatus}
+                        onReveal={onReveal}
+                        onMoveToFolder={onMoveToFolder}
                     />
                 )}
             </div>
@@ -146,6 +159,18 @@ export const ProjectCard: FC<ProjectCardProps> = ({
                         #{tag}
                     </span>
                 ))}
+                {/* The way into the folder, said as what is in it. An empty
+                    folder says nothing here; the menu still shows it. */}
+                {!preview && project.folderPath && stuff.length > 0 && (
+                    <button
+                        type="button"
+                        className="zenith-project-card__stuff"
+                        title={t('projects.card.reveal')}
+                        onClick={onReveal}
+                    >
+                        {stuff.join(' · ')}
+                    </button>
+                )}
             </div>
 
             {showTasks && (
@@ -234,7 +259,9 @@ const ProjectMenu: FC<{
     onEdit?: () => void;
     onOpenNote?: () => void;
     onStatus?: (status: ProjectStatus) => void;
-}> = ({ project, onEdit, onOpenNote, onStatus }) => {
+    onReveal?: () => void;
+    onMoveToFolder?: () => void;
+}> = ({ project, onEdit, onOpenNote, onStatus, onReveal, onMoveToFolder }) => {
     const t = useTranslation();
     const menu = usePopover();
 
@@ -280,6 +307,21 @@ const ProjectMenu: FC<{
                     }}
                 >
                     {t('projects.menu.open')}
+                </button>
+                {/* One or the other: a project that is a folder can be shown
+                    in the file tree, one that is a note by itself can be given
+                    a folder. */}
+                <button
+                    type="button"
+                    role="menuitem"
+                    className="zenith-pop__item"
+                    onClick={() => {
+                        menu.close();
+                        if (project.folderPath) onReveal?.();
+                        else onMoveToFolder?.();
+                    }}
+                >
+                    {t(project.folderPath ? 'projects.menu.reveal' : 'projects.menu.toFolder')}
                 </button>
 
                 {/* The status changes far more often than anything else about
