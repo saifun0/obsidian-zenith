@@ -130,9 +130,12 @@ between two subgroups.
 ## Projects
 
 Six projects, one in each state. *Move to a new flat* is due in a week, and
-*Photo Book 2025* is past its target date. Tasks reach a project three ways:
-written in its note, linked with `[[Website Redesign]]`, or tagged with the
-project's `taskTags`.
+*Photo Book 2025* is past its target date. Each is a folder in `20 Projects`
+with its main note inside, under the same name; the other notes in the folder
+are the project's material — *Website Redesign* has a brief and a sitemap,
+*Move to a new flat* the movers' quotes. Tasks reach a project three ways:
+written in any note of its folder, linked with `[[Website Redesign]]`, or
+tagged with the project's `taskTags`.
 
 ## Journal
 

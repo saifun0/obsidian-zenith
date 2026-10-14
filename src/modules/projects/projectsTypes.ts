@@ -32,6 +32,16 @@ export interface Project {
     /** File name */
     fileName: string;
     /**
+     * The folder that is the project, when it has one: `…/Zenith` for the
+     * main note `…/Zenith/Zenith.md`. A project that is a note by itself has
+     * none. See `projectLayout`.
+     */
+    folderPath?: string;
+    /** The other notes under that folder — the project's material. */
+    notes: number;
+    /** What is under it that is not a note: pictures, attachments. */
+    files: number;
+    /**
      * Display title of the project.
      *
      * The file is the project's address and this is its name, and the two are

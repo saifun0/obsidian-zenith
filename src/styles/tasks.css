@@ -615,21 +615,29 @@
     color: var(--text-faint);
 }
 
-.zenith-arc {
-    flex: none;
-    overflow: visible;
+/* The subtasks' tally (`SubtaskTally`): the count over a hairline, inked as
+   far as they have got. Here and on the dashboard's card. */
+.zenith-tally {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 3px;
+    font-variant-numeric: tabular-nums;
 }
-.zenith-arc__track {
-    fill: none;
-    stroke: color-mix(in srgb, currentColor 30%, transparent);
-    stroke-width: 1.6;
+.zenith-tally__line {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1.5px;
+    border-radius: 1px;
+    background: color-mix(in srgb, currentColor 28%, transparent);
+    overflow: hidden;
 }
-.zenith-arc__done {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    transition: stroke-dasharray 0.3s ease;
+.zenith-tally__line > i {
+    display: block;
+    height: 100%;
+    background: currentColor;
+    transition: width 0.3s ease;
 }
 
 /* Hover actions — the timer and "⋯", and the handle in manual order — come

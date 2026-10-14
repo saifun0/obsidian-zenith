@@ -178,7 +178,9 @@ export {
     isoWeek,
     weekdayLabels,
     monthLabel,
+    monthTitle,
     dayLabel,
+    dayTitle,
     shortDayLabel,
     type WeekStart,
 } from '../../../core/calendarDates';

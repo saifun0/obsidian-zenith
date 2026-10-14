@@ -41,7 +41,31 @@
     stroke-width: 1.5;
     transition: stroke 0.15s ease;
 }
-.zenith-status__half { fill: currentColor; }
+/* Under way: the ring fades back and a quarter of it, at full strength, goes
+   round — one turn in about five seconds, slow enough to be seen out of the
+   corner of the eye and not looked at. Every arc on the screen is at the same
+   point of its turn (`orbitPhase`). With motion off it is the same picture,
+   standing still. */
+.zenith-status__box.is-in-progress .zenith-status__ring {
+    stroke: color-mix(in srgb, currentColor 32%, transparent);
+}
+.zenith-status__orbit {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    transform-origin: 10px 10px;
+}
+body:not(.zenith-no-motion) .zenith-status__orbit {
+    animation: zenith-status-orbit 4.8s linear infinite;
+}
+/* In the menu of statuses it is a picture of the status, not a task going on. */
+body:not(.zenith-no-motion) .zenith-pop .zenith-status__orbit {
+    animation: none;
+}
+@keyframes zenith-status-orbit {
+    to { transform: rotate(360deg); }
+}
 .zenith-status__slash {
     fill: none;
     stroke: currentColor;
@@ -95,6 +119,9 @@
     .zenith-status__box.is-inked .zenith-status__tick {
         animation: none;
         stroke-dashoffset: 0;
+    }
+    body:not(.zenith-no-motion) .zenith-status__orbit {
+        animation: none;
     }
 }
 /* The menu itself is `.zenith-pop` in ui.css now — it was this block, and six
@@ -1211,12 +1238,6 @@ button.zenith-add-row {
 .zenith-tw__margin.is-overdue { color: var(--color-red, #e5534b); }
 .zenith-tw__margin.is-today { color: var(--zenith-text-normal); }
 
-/* A subtask's circle stands under its parent's title. */
-.zenith-tw__row--sub {
-    grid-template-columns: var(--zenith-twmargin) auto minmax(0, 1fr);
-    padding-left: 26px;
-}
-.zenith-tw--lg .zenith-tw__row--sub { padding-left: 27px; }
 .zenith-tw__row--more {
     display: flex;
     padding-left: calc(var(--zenith-twmargin) + 46px);
@@ -1236,7 +1257,6 @@ button.zenith-add-row {
 .zenith-tw__title.is-p-high,
 .zenith-tw__title.is-p-urgent { font-weight: 600; }
 .zenith-tw__title.is-p-low { color: var(--zenith-text-muted); }
-.zenith-tw__title.is-sub { font-size: 12.5px; color: var(--zenith-text-muted); }
 
 /* The ink, as in the list: drawn through a task as it closes. */
 .zenith-tw__ink {
@@ -1245,8 +1265,6 @@ button.zenith-add-row {
     background-position: 0 58%;
     background-size: 0 1px;
 }
-.zenith-tw__title.is-struck { color: var(--zenith-text-faint); }
-.zenith-tw__title.is-struck .zenith-tw__ink { background-size: 100% 1px; }
 .zenith-tw__row.is-closing .zenith-tw__title {
     color: var(--zenith-text-faint);
     font-weight: 400;
@@ -1311,8 +1329,7 @@ button.zenith-add-row {
     color: var(--zenith-text-muted);
     cursor: pointer;
 }
-.zenith-root button.zenith-tw__fold:hover,
-.zenith-root button.zenith-tw__fold.is-open {
+.zenith-root button.zenith-tw__fold:hover {
     color: var(--zenith-text-normal);
     background: var(--zenith-bg-hover);
 }
@@ -1396,4 +1413,210 @@ button.zenith-add-row {
 .zenith-widget-card__fit > .zenith-tw {
     height: auto;
     overflow: visible;
+}
+
+/* ══════════════════════════════════════════════════════
+   A task's subtasks, in a dialog of their own
+   ──────────────────────────────────────────────────────
+   What the tally on the dashboard's card opens (`SubtasksDialog`). A page of
+   the planner, cut small: the task in the planner's hand, how far along it
+   is as one line of ink, its subtasks on ruled lines, and a line to write the
+   next one on. The shell — scrim, panel, close — is modal.css.
+   ══════════════════════════════════════════════════════ */
+.zenith-subdlg .zenith-dialog__header {
+    align-items: flex-start;
+    padding: 22px 16px 14px 24px;
+    border-bottom: none;
+}
+.zenith-subdlg .zenith-dialog__body {
+    padding: 0 24px 18px;
+}
+
+.zenith-subdlg__head {
+    flex: 1;
+    min-width: 0;
+}
+.zenith-subdlg__title {
+    margin: 0;
+    font-family: var(--zenith-font-ink);
+    font-size: 1.45rem;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.008em;
+    color: var(--zenith-text-normal);
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+}
+.zenith-subdlg__tally {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    margin: 6px 0 0;
+    color: var(--zenith-text-faint);
+    font-size: 0.84rem;
+    font-variant-numeric: tabular-nums;
+}
+/* When it is due, as the margin of the list says it. */
+.zenith-subdlg__when {
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 0.92rem;
+    font-variant-numeric: oldstyle-nums;
+}
+.zenith-subdlg__when.is-overdue { color: var(--color-red, #e5534b); }
+.zenith-subdlg__when.is-today { color: var(--zenith-text-normal); }
+
+/* The rule under the head, inked as far as the task has got. */
+.zenith-subdlg__progress {
+    position: relative;
+    height: 2px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--zenith-text-faint) 30%, transparent);
+    overflow: hidden;
+}
+.zenith-subdlg__progress > span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 2px;
+    background: var(--zenith-text-normal);
+    transition: width 0.5s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.zenith-subdlg__list {
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    outline: none;
+}
+.zenith-subdlg__row,
+.zenith-subdlg__add {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    border-bottom: 1px solid var(--zenith-border);
+}
+/* A subtask of a subtask stands under its parent's title. */
+.zenith-subdlg__row {
+    padding: 6px 0 6px calc(var(--subdlg-depth, 0) * 26px);
+}
+.zenith-subdlg__name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    color: var(--zenith-text-normal);
+    overflow-wrap: anywhere;
+}
+.zenith-subdlg__row.is-closed .zenith-subdlg__name {
+    color: var(--zenith-text-faint);
+    text-decoration: line-through;
+}
+/* The pencil that turns a name into a field: at the end of the row, there
+   when the row is pointed at or reached by the keyboard — and always where
+   there is no pointer to point with. */
+.zenith-subdlg__row button.zenith-subdlg__edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--zenith-transition-fast), color var(--zenith-transition-fast),
+        background var(--zenith-transition-fast);
+}
+.zenith-subdlg__row:hover button.zenith-subdlg__edit,
+.zenith-subdlg__row button.zenith-subdlg__edit:focus-visible {
+    opacity: 1;
+}
+.zenith-subdlg__row button.zenith-subdlg__edit:hover {
+    background: var(--zenith-bg-hover);
+    color: var(--zenith-text-normal);
+}
+@media (pointer: coarse) {
+    .zenith-subdlg__row button.zenith-subdlg__edit {
+        width: 32px;
+        height: 32px;
+        opacity: 1;
+    }
+}
+/* The name as a field: the same line it stood on, with a rule under it while
+   it is being written. */
+.zenith-subdlg__row input.zenith-subdlg__rename {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: inset 0 -1px 0 var(--zenith-accent);
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--zenith-text-normal);
+}
+.zenith-subdlg__row input.zenith-subdlg__rename:focus {
+    outline: none;
+    box-shadow: inset 0 -1px 0 var(--zenith-accent);
+}
+
+.zenith-subdlg__time {
+    flex: none;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 0.86rem;
+    color: var(--zenith-text-faint);
+    font-variant-numeric: oldstyle-nums;
+}
+
+/* The line the next one is written on: a circle not yet drawn in, and the
+   words in the planner's hand until something is typed over them. */
+.zenith-subdlg__add {
+    border-bottom-color: transparent;
+}
+/* Under the circles above it: those stand in a 28px control, six pixels in. */
+.zenith-subdlg__ring {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin: 0 6px;
+    border: 1.5px solid var(--zenith-text-faint);
+    border-radius: 50%;
+    opacity: 0.5;
+}
+.zenith-subdlg__add input.zenith-subdlg__input {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--zenith-text-normal);
+}
+.zenith-subdlg__add input.zenith-subdlg__input:focus {
+    box-shadow: none;
+    outline: none;
+}
+.zenith-subdlg__input::placeholder {
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    color: var(--zenith-text-faint);
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zenith-subdlg__progress > span { transition: none; }
 }

@@ -126,6 +126,27 @@ export class VaultService {
     }
 
     /**
+     * The path of every file under a folder — notes and everything else.
+     *
+     * For the projects, where a folder's pictures and attachments are counted
+     * beside its notes. Nothing is reported about a folder that is not there:
+     * `getMarkdownFiles`, asked first, has said so already.
+     */
+    getFilePaths(folderPath: string): string[] {
+        const folder = this.app.vault.getAbstractFileByPath((folderPath ?? '').trim());
+        if (!(folder instanceof TFolder)) return [];
+        const paths: string[] = [];
+        const walk = (dir: TFolder) => {
+            for (const child of dir.children) {
+                if (child instanceof TFile) paths.push(child.path);
+                else if (child instanceof TFolder) walk(child);
+            }
+        };
+        walk(folder);
+        return paths;
+    }
+
+    /**
      * Recursively collect .md files from a folder.
      */
     private collectMarkdownFiles(folder: TFolder, result: TFile[]): void {

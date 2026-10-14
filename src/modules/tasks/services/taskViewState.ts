@@ -31,6 +31,20 @@ export function setDetailsOpen(key: string, open: boolean): void {
     patch({ open: open ? [key, ...rest].slice(0, OPEN_CAP) : rest });
 }
 
+/**
+ * Ask the list to show one task: its subtasks unfolded, the list turned to it.
+ *
+ * The asking is all that happens here. The list is what knows its tabs, its
+ * search and its folded groups, so it is the list that undoes whichever of
+ * them is hiding the task (`TasksApp`, `TaskGroup`); opening the view itself
+ * is the caller's, who has the plugin to open it with.
+ */
+export function askForTask(task: { filePath: string; title: string }): void {
+    const key = detailKey(task);
+    setDetailsOpen(key, true);
+    useZenithStore.getState().setTaskFocus(key);
+}
+
 export function closedGroups(view: TaskViewState): readonly string[] {
     return view.closed ?? DEFAULT_CLOSED_GROUPS;
 }

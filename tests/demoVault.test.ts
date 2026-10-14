@@ -176,6 +176,23 @@ describe('the demo vault in the repository', () => {
         expect(days.filter((d) => d > DEMO_TODAY)).toEqual([]);
     });
 
+    it('names no weekday beside a date that will move', () => {
+        // The move is by days, not by weeks: a note for the 24th that says
+        // "it is a Thursday" is wrong on every release day that is not one. A
+        // day's note and a task are tied to a date; a review of a week is not.
+        const WEEKDAY =
+            /\b(mon|tues|wednes|thurs|fri|satur|sun)days?\b|понедельник|вторник|сред[аеуы]\b|четверг|пятниц|суббот|воскресень/i;
+        const dated = files.filter((f) => /Daily note\/|Tasks\//.test(rel(f)));
+        expect(dated.length).toBeGreaterThan(50);
+        const named = dated.flatMap((f) =>
+            readFileSync(f, 'utf8')
+                .split('\n')
+                .filter((line) => WEEKDAY.test(line))
+                .map((line) => `${rel(f)}: ${line.trim()}`)
+        );
+        expect(named).toEqual([]);
+    });
+
     it('reads its tasks from the inbox it shows off', () => {
         // An empty tasks folder means "no folder", not "the whole vault".
         expect(settings.tasksFolderPath).toBe('10 Inbox/Tasks');

@@ -1,8 +1,8 @@
-import React, { type FC } from 'react';
+import React, { useEffect, type FC } from 'react';
 import { TaskItem } from './TaskItem';
 import { useTranslation } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
-import { closedGroups, toggleGroup } from '../services/taskViewState';
+import { closedGroups, detailKey, toggleGroup } from '../services/taskViewState';
 import type { SortableApi } from './useSortableRows';
 import type { TaskListGroup } from './TaskList';
 
@@ -45,6 +45,14 @@ export const TaskGroup: FC<TaskGroupProps> = ({
     const closed = useZenithStore((s) => closedGroups(s.settings.taskView).includes(group.id));
     const { dragKey, dropTarget, handleProps, registerRow, registerZone } = sortable;
     const empty = group.items.length === 0;
+
+    // A task that has been asked for is shown: if it is in this group and the
+    // group is folded away, the group opens.
+    const asked = useZenithStore((s) => s.taskFocus);
+    const holdsAsked = !!asked && group.items.some((it) => detailKey(it.task) === asked);
+    useEffect(() => {
+        if (holdsAsked && closed) toggleGroup(group.id);
+    }, [holdsAsked, closed, group.id]);
 
     if (empty && !droppable) return null;
     // A group without a title is the flat list; it has nothing to fold by.

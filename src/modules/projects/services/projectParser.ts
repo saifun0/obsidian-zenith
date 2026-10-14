@@ -5,6 +5,7 @@ import type { Priority } from '../../../core/constants';
 import type { Project, ProjectStatus } from '../projectsTypes';
 import { computeProjectStats } from './projectStats';
 import { linkNamesProject } from './projectLink';
+import { placeProjects, type ProjectPlace } from './projectLayout';
 
 export function normalizeProjectStatus(raw: unknown): ProjectStatus {
     if (typeof raw !== 'string') return 'active';
@@ -31,10 +32,10 @@ export function normalizeProjectPriority(raw: unknown): Priority {
  * The tasks that belong to a project.
  *
  * Four rules, and the difference between them is the whole design. Three are
- * statements the task itself makes — it lives in the project's note, it names
- * the project in its text, or it links to the note from its detail block —
- * and the fourth is a statement the PROJECT makes, in `taskTags`, about which
- * tags mean it.
+ * statements the task itself makes — it lives in the project's note or
+ * anywhere in the project's folder, it names the project in its text, or it
+ * links to the note from its detail block — and the fourth is a statement the
+ * PROJECT makes, in `taskTags`, about which tags mean it.
  *
  * What is gone is the rule that was nobody's statement: any shared tag counted,
  * minus a blacklist of `project`/`todo`/`task` written into this function to
@@ -57,12 +58,15 @@ export function filterTasksForProject(project: Project, allTasks: Task[]): Task[
 
     const seenIds = new Set<string>();
     const matched: Task[] = [];
+    const inFolder = project.folderPath ? `${project.folderPath}/` : null;
 
     for (const task of allTasks) {
         if (seenIds.has(task.id)) continue;
 
-        // 1. Written inside the project's own note.
-        if (task.filePath === project.filePath) {
+        // 1. Written inside the project's own note — or, for a project that
+        //    is a folder, in any note of that folder: the folder is the
+        //    project, and a task in its meeting notes is the project's task.
+        if (task.filePath === project.filePath || (inFolder && task.filePath.startsWith(inFolder))) {
             seenIds.add(task.id);
             matched.push(task);
             continue;
@@ -117,22 +121,37 @@ export class ProjectParser {
         this.vaultService = new VaultService(app);
     }
 
+    /**
+     * Every project under the projects folder.
+     *
+     * Which notes are projects is decided from the whole folder at once
+     * (`placeProjects`): a note is one by itself, or as the main note of a
+     * folder of its own name — and then the other notes of that folder are
+     * its material, not projects. That cannot be told from one file, which is
+     * why there is no reading of a single project any more.
+     */
     async parseProjects(folderPath: string, allTasks: Task[]): Promise<Project[]> {
-        const files = this.vaultService.getMarkdownFiles(folderPath);
+        // Asked for its notes first: that is the call that reports a folder
+        // set in settings and missing from the vault.
+        const notes = new Map(
+            this.vaultService.getMarkdownFiles(folderPath).map((file) => [file.path, file])
+        );
         const projects: Project[] = [];
-        for (const file of files) {
-            const project = await this.parseFile(file, allTasks);
-            if (project) projects.push(project);
+        for (const place of placeProjects(this.vaultService.getFilePaths(folderPath), folderPath)) {
+            const file = notes.get(place.notePath);
+            if (!file) continue;
+            projects.push(await this.parseFile(file, allTasks, place));
         }
         return projects;
     }
 
-    async parseFile(file: TFile, allTasks: Task[]): Promise<Project | null> {
+    private async parseFile(file: TFile, allTasks: Task[], place: ProjectPlace): Promise<Project> {
         const fm = await this.vaultService.getFrontmatter(file);
         return projectFromFrontmatter(
             fm,
             { path: file.path, name: file.name, basename: file.basename, mtime: file.stat?.mtime ?? 0 },
-            allTasks
+            allTasks,
+            place
         );
     }
 }
@@ -148,7 +167,9 @@ export class ProjectParser {
 export function projectFromFrontmatter(
     fm: Record<string, unknown>,
     file: { path: string; name: string; basename: string; mtime: number },
-    allTasks: Task[]
+    allTasks: Task[],
+    /** Where it stands among the files — its folder, if it has one, and what is in it. */
+    place?: Pick<ProjectPlace, 'folderPath' | 'notes' | 'files'>
 ): Project {
     const title = (typeof fm.title === 'string' && fm.title.trim()) || file.basename;
     const status = normalizeProjectStatus(fm.status);
@@ -165,6 +186,9 @@ export function projectFromFrontmatter(
         id: file.path,
         filePath: file.path,
         fileName: file.name,
+        folderPath: place?.folderPath,
+        notes: place?.notes ?? 0,
+        files: place?.files ?? 0,
         title,
         status,
         priority,

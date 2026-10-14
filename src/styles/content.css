@@ -12,51 +12,35 @@
     animation: zenith-fade-in var(--zenith-transition-slow);
 }
 
-/* The header itself is `.zenith-vhead` in ui.css, shared with every other
-   module's view. What is left is the one thing that is about a library: a
-   coloured dot per status in the caption. */
-.zenith-content__summary-stat {
+/* The head is `.zenith-phead` in ui.css, shared with every other view. What is
+   left is the one figure in its tally that is not a word: the star before the
+   average rating. */
+.zenith-content__rating {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-variant-numeric: tabular-nums;
+    gap: 4px;
 }
 
-.zenith-content__summary-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-.zenith-content__summary-dot.is-in-progress { background: var(--zenith-info); }
-.zenith-content__summary-dot.is-completed { background: var(--zenith-success); }
-
-/* ── Section labels (Continue / Library) ──────────
-   A micro-label trailing a hairline, not a heading. The section still gets
-   marked, but a bold 0.95rem line with an accent icon and a count pill was
-   competing with the posters it was supposed to introduce. */
+/* ── Section names (Continue / Library) ──────────
+   Named as a group of tasks is on the Tasks page: in the planner's hand, the
+   count after it in italics. They were a micro-label in capitals trailing a
+   hairline. */
 .zenith-content-section {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    align-items: baseline;
+    gap: 8px;
     margin: 0 0 var(--zenith-space-sm);
-    font-size: 0.66rem;
-    font-weight: 650;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--zenith-text-faint);
-}
-.zenith-content-section::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: var(--zenith-border);
+    font-family: var(--zenith-font-ink);
+    font-size: 1.12rem;
+    font-weight: 400;
+    letter-spacing: 0.002em;
+    color: var(--zenith-text-normal);
 }
 .zenith-content-section__count {
-    font-weight: 600;
-    letter-spacing: 0;
+    font-style: italic;
+    font-size: 0.9rem;
     color: var(--zenith-text-faint);
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: oldstyle-nums;
 }
 
 /* ── Content Gallery ──────────────────────────────
@@ -261,23 +245,22 @@
     scroll-snap-align: start;
 }
 
+/* No card around each: a cover, a title and a line of progress are a row of
+   their own. Pointed at, the row is tinted, as a row of the list is. */
 .zenith-resume {
     display: flex;
     align-items: center;
     gap: var(--zenith-space-sm);
     min-width: 0;
-    padding: 8px 10px 8px 8px;
-    border: 1px solid var(--zenith-border);
+    padding: 6px 10px 6px 6px;
     border-radius: var(--zenith-radius-md);
-    background: var(--zenith-bg-secondary);
     cursor: pointer;
     outline: none;
     animation: zenith-scale-in var(--zenith-transition-slow) ease both;
-    transition: border-color var(--zenith-transition), background var(--zenith-transition);
+    transition: background var(--zenith-transition);
 }
 .zenith-resume:hover,
 .zenith-resume:focus-visible {
-    border-color: var(--zenith-accent);
     background: var(--zenith-bg-hover);
 }
 .zenith-resume.is-selected {
@@ -377,7 +360,7 @@
     height: 26px;
     flex-shrink: 0;
     padding: 0;
-    border: 1px solid var(--zenith-border);
+    border: none;
     border-radius: 50%;
     background: transparent;
     box-shadow: none;
@@ -385,7 +368,7 @@
     cursor: pointer;
     opacity: 0;
     transition: opacity var(--zenith-transition-fast), background var(--zenith-transition-fast),
-        color var(--zenith-transition-fast), border-color var(--zenith-transition-fast);
+        color var(--zenith-transition-fast);
 }
 .zenith-resume:hover button.zenith-resume__bump,
 .zenith-resume button.zenith-resume__bump:focus-visible {
@@ -393,7 +376,6 @@
 }
 .zenith-resume button.zenith-resume__bump:hover {
     background: var(--zenith-accent);
-    border-color: var(--zenith-accent);
     color: #fff;
 }
 /* Coarse pointers have no hover — keep the action reachable. */
@@ -407,7 +389,9 @@
 .zenith-content-gallery__allclear {
     margin: 0;
     padding: var(--zenith-space-md) 0;
-    font-size: 0.85rem;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 1rem;
     color: var(--zenith-text-faint);
 }
 
@@ -574,19 +558,17 @@
     flex-wrap: wrap;
 }
 
-/* Type filter as a segmented control. Deliberately not the shared `.zenith-tabs`
-   component — that one is also worn by the tasks and weather views, and this
-   shape is only right here. */
+/* The types, as words in a row — the way the Tasks page turns between
+   "active", "in progress" and "done": the one shown is in the text's colour
+   and underlined, the rest are quiet. It was a segmented control in a box of
+   its own. Deliberately not the shared `.zenith-tabs` component — that one is
+   also worn by the weather view, and this shape is only right here. */
 .zenith-content-gallery__types {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
+    gap: 2px 16px;
     flex-shrink: 0;
     max-width: 100%;
-    padding: 3px;
-    border: 1px solid var(--zenith-border);
-    border-radius: var(--zenith-radius-md);
-    background: var(--zenith-bg-secondary);
     overflow-x: auto;
     scrollbar-width: none;
 }
@@ -599,30 +581,40 @@
     align-items: center;
     gap: 6px;
     flex-shrink: 0;
-    padding: 4px 10px;
+    height: var(--zenith-field-h);
+    padding: 0;
     border: none;
-    border-radius: var(--zenith-radius-sm);
+    border-radius: 0;
     background: transparent;
     box-shadow: none;
     color: var(--zenith-text-muted);
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: 0.86rem;
+    font-weight: 400;
     white-space: nowrap;
     cursor: pointer;
-    transition: background var(--zenith-transition-fast), color var(--zenith-transition-fast);
+    transition: color var(--zenith-transition-fast);
 }
 .zenith-content-gallery__types button.zenith-content-gallery__type:hover {
     color: var(--zenith-text-normal);
 }
 .zenith-content-gallery__types button.zenith-content-gallery__type.is-active {
-    background: var(--zenith-bg-primary);
     color: var(--zenith-text-normal);
-    font-weight: 600;
-    box-shadow: var(--zenith-shadow-xs);
+}
+/* The underline is there, a pixel thick, and unseen until this is the type
+   shown. One value, restated whole by the state that shows it — as the Tasks
+   page's tally does. */
+.zenith-content-gallery__type-label {
+    --zenith-underline: underline 1px transparent;
+    text-decoration: var(--zenith-underline);
+    text-underline-offset: 5px;
+}
+.zenith-content-gallery__type.is-active .zenith-content-gallery__type-label {
+    --zenith-underline: underline 1px currentColor;
 }
 .zenith-content-gallery__types button.zenith-content-gallery__type:focus-visible {
-    outline: 2px solid var(--zenith-accent);
-    outline-offset: -1px;
+    outline: none;
+    border-radius: 3px;
+    box-shadow: 0 0 0 2px var(--zenith-accent);
 }
 
 /* The type's own colour lands on its icon, so the row stays scannable by hue
@@ -635,8 +627,7 @@
     display: inline-flex;
 }
 .zenith-content-gallery__type-count {
-    font-size: 0.68rem;
-    font-weight: 500;
+    font-size: 0.72rem;
     color: var(--zenith-text-faint);
     font-variant-numeric: tabular-nums;
 }
@@ -660,7 +651,8 @@
     gap: 4px;
 }
 
-/* A field-sized square, so it reads as part of the sort field beside it. */
+/* As tall as the sort field beside it, and a quiet mark like the ones at the
+   head of the page: no square around it until it is pointed at or switched on. */
 .zenith-content-gallery__controls button.zenith-content-gallery__sortdir {
     display: inline-flex;
     align-items: center;
@@ -669,18 +661,18 @@
     height: var(--zenith-field-h);
     flex-shrink: 0;
     padding: 0;
-    border: 1px solid var(--zenith-field-border);
-    border-radius: var(--zenith-field-radius);
-    background: var(--zenith-field-bg);
+    border: none;
+    border-radius: 8px;
+    background: transparent;
     box-shadow: none;
-    color: var(--text-muted);
+    color: var(--text-faint);
     cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease;
+    transition: color 0.15s ease, background 0.15s ease;
 }
 
 .zenith-content-gallery__controls button.zenith-content-gallery__sortdir:hover {
     color: var(--text-normal);
-    border-color: var(--interactive-accent);
+    background: var(--background-modifier-hover);
 }
 
 /* Filter feedback: how much of the library you're actually looking at. */
@@ -695,25 +687,27 @@
 }
 
 .zenith-content-gallery button.zenith-content-gallery__clear,
-.zenith-empty-state button.zenith-content-gallery__clear {
+.zenith-pempty button.zenith-content-gallery__clear {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 3px 10px;
-    border: 1px solid var(--zenith-border);
-    border-radius: 999px;
+    height: auto;
+    padding: 2px 0;
+    border: none;
+    border-radius: 0;
     background: transparent;
     box-shadow: none;
     color: var(--zenith-text-muted);
-    font-size: 0.76rem;
+    font-size: 0.8rem;
     cursor: pointer;
 }
 
 .zenith-content-gallery button.zenith-content-gallery__clear:hover,
-.zenith-empty-state button.zenith-content-gallery__clear:hover {
+.zenith-pempty button.zenith-content-gallery__clear:hover {
     color: var(--zenith-text-normal);
-    border-color: var(--zenith-accent);
-    background: var(--zenith-bg-hover);
+    background: transparent;
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 @media (max-width: 600px) {
@@ -1130,7 +1124,6 @@ button.zenith-ctype__add {
 
 .zenith-content-gallery__controls button.zenith-content-gallery__sortdir.is-active {
     color: var(--zenith-accent);
-    border-color: var(--zenith-accent);
     background: color-mix(in srgb, var(--zenith-accent) 12%, transparent);
 }
 
@@ -1511,8 +1504,10 @@ button.zenith-ctype__add {
     background: none;
     box-shadow: none;
     color: var(--zenith-text-normal);
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-family: var(--zenith-font-ink);
+    font-size: 1.12rem;
+    font-weight: 400;
+    letter-spacing: 0.002em;
     text-align: left;
     cursor: pointer;
 }
@@ -1540,9 +1535,10 @@ button.zenith-ctype__add {
 }
 
 .zenith-csection__count {
+    font-style: italic;
+    font-size: 0.9rem;
     color: var(--zenith-text-faint);
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: oldstyle-nums;
 }
 
 .zenith-crows {
@@ -1756,7 +1752,6 @@ button.zenith-ctype__add {
 
 .zenith-content-gallery__controls button.zenith-content-gallery__sortdir.is-heart {
     color: #ec4899;
-    border-color: #ec4899;
     background: color-mix(in srgb, #ec4899 12%, transparent);
 }
 
@@ -1771,51 +1766,6 @@ button.zenith-ctype__add {
     animation: zenith-fade-in var(--zenith-transition-slow);
 }
 
-/* Four figures in a row, parted by hairlines rather than boxed. */
-.zenith-cstats__figures {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    padding: var(--zenith-space-sm) 0;
-    border-bottom: 1px solid var(--zenith-border);
-}
-
-.zenith-cstats__figure {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 0 var(--zenith-space-md);
-}
-
-.zenith-cstats__figure + .zenith-cstats__figure {
-    border-left: 1px solid var(--zenith-border);
-}
-
-.zenith-cstats__figure-value {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--zenith-text-normal);
-    font-size: 1.7rem;
-    font-weight: 700;
-    line-height: 1.1;
-    font-variant-numeric: tabular-nums;
-}
-
-.zenith-cstats__figure-label {
-    color: var(--zenith-text-muted);
-    font-size: 0.78rem;
-}
-
-@media (max-width: 560px) {
-    .zenith-cstats__figures {
-        grid-template-columns: repeat(2, 1fr);
-        row-gap: var(--zenith-space-md);
-    }
-    .zenith-cstats__figure:nth-child(3) {
-        border-left: none;
-    }
-}
-
 .zenith-cstats__section {
     display: flex;
     flex-direction: column;
@@ -1825,18 +1775,21 @@ button.zenith-ctype__add {
 .zenith-cstats__title {
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
     margin: 0;
     color: var(--zenith-text-normal);
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-family: var(--zenith-font-ink);
+    font-size: 1.12rem;
+    font-weight: 400;
+    letter-spacing: 0.002em;
 }
 
 .zenith-cstats__aside {
     color: var(--zenith-text-faint);
-    font-size: 0.78rem;
-    font-weight: 400;
+    font-family: var(--font-interface, inherit);
+    font-size: 0.8rem;
+    letter-spacing: 0;
 }
 
 .zenith-cstats__hint {

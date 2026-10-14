@@ -85,6 +85,9 @@ export const ProjectForm: FC<ProjectFormProps> = ({ project, initialTitle, onClo
             id: project?.id ?? 'preview',
             filePath: project?.filePath ?? '',
             fileName: project?.fileName ?? '',
+            folderPath: project?.folderPath,
+            notes: project?.notes ?? 0,
+            files: project?.files ?? 0,
             title: title.trim() || t('projects.template.title'),
             status,
             priority,
@@ -119,6 +122,9 @@ export const ProjectForm: FC<ProjectFormProps> = ({ project, initialTitle, onClo
             t,
         ]
     );
+
+    /** The title as a name the file system will take — for the folder and its note. */
+    const fileBase = projectFileName(title, t('projects.template.title'));
 
     const submit = async () => {
         if (!title.trim()) {
@@ -168,7 +174,8 @@ export const ProjectForm: FC<ProjectFormProps> = ({ project, initialTitle, onClo
                         editing
                             ? undefined
                             : t('projects.form.file', {
-                                  name: `${projectFileName(title, t('projects.template.title'))}.md`,
+                                  // A new project is a folder with its note in it.
+                                  name: `${fileBase}/${fileBase}.md`,
                               })
                     }
                     error={error ?? undefined}

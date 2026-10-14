@@ -161,6 +161,22 @@ export class DataService {
         }
     }
 
+    /** The projects, read again without the loading flag: for a change in the vault. */
+    private async refreshProjects(): Promise<void> {
+        const { projectsFolderPath, activeModuleIds } = useZenithStore.getState().settings;
+        if (!activeModuleIds.includes('projects') || !projectsFolderPath?.trim()) return;
+        const run = ++this.generation.projects;
+        try {
+            const projects = await this.projectParser.parseProjects(
+                projectsFolderPath,
+                useZenithStore.getState().tasks
+            );
+            if (run === this.generation.projects) useZenithStore.getState().setProjects(projects);
+        } catch (err) {
+            console.error('Zenith: Failed to parse projects:', err);
+        }
+    }
+
     async reloadJournal(): Promise<void> {
         const store = useZenithStore.getState();
         const { journalFolderPath, journalDateFormat } = store.settings;
@@ -217,10 +233,19 @@ export class DataService {
         // Only Markdown files carry tasks/content; ignore other assets. On
         // delete/rename the TFile may no longer resolve, so also test oldPath.
         const isMd = file instanceof TFile ? file.extension === 'md' : true;
-        if (!isMd && !oldPath) return;
-
         const settings = useZenithStore.getState().settings;
         const { contentFolderPath, journalFolderPath, projectsFolderPath } = settings;
+        if (!isMd && !oldPath) {
+            // Not a note, so no task and no item — but a picture or an
+            // attachment in a project's folder is one of the files its card
+            // counts.
+            if (projectsFolderPath && this.isInFolder(file.path, projectsFolderPath)) {
+                this.dirtyProjects.add(file.path);
+                this.flushDebounced();
+            }
+            return;
+        }
+
         const taskFolders = this.taskFolders();
         const dailyNotesWatched = watchesDailyNotes(settings);
         const paths = [file.path, oldPath].filter((p): p is string => !!p);
@@ -287,21 +312,12 @@ export class DataService {
             }
         }
 
-        for (const path of projectPaths) {
-            try {
-                const file = this.plugin.app.vault.getAbstractFileByPath(path);
-                const project =
-                    file instanceof TFile
-                        ? await this.projectParser.parseFile(file, useZenithStore.getState().tasks)
-                        : null;
-                useZenithStore.getState().replaceProjectForFile(path, project);
-            } catch (err) {
-                console.error(`Zenith: Failed to parse project in "${path}":`, err);
-            }
-        }
-
-        if (taskPaths.length > 0 && projectPaths.length === 0) {
-            void this.reloadProjects();
+        // The projects are read again whole, not file by file: whether a note
+        // is a project, or the material of one, depends on what stands around
+        // it (`placeProjects`), and a project's tasks on every task there is.
+        // Quietly — see above about the loading flags.
+        if (taskPaths.length > 0 || projectPaths.length > 0) {
+            await this.refreshProjects();
         }
 
         if (journalPaths.length > 0) {

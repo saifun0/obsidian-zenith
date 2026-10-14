@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState, type FC } from 'react';
-import { FolderKanban, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Notice, TFile } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
@@ -8,11 +8,12 @@ import { PromptModal } from '../../../core/PromptModal';
 import type { Project, ProjectStatus } from '../projectsTypes';
 import { filterTasksForProject } from '../services/projectParser';
 import { ProjectWriter } from '../services/projectWriter';
+import { moveProjectIntoFolder, revealFolder } from '../services/projectFolders';
 import { ProjectFormModal } from '../ProjectFormModal';
 import { ProjectCard } from './ProjectCard';
 import { TaskWriter } from '../../tasks/services/taskWriter';
 import { useFeature } from '../../../core/useFeature';
-import { ViewHeader } from '../../../components/shared';
+import { PageHead, PageHeadButton } from '../../../components/shared';
 import { SearchField } from '../../../components/ui/fields';
 import type { Task } from '../../../store/taskSlice';
 import type { TaskStatus } from '../../../core/constants';
@@ -79,6 +80,14 @@ export const ProjectsApp: FC = () => {
             void app.workspace.openLinkText(project.filePath, '', false);
         },
         [app]
+    );
+
+    /** The project's folder in the file tree; its note, where there is no tree to show it in. */
+    const reveal = useCallback(
+        (project: Project) => {
+            if (!project.folderPath || !revealFolder(app, project.folderPath)) openNote(project);
+        },
+        [app, openNote]
     );
 
     const openForm = useCallback(
@@ -184,35 +193,22 @@ export const ProjectsApp: FC = () => {
             <div className="zenith-projects">
                 {/* The four figures were four bordered boxes across the top of the
                 view — ninety pixels to say "6 projects" above a grid of six
-                projects. They are a caption to the title now, in the one
-                header every module's view is built from. */}
-                <ViewHeader
-                    icon={FolderKanban}
+                projects. They are the line under the title now, in the one
+                head every view is built from. */}
+                <PageHead
                     title={t('projects.title')}
-                    caption={
-                        <>
-                            <span>{t('projects.summary.total', { count: summary.total })}</span>
-                            <span>{t('projects.summary.active', { count: summary.active })}</span>
-                            {linksOn && (
-                                <span>
-                                    {t('projects.summary.tasks', {
-                                        done: summary.doneTasks,
-                                        total: summary.totalTasks,
-                                    })}
-                                </span>
-                            )}
-                        </>
-                    }
+                    tally={[
+                        t('projects.summary.total', { count: summary.total }),
+                        t('projects.summary.active', { count: summary.active }),
+                        linksOn &&
+                            t('projects.summary.tasks', {
+                                done: summary.doneTasks,
+                                total: summary.totalTasks,
+                            }),
+                    ]}
                 >
-                    <button
-                        type="button"
-                        className="zenith-btn zenith-btn--cta"
-                        onClick={() => openForm()}
-                    >
-                        <Plus size={15} />
-                        <span>{t('projects.new')}</span>
-                    </button>
-                </ViewHeader>
+                    <PageHeadButton icon={Plus} label={t('projects.new')} onClick={() => openForm()} />
+                </PageHead>
 
                 <div className="zenith-projects__controls">
                     <SearchField
@@ -228,6 +224,7 @@ export const ProjectsApp: FC = () => {
                                 key={tab.id}
                                 type="button"
                                 className={`zenith-projects__tab ${statusFilter === tab.id ? 'is-active' : ''}`}
+                                aria-pressed={statusFilter === tab.id}
                                 onClick={() => setStatusFilter(tab.id)}
                             >
                                 {tab.label}
@@ -237,14 +234,9 @@ export const ProjectsApp: FC = () => {
                 </div>
 
                 {filtered.length === 0 ? (
-                    <div className="zenith-projects__empty">
-                        <FolderKanban size={40} className="zenith-projects__empty-icon" />
-                        <div className="zenith-projects__empty-title">
-                            {t('projects.empty.title')}
-                        </div>
-                        <div className="zenith-projects__empty-desc">
-                            {t('projects.empty.desc')}
-                        </div>
+                    <div className="zenith-pempty">
+                        <p className="zenith-pempty__lead">{t('projects.empty.title')}</p>
+                        <p className="zenith-pempty__hint">{t('projects.empty.desc')}</p>
                     </div>
                 ) : (
                     <div className="zenith-projects__grid">
@@ -265,6 +257,8 @@ export const ProjectsApp: FC = () => {
                                 onEdit={() => openForm(project)}
                                 onStatus={(s) => void changeProjectStatus(project, s)}
                                 onAddTask={() => void addTask(project)}
+                                onReveal={() => reveal(project)}
+                                onMoveToFolder={() => void moveProjectIntoFolder(plugin, project)}
                                 onTaskStatus={(task, next) => void changeTaskStatus(task, next)}
                             />
                         ))}

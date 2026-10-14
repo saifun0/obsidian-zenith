@@ -92,6 +92,13 @@ export interface TaskSlice {
      */
     taskReorderMode: boolean;
     setTaskReorderMode: (on: boolean) => void;
+    /**
+     * A task the list has been asked to show, by its `detailKey` — from the
+     * dashboard's subtasks dialog, say. The list turns to it, scrolls to it
+     * and clears this. Not saved: it is a request, not a state.
+     */
+    taskFocus: string | null;
+    setTaskFocus: (key: string | null) => void;
 }
 
 export const createTaskSlice: ZenithSliceCreator<TaskSlice> = (set) => ({
@@ -132,4 +139,7 @@ export const createTaskSlice: ZenithSliceCreator<TaskSlice> = (set) => ({
 
     taskReorderMode: false,
     setTaskReorderMode: (on) => set(() => ({ taskReorderMode: on })),
+
+    taskFocus: null,
+    setTaskFocus: (key) => set(() => ({ taskFocus: key })),
 });

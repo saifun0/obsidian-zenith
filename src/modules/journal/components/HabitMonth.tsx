@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, type CSSPrope
 import { useApp } from '../../../context/AppContext';
 import { intlLocale, useTranslation, type Translator } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
-import { isoToDate, monthLabel } from '../../../core/calendarDates';
+import { isoToDate } from '../../../core/calendarDates';
 import type { JournalTracker } from '../../../core/journalConfig';
 import { DynamicIcon } from '../../../components/shared/DynamicIcon';
 import type { JournalEntry, TrackerValue } from '../../../store/journalSlice';
@@ -328,13 +328,10 @@ export const HabitMonth: FC<HabitMonthProps> = ({
         >
             <GooeyDefs />
 
-            <header className="zenith-hmon__head">
-                <h3 className="zenith-hmon__title">{t('habits.title')}</h3>
-                <span className="zenith-hmon__month">{monthLabel(anchor, locale)}</span>
-                <span className="zenith-hmon__hint">
-                    {onSetValue ? t('habits.hint') : t('habits.hintReadonly')}
-                </span>
-            </header>
+            {/* Its name and nothing else. The month is the page's title, and
+                "click a day to record it" was a sentence about a grid of
+                buttons. */}
+            <h2 className="zenith-hmon__title">{t('habits.title')}</h2>
 
             <div className="zenith-hmon__scroll" ref={scrollRef}>
                 <div className="zenith-hmon__grid" key={monthKey}>

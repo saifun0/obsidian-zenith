@@ -56,39 +56,21 @@ const firstLine = (text: string) =>
         ?.trim() ?? '';
 
 /**
- * How far the subtasks are, as an arc that closes as they get done — read at a
- * glance where "3/7" has to be read.
+ * How far the subtasks are: the count, and under it a line inked as far as
+ * they have got — the line the day's progress is on the dashboard's card.
+ *
+ * It was a small ring that closed as they got done, beside the count. A task
+ * under way has a ring with an arc for its checkbox, and a row then had two
+ * of them saying different things.
  */
-export const ProgressArc: FC<{ done: number; total: number; size?: number }> = ({
-    done,
-    total,
-    size = 12,
-}) => {
-    const r = 5;
-    const c = 2 * Math.PI * r;
-    const part = total > 0 ? Math.min(1, done / total) : 0;
-    return (
-        <svg
-            className="zenith-arc"
-            width={size}
-            height={size}
-            viewBox="0 0 12 12"
-            aria-hidden="true"
-        >
-            <circle className="zenith-arc__track" cx="6" cy="6" r={r} />
-            {part > 0 && (
-                <circle
-                    className="zenith-arc__done"
-                    cx="6"
-                    cy="6"
-                    r={r}
-                    strokeDasharray={`${c * part} ${c}`}
-                    transform="rotate(-90 6 6)"
-                />
-            )}
-        </svg>
-    );
-};
+export const SubtaskTally: FC<{ done: number; total: number }> = ({ done, total }) => (
+    <span className="zenith-tally">
+        {done}/{total}
+        <span className="zenith-tally__line" aria-hidden="true">
+            <i style={{ width: `${total > 0 ? Math.min(1, done / total) * 100 : 0}%` }} />
+        </span>
+    </span>
+);
 
 interface TaskItemProps {
     task: Task;
@@ -378,6 +360,7 @@ export const TaskItem: FC<TaskItemProps> = ({
                             role="button"
                             tabIndex={closing ? -1 : 0}
                             data-task-head=""
+                            data-task-key={key}
                             onClick={openEditor}
                             onKeyDown={(e) => {
                                 if (closing) return;
@@ -454,8 +437,7 @@ export const TaskItem: FC<TaskItemProps> = ({
                                                 })}
                                                 onClick={toggleDetails}
                                             >
-                                                <ProgressArc done={subs.done} total={subs.total} />
-                                                {subs.done}/{subs.total}
+                                                <SubtaskTally done={subs.done} total={subs.total} />
                                             </button>
                                         )}
                                         {attachments.length > 0 && (

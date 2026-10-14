@@ -131,6 +131,38 @@ export const TasksApp: FC = () => {
     // Leaving the view leaves reordering too: it is a mode, not a setting.
     useEffect(() => () => setReorderMode(false), [setReorderMode]);
 
+    /**
+     * A task that was asked for from elsewhere (`askForTask`): whatever would
+     * hide it is undone — the tab goes back to everything, the search and the
+     * statistics close — and the list scrolls to it. Its row may not be drawn
+     * yet when the view has only just opened, so it is looked for a few times.
+     */
+    const asked = useZenithStore((s) => s.taskFocus);
+    const setTaskFocus = useZenithStore((s) => s.setTaskFocus);
+    useEffect(() => {
+        if (!asked) return;
+        setShowStats(false);
+        setTab('all');
+        setSearch('');
+        setSearchOpen(false);
+
+        let tries = 0;
+        let timer = 0;
+        const look = () => {
+            const head = Array.from(
+                rootRef.current?.querySelectorAll<HTMLElement>('[data-task-head]') ?? []
+            ).find((el) => el.dataset.taskKey === asked);
+            if (head) {
+                head.scrollIntoView({ block: 'center' });
+                head.focus({ preventScroll: true });
+            }
+            if (head || ++tries >= 8) setTaskFocus(null);
+            else timer = window.setTimeout(look, 150);
+        };
+        timer = window.setTimeout(look, 60);
+        return () => window.clearTimeout(timer);
+    }, [asked, setTaskFocus]);
+
     const query = useMemo(() => parseSearch(search), [search]);
     const filtering = isFiltering(query);
 

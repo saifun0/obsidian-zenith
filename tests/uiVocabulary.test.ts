@@ -144,7 +144,7 @@ describe('one target scale', () => {
 
 describe('one view header', () => {
     it('leaves no module with a private copy', () => {
-        // A module view's header is `<ViewHeader>`. The five that existed
+        // A module view's header is `<PageHead>`. The five that existed
         // disagreed on the title's size (1.2 / 1.25 / 1.4 / 1.5 / 1.9rem) and
         // its weight, which told the reader they had travelled further between
         // two views than they had.

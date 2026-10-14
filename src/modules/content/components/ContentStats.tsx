@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Clock, Star } from 'lucide-react';
 import { ChallengeBars, useChallenge } from './ChallengeBars';
 import { useFeature } from '../../../core/useFeature';
 import type { ContentItem } from '../../../store/contentSlice';
@@ -62,25 +61,6 @@ export const ContentStats: React.FC<ContentStatsProps> = ({ items, types, onSele
 
     return (
         <div className="zenith-cstats">
-            <div className="zenith-cstats__figures">
-                <Figure value={stats.total} label={t('content.stats.total')} />
-                <Figure value={stats.finishedRecently} label={t('content.stats.finishedRecently')} />
-                <Figure
-                    value={
-                        stats.avgRating > 0 ? (
-                            <>
-                                <Star size={16} fill="#f59e0b" stroke="#f59e0b" />
-                                {stats.avgRating.toFixed(1)}
-                            </>
-                        ) : (
-                            '—'
-                        )
-                    }
-                    label={t('content.stats.avgRating')}
-                />
-                <Figure value={stats.inProgress} label={t('content.status.inProgress')} />
-            </div>
-
             {challengeOn && challenge.length > 0 && (
                 <section className="zenith-cstats__section">
                     <ChallengeBars progress={challenge} />
@@ -141,6 +121,7 @@ export const ContentStats: React.FC<ContentStatsProps> = ({ items, types, onSele
                     {t('content.stats.finishedByMonth')}
                     <span className="zenith-cstats__aside">
                         {t('content.stats.finishedYear', { count: finishedThisYear })}
+                        {` · ${t('content.stats.finishedMonth', { count: stats.finishedRecently })}`}
                         {stats.avgDaysToFinish != null &&
                             ` · ${t('content.stats.avgDays', {
                                 count: Math.round(stats.avgDaysToFinish),
@@ -169,9 +150,7 @@ export const ContentStats: React.FC<ContentStatsProps> = ({ items, types, onSele
 
             {stats.stalled.length > 0 && (
                 <section className="zenith-cstats__section">
-                    <h3 className="zenith-cstats__title">
-                        <Clock size={14} /> {t('content.stats.stalled')}
-                    </h3>
+                    <h3 className="zenith-cstats__title">{t('content.stats.stalled')}</h3>
                     <p className="zenith-cstats__hint">{t('content.stats.stalledHint')}</p>
                     <ul className="zenith-cstats__stalled">
                         {stats.stalled.slice(0, 6).map((i) => (
@@ -215,10 +194,3 @@ export const ContentStats: React.FC<ContentStatsProps> = ({ items, types, onSele
         </div>
     );
 };
-
-const Figure: React.FC<{ value: React.ReactNode; label: string }> = ({ value, label }) => (
-    <div className="zenith-cstats__figure">
-        <span className="zenith-cstats__figure-value">{value}</span>
-        <span className="zenith-cstats__figure-label">{label}</span>
-    </div>
-);

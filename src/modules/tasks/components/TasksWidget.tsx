@@ -2,11 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, type FC } fro
 import { Notice } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
-import type { SubTask, Task } from '../../../store/taskSlice';
-import type { TaskStatus } from '../../../core/constants';
+import type { Task } from '../../../store/taskSlice';
 import { useFeature } from '../../../core/useFeature';
 import { countSubtasks } from '../services/taskStats';
-import { TaskWriter } from '../services/taskWriter';
 import { getTodayString } from '../../../core/dateUtils';
 import { TaskStatusControl } from './taskStatusUi';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
@@ -25,8 +23,9 @@ import {
 import { marginText } from '../services/taskMargin';
 import { isClosingOf, useClosingTasks, type Closing } from '../services/closingTasks';
 import { undoClosing, useTaskActions } from './useTaskActions';
-import { ProgressArc } from './TaskItem';
+import { SubtaskTally } from './TaskItem';
 import { withFigures } from './inkFigures';
+import { SubtasksDialog } from './SubtasksDialog';
 
 /**
  * The tasks card, as a page of a diary: what is burning, what is running,
@@ -38,8 +37,10 @@ import { withFigures } from './inkFigures';
  * progress as a single line of ink.
  *
  * `sm` is the three most urgent tasks. `md` and `lg` are named groups over the
- * day's progress, `md` stopping at five tasks. Subtasks stay folded behind
- * their tally, which opens them one task at a time.
+ * day's progress, `md` stopping at five tasks. Subtasks stay behind their
+ * tally, which opens them in a dialog of their own (`SubtasksDialog`): the
+ * card has a budget of rows, and unfolded in place they spent it — a few of
+ * them shown, the tasks below pushed off the card.
  */
 
 /** The opening sentence: its parts, the overdue one in the page's one colour. */
@@ -70,8 +71,8 @@ interface RowProps {
     height: number;
     /** Under "Today", where the margin need not say so. */
     grouped: boolean;
-    expanded: boolean;
-    onToggle: () => void;
+    /** Open the task's subtasks. */
+    onSubtasks: () => void;
     onOpenList: () => void;
 }
 
@@ -82,8 +83,7 @@ const WidgetRow: FC<RowProps> = ({
     size,
     height,
     grouped,
-    expanded,
-    onToggle,
+    onSubtasks,
     onOpenList,
 }) => {
     const t = useTranslation();
@@ -145,13 +145,13 @@ const WidgetRow: FC<RowProps> = ({
                     {total > 0 && (
                         <button
                             type="button"
-                            className={`zenith-tw__fold ${expanded ? 'is-open' : ''}`}
-                            aria-expanded={expanded}
+                            className="zenith-tw__fold"
+                            aria-haspopup="dialog"
                             aria-label={t('tasks.subtasks.progress', { done, total })}
-                            onClick={onToggle}
+                            title={t('tasks.subtasks.progress', { done, total })}
+                            onClick={onSubtasks}
                         >
-                            <ProgressArc done={done} total={total} size={11} />
-                            {done}/{total}
+                            <SubtaskTally done={done} total={total} />
                         </button>
                     )}
                 </span>
@@ -183,7 +183,7 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
               : cardRoom.height < ROOMY_MIN_PX
                 ? 'md'
                 : 'lg';
-    const { app, plugin } = useApp();
+    const { plugin } = useApp();
     const stored = useZenithStore((s) => s.tasks);
     const closings = useClosingTasks((s) => s.items);
     // With subtasks switched off the card is planned as if there were none:
@@ -225,11 +225,8 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
     const today = getTodayString();
     const m = METRICS[size];
 
-    /**
-     * The one task whose subtasks are open. One at a time: the row budget is
-     * what makes the card fit, and two expansions would spend it all on one task.
-     */
-    const [expanded, setExpanded] = useState<string | null>(null);
+    /** The task whose subtasks are open in their dialog, by id. */
+    const [subtasksOf, setSubtasksOf] = useState<string | null>(null);
 
     const rootRef = useRef<HTMLDivElement>(null);
     const [box, setBox] = useState({ h: 0, w: 0 });
@@ -265,23 +262,6 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
     const openTasks = useCallback(() => {
         void plugin.moduleManager.get('tasks')?.activateView();
     }, [plugin]);
-
-    const changeSubStatus = async (filePath: string, sub: SubTask, status: TaskStatus) => {
-        try {
-            if (
-                await new TaskWriter(app).setStatusInFile(
-                    filePath,
-                    sub.lineNumber,
-                    status,
-                    sub.title
-                )
-            ) {
-                void plugin.dataService.reloadTasks();
-            }
-        } catch (err) {
-            console.error('Zenith: failed to set subtask status:', err);
-        }
-    };
 
     const split = useMemo(() => splitTasks(tasks, today), [tasks, today]);
     const progress = dayProgress(split);
@@ -328,8 +308,9 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
     // board has its title at one edge and what it carries at the other.
     const columns = cardRoom.width >= ROOM_WIDE ? 2 : 1;
     const layout = useMemo(
-        () => planWidget({ split, size, available, expanded, chrome, columns }),
-        [split, size, available, expanded, chrome, columns]
+        // Nothing unfolds on the card any more, so nothing is ever "expanded".
+        () => planWidget({ split, size, available, expanded: null, chrome, columns }),
+        [split, size, available, chrome, columns]
     );
 
     // ── Rendering ────────────────────────────────────
@@ -348,30 +329,7 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
                 </div>
             );
         }
-        if (line.kind === 'sub') {
-            const { sub, task } = line;
-            return (
-                <div
-                    key={line.key}
-                    className="zenith-tw__row zenith-tw__row--sub"
-                    style={{ height: line.height }}
-                >
-                    <span className="zenith-tw__margin" />
-                    <TaskStatusControl
-                        status={sub.status}
-                        size={13}
-                        onChange={(s) => void changeSubStatus(task.filePath, sub, s)}
-                    />
-                    <span
-                        className={`zenith-tw__title is-sub ${sub.status === 'done' || sub.status === 'cancelled' ? 'is-struck' : ''}`}
-                        onClick={openTasks}
-                        role="button"
-                    >
-                        <span className="zenith-tw__ink">{sub.title}</span>
-                    </span>
-                </div>
-            );
-        }
+        if (line.kind !== 'task') return null;
         const { task } = line;
         return (
             <WidgetRow
@@ -381,8 +339,7 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
                 size={size}
                 height={line.height}
                 grouped={grouped}
-                expanded={expanded === task.id}
-                onToggle={() => setExpanded((v) => (v === task.id ? null : task.id))}
+                onSubtasks={() => setSubtasksOf(task.id)}
                 onOpenList={openTasks}
             />
         );
@@ -501,6 +458,10 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
                         </button>
                     </div>
                 </div>
+            )}
+
+            {subtasksOf && (
+                <SubtasksDialog taskId={subtasksOf} onClose={() => setSubtasksOf(null)} />
             )}
         </div>
     );

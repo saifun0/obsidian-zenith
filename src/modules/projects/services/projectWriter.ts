@@ -84,30 +84,35 @@ export class ProjectWriter {
     constructor(private readonly app: App) {}
 
     /**
-     * Create the note and fill it in.
+     * Create the project and fill it in.
      *
-     * The file lands with its body first and its fields immediately after,
+     * A project is made as a folder of its own with its main note inside,
+     * under the same name — `Name/Name.md` — so that what belongs to it has
+     * somewhere to go from the first day (`projectLayout`). A name that is
+     * taken, by a folder or by a note that is a project by itself, gets a
+     * number after it.
+     *
+     * The note lands with its body first and its fields immediately after,
      * rather than being assembled as one string, so that creating a project
      * and editing one are the same code path — and a bug in how a colour is
      * serialised cannot exist in one and not the other.
      */
     async create(folderPath: string, input: ProjectInput): Promise<TFile> {
-        const folder = normalizePath((folderPath || '').trim().replace(/\/+$/, ''));
-        if (folder && !this.app.vault.getAbstractFileByPath(folder)) {
-            await this.app.vault.createFolder(folder);
+        const root = normalizePath((folderPath || '').trim().replace(/\/+$/, ''));
+        if (root && !this.app.vault.getAbstractFileByPath(root)) {
+            await this.app.vault.createFolder(root);
         }
+        const within = (name: string) => normalizePath(root ? `${root}/${name}` : name);
 
         const base = projectFileName(input.title, translateNow('projects.template.title'));
-        let path = normalizePath(folder ? `${folder}/${base}.md` : `${base}.md`);
-        let counter = 1;
-        while (this.app.vault.getAbstractFileByPath(path)) {
-            path = normalizePath(
-                folder ? `${folder}/${base} ${counter}.md` : `${base} ${counter}.md`
-            );
-            counter++;
-        }
+        const taken = (name: string) =>
+            !!this.app.vault.getAbstractFileByPath(within(name)) ||
+            !!this.app.vault.getAbstractFileByPath(within(`${name}.md`));
+        let name = base;
+        for (let n = 2; taken(name); n++) name = `${base} ${n}`;
 
-        const file = await this.app.vault.create(path, projectBody());
+        await this.app.vault.createFolder(within(name));
+        const file = await this.app.vault.create(within(`${name}/${name}.md`), projectBody());
         await this.update(file, input);
         return file;
     }

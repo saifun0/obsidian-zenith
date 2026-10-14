@@ -37,10 +37,43 @@ const isClosed = (status: TaskStatus) => status === 'done' || status === 'cancel
 /** How long the fill of a just-completed circle takes, in ms. Matches tasks-ui.css. */
 const INK_MS = 420;
 
+/** One turn of the arc of a task under way, in ms. Matches tasks-ui.css. */
+const ORBIT_MS = 4800;
+
 /**
- * The checkbox, drawn as an ink circle: an empty ring to do, half filled once
- * started, filled with the tick cut out of it when done, struck through when
- * given up. Monochrome on purpose — see `STATUS_COLOR`.
+ * Where in its turn an arc drawn now should begin, so that every one on the
+ * screen is at the same point of it: each starts as far in as the clock is.
+ * Left to themselves they would start when their row was drawn, and a list of
+ * ten tasks under way would be ten arcs each at a place of its own.
+ */
+const orbitPhase = () => `-${Date.now() % ORBIT_MS}ms`;
+
+/**
+ * The arc of a task under way.
+ *
+ * A part of its own so that its place in the turn is worked out once, at the
+ * moment it is drawn, and kept: a delay restated on every render of the row
+ * would move the arc each time anything about the task changed.
+ */
+const Orbit: FC = () => {
+    const [delay] = useState(orbitPhase);
+    return (
+        <path
+            className="zenith-status__orbit"
+            d="M10 1.75a8.25 8.25 0 0 1 8.25 8.25"
+            style={{ animationDelay: delay }}
+        />
+    );
+};
+
+/**
+ * The checkbox, drawn as an ink circle: an empty ring to do, a quarter of the
+ * ring going slowly round it once started, filled with the tick cut out of it
+ * when done, struck through when given up. Monochrome on purpose — see
+ * `STATUS_COLOR`.
+ *
+ * Under way was a half-filled disc, which stood still and read as "half
+ * done"; the arc says that it is going, and says nothing about how far.
  *
  * The tick is cut out in the page's own colour rather than drawn in white, so
  * a filled circle on a light theme does not turn into a black button.
@@ -65,9 +98,7 @@ export const StatusBox: FC<{ status: TaskStatus; size?: number; inked?: boolean 
         ) : (
             <>
                 <circle className="zenith-status__ring" cx="10" cy="10" r="8.25" />
-                {status === 'in-progress' && (
-                    <path className="zenith-status__half" d="M10 4.6a5.4 5.4 0 0 0 0 10.8z" />
-                )}
+                {status === 'in-progress' && <Orbit />}
                 {status === 'cancelled' && (
                     <path className="zenith-status__slash" d="M5.6 14.4l8.8-8.8" />
                 )}

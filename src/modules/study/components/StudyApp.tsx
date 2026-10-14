@@ -6,11 +6,10 @@ import React, {
     type CSSProperties,
     type FC,
 } from 'react';
-import { ClipboardPaste, GraduationCap, Pencil, Sparkles } from 'lucide-react';
-import { useTranslation } from '../../../core/i18n';
-import { addDays, isoToDate, startOfWeek } from '../../../core/calendarDates';
-import { ViewHeader } from '../../../components/shared/ViewHeader';
-import { IconButton } from '../../../components/shared/IconButton';
+import { ClipboardPaste, Pencil, Sparkles } from 'lucide-react';
+import { intlLocale, useTranslation } from '../../../core/i18n';
+import { addDays, dayTitle, isoToDate, startOfWeek } from '../../../core/calendarDates';
+import { PageHead, PageHeadButton } from '../../../components/shared';
 import { useZenithStore } from '../../../store';
 import { slotOf, timeOf } from '../studyModel';
 import {
@@ -35,7 +34,6 @@ import {
     rowState,
 } from './parts';
 import { NowCard } from './NowCard';
-import { Segmented } from './LessonForm';
 import { ImportDialog } from './ImportDialog';
 import { EditorDialog } from './EditorDialog';
 import { LessonDialog } from './LessonDialog';
@@ -147,40 +145,36 @@ export const StudyApp: FC = () => {
     const open = (item: DayLesson, date: string) =>
         setDialog({ kind: 'lesson', id: item.lesson.id, date });
 
-    // Two figures, each its own span: the caption wraps between facts, never inside one.
-    const caption = schedule.lessons.length ? (
-        <>
-            {opts.twoWeeks && <span>{weekName(t, current, weekStyle)}</span>}
-            <span>{t.plural('study.weekLessons', total)}</span>
-            {preview && <PreviewBadge now={now} />}
-        </>
-    ) : undefined;
+    // The line under the day: which week of the cycle it is, and how full.
+    const tally = schedule.lessons.length
+        ? [
+              opts.twoWeeks && weekName(t, current, weekStyle),
+              t.plural('study.weekLessons', total),
+              preview && <PreviewBadge now={now} />,
+          ]
+        : undefined;
 
     return (
         <div className="zenith-study zenith-study-view" ref={rootRef}>
-            <ViewHeader icon={GraduationCap} title={t('study.title')} caption={caption}>
-                <IconButton
+            {/* Headed by the day, as the Tasks page is: the timetable is read
+                from today, and the tab above already says "Study". */}
+            <PageHead title={dayTitle(today, intlLocale(t.locale))} tally={tally}>
+                <PageHeadButton
                     icon={Sparkles}
-                    tooltip={t('study.copyPrompt')}
+                    label={t('study.copyPrompt')}
                     onClick={() => void copyPrompt(t)}
-                    variant="ghost"
-                    size="md"
                 />
-                <IconButton
+                <PageHeadButton
                     icon={ClipboardPaste}
-                    tooltip={t('study.import')}
+                    label={t('study.import')}
                     onClick={() => setDialog({ kind: 'import' })}
-                    variant="ghost"
-                    size="md"
                 />
-                <IconButton
+                <PageHeadButton
                     icon={Pencil}
-                    tooltip={t('study.edit')}
+                    label={t('study.edit')}
                     onClick={() => setDialog({ kind: 'edit' })}
-                    variant="default"
-                    size="md"
                 />
-            </ViewHeader>
+            </PageHead>
 
             {!schedule.lessons.length ? (
                 <StudySetup
@@ -198,15 +192,28 @@ export const StudyApp: FC = () => {
 
                     {opts.twoWeeks && (
                         <div className="zenith-study-view__weekbar">
-                            <Segmented
-                                value={String(shown)}
-                                label={t('study.field.week')}
-                                options={[1, 2].map((w) => ({
-                                    value: String(w),
-                                    label: `${weekName(t, w as 1 | 2, weekStyle)}${w === current ? ` · ${t('study.week.current')}` : ''}`,
-                                }))}
-                                onChange={(v) => setShown(v === '2' ? 2 : 1)}
-                            />
+                            {/* The two weeks as words, the one shown underlined —
+                                the way the Tasks page turns between its lists.
+                                It was a filled segment in the accent, the
+                                loudest thing on the page. */}
+                            <div
+                                className="zenith-study-view__weeks"
+                                role="group"
+                                aria-label={t('study.field.week')}
+                            >
+                                {([1, 2] as const).map((w) => (
+                                    <button
+                                        key={w}
+                                        type="button"
+                                        className={`zenith-study-view__week${shown === w ? ' is-on' : ''}`}
+                                        aria-pressed={shown === w}
+                                        onClick={() => setShown(w)}
+                                    >
+                                        {weekName(t, w, weekStyle)}
+                                        {w === current && ` · ${t('study.week.current')}`}
+                                    </button>
+                                ))}
+                            </div>
                             <button
                                 type="button"
                                 className="zenith-study-view__swap"
