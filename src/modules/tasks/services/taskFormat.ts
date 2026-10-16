@@ -429,9 +429,14 @@ export interface TaskPatch {
     timerMinutes?: number | null;
     doneDate?: string | null;
     cancelledDate?: string | null;
-    /** Removing is all a patch can do to these three: Zenith never makes them. */
-    id?: null;
-    dependsOn?: null;
+    /**
+     * The Tasks plugin's `🆔` — what other tasks call this one by. Set when a
+     * task is tied under another in the goals' tree; `null` removes it.
+     */
+    id?: string | null;
+    /** `⛔` — the ids of the tasks this one waits on. An empty list removes it. */
+    dependsOn?: string[] | null;
+    /** Removing is all a patch can do to this one: Zenith never makes it. */
     blockLink?: null;
 }
 
@@ -463,6 +468,10 @@ export interface ParsedTaskText {
     recurrence?: string;
     /** `🏁 delete` / `🏁 keep` — what to do with the line once it is done, lowercased. */
     onCompletion?: string;
+    /** `🆔` — what other tasks call this one by. */
+    ref?: string;
+    /** `⛔` — the ids of the tasks this one waits on, in the order written. */
+    needs?: string[];
 }
 
 // ── Reading ──────────────────────────────────────────
@@ -501,7 +510,18 @@ export function parseTaskText(text: string, defaults: TaskDefaults): ParsedTaskT
         createdDate: value('createdDate'),
         recurrence: value('recurrence')?.trim(),
         onCompletion: value('onCompletion')?.toLowerCase(),
+        ref: value('id')?.trim(),
+        needs: splitIds(value('dependsOn')),
     };
+}
+
+/** The ids of a `⛔`, written `a,b` or `a, b`; nothing for none. */
+function splitIds(raw: string | undefined): string[] | undefined {
+    const ids = (raw ?? '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+    return ids.length ? ids : undefined;
 }
 
 // ── Writing ──────────────────────────────────────────
@@ -557,9 +577,19 @@ function fieldEdit(def: MarkerDef, patch: TaskPatch, items: Item[]): string | nu
             if (want === (parseDuration(current ?? '') ?? null)) return undefined;
             return want ? `${glyph} ${formatDuration(want)}` : null;
         }
-        case 'id':
-        case 'dependsOn':
-            return patch[def.kind] === null ? null : undefined;
+        case 'id': {
+            if (patch.id === undefined) return undefined;
+            const want = patch.id?.trim() || null;
+            if (want === (current?.trim() ?? null)) return undefined;
+            return want ? `${glyph} ${want}` : null;
+        }
+        case 'dependsOn': {
+            if (patch.dependsOn === undefined) return undefined;
+            const want = [...new Set((patch.dependsOn ?? []).map((id) => id.trim()).filter(Boolean))];
+            // Written the way the Tasks plugin writes it: a comma, no space.
+            if (want.join(',') === (splitIds(current) ?? []).join(',')) return undefined;
+            return want.length ? `${glyph} ${want.join(',')}` : null;
+        }
         case 'onCompletion':
             return undefined;
         default: {

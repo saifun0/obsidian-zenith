@@ -31,6 +31,13 @@ export interface TaskExtras {
     description?: string;
     /** Images, notes, links and other tasks, from the same block. */
     attachments?: TaskAttachment[];
+    /**
+     * The Tasks plugin's `🆔`: what other tasks call this one by. A goal names
+     * its steps in other notes this way (`goalTree`).
+     */
+    ref?: string;
+    /** The Tasks plugin's `⛔`: the ids of the tasks this one waits on. */
+    needs?: string[];
 }
 
 export interface SubTask extends TaskExtras {

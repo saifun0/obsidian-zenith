@@ -222,6 +222,8 @@ export class TaskParser {
             doneDate: parsed.doneDate,
             cancelledDate: parsed.cancelledDate,
             recurrence: parsed.recurrence,
+            ref: parsed.ref,
+            needs: parsed.needs,
             subtasks: this.buildSubtasks(childrenByParent, item.lineNumber),
             filePath: file.path,
             lineNumber: item.lineNumber,
@@ -252,6 +254,8 @@ export class TaskParser {
                 timerMinutes: parsed.timerMinutes,
                 description: details.description || undefined,
                 attachments: details.attachments.length ? details.attachments : undefined,
+                ref: parsed.ref,
+                needs: parsed.needs,
                 subtasks: this.buildSubtasks(childrenByParent, k.lineNumber),
             };
         });
