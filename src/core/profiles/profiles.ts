@@ -88,6 +88,7 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     weatherShowSun: 'feature',
 
     // ── Preferences ──
+    tasksGoalTag: 'yes',
     taskImageAlign: 'yes',
     taskImageSize: 'yes',
     journalDateFormat: 'yes',

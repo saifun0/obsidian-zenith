@@ -28,6 +28,15 @@ export const tasksSettingsSchema = coreSchema({
                 { type: 'feature', key: 'tasks.captureDaily' },
                 {
                     type: 'text',
+                    key: 'tasksGoalTag',
+                    labelKey: 'settings.tasksGoalTag',
+                    descKey: 'settings.tasksGoalTag.desc',
+                    default: 'goal',
+                    placeholder: 'goal',
+                    showIf: whenFeature('tasks.goals'),
+                },
+                {
+                    type: 'text',
                     key: 'journalTaskHeading',
                     labelKey: 'settings.journalTaskHeading',
                     descKey: 'settings.journalTaskHeading.desc',

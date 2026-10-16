@@ -15,6 +15,8 @@ import { TaskList } from './TaskList';
 import { TaskStats } from './TaskStats';
 import { TaskEditorModal } from './TaskEditorModal';
 import { TaskQuickLine, type TaskDraft } from './TaskQuickLine';
+import { GoalTree } from './GoalTree';
+import { openGoals } from '../services/goalTree';
 
 // ── View state ───────────────────────────────────────
 
@@ -50,7 +52,8 @@ function restoreFilters(saved: { sort: string; group: string }): TaskFilterState
     };
 }
 
-type Tab = (typeof TASK_TABS)[number]['id'];
+/** A list of tasks, or — `goals` — the goals' tree, which the tally turns to as well. */
+type Tab = (typeof TASK_TABS)[number]['id'] | 'goals';
 
 /** "Thursday, 2 October" in the interface's language, capitalised as a heading is. */
 function dayHeading(locale: string): string {
@@ -102,8 +105,13 @@ export const TasksApp: FC = () => {
     const updateSettings = useZenithStore((s) => s.updateSettings);
 
     const [tab, setTab] = useState<Tab>(() =>
-        TASK_TABS.some((x) => x.id === saved.tab) ? (saved.tab as Tab) : 'all'
+        TASK_TABS.some((x) => x.id === saved.tab) || saved.tab === 'goals' ? (saved.tab as Tab) : 'all'
     );
+    const goalsOn = useFeature('tasks.goals');
+    const goalTag = useZenithStore((s) => s.settings.tasksGoalTag);
+    const goalCount = useMemo(() => (goalsOn ? openGoals(tasks, goalTag) : 0), [goalsOn, tasks, goalTag]);
+    // The tree, when it is asked for and there is a tree to show.
+    const showGoals = goalsOn && tab === 'goals';
     const [filters, setFilters] = useState<TaskFilterState>(() => restoreFilters(saved));
     const byHand = reorderScope({
         dragOn,
@@ -170,7 +178,7 @@ export const TasksApp: FC = () => {
 
     const shown = useMemo(() => {
         const list = queryTasks(tasks, {
-            tab,
+            tab: tab === 'goals' ? 'all' : tab,
             priority: query.priority ?? 'all',
             minPriority: query.minPriority,
             tag: '',
@@ -208,6 +216,12 @@ export const TasksApp: FC = () => {
         { id: 'active', text: t.plural('tasks.tally.active', counts.active) },
         { id: 'in-progress', text: t('tasks.tally.doing', { count: counts.doing }) },
         { id: 'done', text: t('tasks.tally.done', { count: counts.done }) },
+        // The goals are another page of the same planner, turned to the same
+        // way. Said only once there is one — the tree is reached from a
+        // task's menu ("make it a goal") before that.
+        ...(goalCount > 0 || showGoals
+            ? [{ id: 'goals' as Tab, text: t.plural('tasks.tally.goals', goalCount) }]
+            : []),
     ];
 
     // ── All existing tags, by use ────────────────────
@@ -237,6 +251,8 @@ export const TasksApp: FC = () => {
 
     const openSearch = () => {
         setShowStats(false);
+        // The search is the list's: from the goals it goes back to it.
+        setTab((cur) => (cur === 'goals' ? 'all' : cur));
         setSearchOpen(true);
         window.setTimeout(() => searchBoxRef.current?.querySelector('input')?.focus(), 0);
     };
@@ -477,6 +493,8 @@ export const TasksApp: FC = () => {
 
                 {statsShown ? (
                     <TaskStats tasks={tasks} />
+                ) : showGoals ? (
+                    <GoalTree tasks={tasks} goalTag={goalTag} />
                 ) : (
                     <>
                         {tab !== 'done' && <TaskQuickLine ref={quickRef} onExpand={setDraft} />}

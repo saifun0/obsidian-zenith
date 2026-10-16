@@ -96,6 +96,8 @@ export interface StoredTokens {
 export interface ZenithSettings {
     /** Vault-relative path to folder with task .md files */
     tasksFolderPath: string;
+    /** The tag that makes a task a goal (`goalTree`), without the `#`. */
+    tasksGoalTag: string;
     /** Where attached pictures sit in a task row. */
     taskImageAlign: TaskImageAlign;
     /** Thumbnail edge, in px. */
@@ -661,6 +663,8 @@ export interface TaskViewState {
     open?: string[];
     /** Groups folded away, by id. Unset means the default: done and cancelled. */
     closed?: string[];
+    /** Goals folded away in the goals' tree, by `file::title`. */
+    goalsClosed?: string[];
 }
 
 /**
@@ -758,6 +762,7 @@ function stripUndefined<T extends object>(source: T): Partial<T> {
 
 export const DEFAULT_SETTINGS: ZenithSettings = {
     tasksFolderPath: DEFAULT_TASKS_FOLDER,
+    tasksGoalTag: 'goal',
     taskImageAlign: 'left',
     taskImageSize: 56,
     contentFolderPath: DEFAULT_CONTENT_FOLDER,

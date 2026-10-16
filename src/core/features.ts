@@ -132,6 +132,7 @@ export const FEATURES = [
     // after an update has not been asked to.
     feature('tasks.reminders', 'tasks', { default: false }),
     feature('tasks.subtasks', 'tasks'),
+    feature('tasks.goals', 'tasks'),
     feature('tasks.attachments', 'tasks'),
     feature('tasks.timer', 'tasks'),
     feature('tasks.dragDrop', 'tasks'),

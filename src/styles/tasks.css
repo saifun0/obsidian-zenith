@@ -1489,3 +1489,257 @@ button.zenith-lightbox__btn {
         height: 34px;
     }
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   The goals' tree (GoalTree)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   A page of the same planner, standing on the title column the list's titles
+   stand on. A goal is named as a group of tasks is, in the planner's hand,
+   with a line of ink under it for how far along it is; its steps are the
+   list's rows cut down, and each level stands a step further in, on a thin
+   line that ties it to the one above. */
+.zenith-goals {
+    padding-left: var(--zenith-tcolumn);
+}
+.zenith-goal + .zenith-goal {
+    margin-top: 26px;
+}
+
+.zenith-goal__row,
+.zenith-goal__add,
+.zenith-goal__new {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+}
+/* The checkbox of a goal stands in the margin, where a group's count does,
+   so that the goal's name lines up with the titles of its steps' level. */
+.zenith-goal__row.is-head > .zenith-status {
+    margin-left: calc(-1 * (var(--zenith-tcircle) + var(--zenith-tgap)));
+}
+.zenith-goal__name {
+    flex: 1;
+    min-width: 0;
+    color: var(--text-normal);
+    font-size: 0.94rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+.zenith-goal__row.is-head .zenith-goal__name {
+    font-family: var(--zenith-font-ink);
+    font-size: 1.2rem;
+    letter-spacing: 0.002em;
+}
+.zenith-goal__row.is-closed .zenith-goal__name {
+    color: var(--text-faint);
+    text-decoration: line-through;
+}
+.zenith-goal.is-closed .zenith-goal__row.is-head .zenith-goal__name {
+    text-decoration: none;
+}
+.zenith-goal__when {
+    flex: none;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: 0.86rem;
+    color: var(--text-faint);
+    font-variant-numeric: oldstyle-nums;
+}
+.zenith-goal__when.is-overdue { color: var(--color-red, #e5534b); }
+.zenith-goal__when.is-today { color: var(--text-normal); }
+
+/* The count of a goal's steps, which also folds it. */
+.zenith-root button.zenith-goal__fold {
+    flex: none;
+    height: auto;
+    min-width: 2.4em;
+    padding: 1px 4px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    box-shadow: none;
+    color: var(--text-faint);
+    font: inherit;
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+}
+.zenith-root button.zenith-goal__fold:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+/* The plus and the menu: there when the row is pointed at. Without a pointer
+   only a goal keeps its menu in sight; a step's is a long press away. */
+.zenith-root button.zenith-goal__act {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.zenith-goal__row:hover button.zenith-goal__act,
+.zenith-root button.zenith-goal__act:focus-visible {
+    opacity: 1;
+}
+.zenith-root button.zenith-goal__act:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+@media (pointer: coarse) {
+    .zenith-root button.zenith-goal__act {
+        width: 32px;
+        height: 32px;
+        opacity: 1;
+    }
+    .zenith-root button.zenith-goal__act.is-add,
+    .zenith-root .zenith-goal__row:not(.is-head) button.zenith-goal__act {
+        display: none;
+    }
+}
+
+/* How far along: a line of ink under the goal's name. */
+.zenith-goal__meter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 2px 0 6px;
+}
+.zenith-goal__progress {
+    position: relative;
+    flex: 1;
+    height: 2px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--text-faint) 30%, transparent);
+    overflow: hidden;
+}
+.zenith-goal__progress > span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 2px;
+    background: var(--text-normal);
+    transition: width 0.5s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.zenith-goal__ready {
+    flex: none;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* The steps: each level a step further in, on the thin line from the one above. */
+.zenith-goal__steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.zenith-goal__steps .zenith-goal__steps {
+    margin-left: 7px;
+    padding-left: 15px;
+    border-left: 1px solid color-mix(in srgb, var(--text-faint) 30%, transparent);
+}
+body.is-phone .zenith-goal__steps .zenith-goal__steps {
+    padding-left: 10px;
+}
+body.is-phone .zenith-goal__row.is-head .zenith-goal__name {
+    font-size: 1.1rem;
+}
+
+/* The line a step or a goal is written on. */
+.zenith-goal__ring {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin: 0 6px;
+    border: 1.5px solid var(--text-faint);
+    border-radius: 50%;
+    opacity: 0.5;
+}
+.zenith-goal__new {
+    margin-bottom: 18px;
+    margin-left: calc(-1 * (var(--zenith-tcircle) + var(--zenith-tgap)));
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+.zenith-goal__new .zenith-goal__ring {
+    width: 18px;
+    height: 18px;
+    margin: 0 5px;
+}
+.zenith-root input.zenith-goal__input {
+    flex: 1;
+    min-width: 0;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font-family: inherit;
+    font-size: 0.94rem;
+    color: var(--text-normal);
+}
+.zenith-root input.zenith-goal__input:focus {
+    outline: none;
+    box-shadow: none;
+}
+.zenith-root input.zenith-goal__input::placeholder {
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    color: var(--text-faint);
+    opacity: 1;
+}
+
+/* Tying a task under a step: a list to choose from. */
+.zenith-goalpick__list {
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+.zenith-goalpick__none {
+    margin: 14px 0 0;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    color: var(--zenith-text-faint);
+}
+.zenith-root button.zenith-goalpick__item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    height: auto;
+    padding: 8px 4px;
+    border: none;
+    border-bottom: 1px solid var(--zenith-border);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    text-align: left;
+    white-space: normal;
+    cursor: pointer;
+}
+.zenith-root button.zenith-goalpick__item:hover {
+    background: var(--zenith-bg-hover);
+}
+.zenith-goalpick__title {
+    min-width: 0;
+    color: var(--zenith-text-normal);
+    font-size: 0.92rem;
+    overflow-wrap: anywhere;
+}
+.zenith-goalpick__where {
+    flex: none;
+    color: var(--zenith-text-faint);
+    font-size: 0.78rem;
+}

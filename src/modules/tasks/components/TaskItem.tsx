@@ -7,6 +7,8 @@ import { useApp } from '../../../context/AppContext';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import { TaskWriter } from '../services/taskWriter';
 import { useFeature } from '../../../core/useFeature';
+import { isGoal } from '../services/goalTree';
+import { setGoal } from '../services/goalActions';
 import { useLongPress } from '../../../core/useLongPress';
 import { useSwipeActions } from '../../../core/useSwipeActions';
 import { getTodayString } from '../../../core/dateUtils';
@@ -143,6 +145,8 @@ export const TaskItem: FC<TaskItemProps> = ({
     const subtasksOn = useFeature('tasks.subtasks');
     const attachmentsOn = useFeature('tasks.attachments');
     const timerOn = useFeature('tasks.timer');
+    const goalsOn = useFeature('tasks.goals');
+    const goalTag = useZenithStore((s) => s.settings.tasksGoalTag);
     const dragOn = useFeature('tasks.dragDrop');
     const reorderMode = useZenithStore((s) => s.taskReorderMode);
     const timerRunning = useZenithStore((s) =>
@@ -238,6 +242,15 @@ export const TaskItem: FC<TaskItemProps> = ({
                 onStatus: (s) => void changeStatus(s),
                 onSchedule: dimmed ? undefined : (to) => void schedule(to),
                 onAddSubtask: subtasksOn && !dimmed ? addSubtask : undefined,
+                onGoal: goalsOn
+                    ? {
+                          isGoal: isGoal(task, goalTag),
+                          toggle: () =>
+                              void setGoal(app, task, goalTag, !isGoal(task, goalTag)).then((ok) => {
+                                  if (ok) void reload();
+                              }),
+                      }
+                    : undefined,
                 timer: timerOn && !dimmed,
                 onEdit: () => setEditing(true),
                 onOpen: handleOpen,

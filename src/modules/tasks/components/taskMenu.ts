@@ -30,6 +30,8 @@ export interface MenuActions {
     /** Move the deadline; left out for a finished line. */
     onSchedule?: (to: ScheduleTarget) => void;
     onAddSubtask?: () => void;
+    /** Make the task a goal, or stop it being one; left out with goals off. */
+    onGoal?: { isGoal: boolean; toggle: () => void };
     /** Offer the timer; left out for a finished line or with the feature off. */
     timer?: boolean;
     onEdit: () => void;
@@ -81,6 +83,16 @@ export function showLineMenu(
     if (actions.onAddSubtask) {
         menu.addItem((item) =>
             item.setTitle(t('tasks.subtask.add')).setIcon('list-plus').onClick(() => actions.onAddSubtask?.())
+        );
+    }
+
+    if (actions.onGoal) {
+        const goal = actions.onGoal;
+        menu.addItem((item) =>
+            item
+                .setTitle(t(goal.isGoal ? 'tasks.goals.unmake' : 'tasks.goals.make'))
+                .setIcon('target')
+                .onClick(goal.toggle)
         );
     }
 
