@@ -18,4 +18,4 @@ Reading the Quran without transliteration by next summer.
 - [x] Finish the alphabet ✅ 2026-04-10
 - [x] Learn the vowel marks ✅ 2026-06-02
 - [/] Madinah book, unit 3
-- [ ] Unit 4
+- [ ] Unit 4 🆔 unit4
