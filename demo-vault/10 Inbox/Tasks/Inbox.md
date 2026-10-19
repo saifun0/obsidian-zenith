@@ -3,18 +3,6 @@
 The tasks folder, in one file. The task list reads this folder, the daily notes
 and the projects — so the tasks written in those show up too.
 
-## Goals
-
-- [ ] Run a half marathon in spring #goal 📅 2027-04-18 ⛔ run15,shoes
-    - [x] Join the running club ✅ 2026-09-10
-    - [ ] Pick the race
-- [ ] Run 15 km without stopping 🆔 run15
-    - [x] Run 10 km ✅ 2026-09-19
-    - [ ] Run 12 km
-- [ ] Buy new running shoes 🆔 shoes 📅 2026-10-02
-- [ ] Hold a café conversation in Arabic #goal 📅 2026-12-20 ⛔ unit4,talk
-- [ ] Find a conversation partner 🆔 talk
-
 ## Today
 
 - [ ] Standup ⏰ 09:30-09:45 📅 2026-09-24 #work
@@ -34,6 +22,8 @@ and the projects — so the tasks written in those show up too.
 - [ ] Scheduled, with no deadline ⏳ 2026-09-27
 - [ ] Visa appointment #countdown 📅 2026-10-08
 - [ ] Renew the passport #countdown 📅 2026-11-20
+- [ ] Buy new running shoes 🆔 shoes 📅 2026-10-02
+- [ ] Find a conversation partner 🆔 talk
 
 ## Overdue
 
