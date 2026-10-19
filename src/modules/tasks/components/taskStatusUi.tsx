@@ -115,6 +115,11 @@ interface StatusControlProps {
     status: TaskStatus;
     onChange: (status: TaskStatus) => void;
     size?: number;
+    /**
+     * Everything it asked for is done — its steps, its hours — and it is still
+     * open: the tick it is waiting for shows faintly, without the pointer.
+     */
+    ready?: boolean;
 }
 
 const MENU_WIDTH = 180;
@@ -129,7 +134,12 @@ const MENU_HEIGHT = 170;
  * is still there, a right-click or a long press away, for "in progress" and
  * "cancelled".
  */
-export const TaskStatusControl: FC<StatusControlProps> = ({ status, onChange, size = 18 }) => {
+export const TaskStatusControl: FC<StatusControlProps> = ({
+    status,
+    onChange,
+    size = 18,
+    ready = false,
+}) => {
     const t = useTranslation();
     const pop = usePopover();
     const [inked, setInked] = useState(false);
@@ -160,7 +170,7 @@ export const TaskStatusControl: FC<StatusControlProps> = ({ status, onChange, si
     };
 
     return (
-        <div className="zenith-status">
+        <div className={`zenith-status${ready ? ' is-ready' : ''}`}>
             <button
                 {...pop.anchorProps}
                 type="button"

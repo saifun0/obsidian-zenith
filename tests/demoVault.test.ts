@@ -65,6 +65,15 @@ describe('moving the demo vault forward', () => {
         expect(shiftIso('2026-03-01', -1)).toBe('2026-02-28');
     });
 
+    it('moves a week of hours by whole weeks, so this week is still this week', () => {
+        const hours = '- [ ] Practise 🎯 5h/w\n    - 2026-09-14 ⏱ 5h\n    - 2026-09-21 ⏱ 3h';
+        // Ten days on, the demo's Thursday is a Sunday, of the week starting the 28th.
+        expect(shiftText(hours, 10)).toBe(
+            '- [ ] Practise 🎯 5h/w\n    - 2026-09-21 ⏱ 5h\n    - 2026-09-28 ⏱ 3h'
+        );
+        expect(shiftText(hours, 1)).toBe(hours);
+    });
+
     it('moves every date in a note, and none that is not the demo’s', () => {
         const task = '- [ ] Pack the books 📅 2026-09-27 ⏰ 09:30-09:45\n- [x] Done ✅ 2026-09-23';
         expect(shiftText(task, 14)).toBe(

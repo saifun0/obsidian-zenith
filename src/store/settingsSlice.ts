@@ -98,6 +98,8 @@ export interface ZenithSettings {
     tasksFolderPath: string;
     /** The tag that makes a task a goal (`goalTree`), without the `#`. */
     tasksGoalTag: string;
+    /** The note in the tasks folder new goals are written in, by name; empty is "Goals". */
+    tasksGoalsNote: string;
     /** Where attached pictures sit in a task row. */
     taskImageAlign: TaskImageAlign;
     /** Thumbnail edge, in px. */
@@ -663,8 +665,11 @@ export interface TaskViewState {
     open?: string[];
     /** Groups folded away, by id. Unset means the default: done and cancelled. */
     closed?: string[];
-    /** Goals folded away in the goals' tree, by `file::title`. */
-    goalsClosed?: string[];
+    /**
+     * Goals and stages in the goals' tree whose fold is not the default — open
+     * for what is open, folded for what is closed — by their `foldKey`.
+     */
+    goalsFlipped?: string[];
 }
 
 /**
@@ -763,6 +768,7 @@ function stripUndefined<T extends object>(source: T): Partial<T> {
 export const DEFAULT_SETTINGS: ZenithSettings = {
     tasksFolderPath: DEFAULT_TASKS_FOLDER,
     tasksGoalTag: 'goal',
+    tasksGoalsNote: '',
     taskImageAlign: 'left',
     taskImageSize: 56,
     contentFolderPath: DEFAULT_CONTENT_FOLDER,

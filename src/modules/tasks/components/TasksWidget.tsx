@@ -26,6 +26,9 @@ import { undoClosing, useTaskActions } from './useTaskActions';
 import { SubtaskTally } from './TaskItem';
 import { withFigures } from './inkFigures';
 import { SubtasksDialog } from './SubtasksDialog';
+import { listedTasks } from '../services/goalTree';
+import { hoursReached } from '../services/taskHours';
+import { HoursTally } from './HoursTally';
 
 /**
  * The tasks card, as a page of a diary: what is burning, what is running,
@@ -93,6 +96,8 @@ const WidgetRow: FC<RowProps> = ({
     const margin = closing ? null : marginText(task, today, t, grouped);
     const { done, total } = countSubtasks(task.subtasks);
     const tags = m.tags ? task.tags.slice(0, 2) : [];
+    const timerOn = useFeature('tasks.timer');
+    const hours = timerOn && !!task.target;
 
     return (
         <div
@@ -123,6 +128,7 @@ const WidgetRow: FC<RowProps> = ({
             <TaskStatusControl
                 status={closing ? closing.snapshot.status : task.status}
                 size={m.box}
+                ready={hours && !closing && hoursReached(task)}
                 onChange={(s) => {
                     if (!closing) void changeStatus(s);
                 }}
@@ -135,7 +141,7 @@ const WidgetRow: FC<RowProps> = ({
             >
                 <span className="zenith-tw__ink">{task.title}</span>
             </span>
-            {!closing && (tags.length > 0 || total > 0) && (
+            {!closing && (tags.length > 0 || total > 0 || hours) && (
                 <span className="zenith-tw__info">
                     {tags.length > 0 && (
                         <span className="zenith-tw__tags">
@@ -154,6 +160,7 @@ const WidgetRow: FC<RowProps> = ({
                             <SubtaskTally done={done} total={total} />
                         </button>
                     )}
+                    {hours && <HoursTally item={task} />}
                 </span>
             )}
         </div>
@@ -184,7 +191,16 @@ export const TasksWidget: FC<DashboardWidgetProps> = ({ size: preset = 'lg' }) =
                 ? 'md'
                 : 'lg';
     const { plugin } = useApp();
-    const stored = useZenithStore((s) => s.tasks);
+    const all = useZenithStore((s) => s.tasks);
+    // The goals live in their tree, as in the list; their steps with a day are here.
+    const goalsOn = useFeature('tasks.goals');
+    const goalTag = useZenithStore((s) => s.settings.tasksGoalTag);
+    const weekStart = useZenithStore((s) => s.settings.journalWeekStart);
+    const stored = useMemo(
+        () =>
+            goalsOn ? listedTasks(all, goalTag, { today: getTodayString(), weekStart }) : all,
+        [goalsOn, all, goalTag, weekStart]
+    );
     const closings = useClosingTasks((s) => s.items);
     // With subtasks switched off the card is planned as if there were none:
     // no tally, no rows to open.

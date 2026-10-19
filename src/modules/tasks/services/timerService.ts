@@ -3,6 +3,8 @@ import { useZenithStore } from '../../../store';
 import { translate, resolveLocale } from '../../../core/i18n';
 import { TaskWriter } from './taskWriter';
 import { parseTaskText } from './taskFormat';
+import { startOfWeek } from '../../../core/calendarDates';
+import { getTodayString } from '../../../core/dateUtils';
 import { isDue, isWorthWriting, startSession, totalAfter, type TimerSession } from './taskTimer';
 
 /**
@@ -140,12 +142,19 @@ export class TimerService {
         return parseTaskText(body, { priority: 'none', tags: [] }).spentMinutes ?? 0;
     }
 
-    /** Write the new total onto the line, leaving everything else as it is. */
+    /**
+     * Write the new total onto the line, leaving everything else as it is —
+     * and, for a task that asks for hours a week, the week's line too.
+     */
     private async writeSpent(
         filePath: string,
         lineNumber: number,
         minutes: number
     ): Promise<boolean> {
-        return new TaskWriter(this.app).setSpentInFile(filePath, lineNumber, minutes);
+        const week = startOfWeek(
+            getTodayString(),
+            useZenithStore.getState().settings.journalWeekStart
+        );
+        return new TaskWriter(this.app).setSpentInFile(filePath, lineNumber, minutes, week);
     }
 }

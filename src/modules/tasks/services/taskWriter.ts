@@ -11,10 +11,26 @@ import {
     type TaskInput,
     type TaskPatch,
 } from './taskFormat';
-import { buildDetailLines, detailRange, writeDetails, type TaskDetails } from './taskDetails';
+import {
+    addToWeek,
+    buildDetailLines,
+    detailLines,
+    detailRange,
+    parseDetails,
+    writeDetails,
+    type TaskDetails,
+} from './taskDetails';
 import { charFromStatus, type TaskStatus } from '../../../core/constants';
 import { getTodayString } from '../../../core/dateUtils';
-import { moveBlock, extractBlock, insertBlock, findBlock, type DropPosition } from './taskMove';
+import {
+    moveBlock,
+    extractBlock,
+    insertBlock,
+    insertUnder,
+    findBlock,
+    nestUnder,
+    type DropPosition,
+} from './taskMove';
 import { insertUnderHeading, appendBlock } from '../../../services/markdownSections';
 import type { TaskTarget } from './taskTarget';
 
@@ -466,8 +482,69 @@ export class TaskWriter {
      * Through the same patch as every other edit, so it touches nothing else:
      * the timer stops on a line the user may be editing by hand.
      */
-    async setSpentInFile(filePath: string, lineNumber: number, minutes: number): Promise<boolean> {
-        return this.patchLine(filePath, lineNumber, { spentMinutes: minutes }, null);
+    async setSpentInFile(
+        filePath: string,
+        lineNumber: number,
+        minutes: number,
+        week?: string
+    ): Promise<boolean> {
+        return this.writeSpent(filePath, lineNumber, () => minutes, null, week);
+    }
+
+    /**
+     * Add time to a line's `⏱` by hand — the "+" of a task that asks for
+     * hours — or take some off, with `minutes` below zero; the total never
+     * goes under nothing. Checked against the title, as every edit by line
+     * number is.
+     */
+    async addSpentInFile(
+        filePath: string,
+        lineNumber: number,
+        minutes: number,
+        expectedTitle: string,
+        week?: string
+    ): Promise<boolean> {
+        return this.writeSpent(filePath, lineNumber, (was) => was + minutes, expectedTitle, week);
+    }
+
+    /**
+     * The `⏱` total, and — on a line that asks for hours a week (`🎯 …/w`) —
+     * whatever it gained added to the line under it for the week starting
+     * `week`. One write for both, so the two never disagree.
+     */
+    private async writeSpent(
+        filePath: string,
+        lineNumber: number,
+        next: (was: number) => number,
+        expectedTitle: string | null,
+        week?: string
+    ): Promise<boolean> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return false;
+
+        let ok = false;
+        await this.process(file, (data) => {
+            const lines = data.split('\n');
+            const idx = lineNumber - 1;
+            if (idx < 0 || idx >= lines.length) return data;
+            const m = lines[idx].match(CHECKBOX_PARTS_RE);
+            if (!m) return data;
+            if (expectedTitle !== null && !titlesMatch(m[3], expectedTitle)) return data;
+
+            const [, prefix, char, body] = m;
+            const parsed = parseTaskText(body, { priority: 'none', tags: [] });
+            const was = parsed.spentMinutes ?? 0;
+            const now = Math.max(0, Math.round(next(was)));
+            lines[idx] = `${prefix}[${char}] ${applyTaskPatch(body, { spentMinutes: now })}`;
+            ok = true;
+            // Taken off as well as put in: the week loses what the total loses.
+            if (!week || !parsed.target?.weekly || now === was) return lines.join('\n');
+
+            const details = parseDetails(detailLines(lines, idx));
+            const weeks = addToWeek(details.weeks ?? [], week, now - was);
+            return writeDetails(lines, idx, { ...details, weeks }).join('\n');
+        });
+        return ok;
     }
 
     /**
@@ -527,7 +604,9 @@ export class TaskWriter {
     async addSubtaskInFile(
         filePath: string,
         parentLineNumber: number,
-        title: string
+        title: string,
+        /** Fields for the new line besides its title — a day read out of the words, say. */
+        fields?: TaskPatch
     ): Promise<boolean> {
         const file = this.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return false;
@@ -545,21 +624,94 @@ export class TaskWriter {
             const parentIndent = lines[idx].match(/^(\s*)/)?.[1] ?? '';
             const parentWidth = parentIndent.replace(/\t/g, '    ').length;
 
-            // Advance past the parent's existing (deeper-indented) child lines.
+            // Advance past the parent's existing (deeper-indented) child lines,
+            // noting how the first subtask among them is indented.
             let insertAt = idx + 1;
+            let siblingIndent: string | null = null;
             while (insertAt < lines.length) {
                 const line = lines[insertAt];
                 if (line.trim() === '') break;
-                const width = (line.match(/^(\s*)/)?.[1] ?? '').replace(/\t/g, '    ').length;
-                if (width <= parentWidth) break;
+                const indent = line.match(/^(\s*)/)?.[1] ?? '';
+                if (indent.replace(/\t/g, '    ').length <= parentWidth) break;
+                if (siblingIndent === null && CHECKBOX_LINE_RE.test(line)) siblingIndent = indent;
                 insertAt++;
             }
 
-            lines.splice(insertAt, 0, `${parentIndent}\t- [ ] ${clean}`);
+            // Indented as its siblings are; the first one, a step in from its
+            // parent, written the way the parent's own indent is: four spaces
+            // under spaces, a tab otherwise.
+            const indent =
+                siblingIndent ?? parentIndent + (/^ +$/.test(parentIndent) ? '    ' : '\t');
+            lines.splice(
+                insertAt,
+                0,
+                `${indent}- [ ] ${fields ? applyTaskPatch(clean, fields) : clean}`
+            );
             ok = true;
             return lines.join('\n');
         });
         return ok;
+    }
+
+    /**
+     * Put a task or a subtask under another — the goals' "move under…" — with
+     * everything under it, as the last of the other's steps. Both lines are
+     * checked against the titles the caller was shown. Across files the block
+     * is written into the target first and only then taken out of the source,
+     * as `moveTask` does: twice is a thing the user can fix, nowhere is not.
+     */
+    async moveUnderInFile(
+        source: { filePath: string; lineNumber: number; title: string },
+        target: { filePath: string; lineNumber: number; title: string }
+    ): Promise<boolean> {
+        const from = this.app.vault.getAbstractFileByPath(source.filePath);
+        const to = this.app.vault.getAbstractFileByPath(target.filePath);
+        if (!(from instanceof TFile) || !(to instanceof TFile)) return false;
+        const at = (lines: string[], line: number, title: string) => {
+            const m = (lines[line - 1] ?? '').match(CHECKBOX_PARTS_RE);
+            return !!m && titlesMatch(m[3], title);
+        };
+
+        if (source.filePath === target.filePath) {
+            let ok = false;
+            await this.process(from, (data) => {
+                const lines = data.split('\n');
+                if (!at(lines, source.lineNumber, source.title)) return data;
+                if (!at(lines, target.lineNumber, target.title)) return data;
+                const next = nestUnder(lines, source.lineNumber, target.lineNumber);
+                if (!next) return data;
+                ok = true;
+                return next.join('\n');
+            });
+            return ok;
+        }
+
+        const sourceLines = (await this.read(from)).split('\n');
+        if (!at(sourceLines, source.lineNumber, source.title)) return false;
+        const moving = extractBlock(sourceLines, source.lineNumber)?.block;
+        if (!moving) return false;
+
+        let placed = false;
+        await this.process(to, (data) => {
+            const lines = data.split('\n');
+            if (!at(lines, target.lineNumber, target.title)) return data;
+            const next = insertUnder(lines, moving, target.lineNumber);
+            if (!next) return data;
+            placed = true;
+            return next.join('\n');
+        });
+        if (!placed) return false;
+
+        let removed = false;
+        await this.process(from, (data) => {
+            const lines = data.split('\n');
+            if (!at(lines, source.lineNumber, source.title)) return data;
+            const out = extractBlock(lines, source.lineNumber);
+            if (!out) return data;
+            removed = true;
+            return out.rest.join('\n');
+        });
+        return removed;
     }
 
     /**

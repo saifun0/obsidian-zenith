@@ -16,7 +16,7 @@ import { TaskStats } from './TaskStats';
 import { TaskEditorModal } from './TaskEditorModal';
 import { TaskQuickLine, type TaskDraft } from './TaskQuickLine';
 import { GoalTree } from './GoalTree';
-import { openGoals } from '../services/goalTree';
+import { listedTasks, openGoals } from '../services/goalTree';
 
 // ── View state ───────────────────────────────────────
 
@@ -109,7 +109,15 @@ export const TasksApp: FC = () => {
     );
     const goalsOn = useFeature('tasks.goals');
     const goalTag = useZenithStore((s) => s.settings.tasksGoalTag);
+    const weekStart = useZenithStore((s) => s.settings.journalWeekStart);
     const goalCount = useMemo(() => (goalsOn ? openGoals(tasks, goalTag) : 0), [goalsOn, tasks, goalTag]);
+    // The goals live in their tree; the list, its count and its tags are of the
+    // rest — and of the goals' steps that have a day.
+    const listed = useMemo(
+        () =>
+            goalsOn ? listedTasks(tasks, goalTag, { today: getTodayString(), weekStart }) : tasks,
+        [goalsOn, tasks, goalTag, weekStart]
+    );
     // The tree, when it is asked for and there is a tree to show.
     const showGoals = goalsOn && tab === 'goals';
     const [filters, setFilters] = useState<TaskFilterState>(() => restoreFilters(saved));
@@ -171,13 +179,24 @@ export const TasksApp: FC = () => {
         return () => window.clearTimeout(timer);
     }, [asked, setTaskFocus]);
 
+    // The goals' tree, asked for by its command.
+    const goalsAsked = useZenithStore((s) => s.goalsAsked);
+    const setGoalsAsked = useZenithStore((s) => s.setGoalsAsked);
+    useEffect(() => {
+        if (!goalsAsked) return;
+        setShowStats(false);
+        setSearchOpen(false);
+        setTab('goals');
+        setGoalsAsked(false);
+    }, [goalsAsked, setGoalsAsked]);
+
     const query = useMemo(() => parseSearch(search), [search]);
     const filtering = isFiltering(query);
 
     // ── The list ─────────────────────────────────────
 
     const shown = useMemo(() => {
-        const list = queryTasks(tasks, {
+        const list = queryTasks(listed, {
             tab: tab === 'goals' ? 'all' : tab,
             priority: query.priority ?? 'all',
             minPriority: query.minPriority,
@@ -193,7 +212,7 @@ export const TasksApp: FC = () => {
             list.sort((a, b) => (b.doneDate ?? '').localeCompare(a.doneDate ?? ''));
         }
         return list;
-    }, [tasks, tab, query, filters.sort]);
+    }, [listed, tab, query, filters.sort]);
 
     const groupMode: TaskFilterState['group'] =
         tab === 'done' || !groups.includes(filters.group) ? 'none' : filters.group;
@@ -204,13 +223,13 @@ export const TasksApp: FC = () => {
         let active = 0;
         let doing = 0;
         let done = 0;
-        for (const task of tasks) {
+        for (const task of listed) {
             if (task.status === 'todo' || task.status === 'in-progress') active++;
             if (task.status === 'in-progress') doing++;
             if (task.status === 'done') done++;
         }
         return { active, doing, done };
-    }, [tasks]);
+    }, [listed]);
 
     const tally: Array<{ id: Tab; text: string }> = [
         { id: 'active', text: t.plural('tasks.tally.active', counts.active) },
@@ -228,10 +247,10 @@ export const TasksApp: FC = () => {
 
     const topTags = useMemo(() => {
         const counted = new Map<string, number>();
-        for (const task of tasks)
+        for (const task of listed)
             for (const tag of task.tags) counted.set(tag, (counted.get(tag) ?? 0) + 1);
         return [...counted.entries()].sort((a, b) => b[1] - a[1]).map(([tag]) => tag);
-    }, [tasks]);
+    }, [listed]);
 
     const suggestions = useMemo(() => {
         const has = (token: string) =>
@@ -374,7 +393,7 @@ export const TasksApp: FC = () => {
     const statsShown = statsOn && showStats;
 
     const empty =
-        tasks.length === 0 ? (
+        listed.length === 0 ? (
             <div className="zenith-tempty">
                 <p className="zenith-tempty__lead">{t('tasks.empty.fresh')}</p>
                 <p className="zenith-tempty__hint">{t('tasks.empty.freshHint')}</p>

@@ -10,7 +10,7 @@ import type { TaskStatus } from '../../../core/constants';
 import { Modal } from '../../../components/shared/Modal';
 import { TaskWriter } from '../services/taskWriter';
 import { countSubtasks } from '../services/taskStats';
-import { marginText } from '../services/taskMargin';
+import { marginText, subtaskWhen } from '../services/taskMargin';
 import { diffTaskFields } from '../services/taskFormat';
 import { askForTask } from '../services/taskViewState';
 import { TaskStatusControl } from './taskStatusUi';
@@ -127,60 +127,66 @@ export const SubtasksDialog: FC<SubtasksDialogProps> = ({ taskId, onClose }) => 
         void plugin.moduleManager.get('tasks')?.activateView();
     };
 
+    const today = getTodayString();
     const rows = (list: SubTask[], depth: number): React.ReactNode =>
-        list.map((sub) => (
-            <React.Fragment key={sub.lineNumber}>
-                <li
-                    className={`zenith-subdlg__row ${closed(sub.status) ? 'is-closed' : ''}`}
-                    style={{ ['--subdlg-depth' as string]: depth }}
-                >
-                    <TaskStatusControl
-                        status={sub.status}
-                        size={16}
-                        onChange={(status) => void setStatus(sub, status)}
-                    />
-                    {renaming?.line === sub.lineNumber ? (
-                        <input
-                            className="zenith-subdlg__input zenith-subdlg__rename"
-                            value={renaming.text}
-                            aria-label={t('tasks.subtasks.rename', { name: sub.title })}
-                            enterKeyHint="done"
-                            autoFocus
-                            onFocus={(e) => e.currentTarget.select()}
-                            onChange={(e) => retitle(sub.lineNumber, e.target.value)}
-                            onBlur={() => void rename(sub)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    void rename(sub);
-                                } else if (e.key === 'Escape') {
-                                    // The field's own Escape: the dialog stays.
-                                    e.stopPropagation();
-                                    retitle(sub.lineNumber, null);
-                                }
-                            }}
+        list.map((sub) => {
+            const at = subtaskWhen(sub, today, t);
+            return (
+                <React.Fragment key={sub.lineNumber}>
+                    <li
+                        className={`zenith-subdlg__row ${closed(sub.status) ? 'is-closed' : ''}`}
+                        style={{ ['--subdlg-depth' as string]: depth }}
+                    >
+                        <TaskStatusControl
+                            status={sub.status}
+                            size={16}
+                            onChange={(status) => void setStatus(sub, status)}
                         />
-                    ) : (
-                        <>
-                            <span className="zenith-subdlg__name">{sub.title}</span>
-                            {sub.dueTime && (
-                                <span className="zenith-subdlg__time">{sub.dueTime}</span>
-                            )}
-                            <button
-                                type="button"
-                                className="zenith-subdlg__edit"
+                        {renaming?.line === sub.lineNumber ? (
+                            <input
+                                className="zenith-subdlg__input zenith-subdlg__rename"
+                                value={renaming.text}
                                 aria-label={t('tasks.subtasks.rename', { name: sub.title })}
-                                title={t('tasks.subtasks.rename', { name: sub.title })}
-                                onClick={() => retitle(sub.lineNumber, sub.title)}
-                            >
-                                <Pencil size={13} />
-                            </button>
-                        </>
-                    )}
-                </li>
-                {sub.subtasks.length > 0 && rows(sub.subtasks, depth + 1)}
-            </React.Fragment>
-        ));
+                                enterKeyHint="done"
+                                autoFocus
+                                onFocus={(e) => e.currentTarget.select()}
+                                onChange={(e) => retitle(sub.lineNumber, e.target.value)}
+                                onBlur={() => void rename(sub)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        void rename(sub);
+                                    } else if (e.key === 'Escape') {
+                                        // The field's own Escape: the dialog stays.
+                                        e.stopPropagation();
+                                        retitle(sub.lineNumber, null);
+                                    }
+                                }}
+                            />
+                        ) : (
+                            <>
+                                <span className="zenith-subdlg__name">{sub.title}</span>
+                                {at.text && (
+                                    <span className={`zenith-subdlg__time is-${at.tone}`}>
+                                        {at.text}
+                                    </span>
+                                )}
+                                <button
+                                    type="button"
+                                    className="zenith-subdlg__edit"
+                                    aria-label={t('tasks.subtasks.rename', { name: sub.title })}
+                                    title={t('tasks.subtasks.rename', { name: sub.title })}
+                                    onClick={() => retitle(sub.lineNumber, sub.title)}
+                                >
+                                    <Pencil size={13} />
+                                </button>
+                            </>
+                        )}
+                    </li>
+                    {sub.subtasks.length > 0 && rows(sub.subtasks, depth + 1)}
+                </React.Fragment>
+            );
+        });
 
     const header = (
         <div className="zenith-subdlg__head">
@@ -213,7 +219,13 @@ export const SubtasksDialog: FC<SubtasksDialogProps> = ({ taskId, onClose }) => 
     );
 
     return (
-        <Modal title={task.title} header={head} onClose={onClose} size="sm" className="zenith-subdlg">
+        <Modal
+            title={task.title}
+            header={head}
+            onClose={onClose}
+            size="sm"
+            className="zenith-subdlg"
+        >
             {total > 0 && (
                 <div
                     className="zenith-subdlg__progress"

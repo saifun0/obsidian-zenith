@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState, type CSSProperties, type FC } from 'react';
 import { Notice } from 'obsidian';
-import { GripVertical, MoreHorizontal, Paperclip } from 'lucide-react';
+import { GripVertical, MoreHorizontal, Paperclip, Target } from 'lucide-react';
 import type { Task } from '../../../store/taskSlice';
 import { useZenithStore } from '../../../store';
 import { useApp } from '../../../context/AppContext';
@@ -24,6 +24,8 @@ import { formatDuration } from '../services/taskFormat';
 import { countSubtasks } from '../services/taskStats';
 import { isRunningFor } from '../services/taskTimer';
 import { marginText } from '../services/taskMargin';
+import { hoursReached } from '../services/taskHours';
+import { HoursTally } from './HoursTally';
 import { detailKey, setDetailsOpen } from '../services/taskViewState';
 import type { Closing } from '../services/closingTasks';
 import { useBranchAnchors } from './useBranchAnchors';
@@ -242,13 +244,19 @@ export const TaskItem: FC<TaskItemProps> = ({
                 onStatus: (s) => void changeStatus(s),
                 onSchedule: dimmed ? undefined : (to) => void schedule(to),
                 onAddSubtask: subtasksOn && !dimmed ? addSubtask : undefined,
-                onGoal: goalsOn
+                onGoal:
+                    goalsOn && !task.goal
                     ? {
                           isGoal: isGoal(task, goalTag),
-                          toggle: () =>
-                              void setGoal(app, task, goalTag, !isGoal(task, goalTag)).then((ok) => {
-                                  if (ok) void reload();
-                              }),
+                          toggle: () => {
+                              const on = !isGoal(task, goalTag);
+                              void setGoal(app, task, goalTag, on).then((ok) => {
+                                  if (!ok) return;
+                                  // It leaves the list for the goals' tree: say where it went.
+                                  if (on) new Notice(t('tasks.goals.moved'));
+                                  void reload();
+                              });
+                          },
                       }
                     : undefined,
                 timer: timerOn && !dimmed,
@@ -284,7 +292,8 @@ export const TaskItem: FC<TaskItemProps> = ({
     const tags = task.tags.slice(0, TAGS_SHOWN);
     const moreTags = task.tags.length - tags.length;
     const note = active && task.description ? firstLine(task.description) : '';
-    const grip = dragOn && reorderable && active;
+    // A goal's step is a subtask's line: it is put in order under its goal.
+    const grip = dragOn && reorderable && active && !task.goal;
     const urgent = active && task.priority === 'urgent';
     const idleTimer = active && timerOn && !timerRunning;
     // How many buttons the hover brings up — the row keeps that much clear.
@@ -363,6 +372,7 @@ export const TaskItem: FC<TaskItemProps> = ({
 
                         <TaskStatusControl
                             status={task.status}
+                            ready={timerOn && !dimmed && hoursReached(task)}
                             onChange={(status) => {
                                 if (!closing) void changeStatus(status);
                             }}
@@ -421,6 +431,17 @@ export const TaskItem: FC<TaskItemProps> = ({
                             <div className="zenith-trow__side" onClick={stop}>
                                 {active && (
                                     <>
+                                        {task.goal && (
+                                            <span
+                                                className="zenith-trow__goal"
+                                                title={t('tasks.goals.stepOf', { name: task.goal })}
+                                            >
+                                                <Target size={11} aria-hidden="true" />
+                                                <span className="zenith-trow__goalname">
+                                                    {task.goal}
+                                                </span>
+                                            </span>
+                                        )}
                                         {tags.length > 0 && (
                                             <span
                                                 className="zenith-trow__tags"
@@ -430,10 +451,15 @@ export const TaskItem: FC<TaskItemProps> = ({
                                                 {moreTags > 0 && ` +${moreTags}`}
                                             </span>
                                         )}
-                                        {timerOn && task.spentMinutes !== undefined && (
-                                            <span className="zenith-trow__spent">
-                                                {formatDuration(task.spentMinutes)}
-                                            </span>
+                                        {timerOn && task.target ? (
+                                            <HoursTally item={task} />
+                                        ) : (
+                                            timerOn &&
+                                            task.spentMinutes !== undefined && (
+                                                <span className="zenith-trow__spent">
+                                                    {formatDuration(task.spentMinutes)}
+                                                </span>
+                                            )
                                         )}
                                         {hasSubs && (
                                             <button

@@ -159,3 +159,45 @@ export function insertBlock(
     out.splice(position === 'before' ? target.start : target.end + 1, 0, ...reindented);
     return out;
 }
+
+/**
+ * How a new child of the checkbox at `targetIdx` is indented: as its first
+ * checkbox child is, or — it has none — a step in from it, the way its own
+ * indent is written: four spaces under spaces, a tab otherwise.
+ */
+function childIndent(lines: string[], target: LineBlock): string {
+    for (let i = target.start + 1; i <= target.end; i++) {
+        if (CHECKBOX_LINE_RE.test(lines[i])) return indentOf(lines[i]);
+    }
+    const own = indentOf(lines[target.start]);
+    return own + (/^ +$/.test(own) ? '    ' : '\t');
+}
+
+/**
+ * Put a block under another checkbox — the last of its children, one step in
+ * from it — in the same file. Null when either line is not a checkbox, or the
+ * target is the block itself or inside it: nothing goes under itself.
+ */
+export function nestUnder(lines: string[], sourceLine: number, targetLine: number): string[] | null {
+    const source = findBlock(lines, sourceLine - 1);
+    const target = findBlock(lines, targetLine - 1);
+    if (!source || !target) return null;
+    if (target.start >= source.start && target.start <= source.end) return null;
+
+    const block = reindentBlock(lines.slice(source.start, source.end + 1), childIndent(lines, target));
+    const out = [...lines];
+    out.splice(source.start, block.length);
+    // The target's end moves up by the block when the block was above it.
+    const at = target.end < source.start ? target.end + 1 : target.end + 1 - block.length;
+    out.splice(at, 0, ...block);
+    return out;
+}
+
+/** Put an already-extracted block under a checkbox of another file, as `nestUnder` does. */
+export function insertUnder(lines: string[], block: string[], targetLine: number): string[] | null {
+    const target = findBlock(lines, targetLine - 1);
+    if (!target) return null;
+    const out = [...lines];
+    out.splice(target.end + 1, 0, ...reindentBlock(block, childIndent(lines, target)));
+    return out;
+}

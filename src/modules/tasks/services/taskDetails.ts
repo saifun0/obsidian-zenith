@@ -20,7 +20,17 @@
  * of prose are what anyone would write by hand, and Obsidian renders the block
  * as part of the task whether or not this plugin is installed. Which is the
  * point — the same reason the statuses are checkbox characters.
+ *
+ * One more kind of line keeps the hours of a task that asks for so many a
+ * week (`🎯 20h/w`): a week each, by the day it starts, with the time put in.
+ *
+ * ```markdown
+ * - [ ] Learn English 🎯 20h/w ⏱ 25h30m
+ *     - 2026-10-12 ⏱ 18h
+ *     - 2026-10-19 ⏱ 7h30m
+ * ```
  */
+import { formatDuration, parseDuration } from './taskFormat';
 
 /** What an attachment points at. The arrow prefix is what marks a task link. */
 export type AttachmentKind = 'image' | 'note' | 'task' | 'link';
@@ -33,10 +43,21 @@ export interface TaskAttachment {
     label?: string;
 }
 
+/** A week of a task's hours: the day it starts, and the minutes put in. */
+export interface WeekLog {
+    start: string;
+    minutes: number;
+}
+
 export interface TaskDetails {
     /** Free text, newlines preserved. Empty string when there is none. */
     description: string;
     attachments: TaskAttachment[];
+    /**
+     * The weeks' hours. Left out by whoever does not deal in them — the
+     * editor, the attachments — and then the ones already there are kept.
+     */
+    weeks?: WeekLog[];
 }
 
 export const EMPTY_DETAILS: TaskDetails = { description: '', attachments: [] };
@@ -51,6 +72,25 @@ const MD_LINK_RE = /^\[([^\]]*)\]\(([^)]+)\)$/;
 const BARE_URL_RE = /^https?:\/\/\S+$/i;
 
 const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|svg|avif|bmp)(?:[?#].*)?$/i;
+
+/** `- 2026-10-12 ⏱ 18h`: a week of hours. */
+const WEEK_RE = /^(?:[-*+]\s+)?(\d{4}-\d{2}-\d{2})\s*⏱\s*(\d+(?:h\d*)?m?)$/u;
+
+/** Read one detail line as a week of hours, or `null` if it is not one. */
+function readWeek(line: string): WeekLog | null {
+    const m = line.match(WEEK_RE);
+    const minutes = m ? parseDuration(m[2]) : undefined;
+    return m && minutes ? { start: m[1], minutes } : null;
+}
+
+/** The weeks with `minutes` more put in the one starting `start`, in the order of the weeks. */
+export function addToWeek(weeks: readonly WeekLog[], start: string, minutes: number): WeekLog[] {
+    const found = weeks.some((w) => w.start === start);
+    const next = found
+        ? weeks.map((w) => (w.start === start ? { start, minutes: w.minutes + minutes } : w))
+        : [...weeks, { start, minutes }];
+    return next.filter((w) => w.minutes > 0).sort((a, b) => a.start.localeCompare(b.start));
+}
 
 /** Read one detail line as an attachment, or `null` if it is prose. */
 function readAttachment(line: string): TaskAttachment | null {
@@ -118,16 +158,26 @@ export function attachmentLine(attachment: TaskAttachment): string {
 export function parseDetails(lines: string[]): TaskDetails {
     const prose: string[] = [];
     const attachments: TaskAttachment[] = [];
+    const weeks: WeekLog[] = [];
 
     for (const raw of lines) {
         const line = raw.trim();
         if (!line) continue;
+        const week = readWeek(line);
+        if (week) {
+            weeks.push(week);
+            continue;
+        }
         const attachment = readAttachment(line);
         if (attachment) attachments.push(attachment);
         else prose.push(line);
     }
 
-    return { description: prose.join('\n'), attachments };
+    return {
+        description: prose.join('\n'),
+        attachments,
+        ...(weeks.length ? { weeks } : {}),
+    };
 }
 
 /**
@@ -145,6 +195,9 @@ export function buildDetailLines(details: TaskDetails, indent: string): string[]
     for (const attachment of details.attachments) {
         out.push(indent + attachmentLine(attachment));
     }
+    for (const week of details.weeks ?? []) {
+        out.push(`${indent}- ${week.start} ⏱ ${formatDuration(week.minutes)}`);
+    }
     return out;
 }
 
@@ -152,6 +205,9 @@ export function buildDetailLines(details: TaskDetails, indent: string): string[]
 export function detailsEqual(a: TaskDetails, b: TaskDetails): boolean {
     if (a.description !== b.description) return false;
     if (a.attachments.length !== b.attachments.length) return false;
+    const weeks = (d: TaskDetails) =>
+        (d.weeks ?? []).map((w) => `${w.start}:${w.minutes}`).join(',');
+    if (weeks(a) !== weeks(b)) return false;
     return a.attachments.every((x, i) => {
         const y = b.attachments[i];
         return x.kind === y.kind && x.target === y.target && (x.label ?? '') === (y.label ?? '');
@@ -211,8 +267,11 @@ export function writeDetails(
     const own = indentOf(lines[lineIdx] ?? '');
     const existing = end > start ? indentOf(lines[start]) : '';
     const indent = existing || (own.includes('\t') ? `${own}\t` : `${own}    `);
+    // Whoever left the weeks out keeps the ones already written.
+    const weeks =
+        details.weeks ?? parseDetails(lines.slice(start, end).map((l) => l.trim())).weeks;
 
     const next = [...lines];
-    next.splice(start, end - start, ...buildDetailLines(details, indent));
+    next.splice(start, end - start, ...buildDetailLines({ ...details, weeks }, indent));
     return next;
 }

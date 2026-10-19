@@ -2,7 +2,8 @@ import { BaseModule } from '../../core/IModule';
 import { VIEW_TYPE_TASKS } from '../../core/constants';
 import { TasksView } from './TasksView';
 import { TasksWidget } from './components/TasksWidget';
-import { watchFeature } from '../../core/useFeature';
+import { GoalsWidget } from './components/GoalsWidget';
+import { isFeatureOn, watchFeature } from '../../core/useFeature';
 import { TimerService } from './services/timerService';
 import { TaskReminderService } from './services/taskReminders';
 import { tasksSettingsSchema } from './settings.schema';
@@ -11,6 +12,7 @@ import { tasksTranslations } from './i18n';
 import type { TranslationTable } from '../../core/i18n';
 import { tasksSearchSource } from './searchSource';
 import { translateNow } from '../../core/i18n';
+import { askForGoals } from './services/taskViewState';
 
 /**
  * TasksModule — manages the Tasks view and related commands.
@@ -71,6 +73,18 @@ export class TasksModule extends BaseModule {
             name: translateNow('command.open-tasks'),
             callback: () => this.activateView(),
         });
+        this.addCommand({
+            id: 'open-goals',
+            name: translateNow('command.open-goals'),
+            checkCallback: (checking) => {
+                if (!isFeatureOn('tasks.goals')) return false;
+                if (!checking) {
+                    askForGoals();
+                    void this.activateView();
+                }
+                return true;
+            },
+        });
 
         // Contribute the Tasks widget to the dashboard.
         this.disposers.push(
@@ -87,6 +101,23 @@ export class TasksModule extends BaseModule {
                 // Three tasks in a cell four rows tall is mostly an empty cell.
                 autoHeight: true,
                 component: TasksWidget,
+            })
+        );
+        // And the goals: how far along each is, what is next, the week's hours.
+        this.disposers.push(
+            this.plugin.registerDashboardWidget({
+                id: 'tasks.goals',
+                feature: 'tasks.goals',
+                title: 'Goals',
+                titleKey: 'widget.goals',
+                description: 'Each goal: how far along, what is next, the week’s hours.',
+                descriptionKey: 'widget.goals.desc',
+                icon: 'target',
+                sizes: ['sm', 'md', 'lg'],
+                defaultSize: 'md',
+                order: 31,
+                autoHeight: true,
+                component: GoalsWidget,
             })
         );
 

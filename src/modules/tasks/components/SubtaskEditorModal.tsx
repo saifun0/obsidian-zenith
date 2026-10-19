@@ -14,7 +14,8 @@ import {
 import type { TaskAttachment, TaskDetails } from '../services/taskDetails';
 import { AttachmentField } from './AttachmentField';
 import { Modal } from '../../../components/shared/Modal';
-import { TimeField } from '../../../components/ui/fields';
+import { DateField, TimeField } from '../../../components/ui/fields';
+import { formatHours, parseHoursInput } from '../services/taskHours';
 
 /**
  * The same four extras a task has, on a subtask.
@@ -25,9 +26,10 @@ import { TimeField } from '../../../components/ui/fields';
  * it does have is a title, an hour, a countdown, notes and attachments — and
  * those are written by exactly the same writer, into exactly the same shapes.
  *
- * The day a subtask is due is deliberately absent: it belongs to the task, and a
- * subtask with its own date is a task that has been filed in the wrong place.
- * An hour, though, is a time within the day the task already carries.
+ * A day of its own, too: a step of a goal has one more often than not, and
+ * the list brings such a step out on its day. Without one, its hour is a time
+ * within the day the task already carries. And the hours it asks for, as a
+ * task's can — twenty a week for a goal's "learn the language".
  */
 
 interface SubtaskEditorModalProps {
@@ -47,11 +49,16 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
     const { app } = useApp();
 
     const [title, setTitle] = useState(subtask.title);
+    const [dueDate, setDueDate] = useState(subtask.dueDate ?? '');
     const [dueTime, setDueTime] = useState(subtask.dueTime ?? '');
     const [dueEndTime, setDueEndTime] = useState(subtask.dueEndTime ?? '');
     const [timerText, setTimerText] = useState(
         subtask.timerMinutes ? formatDuration(subtask.timerMinutes) : ''
     );
+    const [hoursText, setHoursText] = useState(
+        subtask.target ? formatHours(subtask.target.minutes, t.locale) : ''
+    );
+    const [hoursWeekly, setHoursWeekly] = useState(subtask.target?.weekly ?? true);
     const [notes, setNotes] = useState(subtask.description ?? '');
     const [attachments, setAttachments] = useState<TaskAttachment[]>(subtask.attachments ?? []);
     const [submitting, setSubmitting] = useState(false);
@@ -72,8 +79,11 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
             // Only the fields this form owns, and of those only the ones that
             // changed — so anything else on the line, a tag or a marker this
             // plugin doesn't know, survives being edited here.
+            const hours = parseHoursInput(hoursText);
             const patch = diffTaskFields(subtask, {
                 title: trimmed,
+                dueDate: dueDate || undefined,
+                target: hours ? { minutes: hours, weekly: hoursWeekly } : undefined,
                 dueTime: normalizeTimeOfDay(dueTime),
                 dueEndTime: dueTime ? normalizeTimeOfDay(dueEndTime) : undefined,
                 timerMinutes: parseDuration(timerText),
@@ -137,6 +147,15 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
 
                 <div className="zenith-form__grid">
                     <div className="zenith-field">
+                        <label className="zenith-field__label">{t('tasks.editor.due')}</label>
+                        <DateField
+                            className="zenith-input zenith-field__input"
+                            aria-label={t('tasks.editor.due')}
+                            value={dueDate}
+                            onChange={setDueDate}
+                        />
+                    </div>
+                    <div className="zenith-field">
                         <label className="zenith-field__label">{t('tasks.editor.dueTime')}</label>
                         <TimeField
                             className="zenith-input zenith-field__input"
@@ -169,6 +188,32 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
                                 value={timerText}
                                 onChange={(e) => setTimerText(e.target.value)}
                             />
+                        </div>
+                    )}
+                    {timerOn && (
+                        <div className="zenith-field">
+                            <label className="zenith-field__label">
+                                {t('tasks.editor.hours')}
+                            </label>
+                            <div className="zenith-subhours">
+                                <input
+                                    className="zenith-input zenith-field__input"
+                                    placeholder={t('tasks.editor.hoursPlaceholder')}
+                                    aria-label={t('tasks.editor.hours')}
+                                    inputMode="decimal"
+                                    value={hoursText}
+                                    onChange={(e) => setHoursText(e.target.value)}
+                                />
+                                <select
+                                    className="dropdown"
+                                    aria-label={t('tasks.editor.hours')}
+                                    value={hoursWeekly ? 'weekly' : 'total'}
+                                    onChange={(e) => setHoursWeekly(e.target.value === 'weekly')}
+                                >
+                                    <option value="weekly">{t('tasks.editor.hoursWeekly')}</option>
+                                    <option value="total">{t('tasks.editor.hoursTotal')}</option>
+                                </select>
+                            </div>
                         </div>
                     )}
                 </div>

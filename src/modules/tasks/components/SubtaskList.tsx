@@ -12,6 +12,8 @@ import { confirmDelete } from '../../../core/ConfirmModal';
 import { TaskWriter } from '../services/taskWriter';
 import { countSubtasks } from '../services/taskStats';
 import { formatDuration } from '../services/taskFormat';
+import { subtaskWhen } from '../services/taskMargin';
+import { getTodayString } from '../../../core/dateUtils';
 import { TaskStatusControl } from './taskStatusUi';
 import { TaskTimerButton } from './TaskTimerButton';
 import { SubtaskEditorModal } from './SubtaskEditorModal';
@@ -276,6 +278,7 @@ const SubtaskRow: FC<SubtaskRowProps> = ({
     const key = `${filePath}:${sub.lineNumber}`;
     const dropEdge = dropTarget?.kind === 'row' && dropTarget.key === key ? dropTarget.position : null;
     const note = sub.description ? firstLine(sub.description) : '';
+    const when = subtaskWhen(sub, getTodayString(), t);
 
     const menu = (at: { x: number; y: number } | MouseEvent) =>
         showLineMenu(
@@ -334,8 +337,10 @@ const SubtaskRow: FC<SubtaskRowProps> = ({
                 <span className="zenith-subtask__text">{sub.title}</span>
                 {note && <span className="zenith-subtask__note">{note}</span>}
             </span>
-            {/* The hour it is due, time spent, and a paperclip — quiet, and only when set. */}
-            {sub.dueTime && <span className="zenith-subtask__time">{sub.dueTime}</span>}
+            {/* Its day or hour, time spent, and a paperclip — quiet, and only when set. */}
+            {when.text && (
+                <span className={`zenith-subtask__time is-${when.tone}`}>{when.text}</span>
+            )}
             {timerOn && sub.spentMinutes !== undefined && (
                 <span className="zenith-subtask__time is-spent">{formatDuration(sub.spentMinutes)}</span>
             )}

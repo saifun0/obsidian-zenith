@@ -63,6 +63,7 @@ export const STATE_POLICY: Record<keyof ZenithSettings, KeyPolicy> = {
     // ── Storage paths — the vault is shared, so these must be ──
     tasksFolderPath: { scope: 'shared' },
     tasksGoalTag: { scope: 'shared' },
+    tasksGoalsNote: { scope: 'shared' },
     projectsFolderPath: { scope: 'shared' },
     contentFolderPath: { scope: 'shared' },
     journalFolderPath: { scope: 'shared' },

@@ -489,3 +489,34 @@ describe('a note written with Windows line endings', () => {
         expect(store.text).toBe(CRLF_NOTE);
     });
 });
+
+describe('adding a subtask', () => {
+    it('indents it as its siblings are, after the last of them', async () => {
+        const { app, store } = fakeApp(
+            'Goals.md',
+            [
+                '- [ ] Run a half marathon',
+                '    - [ ] Build the base',
+                '        - [x] Run 10 km',
+                '        - [ ] Run 12 km',
+                '    - [ ] Race',
+            ].join('\n')
+        );
+        expect(await new TaskWriter(app).addSubtaskInFile('Goals.md', 2, 'Run 14 km')).toBe(true);
+        expect(store.text.split('\n')[4]).toBe('        - [ ] Run 14 km');
+    });
+
+    it('steps the first one in the way its parent is indented', async () => {
+        const spaces = fakeApp('A.md', ['- [ ] Goal', '    - [ ] Stage'].join('\n'));
+        await new TaskWriter(spaces.app).addSubtaskInFile('A.md', 2, 'Step');
+        expect(spaces.store.text.split('\n')[2]).toBe('        - [ ] Step');
+
+        const tabs = fakeApp('B.md', ['- [ ] Goal', '\t- [ ] Stage'].join('\n'));
+        await new TaskWriter(tabs.app).addSubtaskInFile('B.md', 2, 'Step');
+        expect(tabs.store.text.split('\n')[2]).toBe('\t\t- [ ] Step');
+
+        const top = fakeApp('C.md', '- [ ] Goal');
+        await new TaskWriter(top.app).addSubtaskInFile('C.md', 1, 'Step');
+        expect(top.store.text.split('\n')[1]).toBe('\t- [ ] Step');
+    });
+});

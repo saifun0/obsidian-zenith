@@ -75,6 +75,13 @@ const heads = () =>
         (n) => n.textContent
     );
 
+const flipped = () => useZenithStore.getState().settings.taskView.goalsFlipped;
+const rowOf = (name: string) =>
+    [...document.querySelectorAll<HTMLElement>('.zenith-goal__row')].find(
+        (r) => r.querySelector('.zenith-goal__name')?.textContent === name
+    );
+const goalOf = (name: string) => rowOf(name)?.closest<HTMLElement>('.zenith-goal');
+
 describe('the goals tree', () => {
     beforeEach(() => {
         host = document.createElement('div');
@@ -83,7 +90,7 @@ describe('the goals tree', () => {
         const view = useZenithStore.getState().settings.taskView;
         act(() =>
             useZenithStore.setState((s) => ({
-                settings: { ...s.settings, taskView: { ...view, goalsClosed: [] } },
+                settings: { ...s.settings, taskView: { ...view, goalsFlipped: [] } },
             }))
         );
     });
@@ -107,31 +114,101 @@ describe('the goals tree', () => {
         ]);
     });
 
-    it('counts the leaves, and says quietly when every step is done', () => {
+    it('counts a goal’s steps under its name, and a stage’s after its own', () => {
         draw([MARATHON, RUN15, READ]);
-        const folds = [...document.querySelectorAll('.zenith-goal__fold')].map(
-            (b) => b.textContent
-        );
-        expect(folds).toEqual(['1/1', '2/3']);
-        const ready = [...document.querySelectorAll('.zenith-goal')].map(
-            (g) => !!g.querySelector('.zenith-goal__ready')
-        );
-        expect(ready).toEqual([true, false]);
-        // The goal itself stays open: closing it is the reader's call.
+        const goalCounts = [...document.querySelectorAll('.zenith-goal__meta .zenith-goal__count')];
+        expect(goalCounts.map((b) => b.textContent)).toEqual(['1/1', '1/2']);
+        expect(rowOf('Run 15 km')?.classList.contains('is-stage')).toBe(true);
+        expect(rowOf('Run 15 km')?.querySelector('.zenith-goal__count')?.textContent).toBe('1/2');
+        expect(rowOf('Run 12 km')?.querySelector('.zenith-goal__count')).toBeNull();
+    });
+
+    it('draws how far along a goal is with everything under it in shares', () => {
+        draw([MARATHON, RUN15, READ]);
+        const bars = [...document.querySelectorAll('.zenith-goal__progress')];
+        // The club is done and the 15 km half: three quarters.
+        expect(bars.map((b) => b.getAttribute('aria-valuenow'))).toEqual(['100', '75']);
+    });
+
+    it('marks a goal whose steps are all done as ready, and leaves it open', () => {
+        draw([MARATHON, RUN15, READ]);
+        const ready = (name: string) => !!rowOf(name)?.querySelector('.zenith-status.is-ready');
+        expect(ready('Read twelve books')).toBe(true);
+        expect(ready('Run a half marathon')).toBe(false);
         expect(document.querySelector('.zenith-goal.is-closed')).toBeNull();
     });
 
-    it('folds a goal, and remembers it in the settings', () => {
+    it('marks the next thing to do', () => {
         draw([MARATHON, RUN15]);
-        const fold = document.querySelector<HTMLButtonElement>('.zenith-goal__fold');
-        act(() => fold?.click());
+        const marks = [...document.querySelectorAll('.zenith-goal__when.is-next')];
+        expect(marks).toHaveLength(1);
+        expect(marks[0].closest('.zenith-goal__row')).toBe(rowOf('Run 12 km'));
+    });
+
+    it('folds a goal by its count, says what is next, and remembers it', () => {
+        draw([MARATHON, RUN15]);
+        const count = goalOf('Run a half marathon')?.querySelector<HTMLButtonElement>(
+            '.zenith-goal__meta .zenith-goal__count'
+        );
+        act(() => count?.click());
         expect(names()).toEqual(['Run a half marathon']);
-        expect(useZenithStore.getState().settings.taskView.goalsClosed).toEqual([
-            'Inbox.md::Run a half marathon',
-        ]);
-        act(() => fold?.click());
+        expect(document.querySelector('.zenith-goal__nextis')?.textContent).toBe('next: Run 12 km');
+        expect(flipped()).toEqual(['Inbox.md::Run a half marathon']);
+        act(() => count?.click());
         expect(names()).toHaveLength(5);
-        expect(useZenithStore.getState().settings.taskView.goalsClosed).toEqual([]);
+        expect(flipped()).toEqual([]);
+    });
+
+    it('folds a stage by its count', () => {
+        draw([MARATHON, RUN15]);
+        act(() =>
+            rowOf('Run 15 km')?.querySelector<HTMLButtonElement>('.zenith-goal__count')?.click()
+        );
+        expect(names()).toEqual(['Run a half marathon', 'Join the club', 'Run 15 km']);
+        expect(flipped()).toEqual(['Inbox.md::Run a half marathon > Run 15 km']);
+    });
+
+    it('keeps a closed stage folded until it is opened', () => {
+        const goal = task(20, 'Learn English', {
+            tags: ['goal'],
+            subtasks: [
+                sub(21, 'Stage 1', {
+                    status: 'done',
+                    completed: true,
+                    subtasks: [sub(22, 'Old', { status: 'done', completed: true })],
+                }),
+                sub(23, 'Stage 2', { subtasks: [sub(24, 'Task 1')] }),
+            ],
+        });
+        draw([goal]);
+        expect(names()).toEqual(['Learn English', 'Stage 1', 'Stage 2', 'Task 1']);
+        act(() =>
+            rowOf('Stage 1')?.querySelector<HTMLButtonElement>('.zenith-goal__count')?.click()
+        );
+        expect(names()).toContain('Old');
+    });
+
+    it('opens the field for a step at the end of the steps, a level in', () => {
+        draw([MARATHON, RUN15]);
+        act(() =>
+            rowOf('Run 15 km')
+                ?.querySelector<HTMLButtonElement>('.zenith-goal__act.is-add')
+                ?.click()
+        );
+        const field = document.querySelector('.zenith-goal__add');
+        const list = field?.closest('ul');
+        expect(list?.lastElementChild?.contains(field ?? null)).toBe(true);
+        expect(list?.previousElementSibling).toBe(rowOf('Run 15 km'));
+    });
+
+    it('keeps the goals that are done at the bottom, behind one line', () => {
+        const done = task(30, 'Learn to swim', { tags: ['goal'], status: 'done', completed: true });
+        draw([MARATHON, RUN15, done]);
+        expect(heads()).toEqual(['Run a half marathon']);
+        const line = document.querySelector<HTMLButtonElement>('.zenith-goals__done');
+        expect(line?.textContent).toBe('Done · 1');
+        act(() => line?.click());
+        expect(heads()).toEqual(['Run a half marathon', 'Learn to swim']);
     });
 
     it('says how to make a goal when there is none', () => {

@@ -89,6 +89,7 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
 
     // ── Preferences ──
     tasksGoalTag: 'yes',
+    tasksGoalsNote: 'path',
     taskImageAlign: 'yes',
     taskImageSize: 'yes',
     journalDateFormat: 'yes',

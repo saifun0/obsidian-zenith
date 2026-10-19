@@ -45,6 +45,11 @@ export function askForTask(task: { filePath: string; title: string }): void {
     useZenithStore.getState().setTaskFocus(key);
 }
 
+/** Turn the list to the goals' tree. Opening the view is the caller's, as with `askForTask`. */
+export function askForGoals(): void {
+    useZenithStore.getState().setGoalsAsked(true);
+}
+
 export function closedGroups(view: TaskViewState): readonly string[] {
     return view.closed ?? DEFAULT_CLOSED_GROUPS;
 }

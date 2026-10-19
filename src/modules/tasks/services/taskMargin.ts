@@ -40,11 +40,15 @@ function weekday(iso: string, t: Translator): string {
         .replace(/\.$/, '');
 }
 
+/** What the margin reads off a line: a task, or a subtask with a day of its own. */
+type Dated = Pick<Task, 'status'> &
+    Partial<Pick<Task, 'dueDate' | 'dueTime' | 'doneDate' | 'cancelledDate'>>;
+
 /**
  * @param grouped Whether the row sits under a smart group, which already says
  *   "today" or "tomorrow" so the margin need not.
  */
-export function marginText(task: Task, today: string, t: Translator, grouped: boolean): MarginText {
+export function marginText(task: Dated, today: string, t: Translator, grouped: boolean): MarginText {
     if (task.status === 'done' || task.status === 'cancelled') {
         const closedOn = task.status === 'done' ? task.doneDate : task.cancelledDate;
         if (!closedOn) return { text: '', tone: 'closed' };
@@ -81,4 +85,17 @@ export function marginText(task: Task, today: string, t: Translator, grouped: bo
         return { text: [weekday(task.dueDate, t), time].filter(Boolean).join(' '), tone: 'plain' };
     }
     return { text: shortDate(task.dueDate, today, t), tone: 'plain' };
+}
+
+/**
+ * What a subtask says beside its name: its day, when it has one of its own —
+ * with the hour in it — or the hour alone, of its task's day.
+ */
+export function subtaskWhen(
+    sub: { status: Task['status']; dueDate?: string; dueTime?: string },
+    today: string,
+    t: Translator
+): MarginText {
+    if (sub.dueDate) return marginText(sub, today, t, false);
+    return { text: sub.dueTime ?? '', tone: 'plain' };
 }

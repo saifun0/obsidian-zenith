@@ -37,6 +37,15 @@ export const tasksSettingsSchema = coreSchema({
                 },
                 {
                     type: 'text',
+                    key: 'tasksGoalsNote',
+                    labelKey: 'settings.tasksGoalsNote',
+                    descKey: 'settings.tasksGoalsNote.desc',
+                    default: '',
+                    placeholder: 'Goals',
+                    showIf: whenFeature('tasks.goals'),
+                },
+                {
+                    type: 'text',
                     key: 'journalTaskHeading',
                     labelKey: 'settings.journalTaskHeading',
                     descKey: 'settings.journalTaskHeading.desc',

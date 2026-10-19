@@ -58,6 +58,7 @@ type FieldKind =
     | 'time'
     | 'spent'
     | 'timer'
+    | 'target'
     | 'doneDate'
     | 'cancelledDate';
 
@@ -71,6 +72,9 @@ interface MarkerDef {
 
 const ISO = '\\d{4}-\\d{2}-\\d{2}';
 const DURATION = '\\d+(?:h\\d*)?m?';
+/** `20h` in all, or `20h/w` a week: the hours a task asks for (`🎯`). */
+const TARGET = `${DURATION}(?:\\/w(?:eek)?)?`;
+const TARGET_RE = /^(\d+(?:h\d*)?m?)(?:\/(w(?:eek)?))?$/;
 const TASK_ID = '[\\w-]+';
 
 /**
@@ -117,6 +121,9 @@ const MARKERS: readonly MarkerDef[] = [
     { kind: 'scheduledDate', glyphs: ['⏳', '⌛'], value: ISO },
     { kind: 'dueDate', glyphs: ['📅', '📆', '🗓'], value: ISO },
     { kind: 'time', glyphs: ['⏰'], value: HOURS },
+    // The hours the task asks for, in all or a week — closed by time, not a tick.
+    // Before the time spent, so the line reads "🎯 20h/w ⏱ 7h30m".
+    { kind: 'target', glyphs: ['🎯'], value: TARGET },
     // Time already spent on the task, accumulated across sessions.
     { kind: 'spent', glyphs: ['⏱'], value: DURATION },
     // The countdown the user set, in case they want the same one again.
@@ -379,6 +386,29 @@ const cleanTag = (tag: string): string => tag.replace(/^#/, '').trim();
 
 // ── Types ────────────────────────────────────────────
 
+/**
+ * The hours a task asks for: `🎯 20h/w` — twenty a week, counted again from
+ * the start of each week — or `🎯 100h`, a hundred in all. What has been put
+ * in is the `⏱` it already keeps, and for a week, the week's line under it
+ * (`taskDetails`).
+ */
+export interface HourTarget {
+    minutes: number;
+    weekly: boolean;
+}
+
+/** `🎯 20h/w` → twenty hours a week; anything else → undefined. */
+export function readTarget(raw: string | undefined): HourTarget | undefined {
+    const m = (raw ?? '').trim().match(TARGET_RE);
+    const minutes = m ? parseDuration(m[1]) : undefined;
+    return m && minutes ? { minutes, weekly: !!m[2] } : undefined;
+}
+
+/** The inverse: what follows the `🎯`. */
+export function formatTarget(target: HourTarget): string {
+    return `${formatDuration(target.minutes)}${target.weekly ? '/w' : ''}`;
+}
+
 export interface TaskInput {
     title: string;
     /** Checkbox status — used by the writer for the `[ ]` char; ignored by the body. */
@@ -398,6 +428,8 @@ export interface TaskInput {
     spentMinutes?: number;
     /** Minutes the countdown was last set to. */
     timerMinutes?: number;
+    /** The hours it asks for (`🎯`). */
+    target?: HourTarget;
     recurrence?: string;
     /** Subtask titles (only consumed by `addTask` when creating). */
     subtasks?: string[];
@@ -427,6 +459,7 @@ export interface TaskPatch {
     dueEndTime?: string | null;
     spentMinutes?: number | null;
     timerMinutes?: number | null;
+    target?: HourTarget | null;
     doneDate?: string | null;
     cancelledDate?: string | null;
     /**
@@ -465,6 +498,8 @@ export interface ParsedTaskText {
     spentMinutes?: number;
     /** Minutes the countdown was last set to. */
     timerMinutes?: number;
+    /** `🎯` — the hours it asks for. */
+    target?: HourTarget;
     recurrence?: string;
     /** `🏁 delete` / `🏁 keep` — what to do with the line once it is done, lowercased. */
     onCompletion?: string;
@@ -503,6 +538,7 @@ export function parseTaskText(text: string, defaults: TaskDefaults): ParsedTaskT
         dueEndTime: hours.end,
         spentMinutes: parseDuration(value('spent') ?? ''),
         timerMinutes: parseDuration(value('timer') ?? ''),
+        target: readTarget(value('target')),
         startDate: value('startDate'),
         scheduledDate: value('scheduledDate'),
         doneDate: value('doneDate'),
@@ -576,6 +612,18 @@ function fieldEdit(def: MarkerDef, patch: TaskPatch, items: Item[]): string | nu
             const want = minutes && minutes > 0 ? Math.round(minutes) : null;
             if (want === (parseDuration(current ?? '') ?? null)) return undefined;
             return want ? `${glyph} ${formatDuration(want)}` : null;
+        }
+        case 'target': {
+            if (patch.target === undefined) return undefined;
+            const want = patch.target && patch.target.minutes > 0 ? patch.target : null;
+            const was = readTarget(current) ?? null;
+            if (
+                (want === null && was === null) ||
+                (want && was && want.minutes === was.minutes && want.weekly === was.weekly)
+            ) {
+                return undefined;
+            }
+            return want ? `${glyph} ${formatTarget(want)}` : null;
         }
         case 'id': {
             if (patch.id === undefined) return undefined;
@@ -702,6 +750,14 @@ export function diffTaskFields(before: TaskFields, after: TaskFields): TaskPatch
         if (was !== now) patch[key] = now ?? null;
     }
 
+    if (owns('target')) {
+        const was = before.target;
+        const now = after.target;
+        if ((was?.minutes ?? 0) !== (now?.minutes ?? 0) || !!was?.weekly !== !!now?.weekly) {
+            patch.target = now ?? null;
+        }
+    }
+
     return patch;
 }
 
@@ -719,6 +775,7 @@ export function buildTaskBody(input: TaskInput): string {
         dueEndTime: input.dueEndTime,
         spentMinutes: input.spentMinutes,
         timerMinutes: input.timerMinutes,
+        target: input.target,
         doneDate: input.doneDate,
         cancelledDate: input.cancelledDate,
         addTags: input.tags,

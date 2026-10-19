@@ -1,5 +1,6 @@
 import type { Priority, TaskStatus } from '../core/constants';
-import type { TaskAttachment } from '../modules/tasks/services/taskDetails';
+import type { TaskAttachment, WeekLog } from '../modules/tasks/services/taskDetails';
+import type { HourTarget } from '../modules/tasks/services/taskFormat';
 import type { ZenithSliceCreator } from './types';
 
 // ── Task Types ───────────────────────────────────────
@@ -38,6 +39,10 @@ export interface TaskExtras {
     ref?: string;
     /** The Tasks plugin's `⛔`: the ids of the tasks this one waits on. */
     needs?: string[];
+    /** `🎯` — the hours it asks for, in all or a week (`taskHours`). */
+    target?: HourTarget;
+    /** The hours of each week, for a task that asks for so many a week. */
+    weeks?: WeekLog[];
 }
 
 export interface SubTask extends TaskExtras {
@@ -45,12 +50,20 @@ export interface SubTask extends TaskExtras {
     status: TaskStatus;
     completed: boolean;
     lineNumber: number;
+    /** Its own day, `📅` — a step of a goal has one of its own more often than not. */
+    dueDate?: string;
     /** Nested subtasks (a subtask can have its own subtasks, recursively). */
     subtasks: SubTask[];
 }
 
 export interface Task extends TaskExtras {
     id: string;
+    /**
+     * The goal this row is a step of, when it is one written under a goal and
+     * brought into the list for its day (`goalSteps`). It is a subtask's line,
+     * not a task's: it is not reordered from the list.
+     */
+    goal?: string;
     title: string;
     /** 4-state status derived from the checkbox char. */
     status: TaskStatus;
@@ -106,6 +119,9 @@ export interface TaskSlice {
      */
     taskFocus: string | null;
     setTaskFocus: (key: string | null) => void;
+    /** The goals' tree, asked for by its command: the list turns to it and clears this. */
+    goalsAsked: boolean;
+    setGoalsAsked: (on: boolean) => void;
 }
 
 export const createTaskSlice: ZenithSliceCreator<TaskSlice> = (set) => ({
@@ -149,4 +165,7 @@ export const createTaskSlice: ZenithSliceCreator<TaskSlice> = (set) => ({
 
     taskFocus: null,
     setTaskFocus: (key) => set(() => ({ taskFocus: key })),
+
+    goalsAsked: false,
+    setGoalsAsked: (on) => set(() => ({ goalsAsked: on })),
 });

@@ -582,6 +582,23 @@
 .zenith-trow__spent {
     white-space: nowrap;
 }
+/* The goal a step brought into the list belongs to. */
+.zenith-trow__goal {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    max-width: 180px;
+}
+.zenith-trow__goal > svg {
+    flex: none;
+}
+.zenith-trow__goalname {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 
 /* The subtask progress and the paperclip are the fold's handles. */
 .zenith-root button.zenith-trow__fold {
@@ -638,6 +655,50 @@
     height: 100%;
     background: currentColor;
     transition: width 0.3s ease;
+}
+
+/* The tally of a task that asks for hours: a button, which puts time in. */
+.zenith-root button.zenith-hours {
+    height: auto;
+    margin: 0;
+    padding: 0 0 3px;
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.zenith-root button.zenith-hours:hover,
+.zenith-root button.zenith-hours.is-full {
+    color: var(--text-normal);
+}
+.zenith-hours__field {
+    padding: 6px;
+}
+.zenith-hours__story {
+    margin: 6px 2px 0;
+    color: var(--text-faint);
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
+}
+input.zenith-hours__input {
+    width: 100%;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    box-shadow: none;
+    color: var(--text-normal);
+    font-size: 0.9rem;
+}
+input.zenith-hours__input:focus {
+    border-color: var(--interactive-accent);
+    outline: none;
 }
 
 /* Hover actions — the timer and "⋯", and the handle in manual order — come
@@ -1188,6 +1249,14 @@ button.zenith-lightbox__btn {
 .zenith-subtask__time.is-spent {
     color: var(--text-faint);
 }
+.zenith-subtask__time.is-overdue,
+.zenith-subdlg__time.is-overdue {
+    color: var(--color-red, #e5534b);
+}
+.zenith-subtask__time.is-today,
+.zenith-subdlg__time.is-today {
+    color: var(--text-normal);
+}
 
 /* ══════════════════════════════════════════════════════════
    Narrow panes and touch
@@ -1494,15 +1563,16 @@ button.zenith-lightbox__btn {
    The goals' tree (GoalTree)
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    A page of the same planner, standing on the title column the list's titles
-   stand on. A goal is named as a group of tasks is, in the planner's hand,
-   with a line of ink under it for how far along it is; its steps are the
-   list's rows cut down, and each level stands a step further in, on a thin
-   line that ties it to the one above. */
+   stand on. A goal is a heading in the planner's hand; under it a line of
+   small print — its count, its day — and a line of ink for how far along it
+   is. Its steps are the list's rows cut down; a stage, a step with steps of
+   its own, is set in bold with its count after its name. Each level stands a
+   step further in, on a thin line that comes down from the circle above. */
 .zenith-goals {
     padding-left: var(--zenith-tcolumn);
 }
 .zenith-goal + .zenith-goal {
-    margin-top: 26px;
+    margin-top: 30px;
 }
 
 .zenith-goal__row,
@@ -1518,19 +1588,24 @@ button.zenith-lightbox__btn {
 .zenith-goal__row.is-head > .zenith-status {
     margin-left: calc(-1 * (var(--zenith-tcircle) + var(--zenith-tgap)));
 }
-.zenith-goal__name {
+.zenith-goal__title {
     flex: 1;
     min-width: 0;
-    color: var(--text-normal);
-    font-size: 0.94rem;
     line-height: 1.35;
     overflow-wrap: anywhere;
+}
+.zenith-goal__name {
+    color: var(--text-normal);
+    font-size: 0.94rem;
     cursor: pointer;
 }
 .zenith-goal__row.is-head .zenith-goal__name {
     font-family: var(--zenith-font-ink);
-    font-size: 1.2rem;
+    font-size: 1.36rem;
     letter-spacing: 0.002em;
+}
+.zenith-goal__row.is-stage .zenith-goal__name {
+    font-weight: var(--font-semibold, 600);
 }
 .zenith-goal__row.is-closed .zenith-goal__name {
     color: var(--text-faint);
@@ -1539,6 +1614,13 @@ button.zenith-lightbox__btn {
 .zenith-goal.is-closed .zenith-goal__row.is-head .zenith-goal__name {
     text-decoration: none;
 }
+@container zenith-tasks (max-width: 560px) {
+    .zenith-goal__row.is-head .zenith-goal__name {
+        font-size: 1.16rem;
+    }
+}
+
+/* A day in the margin, in the planner's hand; "next" is written the same way. */
 .zenith-goal__when {
     flex: none;
     font-family: var(--zenith-font-ink);
@@ -1549,26 +1631,82 @@ button.zenith-lightbox__btn {
 }
 .zenith-goal__when.is-overdue { color: var(--color-red, #e5534b); }
 .zenith-goal__when.is-today { color: var(--text-normal); }
+.zenith-goal__when.is-next { color: var(--text-accent); }
 
-/* The count of a goal's steps, which also folds it. */
-.zenith-root button.zenith-goal__fold {
-    flex: none;
+/* A count — of a goal, under its name; of a stage, after it. It folds. */
+.zenith-root button.zenith-goal__count {
+    display: inline;
     height: auto;
-    min-width: 2.4em;
-    padding: 1px 4px;
+    padding: 1px 3px;
     border: none;
     border-radius: 4px;
     background: none;
     box-shadow: none;
     color: var(--text-faint);
     font: inherit;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
+    font-weight: normal;
     font-variant-numeric: tabular-nums;
+    vertical-align: baseline;
     cursor: pointer;
 }
-.zenith-root button.zenith-goal__fold:hover {
+.zenith-goal__title > button.zenith-goal__count {
+    margin-left: 6px;
+}
+.zenith-goal__title > button.zenith-hours {
+    margin-left: 8px;
+    vertical-align: baseline;
+}
+.zenith-root button.zenith-goal__count:hover {
     background: var(--background-modifier-hover);
     color: var(--text-normal);
+}
+
+/* The line under a goal's name. */
+.zenith-goal__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 6px;
+    margin: -2px 0 0 -3px;
+    color: var(--text-faint);
+    font-size: 0.8rem;
+}
+.zenith-goal__meta .zenith-goal__when {
+    font-size: 0.84rem;
+}
+.zenith-goal__dot {
+    color: var(--text-faint);
+    opacity: 0.7;
+}
+.zenith-goal__week {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.zenith-goal__meta > button.zenith-hours {
+    font-size: 0.8rem;
+}
+.zenith-goal__nextis {
+    min-width: 0;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+/* How far along: a line of ink, on a track of its own that is not a rule. */
+.zenith-goal__progress {
+    position: relative;
+    height: 3px;
+    margin: 8px 0 10px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--text-faint) 22%, transparent);
+    overflow: hidden;
+}
+.zenith-goal__progress > span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 3px;
+    background: var(--text-normal);
+    transition: width 0.5s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
 /* The plus and the menu: there when the row is pointed at. Without a pointer
@@ -1598,11 +1736,26 @@ button.zenith-lightbox__btn {
     background: var(--background-modifier-hover);
     color: var(--text-normal);
 }
+/* The timer: there with the plus and the menu, and for good while it runs. */
+.zenith-goal__timer {
+    display: inline-flex;
+    flex: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.zenith-goal__row:hover .zenith-goal__timer,
+.zenith-goal__timer:focus-within,
+.zenith-goal__timer.is-running {
+    opacity: 1;
+}
 @media (pointer: coarse) {
     .zenith-root button.zenith-goal__act {
         width: 32px;
         height: 32px;
         opacity: 1;
+    }
+    .zenith-goal__timer:not(.is-running) {
+        display: none;
     }
     .zenith-root button.zenith-goal__act.is-add,
     .zenith-root .zenith-goal__row:not(.is-head) button.zenith-goal__act {
@@ -1610,50 +1763,42 @@ button.zenith-lightbox__btn {
     }
 }
 
-/* How far along: a line of ink under the goal's name. */
-.zenith-goal__meter {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 2px 0 6px;
-}
-.zenith-goal__progress {
-    position: relative;
-    flex: 1;
-    height: 2px;
-    border-radius: 2px;
-    background: color-mix(in srgb, var(--text-faint) 30%, transparent);
-    overflow: hidden;
-}
-.zenith-goal__progress > span {
-    position: absolute;
-    inset: 0 auto 0 0;
-    border-radius: 2px;
-    background: var(--text-normal);
-    transition: width 0.5s cubic-bezier(0.2, 0.7, 0.3, 1);
-}
-.zenith-goal__ready {
-    flex: none;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-/* The steps: each level a step further in, on the thin line from the one above. */
+/* The steps: each level a step further in, on the thin line that comes down
+   from the middle of the circle above. A goal's circle stands in the margin,
+   so its line is drawn there and its steps come back to the title column. */
 .zenith-goal__steps {
     margin: 0;
     padding: 0;
     list-style: none;
-}
-.zenith-goal__steps .zenith-goal__steps {
-    margin-left: 7px;
-    padding-left: 15px;
     border-left: 1px solid color-mix(in srgb, var(--text-faint) 30%, transparent);
 }
-body.is-phone .zenith-goal__steps .zenith-goal__steps {
-    padding-left: 10px;
+.zenith-goal > .zenith-goal__steps {
+    margin-left: calc(-1 * (var(--zenith-tcircle) / 2 + var(--zenith-tgap)));
+    padding-left: calc(var(--zenith-tcircle) / 2 + var(--zenith-tgap) - 1px);
 }
-body.is-phone .zenith-goal__row.is-head .zenith-goal__name {
-    font-size: 1.1rem;
+.zenith-goal__steps .zenith-goal__steps {
+    margin-left: calc(var(--zenith-tcircle) / 2 - 1px);
+    padding-left: 9px;
+}
+
+/* The goals that are done: one line at the bottom, and under it, if asked. */
+.zenith-root button.zenith-goals__done {
+    display: block;
+    height: auto;
+    margin: 34px 0 12px -3px;
+    padding: 2px 3px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    box-shadow: none;
+    color: var(--text-faint);
+    font: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+.zenith-root button.zenith-goals__done:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
 }
 
 /* The line a step or a goal is written on. */
@@ -1667,7 +1812,7 @@ body.is-phone .zenith-goal__row.is-head .zenith-goal__name {
     opacity: 0.5;
 }
 .zenith-goal__new {
-    margin-bottom: 18px;
+    margin-bottom: 22px;
     margin-left: calc(-1 * (var(--zenith-tcircle) + var(--zenith-tgap)));
     border-bottom: 1px solid var(--background-modifier-border);
 }
@@ -1742,4 +1887,84 @@ body.is-phone .zenith-goal__row.is-head .zenith-goal__name {
     flex: none;
     color: var(--zenith-text-faint);
     font-size: 0.78rem;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   The goals on the dashboard (GoalsWidget)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Each goal a name, a hairline in ink for how far along, what is next, and
+   the week of its habits — the tree's goals, in a few lines each. */
+.zenith-gw {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+.zenith-gw__list {
+    gap: 12px;
+}
+.zenith-gw__goal {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+.zenith-root button.zenith-gw__head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+    height: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font: inherit;
+    font-size: var(--zenith-w-text);
+    font-weight: 500;
+    text-align: left;
+    justify-content: flex-start;
+    cursor: pointer;
+}
+.zenith-gw__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.zenith-gw__when {
+    flex: none;
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    font-size: var(--zenith-w-meta);
+    font-weight: 400;
+    color: var(--zenith-text-faint);
+}
+.zenith-gw__when.is-overdue { color: var(--color-red, #e5534b); }
+.zenith-gw__bar {
+    --zenith-wbar-color: var(--zenith-text-normal);
+}
+.zenith-gw__habit {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+}
+.zenith-root button.zenith-gw__all {
+    align-self: flex-start;
+    height: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    font: inherit;
+    font-size: var(--zenith-w-meta);
+    cursor: pointer;
+}
+.zenith-root button.zenith-gw__all:hover {
+    color: var(--zenith-text-normal);
 }

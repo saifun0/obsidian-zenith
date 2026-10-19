@@ -1,4 +1,12 @@
-import React, { useMemo, useRef, useState, type FC } from 'react';
+import React, {
+    createContext,
+    useContext,
+    useMemo,
+    useRef,
+    useState,
+    type FC,
+    type ReactNode,
+} from 'react';
 import { Menu, Notice } from 'obsidian';
 import { MoreHorizontal, Plus } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
@@ -6,183 +14,402 @@ import { useZenithStore } from '../../../store';
 import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import { useLongPress } from '../../../core/useLongPress';
+import { useFeature } from '../../../core/useFeature';
 import { openFileAtLine } from '../../../core/openInVault';
+import { confirmDelete } from '../../../core/ConfirmModal';
 import type { TaskStatus } from '../../../core/constants';
 import type { Task } from '../../../store/taskSlice';
-import { buildGoals, type GoalNode } from '../services/goalTree';
-import { linkStep, unlinkStep } from '../services/goalActions';
+import { buildGoals, habitsUnder, type GoalNode } from '../services/goalTree';
+import { addGoal, linkStep, moveStep, setGoal, unlinkStep } from '../services/goalActions';
 import { TaskWriter } from '../services/taskWriter';
-import { resolveTaskTarget } from '../services/taskTarget';
-import { marginText } from '../services/taskMargin';
-import { detailKey } from '../services/taskViewState';
+import { marginText, subtaskWhen } from '../services/taskMargin';
+import { quickParse } from '../services/quickParse';
+import { countSubtasks } from '../services/taskStats';
+import { formatHours, minutesTowards } from '../services/taskHours';
+import { isRunningFor } from '../services/taskTimer';
+import { TimerService } from '../services/timerService';
 import { TaskStatusControl } from './taskStatusUi';
-import { SubtaskTally } from './TaskItem';
 import { TaskEditorModal } from './TaskEditorModal';
 import { SubtaskEditorModal } from './SubtaskEditorModal';
 import { GoalLinkPicker } from './GoalLinkPicker';
+import { GoalMovePicker } from './GoalMovePicker';
+import { HoursTally } from './HoursTally';
+import { TaskTimerButton } from './TaskTimerButton';
 
 const NONE: readonly string[] = [];
 
-/** The goals that start folded: none — but a folded one is remembered by its note and title. */
-function useFolded() {
+/** The whole tree, for whatever row needs to name a place in it — "move under…". */
+const GoalsContext = createContext<GoalNode[]>([]);
+
+const isClosed = (status: TaskStatus) => status === 'done' || status === 'cancelled';
+
+interface Folds {
+    isFolded: (node: GoalNode) => boolean;
+    toggle: (node: GoalNode) => void;
+}
+
+/**
+ * What is folded. By default what is open is open and what is closed is
+ * folded to its one line; the settings keep only what was turned the other
+ * way, by the node's `foldKey`.
+ */
+function useFolds(): Folds {
     // The default outside the selector: a `[]` made inside it is a new value
     // on every read, and the store would re-render the tree without end.
-    const folded = useZenithStore((s) => s.settings.taskView.goalsClosed) ?? NONE;
+    const flipped = useZenithStore((s) => s.settings.taskView.goalsFlipped) ?? NONE;
     const updateSettings = useZenithStore((s) => s.updateSettings);
-    const toggle = (key: string) => {
-        const view = useZenithStore.getState().settings.taskView;
-        const now = view.goalsClosed ?? [];
-        updateSettings({
-            taskView: {
-                ...view,
-                goalsClosed: now.includes(key) ? now.filter((k) => k !== key) : [...now, key],
-            },
-        });
+    return {
+        isFolded: (node) => isClosed(node.status) !== flipped.includes(node.foldKey),
+        toggle: (node) => {
+            const view = useZenithStore.getState().settings.taskView;
+            const now = view.goalsFlipped ?? [];
+            const key = node.foldKey;
+            updateSettings({
+                taskView: {
+                    ...view,
+                    goalsFlipped: now.includes(key) ? now.filter((k) => k !== key) : [...now, key],
+                },
+            });
+        },
     };
-    return { folded, toggle };
+}
+
+/** Items with a dot between them, as the tally under the day has. */
+function dotted(items: ReactNode[]): ReactNode[] {
+    return items.flatMap((item, i) =>
+        i === 0
+            ? [item]
+            : [
+                  <span key={`dot${i}`} className="zenith-goal__dot" aria-hidden="true">
+                      ·
+                  </span>,
+                  item,
+              ]
+    );
 }
 
 /**
  * The goals, as a tree: what the Tasks page turns to from its tally.
  *
- * Each goal is named in the planner's hand, with how far along it is as a line
- * of ink under it; under it, what it takes — its subtasks, and the tasks its
- * `⛔` names, each with its own steps in turn (`goalTree`). The steps are the
- * list's own rows, cut down: the checkbox, the name, the date in the margin.
- * A step that is done stays, struck through, because what has been done is
- * part of how far along a goal is.
+ * Each goal is a heading in the planner's hand, with a line under it — how
+ * many of its steps are closed, when it is due — and a line of ink for how
+ * far along it is, everything under it counted. Under it, what it takes: its
+ * subtasks and the tasks its `⛔` names, each with its own steps in turn
+ * (`goalTree`). A step with steps of its own is a stage, set in bold with its
+ * own count; the rest are the list's rows cut down. The first thing still to
+ * do is marked "next".
  *
  * Every row has a plus for the next step — a subtask under it, in its note —
  * and a menu: tie an existing task under it, untie one that was tied, open
- * the line in its note. A line at the top writes a new goal.
+ * the line in its note. A line at the top writes a new goal. The goals that
+ * are done wait at the bottom, behind one line.
  */
 export const GoalTree: FC<{ tasks: Task[]; goalTag: string }> = ({ tasks, goalTag }) => {
     const t = useTranslation();
     const goals = useMemo(() => buildGoals(tasks, goalTag), [tasks, goalTag]);
-    const { folded, toggle } = useFolded();
+    const folds = useFolds();
+    const [showDone, setShowDone] = useState(false);
+    const open = goals.filter((goal) => !isClosed(goal.status));
+    const finished = goals.filter((goal) => isClosed(goal.status));
+
+    const section = (goal: GoalNode) => (
+        <GoalSection key={goal.key} goal={goal} tasks={tasks} folds={folds} goalTag={goalTag} />
+    );
 
     return (
-        <div className="zenith-goals">
-            <GoalLine goalTag={goalTag} />
-            {goals.length === 0 ? (
-                <div className="zenith-tempty">
-                    <p className="zenith-tempty__lead">{t('tasks.goals.empty')}</p>
-                    <p className="zenith-tempty__hint">
-                        {t('tasks.goals.emptyHint', { tag: `#${goalTag.replace(/^#/, '')}` })}
-                    </p>
-                </div>
-            ) : (
-                goals.map((goal) => {
-                    const key = detailKey(goal);
-                    return (
-                        <GoalSection
-                            key={goal.key}
-                            goal={goal}
-                            tasks={tasks}
-                            folded={folded.includes(key)}
-                            onFold={() => toggle(key)}
-                        />
-                    );
-                })
-            )}
-        </div>
+        <GoalsContext.Provider value={goals}>
+            <div className="zenith-goals">
+                <GoalLine goalTag={goalTag} />
+                {goals.length === 0 ? (
+                    <div className="zenith-tempty">
+                        <p className="zenith-tempty__lead">{t('tasks.goals.empty')}</p>
+                        <p className="zenith-tempty__hint">
+                            {t('tasks.goals.emptyHint', { tag: `#${goalTag.replace(/^#/, '')}` })}
+                        </p>
+                    </div>
+                ) : (
+                    open.map(section)
+                )}
+                {finished.length > 0 && (
+                    <>
+                        <button
+                            type="button"
+                            className="zenith-goals__done"
+                            aria-expanded={showDone}
+                            onClick={() => setShowDone((v) => !v)}
+                        >
+                            {t('tasks.goals.done', { count: finished.length })}
+                        </button>
+                        {showDone && finished.map(section)}
+                    </>
+                )}
+            </div>
+        </GoalsContext.Provider>
     );
 };
 
-/** One goal: its head, the line of ink, and what hangs under it. */
-const GoalSection: FC<{ goal: GoalNode; tasks: Task[]; folded: boolean; onFold: () => void }> = ({
+/** One goal: its head, the line under it, the line of ink, and what hangs under it. */
+const GoalSection: FC<{ goal: GoalNode; tasks: Task[]; folds: Folds; goalTag: string }> = ({
     goal,
     tasks,
-    folded,
-    onFold,
+    folds,
+    goalTag,
 }) => {
     const t = useTranslation();
-    const closed = goal.status === 'done' || goal.status === 'cancelled';
-    const allDone = goal.total > 0 && goal.done === goal.total && !closed;
+    const timerOn = useFeature('tasks.timer');
+    const weekStart = useZenithStore((s) => s.settings.journalWeekStart);
+    const [adding, setAdding] = useState(false);
+    const folded = folds.isFolded(goal);
+    const today = getTodayString();
+    const when = goal.task?.dueDate ? marginText(goal.task, today, t, false) : null;
+    const habits = timerOn ? habitsUnder(goal) : [];
+    // Hours in all, its own — or nothing to measure yet, and no line for it.
+    const inAll = !!goal.target && !goal.target.weekly;
+    const measured = goal.children.length > 0 || inAll;
+
+    const meta: ReactNode[] = [];
+    if (goal.total > 0) {
+        meta.push(
+            <button
+                key="count"
+                type="button"
+                className="zenith-goal__count"
+                aria-expanded={!folded}
+                title={t(folded ? 'tasks.goals.unfold' : 'tasks.goals.fold')}
+                onClick={() => folds.toggle(goal)}
+            >
+                {goal.done}/{goal.total}
+            </button>
+        );
+    }
+    if (timerOn && goal.target) {
+        meta.push(
+            <HoursTally key="hours" item={goal} towards={inAll ? goal.hoursUnder : undefined} />
+        );
+    }
+    if (when?.text) {
+        meta.push(
+            <span key="when" className={`zenith-goal__when is-${when.tone}`}>
+                {when.text}
+            </span>
+        );
+    }
+    // The week of the habits under it, which its line does not count.
+    if (habits.length > 0) {
+        const done = habits.reduce((sum, h) => sum + minutesTowards(h, today, weekStart), 0);
+        const target = habits.reduce((sum, h) => sum + (h.target?.minutes ?? 0), 0);
+        meta.push(
+            <span key="week" className="zenith-goal__week">
+                {t('tasks.goals.week', {
+                    done: formatHours(done, t.locale),
+                    target: formatHours(target, t.locale),
+                })}
+            </span>
+        );
+    }
+    // Folded, the goal still says what to do next.
+    if (folded && goal.next) {
+        meta.push(
+            <span key="next" className="zenith-goal__nextis">
+                {t('tasks.goals.nextIs', { name: goal.next.title })}
+            </span>
+        );
+    }
 
     return (
-        <section className={`zenith-goal${closed ? ' is-closed' : ''}`}>
-            <NodeRow node={goal} parent={null} tasks={tasks} head>
-                <button
-                    type="button"
-                    className="zenith-goal__fold"
-                    aria-expanded={!folded}
-                    title={t(folded ? 'tasks.goals.unfold' : 'tasks.goals.fold')}
-                    onClick={onFold}
+        <section className={`zenith-goal${isClosed(goal.status) ? ' is-closed' : ''}`}>
+            <NodeRow
+                node={goal}
+                parent={null}
+                tasks={tasks}
+                goalTag={goalTag}
+                head
+                onAdd={() => {
+                    if (folded) folds.toggle(goal);
+                    setAdding(true);
+                }}
+            />
+            {meta.length > 0 && <div className="zenith-goal__meta">{dotted(meta)}</div>}
+            {/* A goal that is closed has nothing left to measure, and one
+                with no steps and no hours has nothing to measure yet. */}
+            {!isClosed(goal.status) && measured && (
+                <div
+                    className="zenith-goal__progress"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(goal.progress * 100)}
                 >
-                    {goal.total > 0 ? `${goal.done}/${goal.total}` : ''}
-                </button>
-            </NodeRow>
-            {goal.total > 0 && (
-                <div className="zenith-goal__meter">
-                    <div
-                        className="zenith-goal__progress"
-                        role="progressbar"
-                        aria-valuemin={0}
-                        aria-valuemax={goal.total}
-                        aria-valuenow={goal.done}
-                    >
-                        <span style={{ width: `${(goal.done / goal.total) * 100}%` }} />
-                    </div>
-                    {/* The goal is not closed by its steps: that is the reader's
-                        call. It says the steps are all done, quietly. */}
-                    {allDone && (
-                        <span className="zenith-goal__ready">{t('tasks.goals.allDone')}</span>
-                    )}
+                    <span style={{ width: `${goal.progress * 100}%` }} />
                 </div>
             )}
-            {!folded && goal.children.length > 0 && (
-                <ul className="zenith-goal__steps">
-                    {goal.children.map((child) => (
-                        <Branch key={child.key} node={child} parent={goal} tasks={tasks} />
-                    ))}
-                </ul>
+            {!folded && (goal.children.length > 0 || adding) && (
+                <Steps
+                    node={goal}
+                    tasks={tasks}
+                    folds={folds}
+                    goalTag={goalTag}
+                    nextKey={goal.next?.key}
+                    adding={adding}
+                    onAdded={() => setAdding(false)}
+                />
             )}
         </section>
     );
 };
 
-/** A step and, under it, its own steps. */
-const Branch: FC<{ node: GoalNode; parent: GoalNode; tasks: Task[] }> = ({
-    node,
-    parent,
-    tasks,
-}) => (
-    <li className="zenith-goal__branch">
-        <NodeRow node={node} parent={parent} tasks={tasks} />
-        {node.children.length > 0 && (
-            <ul className="zenith-goal__steps">
-                {node.children.map((child) => (
-                    <Branch key={child.key} node={child} parent={node} tasks={tasks} />
-                ))}
-            </ul>
+/** What hangs under a node, and the field for one more at the end. */
+const Steps: FC<{
+    node: GoalNode;
+    tasks: Task[];
+    folds: Folds;
+    goalTag: string;
+    nextKey?: string;
+    adding: boolean;
+    onAdded: () => void;
+}> = ({ node, tasks, folds, goalTag, nextKey, adding, onAdded }) => (
+    <ul className="zenith-goal__steps">
+        {node.children.map((child) => (
+            <Branch
+                key={child.key}
+                node={child}
+                parent={node}
+                tasks={tasks}
+                folds={folds}
+                goalTag={goalTag}
+                nextKey={nextKey}
+            />
+        ))}
+        {adding && (
+            <li>
+                <StepField node={node} onDone={onAdded} />
+            </li>
         )}
-    </li>
+    </ul>
 );
+
+/** A step and, under it, its own steps. */
+const Branch: FC<{
+    node: GoalNode;
+    parent: GoalNode;
+    tasks: Task[];
+    folds: Folds;
+    goalTag: string;
+    nextKey?: string;
+}> = ({ node, parent, tasks, folds, goalTag, nextKey }) => {
+    const [adding, setAdding] = useState(false);
+    const stage = node.children.length > 0;
+    const folded = stage && folds.isFolded(node);
+
+    return (
+        <li className="zenith-goal__branch">
+            <NodeRow
+                node={node}
+                parent={parent}
+                tasks={tasks}
+                goalTag={goalTag}
+                next={node.key === nextKey}
+                folded={folded}
+                onFold={stage ? () => folds.toggle(node) : undefined}
+                onAdd={() => {
+                    if (folded) folds.toggle(node);
+                    setAdding(true);
+                }}
+            />
+            {((stage && !folded) || adding) && (
+                <Steps
+                    node={node}
+                    tasks={tasks}
+                    folds={folds}
+                    goalTag={goalTag}
+                    nextKey={nextKey}
+                    adding={adding}
+                    onAdded={() => setAdding(false)}
+                />
+            )}
+        </li>
+    );
+};
 
 /**
  * One line of the tree: a goal's head or a step. The checkbox closes it, the
  * name opens its editor, the plus writes the next step under it, and the
- * menu — or a right-click, or a long press — does the rest.
+ * menu — or a right-click, or a long press — does the rest. A stage carries
+ * its count after its name, which folds it.
  */
 const NodeRow: FC<{
     node: GoalNode;
     parent: GoalNode | null;
     tasks: Task[];
+    goalTag: string;
     head?: boolean;
-    children?: React.ReactNode;
-}> = ({ node, parent, tasks, head = false, children }) => {
+    next?: boolean;
+    folded?: boolean;
+    onFold?: () => void;
+    onAdd: () => void;
+}> = ({
+    node,
+    parent,
+    tasks,
+    goalTag,
+    head = false,
+    next = false,
+    folded = false,
+    onFold,
+    onAdd,
+}) => {
     const { app, plugin } = useApp();
     const t = useTranslation();
-    const [adding, setAdding] = useState(false);
-    const [text, setText] = useState('');
+    const goals = useContext(GoalsContext);
     const [editing, setEditing] = useState(false);
     const [picking, setPicking] = useState(false);
-    const busy = useRef(false);
+    const [moving, setMoving] = useState(false);
     const reload = () => plugin.dataService.reloadTasks();
-    const closed = node.status === 'done' || node.status === 'cancelled';
-    // Only a task has a day; a subtask's is its task's.
-    const when = node.task?.dueDate ? marginText(node.task, getTodayString(), t, false) : null;
+    const timerOn = useFeature('tasks.timer');
+    const running = useZenithStore((s) =>
+        isRunningFor(s.settings.activeTimer, node.filePath, node.lineNumber)
+    );
+    const closed = isClosed(node.status);
+    const stage = !head && node.children.length > 0;
+    // A goal's day is under its name; a step's is in the margin — a subtask's
+    // own, or the hour it has of its task's day.
+    const today = getTodayString();
+    const when = head
+        ? null
+        : node.task
+          ? node.task.dueDate
+              ? marginText(node.task, today, t, false)
+              : null
+          : subtaskWhen(node, today, t);
+
+    /**
+     * Delete the line and what is written under it — asked first, by name and
+     * by how many, when there is something under it, as in the list. A task
+     * tied in from another note goes from that note; its id comes out of the
+     * `⛔` above it first, while the lines are still where they were read.
+     */
+    const remove = async () => {
+        const under = countSubtasks(node.task?.subtasks ?? node.sub?.subtasks ?? []).total;
+        if (under > 0) {
+            const question = t.plural('tasks.delete.withSubtasks', under, { name: node.title });
+            if (!(await confirmDelete(app, question))) return;
+        }
+        try {
+            if (parent && node.via === 'link' && node.ref) {
+                await unlinkStep(app, parent, node.ref);
+            }
+            const ok = await new TaskWriter(app).deleteTaskInFile(
+                node.filePath,
+                node.lineNumber,
+                node.title
+            );
+            if (!ok) new Notice(t('tasks.error.delete'));
+        } catch (err) {
+            console.error('Zenith: failed to delete from the goals tree:', err);
+            new Notice(t('tasks.error.delete'));
+        }
+        await reload();
+    };
 
     const setStatus = async (status: TaskStatus) => {
         try {
@@ -199,29 +426,10 @@ const NodeRow: FC<{
         }
     };
 
-    const addStep = async () => {
-        const title = text.trim();
-        if (!title || busy.current) return;
-        busy.current = true;
-        try {
-            if (await new TaskWriter(app).addSubtaskInFile(node.filePath, node.lineNumber, title)) {
-                setText('');
-                await reload();
-            } else {
-                new Notice(t('tasks.error.save'));
-            }
-        } finally {
-            busy.current = false;
-        }
-    };
-
     const menu = (at: { x: number; y: number } | MouseEvent) => {
         const m = new Menu();
         m.addItem((item) =>
-            item
-                .setTitle(t('tasks.goals.addStep'))
-                .setIcon('list-plus')
-                .onClick(() => setAdding(true))
+            item.setTitle(t('tasks.goals.addStep')).setIcon('list-plus').onClick(onAdd)
         );
         m.addItem((item) =>
             item
@@ -229,6 +437,14 @@ const NodeRow: FC<{
                 .setIcon('link')
                 .onClick(() => setPicking(true))
         );
+        if (parent) {
+            m.addItem((item) =>
+                item
+                    .setTitle(t('tasks.goals.move'))
+                    .setIcon('corner-down-right')
+                    .onClick(() => setMoving(true))
+            );
+        }
         if (parent && node.via === 'link' && node.ref) {
             const ref = node.ref;
             m.addItem((item) =>
@@ -241,6 +457,24 @@ const NodeRow: FC<{
                                 if (ok) void reload();
                             })
                     )
+            );
+        }
+        if (timerOn && !closed) {
+            m.addItem((item) =>
+                item
+                    .setTitle(t(running ? 'tasks.timer.stop' : 'tasks.timer.start'))
+                    .setIcon(running ? 'square' : 'timer')
+                    .onClick(() => {
+                        const service = new TimerService(app);
+                        void (running
+                            ? service.stopRunning()
+                            : service.startFor({
+                                  filePath: node.filePath,
+                                  lineNumber: node.lineNumber,
+                                  title: node.title,
+                                  countdownMinutes: node.timerMinutes,
+                              }));
+                    })
             );
         }
         m.addSeparator();
@@ -256,6 +490,29 @@ const NodeRow: FC<{
                 .setIcon('file-text')
                 .onClick(() => void openFileAtLine(app, node.filePath, node.lineNumber - 1))
         );
+        // The list does not show a goal, so it stops being one here.
+        const task = node.task;
+        if (head && task) {
+            m.addItem((item) =>
+                item
+                    .setTitle(t('tasks.goals.unmake'))
+                    .setIcon('target')
+                    .onClick(
+                        () =>
+                            void setGoal(app, task, goalTag, false).then((ok) => {
+                                if (ok) void reload();
+                            })
+                    )
+            );
+        }
+        m.addSeparator();
+        m.addItem((item) =>
+            item
+                .setTitle(t('common.delete'))
+                .setIcon('trash-2')
+                .setWarning(true)
+                .onClick(() => void remove())
+        );
         if (at instanceof MouseEvent) m.showAtMouseEvent(at);
         else m.showAtPosition(at);
     };
@@ -267,47 +524,86 @@ const NodeRow: FC<{
         }
     );
 
+    const rowClass = [
+        'zenith-goal__row',
+        head && 'is-head',
+        stage && 'is-stage',
+        closed && 'is-closed',
+    ]
+        .filter(Boolean)
+        .join(' ');
+
     return (
         <>
-            <div
-                className={`zenith-goal__row${head ? ' is-head' : ''}${closed ? ' is-closed' : ''}`}
-                onContextMenu={press.onContextMenu}
-            >
+            <div className={rowClass} onContextMenu={press.onContextMenu}>
                 <TaskStatusControl
                     status={node.status}
                     size={head ? 18 : 16}
+                    ready={node.ready}
                     onChange={(s) => void setStatus(s)}
                 />
-                <span
-                    className="zenith-goal__name"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => {
-                        if (!press.swallowClick()) setEditing(true);
-                    }}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') setEditing(true);
-                    }}
-                    onPointerDown={press.onPointerDown}
-                    onPointerMove={press.onPointerMove}
-                    onPointerUp={press.onPointerUp}
-                    onPointerCancel={press.onPointerCancel}
-                >
-                    {node.title}
+                <span className="zenith-goal__title">
+                    <span
+                        className="zenith-goal__name"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => {
+                            if (!press.swallowClick()) setEditing(true);
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') setEditing(true);
+                        }}
+                        onPointerDown={press.onPointerDown}
+                        onPointerMove={press.onPointerMove}
+                        onPointerUp={press.onPointerUp}
+                        onPointerCancel={press.onPointerCancel}
+                    >
+                        {node.title}
+                    </span>
+                    {stage && onFold && node.total > 0 && (
+                        <button
+                            type="button"
+                            className="zenith-goal__count"
+                            aria-expanded={!folded}
+                            title={t(folded ? 'tasks.goals.unfold' : 'tasks.goals.fold')}
+                            onClick={onFold}
+                        >
+                            {node.done}/{node.total}
+                        </button>
+                    )}
+                    {timerOn && node.target && !head && (
+                        <HoursTally
+                            item={node}
+                            towards={stage && !node.target.weekly ? node.hoursUnder : undefined}
+                        />
+                    )}
                 </span>
-                {when?.text && (
-                    <span className={`zenith-goal__when is-${when.tone}`}>{when.text}</span>
+                {when?.text ? (
+                    <span className={`zenith-goal__when is-${when.tone}${next ? ' is-next' : ''}`}>
+                        {when.text}
+                    </span>
+                ) : (
+                    next && (
+                        <span className="zenith-goal__when is-next">{t('tasks.goals.next')}</span>
+                    )
                 )}
-                {!head && node.children.length > 0 && (
-                    <SubtaskTally done={node.done} total={node.total} />
+                {timerOn && !closed && (
+                    <span className={`zenith-goal__timer${running ? ' is-running' : ''}`}>
+                        <TaskTimerButton
+                            filePath={node.filePath}
+                            lineNumber={node.lineNumber}
+                            title={node.title}
+                            timerMinutes={node.timerMinutes}
+                            size={13}
+                        />
+                    </span>
                 )}
-                {children}
                 <button
                     type="button"
                     className="zenith-goal__act is-add"
                     aria-label={t('tasks.goals.addStep')}
                     title={t('tasks.goals.addStep')}
-                    onClick={() => setAdding(true)}
+                    onClick={onAdd}
                 >
                     <Plus size={14} />
                 </button>
@@ -322,33 +618,6 @@ const NodeRow: FC<{
                 </button>
             </div>
 
-            {adding && (
-                <div className="zenith-goal__add">
-                    <span className="zenith-goal__ring" aria-hidden="true" />
-                    <input
-                        className="zenith-goal__input"
-                        value={text}
-                        placeholder={t('tasks.goals.stepPlaceholder')}
-                        aria-label={t('tasks.goals.addStep')}
-                        enterKeyHint="done"
-                        autoFocus
-                        onChange={(e) => setText(e.target.value)}
-                        onBlur={() => {
-                            if (!text.trim()) setAdding(false);
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                e.preventDefault();
-                                void addStep();
-                            } else if (e.key === 'Escape') {
-                                setText('');
-                                setAdding(false);
-                            }
-                        }}
-                    />
-                </div>
-            )}
-
             {editing && node.task && (
                 <TaskEditorModal
                     editTask={node.task}
@@ -362,6 +631,20 @@ const NodeRow: FC<{
                     subtask={node.sub}
                     onClose={() => setEditing(false)}
                     onSaved={reload}
+                />
+            )}
+            {moving && parent && (
+                <GoalMovePicker
+                    node={node}
+                    parent={parent}
+                    goals={goals}
+                    onClose={() => setMoving(false)}
+                    onPick={(target) => {
+                        setMoving(false);
+                        void moveStep(app, tasks, node, parent, target).then((ok) => {
+                            if (ok) void reload();
+                        });
+                    }}
                 />
             )}
             {picking && (
@@ -381,11 +664,79 @@ const NodeRow: FC<{
     );
 };
 
-/** The line a new goal is written on, at the top of the tree. */
+/**
+ * The field for the next step under a node, at the end of its steps. It stays
+ * after a step is written, for the one after; Escape, or leaving it empty,
+ * puts it away.
+ */
+const StepField: FC<{ node: GoalNode; onDone: () => void }> = ({ node, onDone }) => {
+    const { app, plugin } = useApp();
+    const t = useTranslation();
+    const natural = useFeature('tasks.naturalInput');
+    const [text, setText] = useState('');
+    const busy = useRef(false);
+
+    const add = async () => {
+        const typed = text.trim();
+        if (!typed || busy.current) return;
+        // "Run 14 km tomorrow" is a step with a day, read the way quick add reads it.
+        const read = natural ? quickParse(typed, getTodayString()) : null;
+        const title = read?.title.trim() || typed;
+        const fields = read?.dueDate
+            ? { dueDate: read.dueDate, dueTime: read.dueTime, dueEndTime: read.dueEndTime }
+            : undefined;
+        busy.current = true;
+        try {
+            if (
+                await new TaskWriter(app).addSubtaskInFile(
+                    node.filePath,
+                    node.lineNumber,
+                    title,
+                    fields
+                )
+            ) {
+                setText('');
+                await plugin.dataService.reloadTasks();
+            } else {
+                new Notice(t('tasks.error.save'));
+            }
+        } finally {
+            busy.current = false;
+        }
+    };
+
+    return (
+        <div className="zenith-goal__add">
+            <span className="zenith-goal__ring" aria-hidden="true" />
+            <input
+                className="zenith-goal__input"
+                value={text}
+                placeholder={t('tasks.goals.stepPlaceholder')}
+                aria-label={t('tasks.goals.addStep')}
+                enterKeyHint="done"
+                autoFocus
+                onChange={(e) => setText(e.target.value)}
+                onBlur={() => {
+                    if (!text.trim()) onDone();
+                }}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        void add();
+                    } else if (e.key === 'Escape') {
+                        setText('');
+                        onDone();
+                    }
+                }}
+            />
+        </div>
+    );
+};
+
+/** The line a new goal is written on, at the top of the tree — into the goals' note. */
 const GoalLine: FC<{ goalTag: string }> = ({ goalTag }) => {
     const { app, plugin } = useApp();
     const t = useTranslation();
-    const settings = useZenithStore((s) => s.settings);
     const [text, setText] = useState('');
     const [busy, setBusy] = useState(false);
 
@@ -394,17 +745,11 @@ const GoalLine: FC<{ goalTag: string }> = ({ goalTag }) => {
         if (!title || busy) return;
         setBusy(true);
         try {
-            const target = await resolveTaskTarget(app, settings);
-            await new TaskWriter(app).addTask(
-                settings.tasksFolderPath,
-                { title, priority: 'none', tags: [goalTag.replace(/^#/, '')] },
-                target
-            );
-            setText('');
-            void plugin.dataService.reloadTasks();
-        } catch (err) {
-            console.error('Zenith: failed to add the goal:', err);
-            new Notice(t('notice.taskAddFailed'));
+            const settings = useZenithStore.getState().settings;
+            if (await addGoal(app, settings, title, goalTag)) {
+                setText('');
+                void plugin.dataService.reloadTasks();
+            }
         } finally {
             setBusy(false);
         }

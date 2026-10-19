@@ -18,6 +18,7 @@ import {
     normalizeTimeOfDay,
     parseDuration,
 } from '../services/taskFormat';
+import { formatHours, parseHoursInput } from '../services/taskHours';
 import type { TaskAttachment, TaskDetails } from '../services/taskDetails';
 import { addDays } from '../services/taskBuckets';
 import { shortDate } from '../services/taskMargin';
@@ -52,7 +53,16 @@ const PRIORITY_KEY: Record<Priority, string> = {
 const REPEATS = ['every day', 'every week', 'every month', 'every year'] as const;
 
 /** The properties a click on the line opens, one at a time. */
-type Panel = 'status' | 'due' | 'priority' | 'repeat' | 'project' | 'start' | 'scheduled' | 'timer';
+type Panel =
+    | 'status'
+    | 'due'
+    | 'priority'
+    | 'repeat'
+    | 'project'
+    | 'start'
+    | 'scheduled'
+    | 'timer'
+    | 'hours';
 
 /** A day as the property line says it: "Today", "Tomorrow", "Oct 12". */
 function dayWord(iso: string, t: Translator): string {
@@ -122,6 +132,12 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
     const [timerText, setTimerText] = useState(
         editTask?.timerMinutes ? formatDuration(editTask.timerMinutes) : ''
     );
+    // The hours it asks for, as typed — "20", "1h30" — and whether a week or in all.
+    const [hoursText, setHoursText] = useState(
+        editTask?.target ? formatHours(editTask.target.minutes, t.locale) : ''
+    );
+    const [hoursWeekly, setHoursWeekly] = useState(editTask?.target?.weekly ?? true);
+    const hoursMinutes = parseHoursInput(hoursText);
     const [notes, setNotes] = useState(editTask?.description ?? '');
     const [subtasks, setSubtasks] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
@@ -189,6 +205,8 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
             scheduledDate,
             recurrence.trim(),
             timerText.trim(),
+            hoursText.trim(),
+            hoursWeekly,
             notes.trim(),
             subtasks.filter((s) => s.trim()),
             attachments,
@@ -233,6 +251,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
             dueTime: dueDate ? normalizeTimeOfDay(dueTime) : undefined,
             dueEndTime: dueDate && dueTime ? normalizeTimeOfDay(dueEndTime) : undefined,
             timerMinutes: parseDuration(timerText),
+            target: hoursMinutes ? { minutes: hoursMinutes, weekly: hoursWeekly } : undefined,
             // No `spentMinutes`: time already spent belongs to the timer, and a
             // field this sheet does not own is one its save leaves alone.
             startDate: startDate || undefined,
@@ -379,6 +398,18 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
                           ? `⏲ ${timerText.trim()}`
                           : t('tasks.editor.add.timer'),
                       set: !!timerText.trim(),
+                  },
+                  {
+                      id: 'hours' as const,
+                      text: hoursMinutes
+                          ? t(
+                                hoursWeekly
+                                    ? 'tasks.editor.hoursChip.weekly'
+                                    : 'tasks.editor.hoursChip.total',
+                                { hours: formatHours(hoursMinutes, t.locale) }
+                            )
+                          : t('tasks.editor.add.hours'),
+                      set: !!hoursMinutes,
                   },
               ]
             : []),
@@ -579,6 +610,33 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
                         value={timerText}
                         onChange={(e) => setTimerText(e.target.value)}
                     />
+                );
+            case 'hours':
+                return (
+                    <div className="zenith-tsheet__fields">
+                        <input
+                            className="zenith-input zenith-tsheet__field"
+                            placeholder={t('tasks.editor.hoursPlaceholder')}
+                            aria-label={t('tasks.editor.hours')}
+                            inputMode="decimal"
+                            value={hoursText}
+                            onChange={(e) => setHoursText(e.target.value)}
+                        />
+                        <div className="zenith-tsheet__choices">
+                            {choice(
+                                hoursWeekly,
+                                t('tasks.editor.hoursWeekly'),
+                                () => setHoursWeekly(true),
+                                'weekly'
+                            )}
+                            {choice(
+                                !hoursWeekly,
+                                t('tasks.editor.hoursTotal'),
+                                () => setHoursWeekly(false),
+                                'total'
+                            )}
+                        </div>
+                    </div>
                 );
             default:
                 return null;

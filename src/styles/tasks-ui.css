@@ -88,6 +88,9 @@ body:not(.zenith-no-motion) .zenith-pop .zenith-status__orbit {
     transition: opacity 0.15s ease;
 }
 .zenith-status__btn:hover .zenith-status__ghost { opacity: 0.4; }
+/* All it asked for is done, and it waits to be ticked off. */
+.zenith-status.is-ready .zenith-status__box { color: var(--text-normal); }
+.zenith-status.is-ready .zenith-status__ghost { opacity: 0.5; }
 .zenith-status__btn:hover .zenith-status__box.is-todo { color: var(--text-normal); }
 
 .zenith-status__box.is-in-progress { color: var(--text-normal); }
@@ -167,6 +170,9 @@ body:not(.zenith-no-motion) .zenith-pop .zenith-status__orbit {
     min-height: 26px;
 }
 .zenith-subtask:hover { background: color-mix(in srgb, var(--background-modifier-hover) 60%, transparent); }
+/* The hours a subtask asks for, and a week or in all, on one line. */
+.zenith-subhours { display: flex; gap: 8px; }
+.zenith-subhours > input { flex: 1; min-width: 0; }
 /* Compact status control inside subtasks. */
 .zenith-subtask .zenith-status__btn { width: 22px; height: 22px; }
 .zenith-subtask.is-done .zenith-subtask__title { text-decoration: line-through; color: var(--text-muted); }
