@@ -68,6 +68,7 @@ export const PROFILE_POLICY: Record<keyof ZenithSettings, ProfileKeyPolicy> = {
     ritualEveningHour: 'yes',
     ritualReminders: 'yes',
     ritualSkip: 'yes',
+    journalCaptureKind: 'no',
     dashboardBgPath: 'path',
     folderIcons: 'path',
 

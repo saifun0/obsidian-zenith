@@ -2191,89 +2191,143 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     justify-content: flex-end;
 }
 
-.zenith-root button.zenith-ritual-card {
+/* ── "Today": the day's card on the dashboard ─────────
+   The day on one line — its main task, or the ritual the hour calls for —
+   the trackers, a line to write on with where it goes, and what the day's
+   note holds. Lines, not boxes. */
+.zenith-today {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.zenith-today__day {
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 12px;
+    gap: 10px;
     box-sizing: border-box;
     width: 100%;
+    min-height: 32px;
+    color: var(--zenith-text-normal);
+}
+.zenith-root button.zenith-today__day {
     height: auto;
-    min-height: 44px;
     margin: 0;
     padding: 0;
     border: none;
     background: none;
     box-shadow: none;
-    color: inherit;
+    color: var(--zenith-text-normal);
+    font: inherit;
     text-align: left;
+    justify-content: flex-start;
     cursor: pointer;
 }
-
-/* The sun, or the moon: which one says what time of day the card thinks it is. */
-.zenith-ritual-card__icon {
+.zenith-today__icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex: none;
-    width: 34px;
-    height: 34px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: color-mix(in srgb, var(--zenith-warning) 12%, transparent);
     color: var(--zenith-warning);
-    transition: transform var(--zenith-w-draw) var(--zenith-ease-settle);
 }
-.zenith-ritual-card.is-evening .zenith-ritual-card__icon {
+.zenith-today__day.is-evening .zenith-today__icon {
     background: color-mix(in srgb, var(--zenith-info) 12%, transparent);
     color: var(--zenith-info);
 }
-.zenith-ritual-card:hover .zenith-ritual-card__icon {
-    transform: rotate(30deg);
+.zenith-today__day > .zenith-wcap {
+    flex: 1;
 }
-
-.zenith-ritual-card__text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+/* The day's main task: the one phrase on the card, in the planner's hand. */
+.zenith-today__focus {
     flex: 1;
     min-width: 0;
-}
-
-.zenith-ritual-card__line {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: var(--zenith-w-text);
-    line-height: 1.35;
-    color: var(--zenith-text-faint);
-}
-/* The day's main task: the one phrase on the card, in the planner's hand. */
-.zenith-ritual-card__line.is-focus {
     font-family: var(--zenith-w-fig-font);
-    font-size: 1.12rem;
+    font-size: 1.06rem;
     font-style: italic;
     line-height: 1.25;
-    color: var(--zenith-text-normal);
 }
-
-.zenith-ritual-card__go {
+.zenith-today__go {
     flex: none;
     color: var(--zenith-text-faint);
     transition:
         transform var(--zenith-w-quick) var(--zenith-ease-out),
         color var(--zenith-w-quick) var(--zenith-ease-out);
 }
-.zenith-ritual-card:hover .zenith-ritual-card__go {
+.zenith-today__day:hover .zenith-today__go {
     color: var(--zenith-text-normal);
     transform: translateX(2px);
 }
+
+/* The line to write on, and where it goes. */
+.zenith-today__write {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.zenith-root input.zenith-today__input {
+    width: 100%;
+    height: 32px;
+    padding: 0 2px;
+    border: none;
+    border-bottom: 1px solid var(--zenith-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--zenith-text-normal);
+    font-size: var(--zenith-w-text);
+}
+.zenith-root input.zenith-today__input:focus {
+    border-bottom-color: var(--zenith-text-muted);
+    outline: none;
+    box-shadow: none;
+}
+.zenith-root input.zenith-today__input::placeholder {
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    color: var(--zenith-text-faint);
+    opacity: 1;
+}
+.zenith-today__into {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+}
+.zenith-root button.zenith-today__kind {
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+    color: var(--zenith-text-faint);
+    font: inherit;
+    font-size: var(--zenith-w-meta);
+    cursor: pointer;
+    --zenith-underline: underline 1px transparent;
+    text-decoration: var(--zenith-underline);
+    text-underline-offset: 4px;
+}
+.zenith-root button.zenith-today__kind:hover {
+    color: var(--zenith-text-normal);
+}
+.zenith-root button.zenith-today__kind.is-on {
+    color: var(--zenith-text-normal);
+    --zenith-underline: underline 1px currentColor;
+}
 @media (prefers-reduced-motion: reduce) {
-    .zenith-ritual-card__icon,
-    .zenith-ritual-card__go {
+    .zenith-today__go {
         transition: none;
     }
-    .zenith-ritual-card:hover .zenith-ritual-card__icon,
-    .zenith-ritual-card:hover .zenith-ritual-card__go {
+    .zenith-today__day:hover .zenith-today__go {
         transform: none;
     }
 }

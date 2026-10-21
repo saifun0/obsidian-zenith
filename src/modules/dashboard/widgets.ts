@@ -138,6 +138,11 @@ export interface DashboardWidgetDefinition {
      * times. See `widgetConfig.ts` for where the values are kept.
      */
     settings?: ComponentType<WidgetSettingsProps>;
+    /**
+     * No longer offered: left out of the gallery, while a copy already on a
+     * board goes on working. For a card another has taken over from.
+     */
+    retired?: boolean;
     /** What the widget draws. Absent only for a bundle's own card, which draws its members. */
     component?: ComponentType<DashboardWidgetProps>;
 }

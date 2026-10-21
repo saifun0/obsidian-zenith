@@ -503,7 +503,9 @@ export const DashboardGrid: FC<DashboardGridProps> = ({ editing, onEditingChange
         const placed = new Set(layout.map((i) => i.id));
         // A widget that can be copied never leaves the offer: its button means
         // "one more", and there is no state in which that stops making sense.
-        return registered.filter((def) => def.multiple || !placed.has(def.id)).map(describe);
+        return registered
+            .filter((def) => !def.retired && (def.multiple || !placed.has(def.id)))
+            .map(describe);
     }, [registered, layout, describe]);
 
     /** Widgets already on the grid — listed as "added" so the sheet shows the

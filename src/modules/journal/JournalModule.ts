@@ -11,7 +11,7 @@ import { REVIEW_PERIODS } from './services/reviewPeriods';
 import { defaultReviewYear } from './services/yearReview';
 import { JournalCheckinWidget } from './components/JournalCheckinWidget';
 import { JournalStatsWidget } from './components/JournalStatsWidget';
-import { RitualWidget } from './components/RitualWidget';
+import { TodayWidget } from './components/TodayWidget';
 import { RitualModal } from './RitualModal';
 import { RitualReminderService } from './services/ritualReminders';
 import { featureEnabled } from '../../core/features';
@@ -129,10 +129,10 @@ export class JournalModule extends BaseModule {
         reminders.start();
         this.disposers.push(() => reminders.stop());
 
-        // Two cards, split by what they are for: one records the day, one
-        // reports on it. Keeping them apart is why neither has to compromise —
-        // the check-in is all controls, the statistics card has nothing to
-        // click but the way into the journal.
+        // Two cards, split by what they are for: one records the day — "Today",
+        // which took over from the check-in and the ritual card — and one
+        // reports on it. The check-in is no longer offered; a copy already on
+        // a board goes on working.
         this.disposers.push(
             this.plugin.registerDashboardWidget({
                 id: 'journal.checkin',
@@ -145,6 +145,7 @@ export class JournalModule extends BaseModule {
                 defaultSize: 'md',
                 autoHeight: true,
                 order: 40,
+                retired: true,
                 component: JournalCheckinWidget,
             }),
             this.plugin.registerDashboardWidget({
@@ -160,19 +161,20 @@ export class JournalModule extends BaseModule {
                 order: 41,
                 component: JournalStatsWidget,
             }),
+            // The id is the ritual card's, so the boards it was on keep it.
             this.plugin.registerDashboardWidget({
                 id: 'journal.ritual',
-                feature: 'journal.rituals',
-                title: 'Ritual',
-                titleKey: 'widget.ritual',
-                description:
-                    'The morning plan or the evening review, whichever the hour calls for.',
+                feature: 'journal.widget',
+                title: 'Today',
+                titleKey: 'widget.today',
+                description: 'The trackers, a line to write on, and the way into the ritual.',
+                descriptionKey: 'widget.today.desc',
                 icon: 'sunrise',
-                sizes: ['sm', 'md'],
-                defaultSize: 'sm',
+                sizes: ['sm', 'md', 'lg'],
+                defaultSize: 'md',
                 autoHeight: true,
-                order: 42,
-                component: RitualWidget,
+                order: 39,
+                component: TodayWidget,
             })
         );
 

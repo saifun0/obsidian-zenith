@@ -126,6 +126,8 @@ export interface ZenithSettings {
     ritualReminders: boolean;
     /** Ritual steps switched off, by id — see `RITUAL_STEPS`. */
     ritualSkip: string[];
+    /** Where the "Today" card's line writes, as last chosen on this device. */
+    journalCaptureKind: 'note' | 'highlight' | 'task';
     /** Where each period's review note lives, what it is called, its template. */
     journalReviewNotes: ReviewNotes;
     /** First column of the journal calendar. */
@@ -781,6 +783,7 @@ export const DEFAULT_SETTINGS: ZenithSettings = {
     ritualEveningHour: 21,
     ritualReminders: false,
     ritualSkip: [],
+    journalCaptureKind: 'note',
     journalReviewNotes: DEFAULT_REVIEW_NOTES,
     journalWeekStart: 'mon',
     journalTrackers: DEFAULT_TRACKERS.map((t) => ({ ...t })),

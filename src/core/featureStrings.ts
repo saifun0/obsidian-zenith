@@ -79,7 +79,7 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'feature.journal.wordCount': 'Word count',
         'feature.journal.stats': 'Statistics',
         'feature.journal.stats.desc': 'The last thirty days, and the statistics widget.',
-        'feature.journal.widget': 'Check-in widget',
+        'feature.journal.widget': 'The “Today” card',
 
         'feature.content.resume': 'Continue shelf',
         'feature.content.resume.desc': 'What you are partway through, above the library.',
@@ -196,7 +196,7 @@ export const FEATURE_STRINGS: { en: Record<string, string>; ru: Record<string, s
         'feature.journal.wordCount': 'Счётчик слов',
         'feature.journal.stats': 'Статистика',
         'feature.journal.stats.desc': 'Последние тридцать дней и виджет статистики.',
-        'feature.journal.widget': 'Виджет отметок',
+        'feature.journal.widget': 'Карточка «Сегодня»',
 
         'feature.content.resume': 'Полка «Продолжить»',
         'feature.content.resume.desc': 'То, что вы читаете или смотрите сейчас, — над библиотекой.',
