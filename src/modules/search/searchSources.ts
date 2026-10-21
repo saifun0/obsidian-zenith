@@ -52,6 +52,31 @@ export interface SearchItem {
     reveal?: () => void | Promise<void>;
     /** Not remembered as a recent pick — a row whose meaning drifts, like "yesterday". */
     transient?: boolean;
+    /**
+     * The note this row stands for as a whole — a library item's, a project's,
+     * a day's — by its vault path: the notes group leaves out a note another
+     * group already shows. A row for one line of a note, a task, has none.
+     */
+    note?: string;
+    /** Where it lives, faint on the right. Not on a phone, which has no room for it. */
+    folder?: string;
+    /** A line of what was found in it, under the title, the words found marked. */
+    snippet?: Snippet;
+    /** Ctrl/Cmd+Enter, when there is nothing to tick off: open it in a new tab. */
+    openInTab?: () => void | Promise<void>;
+}
+
+/** A line of a note, with the words found in it marked. */
+export interface Snippet {
+    text: string;
+    /** [start, end) in `text`, in order, not overlapping. */
+    marks: ReadonlyArray<readonly [number, number]>;
+}
+
+/** How a source names a note it keeps. */
+export interface OwnNote {
+    title: string;
+    icon?: string;
 }
 
 /** A row that creates something out of what was typed. */
@@ -96,6 +121,27 @@ export interface SearchSource {
     suggest?: (query: string) => SearchItem[];
     /** Rows that create something from the line. */
     creators?: () => SearchCreator[];
+    /**
+     * Searched after every other source and shown below them, from three
+     * letters on: the vault's notes, which would otherwise crowd out what
+     * Zenith keeps. Only an exact match of its counts as "found it" — enough to
+     * move the "+ Task" row down, and to come first.
+     */
+    trailing?: boolean;
+    /**
+     * Rows found in what notes say rather than in their names, best first.
+     * Read per query, as `suggest` is; shown after the source's own matches,
+     * and never "found it".
+     */
+    inText?: (query: string) => SearchItem[];
+    /**
+     * A note this source keeps and finds its own way — a day's note, by its
+     * date. The notes group leaves it out of what it finds by name, and shows
+     * it under this title when it is found by what it says.
+     */
+    ownNote?: (path: string) => OwnNote | null;
+    /** Calls back when its rows have changed under an open panel: the notes are read. */
+    changes?: (listener: () => void) => () => void;
 }
 
 type Listener = () => void;

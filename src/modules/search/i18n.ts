@@ -9,15 +9,16 @@ export const searchTranslations: TranslationTable = {
     en: {
         'module.search.name': 'Search',
         'module.search.desc':
-            'Find any view, action, task, project or library item, and add a task, straight from one line.',
+            'Find any view, action, task, project, library item or note, and add a task, straight from one line.',
     },
     ru: {
         'module.search.name': 'Поиск',
         'module.search.desc':
-            'Найти любой вид, действие, задачу, проект или материал и добавить задачу прямо из одной строки.',
+            'Найти любой вид, действие, задачу, проект, материал или заметку и добавить задачу прямо из одной строки.',
     },
     zh: {
         'module.search.name': '搜索',
-        'module.search.desc': '在一行中查找任何视图、操作、任务、项目或媒体库条目，并直接添加任务。',
+        'module.search.desc':
+            '在一行中查找任何视图、操作、任务、项目、媒体库条目或笔记，并直接添加任务。',
     },
 };

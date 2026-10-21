@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState, type FC } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { Platform } from 'obsidian';
 import { useTranslation, type Translator } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
 import { ObsidianIcon } from '../../../components/shared/ObsidianIcon';
-import { useSearchSources, type SearchSource } from '../searchSources';
+import { useSearchSources, type SearchSource, type Snippet } from '../searchSources';
 import { flatRows, rankResults, type ReadSource, type ResultRow } from '../rank';
 import { recordPick } from '../recents';
 
@@ -14,7 +14,7 @@ import { recordPick } from '../recents';
  * `.suggestion-item` — so it looks like the command palette in every theme,
  * and on a phone sits where the palette does, with the line at the bottom by
  * the keyboard. What is Zenith's own is small: the group headings, the chips a
- * new task was read into, and the ✓.
+ * new task was read into, the ✓, and a note's folder.
  */
 
 /** A source's call, kept from taking the panel down with it. */
@@ -31,6 +31,23 @@ function heading(source: SearchSource, t: Translator): string {
     if (source.labelKey && t.has(source.labelKey)) return t(source.labelKey);
     return source.label ?? source.id;
 }
+
+/** A found line, its words in the quick switcher's highlight. */
+const Marked: FC<{ snippet: Snippet }> = ({ snippet }) => {
+    const parts: React.ReactNode[] = [];
+    let at = 0;
+    for (const [start, end] of snippet.marks) {
+        if (start > at) parts.push(snippet.text.slice(at, start));
+        parts.push(
+            <span key={start} className="suggestion-highlight">
+                {snippet.text.slice(start, end)}
+            </span>
+        );
+        at = end;
+    }
+    if (at < snippet.text.length) parts.push(snippet.text.slice(at));
+    return <>{parts}</>;
+};
 
 /** Obsidian's icon, or a Zenith pack's for a `zi:` id — `ObsidianIcon` takes both. */
 const Icon: FC<{ name?: string }> = ({ name }) => <ObsidianIcon name={name ?? 'dot'} />;
@@ -60,6 +77,28 @@ export const SearchPanel: FC<{ close: () => void }> = ({ close }) => {
         }));
     }, [sources, revision]);
 
+    // A source's rows changed under the open panel: the notes have been read.
+    useEffect(() => {
+        const offs = sources.map((source) => source.changes?.(() => setRevision((r) => r + 1)));
+        return () => offs.forEach((off) => off?.());
+    }, [sources]);
+
+    // What the notes say is searched a beat behind the typing, so a large
+    // vault never holds up a keystroke.
+    const textQuery = useDeferredValue(query.trim());
+    const found = useMemo(
+        () =>
+            new Map(
+                read.map(({ source }) => [
+                    source.id,
+                    textQuery
+                        ? safely(source, 'inText', () => source.inText?.(textQuery) ?? [], [])
+                        : [],
+                ])
+            ),
+        [read, textQuery]
+    );
+
     const groups = useMemo(() => {
         const ready: ReadSource[] = read.map(({ source, items, creators }) => ({
             id: source.id,
@@ -70,6 +109,8 @@ export const SearchPanel: FC<{ close: () => void }> = ({ close }) => {
                 ? safely(source, 'suggest', () => source.suggest?.(query) ?? [], [])
                 : [],
             creators,
+            found: query.trim() ? found.get(source.id) : [],
+            trailing: source.trailing,
         }));
         return rankResults({
             query,
@@ -78,7 +119,7 @@ export const SearchPanel: FC<{ close: () => void }> = ({ close }) => {
             now: Date.now(),
             recentLabel: t('search.recent'),
         });
-    }, [read, query, recents, t]);
+    }, [read, found, query, recents, t]);
 
     const rows = useMemo(() => flatRows(groups), [groups]);
     const current = rows[Math.min(selected, rows.length - 1)] as ResultRow | undefined;
@@ -89,7 +130,7 @@ export const SearchPanel: FC<{ close: () => void }> = ({ close }) => {
         rowRefs.current[selected]?.scrollIntoView({ block: 'nearest' });
     }, [selected]);
 
-    const choose = (row: ResultRow, how: 'run' | 'complete' | 'reveal' = 'run') => {
+    const choose = (row: ResultRow, how: 'run' | 'complete' | 'reveal' | 'tab' = 'run') => {
         if (row.kind === 'create') {
             close();
             void row.row.run();
@@ -109,7 +150,9 @@ export const SearchPanel: FC<{ close: () => void }> = ({ close }) => {
             updateSettings({ searchRecents: recordPick(saved, item.id, Date.now()) });
         }
         close();
-        void (how === 'reveal' && item.reveal ? item.reveal() : item.run());
+        if (how === 'reveal' && item.reveal) void item.reveal();
+        else if (how === 'tab' && item.openInTab) void item.openInTab();
+        else void item.run();
     };
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -122,7 +165,10 @@ export const SearchPanel: FC<{ close: () => void }> = ({ close }) => {
         } else if (e.key === 'Enter') {
             e.preventDefault();
             if (!current) return;
-            const how = e.ctrlKey || e.metaKey ? 'complete' : e.altKey ? 'reveal' : 'run';
+            // Ctrl/Cmd+Enter ticks a task off; a note has nothing to tick, and opens in a tab.
+            const tab = current.kind === 'item' && !current.item.complete && current.item.openInTab;
+            const how =
+                e.ctrlKey || e.metaKey ? (tab ? 'tab' : 'complete') : e.altKey ? 'reveal' : 'run';
             choose(current, how);
         }
     };
@@ -179,8 +225,16 @@ export const SearchPanel: FC<{ close: () => void }> = ({ close }) => {
                 </div>
                 <div className="suggestion-content">
                     <div className="suggestion-title">{item.title}</div>
+                    {item.snippet && (
+                        <div className="suggestion-note zenith-search__snippet">
+                            <Marked snippet={item.snippet} />
+                        </div>
+                    )}
                 </div>
                 <div className="suggestion-aux">
+                    {item.folder && !Platform.isPhone && (
+                        <span className="zenith-search__folder">{item.folder}</span>
+                    )}
                     {item.detail && <span className="zenith-search__detail">{item.detail}</span>}
                     {item.hotkey && <kbd className="suggestion-hotkey">{item.hotkey}</kbd>}
                     {/* What Alt+Enter does, for where there is no Alt: the note a
@@ -225,6 +279,8 @@ export const SearchPanel: FC<{ close: () => void }> = ({ close }) => {
     else if (current) hints.push(['↵', t('search.hint.open')]);
     if (current?.kind === 'item' && current.item.complete) {
         hints.push([`${MOD} ↵`, t('search.hint.done')]);
+    } else if (current?.kind === 'item' && current.item.openInTab) {
+        hints.push([`${MOD} ↵`, t('search.hint.tab')]);
     }
     if (current?.kind === 'item' && current.item.reveal) {
         hints.push([`${ALT} ↵`, t('search.hint.note')]);

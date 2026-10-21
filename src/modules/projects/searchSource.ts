@@ -29,6 +29,7 @@ export function projectsSearchSource(plugin: ZenithPlugin): SearchSource {
                     tags: project.tags,
                     detail: project.status === 'paused' ? t('projects.status.paused') : undefined,
                     icon: project.icon || undefined,
+                    note: project.filePath,
                     run: () => void plugin.app.workspace.openLinkText(project.filePath, '', false),
                 }));
         },

@@ -3,7 +3,7 @@
    Obsidian's own prompt (`.prompt`, `.suggestion-item`), so the panel looks
    like the command palette in any theme and sits where it does on a phone.
    Only what the palette has no answer for is drawn here: the group headings,
-   what a new task was read into, and the ✓.
+   what a new task was read into, the ✓, and a note's folder and found line.
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 /* The line is the point of the panel: larger than the palette's on a desktop.
@@ -48,6 +48,24 @@ body:not(.is-mobile) .zenith-search input.prompt-input {
 .zenith-search .zenith-search__detail {
     font-size: var(--font-ui-smaller);
     color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Where a note lives: faint, and cut short rather than pushing the name out. */
+.zenith-search .zenith-search__folder {
+    overflow: hidden;
+    max-width: 14em;
+    font-size: var(--font-ui-smaller);
+    color: var(--text-faint);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* What a note says, under its name: one line, the words found highlighted as
+   the quick switcher does. */
+.zenith-search .zenith-search__snippet {
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 

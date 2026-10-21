@@ -6,15 +6,21 @@ import type { SearchSource } from '../search/searchSources';
 import { JournalWriter, journalConfig } from './services/journalWriter';
 import { openDailyNote } from './services/journalActions';
 import { parseJournalQuery } from './services/journalQuery';
+import {
+    buildDateMatcher,
+    isoToDate,
+    journalNotePath,
+    relativeNotePath,
+} from './services/journalDates';
 import type ZenithPlugin from '../../main';
 
 /**
  * What Search finds of the journal: a day's note, by its date — "вчера",
  * "пн", "12 сентября" — and "журнал …" to jot a line into today's.
  *
- * By date only, not by what the notes say: searching the text of every day
- * ever written is Obsidian's own search, and here it would be noise and a
- * wait on a big vault.
+ * By date only, here. What the day notes say is found with every other note's
+ * text, in Search's own notes group, under a day's title rather than its file
+ * name — which is what `ownNote` gives it.
  */
 
 /** "Note for 23 September", and the weekday on its own — "за среда" is not Russian. */
@@ -54,6 +60,18 @@ async function jot(plugin: ZenithPlugin, text: string): Promise<void> {
 }
 
 export function journalSearchSource(plugin: ZenithPlugin): SearchSource {
+    // Asked of every note in the vault each time Search opens: built once per pattern.
+    let matcher: { format: string; dateOf: (relativePath: string) => string | null } | null = null;
+    const dayOf = (path: string): string | null => {
+        const { journalFolderPath, journalDateFormat } = useZenithStore.getState().settings;
+        const relative = relativeNotePath(path, journalFolderPath);
+        if (relative === null) return null;
+        if (matcher?.format !== journalDateFormat) {
+            matcher = { format: journalDateFormat, dateOf: buildDateMatcher(journalDateFormat) };
+        }
+        return matcher.dateOf(relative);
+    };
+
     return {
         id: 'journal',
         labelKey: 'module.journal.name',
@@ -62,10 +80,12 @@ export function journalSearchSource(plugin: ZenithPlugin): SearchSource {
         suggest: (query) => {
             const date = parseJournalQuery(query, getTodayString());
             if (!date) return [];
+            const { journalFolderPath, journalDateFormat } = useZenithStore.getState().settings;
             return [
                 {
                     id: `journal:${date}`,
                     ...dayRow(date),
+                    note: journalNotePath(journalFolderPath, journalDateFormat, isoToDate(date)),
                     // "Yesterday" means another day tomorrow.
                     transient: true,
                     run: async () => {
@@ -73,6 +93,10 @@ export function journalSearchSource(plugin: ZenithPlugin): SearchSource {
                     },
                 },
             ];
+        },
+        ownNote: (path) => {
+            const date = dayOf(path);
+            return date ? { title: dayRow(date).title, icon: 'calendar-days' } : null;
         },
         creators: () => [
             {

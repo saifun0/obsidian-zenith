@@ -87,6 +87,7 @@ export function contentSearchSource(plugin: ZenithPlugin): SearchSource {
                         tags: item.tags,
                         detail: item.series ? `${type.label} · ${item.series}` : type.label,
                         icon: type.icon,
+                        note: item.filePath,
                         run: () => open(plugin, item, type),
                         reveal: () =>
                             void plugin.app.workspace.openLinkText(item.filePath, '', false),

@@ -10,11 +10,12 @@
  */
 export const SEARCH_STRINGS: { en: Record<string, string>; ru: Record<string, string> } = {
     en: {
-        'search.placeholder': 'Find in Zenith, or type to add a task…',
+        'search.placeholder': 'Search your vault, or type to add a task…',
         'search.empty': 'Nothing found.',
         'search.recent': 'Recent',
         'search.group.views': 'Views',
         'search.group.actions': 'Actions',
+        'search.group.notes': 'Notes',
         'search.create.task': 'Task',
         'search.create.project': 'New project',
         'search.create.journal': 'Journal entry',
@@ -28,6 +29,7 @@ export const SEARCH_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'search.hint.create': 'to create',
         'search.hint.done': 'done',
         'search.hint.note': 'the note',
+        'search.hint.tab': 'in a new tab',
         'search.hint.close': 'to close',
         'search.ribbon': 'Search Zenith',
 
@@ -59,11 +61,12 @@ export const SEARCH_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'command.sync-files-now': 'Sync note files now',
     },
     ru: {
-        'search.placeholder': 'Найти в Zenith или написать задачу…',
+        'search.placeholder': 'Найти в хранилище или написать задачу…',
         'search.empty': 'Ничего не нашлось.',
         'search.recent': 'Недавнее',
         'search.group.views': 'Виды',
         'search.group.actions': 'Действия',
+        'search.group.notes': 'Заметки',
         'search.create.task': 'Задача',
         'search.create.project': 'Новый проект',
         'search.create.journal': 'Запись в дневник',
@@ -77,6 +80,7 @@ export const SEARCH_STRINGS: { en: Record<string, string>; ru: Record<string, st
         'search.hint.create': 'создать',
         'search.hint.done': 'выполнено',
         'search.hint.note': 'заметка',
+        'search.hint.tab': 'в новой вкладке',
         'search.hint.close': 'закрыть',
         'search.ribbon': 'Поиск по Zenith',
 

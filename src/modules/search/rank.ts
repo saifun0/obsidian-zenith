@@ -1,4 +1,5 @@
 import { EXACT, normalize, scoreTexts } from './match';
+import { lettersIn, NOTES_FROM } from './noteText';
 import { pickBoost, recentIds, type Recents } from './recents';
 import type { SearchCreateRow, SearchCreator, SearchItem } from './searchSources';
 
@@ -17,6 +18,11 @@ import type { SearchCreateRow, SearchCreator, SearchItem } from './searchSources
  *   the group with the best match goes first. The default creator's row ("+
  *   Task") comes first when nothing matched well, and last when something did.
  * - `#tag` keeps only rows with a tag that starts so.
+ * - A trailing source — the vault's notes — is searched from three letters,
+ *   after the rest, and its group goes last: first what it finds by name, then
+ *   what it finds in the text, less any note a group above already shows. It
+ *   moves "+ Task" down, and goes first itself, only with a note of exactly
+ *   that name.
  */
 
 /** A source, read: its heading resolved and its items fetched. */
@@ -28,6 +34,10 @@ export interface ReadSource {
     /** What its `suggest` offered for this query. */
     suggested: readonly SearchItem[];
     creators: readonly SearchCreator[];
+    /** What its `inText` found for this query, best first. */
+    found?: readonly SearchItem[];
+    /** Searched after the rest and shown below them: see `SearchSource.trailing`. */
+    trailing?: boolean;
 }
 
 export type ResultRow =
@@ -108,13 +118,15 @@ function matchSource(
     source: ReadSource,
     query: string,
     opts: RankOptions,
-    tag: { tag: string; rest: string } | null
+    tag: { tag: string; rest: string } | null,
+    skip?: (item: SearchItem) => boolean
 ): ResultRow[] {
     const rows: ResultRow[] = [];
     for (const item of source.suggested) {
         rows.push({ kind: 'item', item, icon: item.icon ?? source.icon, score: SUGGESTED });
     }
     for (const item of source.items) {
+        if (skip?.(item)) continue;
         let score: number;
         if (tag) {
             const tagged = item.tags?.some((t) => normalize(t).startsWith(tag.tag));
@@ -134,6 +146,31 @@ function matchSource(
 function best(group: ResultGroup): number {
     const first = group.rows[0];
     return first?.kind === 'item' ? first.score : 0;
+}
+
+/**
+ * A trailing source's rows: its matches by name, then what was found in the
+ * text, leaving out a note already shown above. A `#tag` looks at tags only.
+ */
+function trailingRows(
+    source: ReadSource,
+    query: string,
+    opts: RankOptions,
+    tag: { tag: string; rest: string } | null,
+    shown: ReadonlySet<string>
+): ResultRow[] {
+    const isShown = (item: SearchItem) => !!item.note && shown.has(item.note);
+    const rows = matchSource(source, query, opts, tag, isShown);
+    if (tag) return rows;
+    const limit = opts.perGroup ?? PER_GROUP;
+    const ids = new Set(rows.map((row) => (row.kind === 'item' ? row.item.id : '')));
+    for (const item of source.found ?? []) {
+        if (rows.length >= limit) break;
+        if (ids.has(item.id) || isShown(item)) continue;
+        // Below any match by name, and never "found it".
+        rows.push({ kind: 'item', item, icon: item.icon ?? source.icon, score: 0 });
+    }
+    return rows;
 }
 
 /** The last picks that still exist, as one group. */
@@ -183,11 +220,33 @@ export function rankResults(opts: RankOptions): ResultGroup[] {
     const tag = tagQuery(query);
     const groups: ResultGroup[] = [];
     for (const source of opts.sources) {
+        if (source.trailing) continue;
         const rows = matchSource(source, query, opts, tag);
         if (rows.length) groups.push({ id: source.id, label: source.label, rows });
     }
     // Stable: equal groups keep the sources' own order.
     groups.sort((a, b) => best(b) - best(a));
+    let found = groups.length > 0 && best(groups[0]) >= STRONG;
+
+    if (lettersIn(query) >= NOTES_FROM) {
+        const shown = new Set<string>();
+        for (const row of flatRows(groups)) {
+            if (row.kind === 'item' && row.item.note) shown.add(row.item.note);
+        }
+        for (const source of opts.sources) {
+            if (!source.trailing) continue;
+            const rows = trailingRows(source, query, opts, tag, shown);
+            if (!rows.length) continue;
+            const group: ResultGroup = { id: source.id, label: source.label, rows };
+            // A note by exactly that name is what was asked for.
+            if (best(group) >= EXACT) {
+                groups.unshift(group);
+                found = true;
+            } else {
+                groups.push(group);
+            }
+        }
+    }
 
     const fallback = opts.sources
         .flatMap((s) => s.creators)
@@ -199,7 +258,6 @@ export function rankResults(opts: RankOptions): ResultGroup[] {
             label: '',
             rows: [{ kind: 'create', row: fallback }],
         };
-        const found = groups.length > 0 && best(groups[0]) >= STRONG;
         if (found) groups.push(create);
         else groups.unshift(create);
     }
