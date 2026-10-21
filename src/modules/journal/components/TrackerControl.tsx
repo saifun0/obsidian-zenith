@@ -64,6 +64,8 @@ export const TrackerControl: FC<TrackerControlProps> = ({
             <button
                 type="button"
                 className={`${cls} zenith-tracker__chip ${on ? 'is-on' : ''}`}
+                // Its colour is handed down either way, for a card that tints
+                // the icon of a check not yet ticked ("Today").
                 style={
                     on
                         ? {
@@ -71,7 +73,7 @@ export const TrackerControl: FC<TrackerControlProps> = ({
                               borderColor: tint(tracker.color, 45),
                               color: tracker.color,
                           }
-                        : undefined
+                        : { ['--zenith-tracker-color' as string]: tracker.color }
                 }
                 aria-pressed={on}
                 title={tracker.label}
@@ -204,7 +206,7 @@ const NumberStepper: FC<NumberStepperProps> = ({
                     <AmountInput
                         className="zenith-tracker__amount-input"
                         amount={amount}
-                        placeholder={t('journal.tracker.unset')}
+                        placeholder={compact ? '—' : t('journal.tracker.unset')}
                         label={tracker.label}
                         onCommit={record}
                     />

@@ -2198,7 +2198,7 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
 .zenith-today {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     min-width: 0;
 }
 
@@ -2209,7 +2209,8 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     gap: 10px;
     box-sizing: border-box;
     width: 100%;
-    min-height: 32px;
+    height: auto;
+    min-height: 28px;
     color: var(--zenith-text-normal);
 }
 .zenith-root button.zenith-today__day {
@@ -2230,8 +2231,8 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     align-items: center;
     justify-content: center;
     flex: none;
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     background: color-mix(in srgb, var(--zenith-warning) 12%, transparent);
     color: var(--zenith-warning);
@@ -2267,6 +2268,56 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     transform: translateX(2px);
 }
 
+/* The habits: one row of quiet marks, all the same height — a ring for a
+   check, dots for a scale, a slim stepper for a number — in hairlines, and in
+   the tracker's colour once done. The rail's own controls sit on the card's
+   background; on a glass board that background is near black, and they read
+   as holes in the card. */
+.zenith-today .zenith-trail {
+    gap: 6px 12px;
+}
+.zenith-today .zenith-trail--wrap .zenith-tracker--scale {
+    flex: none;
+}
+.zenith-today .zenith-tracker {
+    gap: 6px;
+    min-height: 30px;
+}
+.zenith-root .zenith-today button.zenith-tracker__chip {
+    box-sizing: border-box;
+    height: 30px;
+    padding: 0 11px;
+    border: 1px solid color-mix(in srgb, var(--zenith-text-faint) 40%, transparent);
+    background: transparent;
+    /* Not ticked yet: its own colour, quietened, as the scales' and numbers' icons are. */
+    color: color-mix(in srgb, var(--zenith-tracker-color, var(--zenith-text-muted)) 70%, var(--zenith-text-muted));
+}
+.zenith-root .zenith-today button.zenith-tracker__chip.is-compact {
+    justify-content: center;
+    width: 30px;
+    padding: 0;
+}
+.zenith-root .zenith-today button.zenith-tracker__chip:hover {
+    border-color: var(--zenith-text-muted);
+}
+.zenith-root .zenith-today button.zenith-tracker__step {
+    width: 12px;
+    height: 12px;
+    border-width: 1.5px;
+}
+.zenith-today .zenith-tracker__steps {
+    gap: 4px;
+}
+.zenith-today .zenith-tracker__stepper {
+    box-sizing: border-box;
+    height: 30px;
+    border-color: color-mix(in srgb, var(--zenith-text-faint) 40%, transparent);
+    background: transparent;
+}
+.zenith-today .zenith-tracker__amount {
+    min-width: 24px;
+}
+
 /* The line to write on, and where it goes. */
 .zenith-today__write {
     display: flex;
@@ -2275,7 +2326,7 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
 }
 .zenith-root input.zenith-today__input {
     width: 100%;
-    height: 32px;
+    height: 30px;
     padding: 0 2px;
     border: none;
     border-bottom: 1px solid var(--zenith-border);
