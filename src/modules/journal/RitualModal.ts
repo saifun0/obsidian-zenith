@@ -30,7 +30,7 @@ export class RitualModal extends Modal {
             createElement(
                 AppContext.Provider,
                 { value: { app: this.app, plugin: this.plugin } },
-                createElement(RitualBody, { kind: this.kind, onClose: () => this.close() })
+                createElement(RitualBody, { kind: this.kind })
             )
         );
     }

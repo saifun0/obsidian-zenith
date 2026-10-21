@@ -1,12 +1,14 @@
 import React, { useMemo, useState, type FC } from 'react';
 import { Notice } from 'obsidian';
-import { Star, Check } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import { useZenithStore } from '../../../store';
 import type { Task } from '../../../store/taskSlice';
 import { TaskWriter } from '../../tasks/services/taskWriter';
+import { StatusBox, TaskStatusControl } from '../../tasks/components/taskStatusUi';
+import type { TaskStatus } from '../../../core/constants';
 import { JournalWriter, journalConfig } from '../services/journalWriter';
 import {
     FOCUS_KEY,
@@ -25,10 +27,15 @@ import {
  * every step is visible, any of them can be skipped by simply not touching
  * it, and the ones switched off in settings are not there at all.
  *
+ * It is drawn as the Tasks page is: the sections named in the planner's
+ * hand, the tasks on lines with the list's own circle, and what can be done
+ * to one — keep it for today, move it to tomorrow, drop it, make it the day's
+ * main task — said in quiet words and a star rather than a row of boxes.
+ *
  * Everything written goes through the writers the rest of the plugin uses —
  * a task ticked here is ticked exactly as it would be from the list.
  */
-export const RitualBody: FC<{ kind: RitualKind; onClose: () => void }> = ({ kind, onClose }) => {
+export const RitualBody: FC<{ kind: RitualKind }> = ({ kind }) => {
     const t = useTranslation();
     const { app } = useApp();
     const tasks = useZenithStore((s) => s.tasks);
@@ -69,9 +76,9 @@ export const RitualBody: FC<{ kind: RitualKind; onClose: () => void }> = ({ kind
     };
 
     const writer = new TaskWriter(app);
-    const complete = (task: Task) =>
+    const setStatus = (task: Task, status: TaskStatus) =>
         withBusy(task, () =>
-            writer.setStatusInFile(task.filePath, task.lineNumber, 'done', task.title)
+            writer.setStatusInFile(task.filePath, task.lineNumber, status, task.title)
         );
     const triage = (task: Task, action: TriageAction) =>
         withBusy(task, () =>
@@ -106,16 +113,17 @@ export const RitualBody: FC<{ kind: RitualKind; onClose: () => void }> = ({ kind
     };
 
     const row = (task: Task, actions: React.ReactNode) => (
-        <li key={task.id} className={`zenith-ritual__task ${busy.has(task.id) ? 'is-busy' : ''}`}>
-            <button
-                type="button"
-                className="zenith-ritual__tick"
-                aria-label={t('ritual.done')}
-                title={t('ritual.done')}
-                onClick={() => void complete(task)}
-            >
-                <Check size={13} />
-            </button>
+        <li
+            key={task.id}
+            className={`zenith-ritual__task${busy.has(task.id) ? ' is-busy' : ''}${
+                focus === task.title ? ' is-focus' : ''
+            }`}
+        >
+            <TaskStatusControl
+                status={task.status}
+                size={16}
+                onChange={(status) => void setStatus(task, status)}
+            />
             <span className="zenith-ritual__title">{task.title}</span>
             {actions}
         </li>
@@ -123,15 +131,21 @@ export const RitualBody: FC<{ kind: RitualKind; onClose: () => void }> = ({ kind
 
     const triageButtons = (task: Task) => (
         <span className="zenith-ritual__actions">
-            {(['today', 'postpone', 'cancel'] as const).map((action) => (
-                <button
-                    key={action}
-                    type="button"
-                    className="zenith-ritual__action"
-                    onClick={() => void triage(task, action)}
-                >
-                    {t(`ritual.${action}`)}
-                </button>
+            {(['today', 'postpone', 'cancel'] as const).map((action, i) => (
+                <React.Fragment key={action}>
+                    {i > 0 && (
+                        <span className="zenith-ritual__dot" aria-hidden="true">
+                            ·
+                        </span>
+                    )}
+                    <button
+                        type="button"
+                        className={`zenith-ritual__action is-${action}`}
+                        onClick={() => void triage(task, action)}
+                    >
+                        {t(`ritual.${action}`)}
+                    </button>
+                </React.Fragment>
             ))}
         </span>
     );
@@ -151,18 +165,21 @@ export const RitualBody: FC<{ kind: RitualKind; onClose: () => void }> = ({ kind
             <p className="zenith-ritual__empty">{t(empty)}</p>
         );
 
-    const focusButton = (task: Task) => (
-        <button
-            type="button"
-            className={`zenith-ritual__focus ${focus === task.title ? 'is-on' : ''}`}
-            aria-pressed={focus === task.title}
-            title={t('ritual.focus.pick')}
-            aria-label={t('ritual.focus.pick')}
-            onClick={() => void setFocus(task)}
-        >
-            <Star size={14} />
-        </button>
-    );
+    const focusButton = (task: Task) => {
+        const on = focus === task.title;
+        return (
+            <button
+                type="button"
+                className={`zenith-ritual__focus${on ? ' is-on' : ''}`}
+                aria-pressed={on}
+                title={t('ritual.focus.pick')}
+                aria-label={t('ritual.focus.pick')}
+                onClick={() => void setFocus(task)}
+            >
+                <Star size={15} fill={on ? 'currentColor' : 'none'} />
+            </button>
+        );
+    };
 
     return (
         <div className="zenith-ritual">
@@ -176,11 +193,6 @@ export const RitualBody: FC<{ kind: RitualKind; onClose: () => void }> = ({ kind
                             (task) => row(task, shows('morning.focus') ? focusButton(task) : null),
                             'ritual.empty.today'
                         )
-                    )}
-                    {shows('morning.focus') && focus && (
-                        <p className="zenith-ritual__focus-line">
-                            <Star size={13} /> {t('ritual.focus.is', { title: focus })}
-                        </p>
                     )}
                     {section(
                         'morning.overdue',
@@ -201,7 +213,9 @@ export const RitualBody: FC<{ kind: RitualKind; onClose: () => void }> = ({ kind
                             <ul className="zenith-ritual__list is-done">
                                 {lists.done.map((task) => (
                                     <li key={task.id} className="zenith-ritual__task">
-                                        <Check size={13} />
+                                        <span className="zenith-ritual__mark" aria-hidden="true">
+                                            <StatusBox status="done" size={16} />
+                                        </span>
                                         <span className="zenith-ritual__title">{task.title}</span>
                                     </li>
                                 ))}
@@ -223,31 +237,33 @@ export const RitualBody: FC<{ kind: RitualKind; onClose: () => void }> = ({ kind
                         'evening.tomorrow',
                         t('ritual.evening.tomorrow'),
                         <div className="zenith-ritual__tomorrow">
-                            <textarea
-                                className="zenith-input zenith-field__textarea"
-                                rows={2}
+                            <input
+                                className="zenith-ritual__line"
                                 value={tomorrow}
                                 placeholder={t('ritual.tomorrow.placeholder')}
+                                aria-label={t('ritual.evening.tomorrow')}
+                                enterKeyHint="done"
                                 onChange={(e) => setTomorrow(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        void saveTomorrow();
+                                    }
+                                }}
                             />
-                            <button
-                                type="button"
-                                className="mod-cta"
-                                disabled={!tomorrow.trim()}
-                                onClick={() => void saveTomorrow()}
-                            >
-                                {t('ritual.tomorrow.save')}
-                            </button>
+                            {tomorrow.trim() && (
+                                <button
+                                    type="button"
+                                    className="zenith-ritual__save"
+                                    onClick={() => void saveTomorrow()}
+                                >
+                                    {t('ritual.tomorrow.save')}
+                                </button>
+                            )}
                         </div>
                     )}
                 </>
             )}
-
-            <div className="zenith-ritual__footer">
-                <button type="button" onClick={onClose}>
-                    {t('ritual.close')}
-                </button>
-            </div>
         </div>
     );
 };
