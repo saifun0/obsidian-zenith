@@ -1,4 +1,5 @@
 import type { Priority } from '../../../core/constants';
+import { startOfWeek, type WeekStart } from '../../../core/calendarDates';
 import { shiftIsoDate } from './taskFormat';
 
 /**
@@ -13,7 +14,10 @@ import { shiftIsoDate } from './taskFormat';
  * - dates: today / tomorrow / the day after, a weekday (with or without
  *   "в" / "on"), `+3д` / `+2w`, `15.10` or `15.10.2027`, a day and a month
  *   by name — `19 октября`, `Oct 19`, `19 October 2027` — and a span from
- *   today: `через год`, `через 3 дня`, `in 2 weeks`, `3天后`;
+ *   today: `через год`, `через 3 дня`, `через пару недель`, `in 2 weeks`,
+ *   `3天后`; and the calendar's own marks — next week (its first day, by
+ *   the week start given), the end of the week or the month, next month (its
+ *   first), the weekend (its Saturday);
  * - times: `в 18`, `at 9:30`, `18:00`, `6pm`, a range `18–19` or `с 18 до 19`;
  * - priority: `!` (🔼) and `!!` (⏫), standing alone;
  * - repeats the recurrence engine can run: every day / week / month / year,
@@ -81,14 +85,14 @@ interface Candidate {
     start: number;
     end: number;
     text: string;
-    apply: (out: QuickParse, today: string) => boolean;
+    apply: (out: QuickParse, today: string, weekStart: WeekStart) => boolean;
 }
 
 type Rule = {
     kind: QuickPieceKind;
     re: RegExp;
     /** Fills the fields; false when the match turns out not to mean anything (31.02). */
-    apply: (m: RegExpExecArray, out: QuickParse, today: string) => boolean;
+    apply: (m: RegExpExecArray, out: QuickParse, today: string, weekStart: WeekStart) => boolean;
     /** May stand right against Chinese characters, with no space between. */
     cjk?: boolean;
 };
@@ -318,12 +322,41 @@ const ZH_COUNT: Record<string, number> = {
     十: 10,
 };
 
-/** "3", "a", "one", "两"; none said is one — "через год". */
+/** "3", "a", "one", "пару", "a couple of", "两"; none said is one — "через год". */
 function countOf(word: string | undefined): number {
     if (!word) return 1;
     if (/^\d+$/.test(word)) return Number(word);
     if (/^(a|an|one)$/i.test(word)) return 1;
+    if (/^(пару|a\s+couple\s+of)$/i.test(word)) return 2;
     return ZH_COUNT[word] ?? 0;
+}
+
+/** The first day of the week after this one. */
+function nextWeek(today: string, weekStart: WeekStart): string {
+    return shiftIsoDate(startOfWeek(today, weekStart), 7);
+}
+
+/** The last day of this week: today, if it is that day. */
+function endOfWeek(today: string, weekStart: WeekStart): string {
+    return shiftIsoDate(startOfWeek(today, weekStart), 6);
+}
+
+/** The last day of this month. */
+function endOfMonth(today: string): string {
+    const [y, m] = today.split('-').map(Number);
+    return `${y}-${pad(m)}-${pad(new Date(y, m, 0).getDate())}`;
+}
+
+/** The first day of next month. */
+function nextMonth(today: string): string {
+    const [y, m] = today.split('-').map(Number);
+    return m === 12 ? `${y + 1}-01-01` : `${y}-${pad(m + 1)}-01`;
+}
+
+/** The nearest Saturday: today, if it is one. */
+function weekend(today: string): string {
+    const day = new Date(`${today}T00:00:00`).getDay();
+    return shiftIsoDate(today, (6 - day + 7) % 7);
 }
 
 function setSpan(out: QuickParse, today: string, count: number, unit: Unit | null): boolean {
@@ -419,13 +452,35 @@ const RULES: Rule[] = [
     // "через год", "через 3 дня", "через полгода"; "in a year", "in 2 weeks"; "3天后".
     rule(
         'date',
-        'через\\s+(?:(\\d{1,3})\\s+)?(день|дня|дней|неделю|недели|недель|месяц|месяца|месяцев|год|года|лет)',
+        'через\\s+(?:(\\d{1,3}|пару)\\s+)?(день|дня|дней|неделю|недели|недель|месяц|месяца|месяцев|год|года|лет)',
         (m, out, today) => setSpan(out, today, countOf(m[1]), unitOf(m[2]))
     ),
     rule('date', 'через\\s+полгода', (_m, out, today) => setSpan(out, today, 6, 'month')),
-    rule('date', 'in\\s+(a|an|one|\\d{1,3})\\s+(days?|weeks?|months?|years?)', (m, out, today) =>
-        setSpan(out, today, countOf(m[1]), unitOf(m[2]))
+    rule(
+        'date',
+        'in\\s+(a\\s+couple\\s+of|a|an|one|\\d{1,3})\\s+(days?|weeks?|months?|years?)',
+        (m, out, today) => setSpan(out, today, countOf(m[1]), unitOf(m[2]))
     ),
+    // The calendar's own marks.
+    rule('date', 'на\\s+следующей\\s+неделе|next\\s+week', (_m, out, today, weekStart) =>
+        setDate(out, nextWeek(today, weekStart))
+    ),
+    rule('date', 'в\\s+конце\\s+недели|(?:by\\s+)?(?:the\\s+)?end\\s+of\\s+(?:the|this)?\\s*week', (_m, out, today, weekStart) =>
+        setDate(out, endOfWeek(today, weekStart))
+    ),
+    rule('date', 'в\\s+конце\\s+месяца|(?:by\\s+)?(?:the\\s+)?end\\s+of\\s+(?:the|this)?\\s*month', (_m, out, today) =>
+        setDate(out, endOfMonth(today))
+    ),
+    rule('date', 'в\\s+следующем\\s+месяце|next\\s+month', (_m, out, today) =>
+        setDate(out, nextMonth(today))
+    ),
+    rule('date', 'на\\s+выходных|(?:this|on\\s+the|at\\s+the)\\s+weekend', (_m, out, today) =>
+        setDate(out, weekend(today))
+    ),
+    zhRule('date', '下周(?!末)', (_m, out, today, weekStart) => setDate(out, nextWeek(today, weekStart))),
+    zhRule('date', '(?:这|本)?周末', (_m, out, today) => setDate(out, weekend(today))),
+    zhRule('date', '月底', (_m, out, today) => setDate(out, endOfMonth(today))),
+    zhRule('date', '下(?:个)?月', (_m, out, today) => setDate(out, nextMonth(today))),
     zhRule(
         'date',
         '(\\d{1,3}|[一两二三四五六七八九十])\\s*(天|周|星期|礼拜|个月|年)(?:以)?后',
@@ -481,7 +536,8 @@ export function pieceKey(kind: QuickPieceKind, text: string): string {
 export function quickParse(
     text: string,
     today: string,
-    ignore: ReadonlySet<string> = new Set()
+    ignore: ReadonlySet<string> = new Set(),
+    weekStart: WeekStart = 'mon'
 ): QuickParse {
     const out: QuickParse = { title: '', impliedDate: false, pieces: [] };
 
@@ -502,7 +558,7 @@ export function quickParse(
                 start: match.index,
                 end: match.index + match[0].length,
                 text: match[0],
-                apply: (o, t) => r.apply(match, o, t),
+                apply: (o, t, w) => r.apply(match, o, t, w),
             });
         }
     });
@@ -526,7 +582,7 @@ export function quickParse(
             taken.push([c.start, c.end]);
             continue;
         }
-        if (!c.apply(out, today)) {
+        if (!c.apply(out, today, weekStart)) {
             // Recognised in shape but not in sense (31.02, 22:00-06:00): the
             // whole of it stays words, rather than a part of it turning up as
             // a chip that means something else.

@@ -83,7 +83,7 @@ export const TodayWidget: FC<DashboardWidgetProps> = () => {
         setBusy(true);
         try {
             if (into === 'task') {
-                const draft = draftOf(said, natural ? quickParse(said, today) : null);
+                const draft = draftOf(said, natural ? quickParse(said, today, undefined, settings.journalWeekStart) : null);
                 await new TaskWriter(app).addTask(
                     settings.tasksFolderPath,
                     {

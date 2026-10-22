@@ -42,11 +42,28 @@ describe('quickParse — Russian', () => {
         ['Отчёт через неделю', { title: 'Отчёт', dueDate: '2026-09-30' }],
         ['ТО через 2 месяца', { title: 'ТО', dueDate: '2026-11-23' }],
         ['Анализы через полгода', { title: 'Анализы', dueDate: '2027-03-23' }],
+        ['Позвонить через пару дней', { title: 'Позвонить', dueDate: '2026-09-25' }],
+        ['Отчёт через пару недель', { title: 'Отчёт', dueDate: '2026-10-07' }],
+        // Weeks from Monday here: TODAY is a Wednesday.
+        ['Ревью на следующей неделе', { title: 'Ревью', dueDate: '2026-09-28' }],
+        ['Отчёт в конце недели', { title: 'Отчёт', dueDate: '2026-09-27' }],
+        ['Налоги в конце месяца', { title: 'Налоги', dueDate: '2026-09-30' }],
+        ['Отпуск в следующем месяце', { title: 'Отпуск', dueDate: '2026-10-01' }],
+        ['Уборка на выходных', { title: 'Уборка', dueDate: '2026-09-26' }],
         [
             'Созвон через неделю в 18',
             { title: 'Созвон', dueDate: '2026-09-30', dueTime: '18:00' },
         ],
     ])('dates: %s', (text, want) => check(text, want));
+
+    it('starts next week, and ends this one, by the week start given', () => {
+        expect(quickParse('на следующей неделе', TODAY, undefined, 'sun').dueDate).toBe('2026-09-27');
+        expect(quickParse('в конце недели', TODAY, undefined, 'sun').dueDate).toBe('2026-09-26');
+        // On the week's last day, its end is today; on a Saturday, so is the weekend.
+        expect(quickParse('в конце недели', '2026-09-27').dueDate).toBe('2026-09-27');
+        expect(quickParse('на выходных', '2026-09-26').dueDate).toBe('2026-09-26');
+        expect(quickParse('в следующем месяце', '2026-12-10').dueDate).toBe('2027-01-01');
+    });
 
     it('takes a month on from the 31st to the next month’s last day', () => {
         expect(quickParse('через месяц', '2027-01-31').dueDate).toBe('2027-02-28');
@@ -144,6 +161,12 @@ describe('quickParse — English', () => {
         ['Trip 19 October', { title: 'Trip', dueDate: '2026-10-19' }],
         ['Renew in a year', { title: 'Renew', dueDate: '2027-09-23' }],
         ['Call back in 3 days', { title: 'Call back', dueDate: '2026-09-26' }],
+        ['Call back in a couple of days', { title: 'Call back', dueDate: '2026-09-25' }],
+        ['Plan next week', { title: 'Plan', dueDate: '2026-09-28' }],
+        ['Report by the end of the month', { title: 'Report', dueDate: '2026-09-30' }],
+        ['Report end of week', { title: 'Report', dueDate: '2026-09-27' }],
+        ['Trip next month', { title: 'Trip', dueDate: '2026-10-01' }],
+        ['Hike this weekend', { title: 'Hike', dueDate: '2026-09-26' }],
         [
             'Lunch at 12:30am',
             { title: 'Lunch', dueTime: '00:30', dueDate: TODAY, impliedDate: true },
@@ -201,6 +224,10 @@ describe('quickParse — Chinese', () => {
         ['3天后给妈妈打电话', { title: '给妈妈打电话', dueDate: '2026-09-26' }],
         ['两周后交报告', { title: '交报告', dueDate: '2026-10-07' }],
         ['一年后体检', { title: '体检', dueDate: '2027-09-23' }],
+        ['下周开会', { title: '开会', dueDate: '2026-09-28' }],
+        ['周末打扫', { title: '打扫', dueDate: '2026-09-26' }],
+        ['月底交房租', { title: '交房租', dueDate: '2026-09-30' }],
+        ['下个月旅行', { title: '旅行', dueDate: '2026-10-01' }],
         ['早上7点半跑步', { title: '跑步', dueDate: '2026-09-23', dueTime: '07:30', impliedDate: true }],
         ['晚上8点15分看书', { title: '看书', dueDate: '2026-09-23', dueTime: '20:15', impliedDate: true }],
     ])('dates and times: %s', (text, want) => check(text, want));
@@ -240,7 +267,6 @@ describe('quickParse — what stays words', () => {
         // A month's short name inside a word, and a number before a word that is not a month.
         ['Купить 3 марки', { title: 'Купить 3 марки' }],
         ['Read 3 decks', { title: 'Read 3 decks' }],
-        ['через пару дней', { title: 'через пару дней' }],
         ['Встреча в 25:00', { title: 'Встреча в 25:00' }],
         // A range that runs backwards.
         ['Смена 22:00-06:00', { title: 'Смена 22:00-06:00' }],

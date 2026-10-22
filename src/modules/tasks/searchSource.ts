@@ -78,7 +78,9 @@ function itemOf(plugin: ZenithPlugin, task: Task): SearchItem {
 function createRow(plugin: ZenithPlugin, text: string): SearchCreateRow | null {
     const settings = useZenithStore.getState().settings;
     const today = getTodayString();
-    const parsed = featureEnabled(settings, 'tasks.naturalInput') ? quickParse(text, today) : null;
+    const parsed = featureEnabled(settings, 'tasks.naturalInput')
+        ? quickParse(text, today, undefined, settings.journalWeekStart)
+        : null;
     const title = (parsed?.title ?? text).trim();
     if (!title) return null;
     const t = translatorNow();

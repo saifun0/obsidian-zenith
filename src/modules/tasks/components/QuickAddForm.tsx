@@ -100,9 +100,10 @@ export const QuickAddForm: FC<{
     const titleId = useId();
 
     const today = getTodayString();
+    const weekStart = useZenithStore((s) => s.settings.journalWeekStart);
     const parsed = useMemo(
-        () => (natural ? quickParse(title, today, ignored) : null),
-        [natural, title, today, ignored]
+        () => (natural ? quickParse(title, today, ignored, weekStart) : null),
+        [natural, title, today, ignored, weekStart]
     );
     const pieceOf = (kind: QuickPiece['kind']) => parsed?.pieces.find((p) => p.kind === kind);
 

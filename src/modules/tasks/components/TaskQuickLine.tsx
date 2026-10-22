@@ -68,8 +68,11 @@ export const TaskQuickLine = forwardRef<HTMLInputElement, TaskQuickLineProps>(
 
         const today = getTodayString();
         const parsed = useMemo(
-            () => (natural && !literal && text.trim() ? quickParse(text, today) : null),
-            [natural, literal, text, today]
+            () =>
+                natural && !literal && text.trim()
+                    ? quickParse(text, today, undefined, settings.journalWeekStart)
+                    : null,
+            [natural, literal, text, today, settings.journalWeekStart]
         );
         const draft = draftOf(text, parsed);
         const preview = parsed?.dueDate

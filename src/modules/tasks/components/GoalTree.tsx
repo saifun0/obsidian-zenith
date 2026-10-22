@@ -680,7 +680,10 @@ const StepField: FC<{ node: GoalNode; onDone: () => void }> = ({ node, onDone })
         const typed = text.trim();
         if (!typed || busy.current) return;
         // "Run 14 km tomorrow" is a step with a day, read the way quick add reads it.
-        const read = natural ? quickParse(typed, getTodayString()) : null;
+        const { journalWeekStart } = useZenithStore.getState().settings;
+        const read = natural
+            ? quickParse(typed, getTodayString(), undefined, journalWeekStart)
+            : null;
         const title = read?.title.trim() || typed;
         const fields = read?.dueDate
             ? { dueDate: read.dueDate, dueTime: read.dueTime, dueEndTime: read.dueEndTime }

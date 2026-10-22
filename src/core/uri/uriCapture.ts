@@ -65,7 +65,7 @@ function noticeWithUndo(message: string, locale: Locale, undo: () => Promise<boo
 async function addTask(plugin: ZenithPlugin, text: string, locale: Locale): Promise<void> {
     const settings = useZenithStore.getState().settings;
     const parsed = featureEnabled(settings, 'tasks.naturalInput')
-        ? quickParse(text, getTodayString())
+        ? quickParse(text, getTodayString(), undefined, settings.journalWeekStart)
         : null;
     const title = (parsed?.title ?? text).trim();
     if (!title) {
