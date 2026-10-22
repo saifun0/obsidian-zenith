@@ -33,7 +33,25 @@ describe('quickParse — Russian', () => {
         // Already past this year, so next year's.
         ['Паспорт 15.03', { title: 'Паспорт', dueDate: '2027-03-15' }],
         ['Паспорт 15.03.2028', { title: 'Паспорт', dueDate: '2028-03-15' }],
+        ['Отпуск 19 октября', { title: 'Отпуск', dueDate: '2026-10-19', pieces: ['19 октября'] }],
+        ['Отпуск 19 окт', { title: 'Отпуск', dueDate: '2026-10-19' }],
+        ['Паспорт 15 марта', { title: 'Паспорт', dueDate: '2027-03-15' }],
+        ['Свадьба 12 июня 2028 года', { title: 'Свадьба', dueDate: '2028-06-12' }],
+        ['Продлить через год', { title: 'Продлить', dueDate: '2027-09-23', pieces: ['через год'] }],
+        ['через 3 дня позвонить', { title: 'позвонить', dueDate: '2026-09-26' }],
+        ['Отчёт через неделю', { title: 'Отчёт', dueDate: '2026-09-30' }],
+        ['ТО через 2 месяца', { title: 'ТО', dueDate: '2026-11-23' }],
+        ['Анализы через полгода', { title: 'Анализы', dueDate: '2027-03-23' }],
+        [
+            'Созвон через неделю в 18',
+            { title: 'Созвон', dueDate: '2026-09-30', dueTime: '18:00' },
+        ],
     ])('dates: %s', (text, want) => check(text, want));
+
+    it('takes a month on from the 31st to the next month’s last day', () => {
+        expect(quickParse('через месяц', '2027-01-31').dueDate).toBe('2027-02-28');
+        expect(quickParse('через год', '2028-02-29').dueDate).toBe('2029-02-28');
+    });
 
     it.each<[string, Expect]>([
         [
@@ -121,6 +139,11 @@ describe('quickParse — English', () => {
         ['Standup on friday 9:30', { title: 'Standup', dueDate: '2026-09-25', dueTime: '09:30' }],
         ['Gym mon at 7', { title: 'Gym', dueDate: '2026-09-28', dueTime: '07:00' }],
         ['Review +1w', { title: 'Review', dueDate: '2026-09-30' }],
+        ['Trip Oct 19', { title: 'Trip', dueDate: '2026-10-19' }],
+        ['Trip on October 19th, 2027', { title: 'Trip', dueDate: '2027-10-19' }],
+        ['Trip 19 October', { title: 'Trip', dueDate: '2026-10-19' }],
+        ['Renew in a year', { title: 'Renew', dueDate: '2027-09-23' }],
+        ['Call back in 3 days', { title: 'Call back', dueDate: '2026-09-26' }],
         [
             'Lunch at 12:30am',
             { title: 'Lunch', dueTime: '00:30', dueDate: TODAY, impliedDate: true },
@@ -175,6 +198,9 @@ describe('quickParse — Chinese', () => {
         ['10月15号办护照', { title: '办护照', dueDate: '2026-10-15' }],
         // Already past this year, so next year's.
         ['9月12日交报告', { title: '交报告', dueDate: '2027-09-12' }],
+        ['3天后给妈妈打电话', { title: '给妈妈打电话', dueDate: '2026-09-26' }],
+        ['两周后交报告', { title: '交报告', dueDate: '2026-10-07' }],
+        ['一年后体检', { title: '体检', dueDate: '2027-09-23' }],
         ['早上7点半跑步', { title: '跑步', dueDate: '2026-09-23', dueTime: '07:30', impliedDate: true }],
         ['晚上8点15分看书', { title: '看书', dueDate: '2026-09-23', dueTime: '20:15', impliedDate: true }],
     ])('dates and times: %s', (text, want) => check(text, want));
@@ -210,6 +236,11 @@ describe('quickParse — what stays words', () => {
         ['Satellite launch', { title: 'Satellite launch' }],
         // Not a real date or time: left as typed.
         ['Отчёт 31.02', { title: 'Отчёт 31.02' }],
+        ['Отчёт 31 февраля', { title: 'Отчёт 31 февраля' }],
+        // A month's short name inside a word, and a number before a word that is not a month.
+        ['Купить 3 марки', { title: 'Купить 3 марки' }],
+        ['Read 3 decks', { title: 'Read 3 decks' }],
+        ['через пару дней', { title: 'через пару дней' }],
         ['Встреча в 25:00', { title: 'Встреча в 25:00' }],
         // A range that runs backwards.
         ['Смена 22:00-06:00', { title: 'Смена 22:00-06:00' }],

@@ -11,7 +11,9 @@ import { shiftIsoDate } from './taskFormat';
  *
  * What it knows:
  * - dates: today / tomorrow / the day after, a weekday (with or without
- *   "в" / "on"), `+3д` / `+2w`, `15.10` or `15.10.2027`;
+ *   "в" / "on"), `+3д` / `+2w`, `15.10` or `15.10.2027`, a day and a month
+ *   by name — `19 октября`, `Oct 19`, `19 October 2027` — and a span from
+ *   today: `через год`, `через 3 дня`, `in 2 weeks`, `3天后`;
  * - times: `в 18`, `at 9:30`, `18:00`, `6pm`, a range `18–19` or `с 18 до 19`;
  * - priority: `!` (🔼) and `!!` (⏫), standing alone;
  * - repeats the recurrence engine can run: every day / week / month / year,
@@ -149,22 +151,66 @@ function setDate(out: QuickParse, iso: string): boolean {
     return true;
 }
 
-/** `15.10` (the next one), `15.10.26`, `15.10.2026` — only a date that exists. */
-function dotDate(m: RegExpExecArray, today: string): string | null {
-    const day = Number(m[1]);
-    const month = Number(m[2]);
-    let year = m[3] ? Number(m[3].length === 2 ? `20${m[3]}` : m[3]) : Number(today.slice(0, 4));
-    const make = (y: number) => {
-        const d = new Date(y, month - 1, day);
+/**
+ * A day of a month, in the year given or else the next one — only a date that
+ * exists. `year` may be written with two digits.
+ */
+function calendarDate(
+    day: number,
+    month: number,
+    year: string | undefined,
+    today: string
+): string | null {
+    let y = year ? Number(year.length === 2 ? `20${year}` : year) : Number(today.slice(0, 4));
+    const make = (at: number) => {
+        const d = new Date(at, month - 1, day);
         return d.getMonth() === month - 1 && d.getDate() === day
-            ? `${y}-${pad(month)}-${pad(day)}`
+            ? `${at}-${pad(month)}-${pad(day)}`
             : null;
     };
-    let iso = make(year);
+    let iso = make(y);
     // Without a year a date already past means next year's: nobody schedules
     // for last March.
-    if (iso && !m[3] && iso < today) iso = make(++year);
+    if (iso && !year && iso < today) iso = make(++y);
     return iso;
+}
+
+/** `15.10` (the next one), `15.10.26`, `15.10.2026`. */
+function dotDate(m: RegExpExecArray, today: string): string | null {
+    return calendarDate(Number(m[1]), Number(m[2]), m[3], today);
+}
+
+/**
+ * Month names, as said with a day: Russian in the genitive — "19 октября" —
+ * and short, English long and short.
+ */
+const MONTH_NAMES: Array<[number, string[]]> = [
+    [1, ['января', 'янв', 'january', 'jan']],
+    [2, ['февраля', 'февр', 'фев', 'february', 'feb']],
+    [3, ['марта', 'мар', 'march', 'mar']],
+    [4, ['апреля', 'апр', 'april', 'apr']],
+    [5, ['мая', 'may']],
+    [6, ['июня', 'июн', 'june', 'jun']],
+    [7, ['июля', 'июл', 'july', 'jul']],
+    [8, ['августа', 'авг', 'august', 'aug']],
+    [9, ['сентября', 'сент', 'сен', 'september', 'sept', 'sep']],
+    [10, ['октября', 'окт', 'october', 'oct']],
+    [11, ['ноября', 'нояб', 'ноя', 'november', 'nov']],
+    [12, ['декабря', 'дек', 'december', 'dec']],
+];
+const MONTH_OF = new Map(
+    MONTH_NAMES.flatMap(([month, names]) => names.map((name) => [name, month] as const))
+);
+/** Longest first, so "сентября" is not read as "сен" and the rest of a word. */
+const MONTH = `(${[...MONTH_OF.keys()].sort((a, b) => b.length - a.length).join('|')})`;
+/** "19", "19th". */
+const DAY = '(\\d{1,2})(?:st|nd|rd|th)?';
+/** ", 2027", " 2027 года". */
+const YEAR = '(?:,?\\s+(\\d{4})(?:\\s+(?:года|г\\.?))?)?';
+
+function namedDate(day: string, month: string, year: string | undefined, today: string): string | null {
+    const m = MONTH_OF.get(month.toLowerCase());
+    return m ? calendarDate(Number(day), m, year, today) : null;
 }
 
 // ── Times ────────────────────────────────────────────
@@ -244,6 +290,46 @@ function setRepeat(out: QuickParse, value: string | null): boolean {
     return true;
 }
 
+// ── Spans from today ─────────────────────────────────
+
+/** `n` days, weeks, months or years from `today`; the 31st a month on is that month's last day. */
+function shiftBy(today: string, n: number, unit: Unit): string {
+    if (unit === 'day' || unit === 'week') return shiftIsoDate(today, unit === 'week' ? n * 7 : n);
+    const [y, m, d] = today.split('-').map(Number);
+    const total = m - 1 + (unit === 'year' ? n * 12 : n);
+    const year = y + Math.floor(total / 12);
+    const month = total % 12;
+    const last = new Date(year, month + 1, 0).getDate();
+    return `${year}-${pad(month + 1)}-${pad(Math.min(d, last))}`;
+}
+
+/** Chinese numbers up to ten, as said before a span: "两周后". */
+const ZH_COUNT: Record<string, number> = {
+    一: 1,
+    两: 2,
+    二: 2,
+    三: 3,
+    四: 4,
+    五: 5,
+    六: 6,
+    七: 7,
+    八: 8,
+    九: 9,
+    十: 10,
+};
+
+/** "3", "a", "one", "两"; none said is one — "через год". */
+function countOf(word: string | undefined): number {
+    if (!word) return 1;
+    if (/^\d+$/.test(word)) return Number(word);
+    if (/^(a|an|one)$/i.test(word)) return 1;
+    return ZH_COUNT[word] ?? 0;
+}
+
+function setSpan(out: QuickParse, today: string, count: number, unit: Unit | null): boolean {
+    return count > 0 && !!unit && setDate(out, shiftBy(today, count, unit));
+}
+
 // ── The grammar ──────────────────────────────────────
 
 const RULES: Rule[] = [
@@ -309,7 +395,7 @@ const RULES: Rule[] = [
     ),
     // "9月12日", "2027年9月12号": the next one, as with `15.10`.
     zhRule('date', '(?:(\\d{4})年)?(\\d{1,2})月(\\d{1,2})[日号]', (m, out, today) => {
-        const iso = dotDate([m[0], m[3], m[2], m[1]] as unknown as RegExpExecArray, today);
+        const iso = calendarDate(Number(m[3]), Number(m[2]), m[1], today);
         return !!iso && setDate(out, iso);
     }),
     rule('date', '\\+(\\d{1,3})\\s?(д|дн|d|н|нед|w)', (m, out, today) => {
@@ -321,6 +407,31 @@ const RULES: Rule[] = [
         const iso = dotDate(m, today);
         return !!iso && setDate(out, iso);
     }),
+    // "19 октября", "19 October 2027"; "Oct 19", "on October 19th, 2027".
+    rule('date', `${DAY}\\s+${MONTH}${YEAR}`, (m, out, today) => {
+        const iso = namedDate(m[1], m[2], m[3], today);
+        return !!iso && setDate(out, iso);
+    }),
+    rule('date', `(?:on\\s+)?${MONTH}\\s+${DAY}${YEAR}`, (m, out, today) => {
+        const iso = namedDate(m[2], m[1], m[3], today);
+        return !!iso && setDate(out, iso);
+    }),
+    // "через год", "через 3 дня", "через полгода"; "in a year", "in 2 weeks"; "3天后".
+    rule(
+        'date',
+        'через\\s+(?:(\\d{1,3})\\s+)?(день|дня|дней|неделю|недели|недель|месяц|месяца|месяцев|год|года|лет)',
+        (m, out, today) => setSpan(out, today, countOf(m[1]), unitOf(m[2]))
+    ),
+    rule('date', 'через\\s+полгода', (_m, out, today) => setSpan(out, today, 6, 'month')),
+    rule('date', 'in\\s+(a|an|one|\\d{1,3})\\s+(days?|weeks?|months?|years?)', (m, out, today) =>
+        setSpan(out, today, countOf(m[1]), unitOf(m[2]))
+    ),
+    zhRule(
+        'date',
+        '(\\d{1,3}|[一两二三四五六七八九十])\\s*(天|周|星期|礼拜|个月|年)(?:以)?后',
+        (m, out, today) => setSpan(out, today, countOf(m[1]), unitOf(m[2]))
+    ),
+    zhRule('date', '半年(?:以)?后', (_m, out, today) => setSpan(out, today, 6, 'month')),
 
     // Times. A bare number is never a time — "купить 2 хлеба" is not two
     // o'clock — so a time needs a colon, am/pm, or "в" / "at" in front.
