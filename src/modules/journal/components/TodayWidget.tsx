@@ -1,4 +1,4 @@
-import React, { useMemo, useState, type FC } from 'react';
+import React, { useLayoutEffect, useMemo, useRef, useState, type FC } from 'react';
 import { Notice } from 'obsidian';
 import { ChevronRight, Moon, PenLine, Star, Sun } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
@@ -47,7 +47,6 @@ export const TodayWidget: FC<DashboardWidgetProps> = () => {
     const t = useTranslation();
     const { app, plugin } = useApp();
     const room = useCardRoom();
-    const compact = room.width < ROOM_WIDE;
     const now = useNow(60_000);
     const tasks = useZenithStore((s) => s.tasks);
     const entries = useZenithStore((s) => s.journalEntries);
@@ -63,6 +62,31 @@ export const TodayWidget: FC<DashboardWidgetProps> = () => {
     const entry = useMemo(() => entriesByDate(entries).get(today), [entries, today]);
     const kind = ritualFor(now.getHours());
     const focus = entry?.texts?.[FOCUS_KEY];
+
+    const trackers = usableTrackers(settings);
+
+    // What the card gives up when its slot is too short for it: first the
+    // habits draw smaller and closer, then the line about the note goes. Never
+    // a scroll inside the card, which on a phone fights the page's own.
+    const rootRef = useRef<HTMLDivElement>(null);
+    const [squeeze, setSqueeze] = useState(0);
+    const fitFor = useRef('');
+    const fitKey = `${room.width}x${room.height}:${trackers.length}:${ritualsOn || !!focus}`;
+    useLayoutEffect(() => {
+        const el = rootRef.current;
+        if (!el || !room.height) return;
+        // A new size or set of habits: measured afresh, from nothing given up.
+        if (fitFor.current !== fitKey) {
+            fitFor.current = fitKey;
+            if (squeeze) {
+                setSqueeze(0);
+                return;
+            }
+        }
+        if (squeeze < 2 && el.scrollHeight > room.height + 1) setSqueeze(squeeze + 1);
+    }, [room.height, fitKey, squeeze]);
+    const compact = squeeze > 0 || room.width < ROOM_WIDE;
+
     const into: CaptureKind = settings.journalCaptureKind;
     const records = countRecords(
         entry?.body ?? '',
@@ -83,7 +107,10 @@ export const TodayWidget: FC<DashboardWidgetProps> = () => {
         setBusy(true);
         try {
             if (into === 'task') {
-                const draft = draftOf(said, natural ? quickParse(said, today, undefined, settings.journalWeekStart) : null);
+                const draft = draftOf(
+                    said,
+                    natural ? quickParse(said, today, undefined, settings.journalWeekStart) : null
+                );
                 await new TaskWriter(app).addTask(
                     settings.tasksFolderPath,
                     {
@@ -143,7 +170,7 @@ export const TodayWidget: FC<DashboardWidgetProps> = () => {
     );
 
     return (
-        <div className="zenith-today">
+        <div ref={rootRef} className={`zenith-today${squeeze ? ' is-tight' : ''}`}>
             {ritualsOn ? (
                 <button
                     type="button"
@@ -169,7 +196,7 @@ export const TodayWidget: FC<DashboardWidgetProps> = () => {
             )}
 
             <TrackerRail
-                trackers={usableTrackers(settings)}
+                trackers={trackers}
                 values={entry?.values ?? {}}
                 onChange={changeTracker}
                 layout="wrap"
@@ -209,21 +236,25 @@ export const TodayWidget: FC<DashboardWidgetProps> = () => {
                 </div>
             </div>
 
-            <div className="zenith-wfoot">
-                <span className="zenith-wfoot__note">
-                    {records > 0 ? t.plural('today.records', records) : t('journal.widget.blank')}
-                    {wordsOn && entry && entry.words > 0
-                        ? ` · ${t.plural('journal.words', entry.words)}`
-                        : ''}
-                </span>
-                <button
-                    className="zenith-btn zenith-btn--ghost zenith-btn--sm zenith-wfoot__open"
-                    onClick={() => void openDailyNote(app, settings, today)}
-                >
-                    <PenLine size={13} />
-                    <span>{entry ? t('journal.openNote') : t('journal.createNote')}</span>
-                </button>
-            </div>
+            {squeeze < 2 && (
+                <div className="zenith-wfoot">
+                    <span className="zenith-wfoot__note">
+                        {records > 0
+                            ? t.plural('today.records', records)
+                            : t('journal.widget.blank')}
+                        {wordsOn && entry && entry.words > 0
+                            ? ` · ${t.plural('journal.words', entry.words)}`
+                            : ''}
+                    </span>
+                    <button
+                        className="zenith-btn zenith-btn--ghost zenith-btn--sm zenith-wfoot__open"
+                        onClick={() => void openDailyNote(app, settings, today)}
+                    >
+                        <PenLine size={13} />
+                        <span>{entry ? t('journal.openNote') : t('journal.createNote')}</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

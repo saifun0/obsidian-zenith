@@ -2384,6 +2384,27 @@ body.is-mobile .zenith-jday button.zenith-tracker__step-btn {
     min-width: 24px;
 }
 
+/* A slot too short for the card: the habits smaller and closer together. */
+.zenith-today.is-tight {
+    gap: 6px;
+}
+.zenith-today.is-tight .zenith-trail {
+    gap: 4px 8px;
+}
+.zenith-today.is-tight .zenith-tracker {
+    gap: 4px;
+    min-height: 26px;
+}
+.zenith-root .zenith-today.is-tight button.zenith-tracker__chip {
+    height: 26px;
+}
+.zenith-root .zenith-today.is-tight button.zenith-tracker__chip.is-compact {
+    width: 26px;
+}
+.zenith-today.is-tight .zenith-tracker__stepper {
+    height: 26px;
+}
+
 /* The line to write on, and where it goes. */
 .zenith-today__write {
     display: flex;
