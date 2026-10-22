@@ -1,6 +1,6 @@
 import type { Priority, TaskStatus } from '../core/constants';
-import type { TaskAttachment, WeekLog } from '../modules/tasks/services/taskDetails';
-import type { HourTarget } from '../modules/tasks/services/taskFormat';
+import type { TaskAttachment, WeekCount, WeekLog } from '../modules/tasks/services/taskDetails';
+import type { TaskQuota } from '../modules/tasks/services/taskFormat';
 import type { ZenithSliceCreator } from './types';
 
 // ── Task Types ───────────────────────────────────────
@@ -39,10 +39,14 @@ export interface TaskExtras {
     ref?: string;
     /** The Tasks plugin's `⛔`: the ids of the tasks this one waits on. */
     needs?: string[];
-    /** `🎯` — the hours it asks for, in all or a week (`taskHours`). */
-    target?: HourTarget;
+    /** `🎯` — what it asks for, hours or times, in all or a week (`taskHours`). */
+    target?: TaskQuota;
+    /** `🔢` — the times done, of a target that is a count. */
+    tally?: number;
     /** The hours of each week, for a task that asks for so many a week. */
     weeks?: WeekLog[];
+    /** The times of each week, for a task that asks for so many times a week. */
+    counts?: WeekCount[];
 }
 
 export interface SubTask extends TaskExtras {

@@ -49,6 +49,12 @@ export interface WeekLog {
     minutes: number;
 }
 
+/** A week of a task's count: the day it starts, and the times done. */
+export interface WeekCount {
+    start: string;
+    count: number;
+}
+
 export interface TaskDetails {
     /** Free text, newlines preserved. Empty string when there is none. */
     description: string;
@@ -58,6 +64,8 @@ export interface TaskDetails {
      * editor, the attachments — and then the ones already there are kept.
      */
     weeks?: WeekLog[];
+    /** The weeks' counts, of a task that asks for so many times a week; kept the same way. */
+    counts?: WeekCount[];
 }
 
 export const EMPTY_DETAILS: TaskDetails = { description: '', attachments: [] };
@@ -75,6 +83,28 @@ const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|svg|avif|bmp)(?:[?#].*)?$/i;
 
 /** `- 2026-10-12 ⏱ 18h`: a week of hours. */
 const WEEK_RE = /^(?:[-*+]\s+)?(\d{4}-\d{2}-\d{2})\s*⏱\s*(\d+(?:h\d*)?m?)$/u;
+
+/** `- 2026-10-12 🔢 3`: a week of a count. */
+const COUNT_RE = /^(?:[-*+]\s+)?(\d{4}-\d{2}-\d{2})\s*🔢\s*(\d+)$/u;
+
+function readCount(line: string): WeekCount | null {
+    const m = line.match(COUNT_RE);
+    const count = m ? Number(m[2]) : 0;
+    return m && count > 0 ? { start: m[1], count } : null;
+}
+
+/** The weeks with `count` more done in the one starting `start`, in the order of the weeks. */
+export function addToWeekCount(
+    counts: readonly WeekCount[],
+    start: string,
+    count: number
+): WeekCount[] {
+    const found = counts.some((w) => w.start === start);
+    const next = found
+        ? counts.map((w) => (w.start === start ? { start, count: w.count + count } : w))
+        : [...counts, { start, count }];
+    return next.filter((w) => w.count > 0).sort((a, b) => a.start.localeCompare(b.start));
+}
 
 /** Read one detail line as a week of hours, or `null` if it is not one. */
 function readWeek(line: string): WeekLog | null {
@@ -159,6 +189,7 @@ export function parseDetails(lines: string[]): TaskDetails {
     const prose: string[] = [];
     const attachments: TaskAttachment[] = [];
     const weeks: WeekLog[] = [];
+    const counts: WeekCount[] = [];
 
     for (const raw of lines) {
         const line = raw.trim();
@@ -166,6 +197,11 @@ export function parseDetails(lines: string[]): TaskDetails {
         const week = readWeek(line);
         if (week) {
             weeks.push(week);
+            continue;
+        }
+        const count = readCount(line);
+        if (count) {
+            counts.push(count);
             continue;
         }
         const attachment = readAttachment(line);
@@ -177,6 +213,7 @@ export function parseDetails(lines: string[]): TaskDetails {
         description: prose.join('\n'),
         attachments,
         ...(weeks.length ? { weeks } : {}),
+        ...(counts.length ? { counts } : {}),
     };
 }
 
@@ -198,6 +235,9 @@ export function buildDetailLines(details: TaskDetails, indent: string): string[]
     for (const week of details.weeks ?? []) {
         out.push(`${indent}- ${week.start} ⏱ ${formatDuration(week.minutes)}`);
     }
+    for (const week of details.counts ?? []) {
+        out.push(`${indent}- ${week.start} 🔢 ${week.count}`);
+    }
     return out;
 }
 
@@ -208,6 +248,9 @@ export function detailsEqual(a: TaskDetails, b: TaskDetails): boolean {
     const weeks = (d: TaskDetails) =>
         (d.weeks ?? []).map((w) => `${w.start}:${w.minutes}`).join(',');
     if (weeks(a) !== weeks(b)) return false;
+    const counts = (d: TaskDetails) =>
+        (d.counts ?? []).map((w) => `${w.start}:${w.count}`).join(',');
+    if (counts(a) !== counts(b)) return false;
     return a.attachments.every((x, i) => {
         const y = b.attachments[i];
         return x.kind === y.kind && x.target === y.target && (x.label ?? '') === (y.label ?? '');
@@ -268,10 +311,11 @@ export function writeDetails(
     const existing = end > start ? indentOf(lines[start]) : '';
     const indent = existing || (own.includes('\t') ? `${own}\t` : `${own}    `);
     // Whoever left the weeks out keeps the ones already written.
-    const weeks =
-        details.weeks ?? parseDetails(lines.slice(start, end).map((l) => l.trim())).weeks;
+    const kept = parseDetails(lines.slice(start, end).map((l) => l.trim()));
+    const weeks = details.weeks ?? kept.weeks;
+    const counts = details.counts ?? kept.counts;
 
     const next = [...lines];
-    next.splice(start, end - start, ...buildDetailLines({ ...details, weeks }, indent));
+    next.splice(start, end - start, ...buildDetailLines({ ...details, weeks, counts }, indent));
     return next;
 }

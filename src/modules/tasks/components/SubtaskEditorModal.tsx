@@ -15,7 +15,7 @@ import type { TaskAttachment, TaskDetails } from '../services/taskDetails';
 import { AttachmentField } from './AttachmentField';
 import { Modal } from '../../../components/shared/Modal';
 import { DateField, TimeField } from '../../../components/ui/fields';
-import { formatHours, parseHoursInput } from '../services/taskHours';
+import { quotaInputText, readQuotaInput } from '../services/taskHours';
 
 /**
  * The same four extras a task has, on a subtask.
@@ -55,15 +55,15 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
     const [timerText, setTimerText] = useState(
         subtask.timerMinutes ? formatDuration(subtask.timerMinutes) : ''
     );
-    const [hoursText, setHoursText] = useState(
-        subtask.target ? formatHours(subtask.target.minutes, t.locale) : ''
-    );
+    const [hoursText, setHoursText] = useState(quotaInputText(subtask.target, t.locale));
     const [hoursWeekly, setHoursWeekly] = useState(subtask.target?.weekly ?? true);
     const [notes, setNotes] = useState(subtask.description ?? '');
     const [attachments, setAttachments] = useState<TaskAttachment[]>(subtask.attachments ?? []);
     const [submitting, setSubmitting] = useState(false);
     const attachmentsOn = useFeature('tasks.attachments');
     const timerOn = useFeature('tasks.timer');
+    // Times are all there is while the timer is off: hours are the timer's.
+    const [quotaCount, setQuotaCount] = useState(subtask.target?.count ?? !timerOn);
 
     const submit = async () => {
         const trimmed = title.trim();
@@ -79,11 +79,10 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
             // Only the fields this form owns, and of those only the ones that
             // changed — so anything else on the line, a tag or a marker this
             // plugin doesn't know, survives being edited here.
-            const hours = parseHoursInput(hoursText);
             const patch = diffTaskFields(subtask, {
                 title: trimmed,
                 dueDate: dueDate || undefined,
-                target: hours ? { minutes: hours, weekly: hoursWeekly } : undefined,
+                target: readQuotaInput(hoursText, quotaCount, hoursWeekly),
                 dueTime: normalizeTimeOfDay(dueTime),
                 dueEndTime: dueTime ? normalizeTimeOfDay(dueEndTime) : undefined,
                 timerMinutes: parseDuration(timerText),
@@ -179,9 +178,7 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
                     </div>
                     {timerOn && (
                         <div className="zenith-field">
-                            <label className="zenith-field__label">
-                                {t('tasks.editor.timer')}
-                            </label>
+                            <label className="zenith-field__label">{t('tasks.editor.timer')}</label>
                             <input
                                 className="zenith-input zenith-field__input"
                                 placeholder={t('tasks.editor.timerPlaceholder')}
@@ -190,32 +187,47 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
                             />
                         </div>
                     )}
-                    {timerOn && (
-                        <div className="zenith-field">
-                            <label className="zenith-field__label">
-                                {t('tasks.editor.hours')}
-                            </label>
-                            <div className="zenith-subhours">
-                                <input
-                                    className="zenith-input zenith-field__input"
-                                    placeholder={t('tasks.editor.hoursPlaceholder')}
-                                    aria-label={t('tasks.editor.hours')}
-                                    inputMode="decimal"
-                                    value={hoursText}
-                                    onChange={(e) => setHoursText(e.target.value)}
-                                />
+                    <div className="zenith-field">
+                        <label className="zenith-field__label">
+                            {t(quotaCount ? 'tasks.editor.count' : 'tasks.editor.hours')}
+                        </label>
+                        <div className="zenith-subhours">
+                            <input
+                                className="zenith-input zenith-field__input"
+                                placeholder={t(
+                                    quotaCount
+                                        ? 'tasks.editor.countPlaceholder'
+                                        : 'tasks.editor.hoursPlaceholder'
+                                )}
+                                aria-label={t(
+                                    quotaCount ? 'tasks.editor.count' : 'tasks.editor.hours'
+                                )}
+                                inputMode={quotaCount ? 'numeric' : 'decimal'}
+                                value={hoursText}
+                                onChange={(e) => setHoursText(e.target.value)}
+                            />
+                            {timerOn && (
                                 <select
                                     className="dropdown"
-                                    aria-label={t('tasks.editor.hours')}
-                                    value={hoursWeekly ? 'weekly' : 'total'}
-                                    onChange={(e) => setHoursWeekly(e.target.value === 'weekly')}
+                                    aria-label={t('tasks.editor.add.hours')}
+                                    value={quotaCount ? 'count' : 'hours'}
+                                    onChange={(e) => setQuotaCount(e.target.value === 'count')}
                                 >
-                                    <option value="weekly">{t('tasks.editor.hoursWeekly')}</option>
-                                    <option value="total">{t('tasks.editor.hoursTotal')}</option>
+                                    <option value="hours">{t('tasks.editor.unitHours')}</option>
+                                    <option value="count">{t('tasks.editor.unitCount')}</option>
                                 </select>
-                            </div>
+                            )}
+                            <select
+                                className="dropdown"
+                                aria-label={t('tasks.editor.hours')}
+                                value={hoursWeekly ? 'weekly' : 'total'}
+                                onChange={(e) => setHoursWeekly(e.target.value === 'weekly')}
+                            >
+                                <option value="weekly">{t('tasks.editor.hoursWeekly')}</option>
+                                <option value="total">{t('tasks.editor.hoursTotal')}</option>
+                            </select>
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </Modal>

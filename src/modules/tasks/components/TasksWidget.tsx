@@ -27,8 +27,8 @@ import { SubtaskTally } from './TaskItem';
 import { withFigures } from './inkFigures';
 import { SubtasksDialog } from './SubtasksDialog';
 import { listedTasks } from '../services/goalTree';
-import { hoursReached } from '../services/taskHours';
-import { HoursTally } from './HoursTally';
+import { quotaReached, quotaShown } from '../services/taskHours';
+import { QuotaTally } from './QuotaTally';
 import { plainTitle } from '../services/titleLinks';
 import { TaskTitle } from './TaskTitle';
 
@@ -99,7 +99,7 @@ const WidgetRow: FC<RowProps> = ({
     const { done, total } = countSubtasks(task.subtasks);
     const tags = m.tags ? task.tags.slice(0, 2) : [];
     const timerOn = useFeature('tasks.timer');
-    const hours = timerOn && !!task.target;
+    const hours = quotaShown(task.target, timerOn);
 
     return (
         <div
@@ -130,7 +130,7 @@ const WidgetRow: FC<RowProps> = ({
             <TaskStatusControl
                 status={closing ? closing.snapshot.status : task.status}
                 size={m.box}
-                ready={hours && !closing && hoursReached(task)}
+                ready={hours && !closing && quotaReached(task)}
                 onChange={(s) => {
                     if (!closing) void changeStatus(s);
                 }}
@@ -164,7 +164,7 @@ const WidgetRow: FC<RowProps> = ({
                             <SubtaskTally done={done} total={total} />
                         </button>
                     )}
-                    {hours && <HoursTally item={task} />}
+                    {hours && <QuotaTally item={task} />}
                 </span>
             )}
         </div>

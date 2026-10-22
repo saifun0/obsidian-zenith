@@ -9,7 +9,8 @@ import { WidgetEmpty } from '../../dashboard/components/WidgetEmpty';
 import { buildGoals, habitsUnder, type GoalNode } from '../services/goalTree';
 import { marginText } from '../services/taskMargin';
 import { askForGoals } from '../services/taskViewState';
-import { HoursTally } from './HoursTally';
+import { quotaShown } from '../services/taskHours';
+import { QuotaTally } from './QuotaTally';
 
 /** How many goals each preset shows; the rest are a tap away, in the tree. */
 const SHOWN = { sm: 2, md: 3, lg: 5 } as const;
@@ -68,7 +69,7 @@ const GoalLine: FC<{ goal: GoalNode; timerOn: boolean; onOpen: () => void }> = (
 }) => {
     const t = useTranslation();
     const when = goal.task?.dueDate ? marginText(goal.task, getTodayString(), t, false) : null;
-    const habits = timerOn ? habitsUnder(goal) : [];
+    const habits = habitsUnder(goal).filter((habit) => quotaShown(habit.target, timerOn));
     const measured = goal.children.length > 0 || (!!goal.target && !goal.target.weekly);
 
     return (
@@ -99,7 +100,7 @@ const GoalLine: FC<{ goal: GoalNode; timerOn: boolean; onOpen: () => void }> = (
             {habits.map((habit) => (
                 <span key={habit.key} className="zenith-gw__habit">
                     <span className="zenith-wcap">{habit.title}</span>
-                    <HoursTally item={habit} />
+                    <QuotaTally item={habit} />
                 </span>
             ))}
         </li>

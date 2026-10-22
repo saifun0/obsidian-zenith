@@ -1,9 +1,9 @@
 import type { TaskStatus } from '../../../core/constants';
 import type { SubTask, Task } from '../../../store/taskSlice';
 import type { WeekStart } from '../../../core/calendarDates';
-import type { WeekLog } from './taskDetails';
-import type { HourTarget } from './taskFormat';
-import { minutesTowards } from './taskHours';
+import type { WeekCount, WeekLog } from './taskDetails';
+import type { TaskQuota } from './taskFormat';
+import { amountTowards } from './taskHours';
 
 /**
  * Goals, as a tree: each goal at the top, and under it what has to be done to
@@ -51,10 +51,12 @@ interface Item {
     dueTime?: string;
     ref?: string;
     needs?: string[];
-    target?: HourTarget;
+    target?: TaskQuota;
     spentMinutes?: number;
     timerMinutes?: number;
     weeks?: WeekLog[];
+    tally?: number;
+    counts?: WeekCount[];
     subtasks: SubTask[];
     /** The task's own record, when the item is a task rather than a subtask. */
     task?: Task;
@@ -76,12 +78,16 @@ export interface GoalNode {
     lineNumber: number;
     dueDate?: string;
     dueTime?: string;
-    /** The hours it asks for, and what has been put in (`taskHours`). */
-    target?: HourTarget;
+    /** What it asks for, hours or times, and what has been put in (`taskHours`). */
+    target?: TaskQuota;
     spentMinutes?: number;
     weeks?: WeekLog[];
+    tally?: number;
+    counts?: WeekCount[];
     /** The time put in on it and on everything under it, in minutes. */
     hoursUnder: number;
+    /** The times done on it and on everything under it. */
+    countUnder: number;
     /** The countdown its line carries, for a timer started from the tree. */
     timerMinutes?: number;
     /** How it hangs from the node above: a goal has none above it. */
@@ -111,8 +117,8 @@ export interface GoalNode {
 }
 
 const closed = (status: TaskStatus) => status === 'done' || status === 'cancelled';
-/** A step that asks for hours every week: a habit, counted by none of the nodes above it. */
-const isHabit = (node: { target?: HourTarget }) => !!node.target?.weekly;
+/** A step that asks for hours or times every week: a habit, counted by none of the nodes above it. */
+const isHabit = (node: { target?: TaskQuota }) => !!node.target?.weekly;
 const lineKey = (item: { filePath: string; lineNumber: number }) =>
     `${item.filePath}:${item.lineNumber}`;
 
@@ -139,6 +145,8 @@ const fromTask = (task: Task): Item => ({
     spentMinutes: task.spentMinutes,
     timerMinutes: task.timerMinutes,
     weeks: task.weeks,
+    tally: task.tally,
+    counts: task.counts,
     subtasks: task.subtasks,
     task,
 });
@@ -156,6 +164,8 @@ const fromSub = (sub: SubTask, filePath: string): Item => ({
     spentMinutes: sub.spentMinutes,
     timerMinutes: sub.timerMinutes,
     weeks: sub.weeks,
+    tally: sub.tally,
+    counts: sub.counts,
     subtasks: sub.subtasks,
     sub,
 });
@@ -202,13 +212,17 @@ export function buildGoals(tasks: Task[], goalTag: string): GoalNode[] {
         const total = counted.length;
         const hoursUnder =
             (item.spentMinutes ?? 0) + children.reduce((sum, child) => sum + child.hoursUnder, 0);
-        // Asking for hours in all, it is as far along as they are — whatever is under it.
-        const inAll = item.target && !item.target.weekly ? item.target.minutes : 0;
+        const countUnder =
+            (item.tally ?? 0) + children.reduce((sum, child) => sum + child.countUnder, 0);
+        // Asking for hours or times in all, it is as far along as they are —
+        // whatever is under it.
+        const inAll = item.target && !item.target.weekly ? item.target.amount : 0;
+        const putIn = item.target?.count ? countUnder : hoursUnder;
         const progress =
             item.status === 'done'
                 ? 1
                 : inAll
-                  ? Math.min(1, hoursUnder / inAll)
+                  ? Math.min(1, putIn / inAll)
                   : total > 0
                     ? counted.reduce((sum, child) => sum + child.progress, 0) / total
                     : 0;
@@ -221,7 +235,7 @@ export function buildGoals(tasks: Task[], goalTag: string): GoalNode[] {
                 if (next) break;
             }
         }
-        const hoursIn = inAll > 0 && hoursUnder >= inAll;
+        const allIn = inAll > 0 && putIn >= inAll;
 
         return {
             key: trail.join('>'),
@@ -235,7 +249,10 @@ export function buildGoals(tasks: Task[], goalTag: string): GoalNode[] {
             target: item.target,
             spentMinutes: item.spentMinutes,
             weeks: item.weeks,
+            tally: item.tally,
+            counts: item.counts,
             hoursUnder,
+            countUnder,
             timerMinutes: item.timerMinutes,
             via,
             ref: item.ref,
@@ -246,8 +263,8 @@ export function buildGoals(tasks: Task[], goalTag: string): GoalNode[] {
             done,
             total,
             progress,
-            // Asking for hours, it is ready when they are in; otherwise when its steps are.
-            ready: !closed(item.status) && (inAll ? hoursIn : total > 0 && done === total),
+            // Asking for hours or times, it is ready when they are in; otherwise when its steps are.
+            ready: !closed(item.status) && (inAll ? allIn : total > 0 && done === total),
             next,
         };
     };
@@ -285,7 +302,7 @@ export interface WeekNow {
  * itself already — and only what is open, under nothing closed. A step with
  * a day carries its own steps along, so none of those is listed twice.
  *
- * With `now`, the habits too — the steps that ask for hours a week — under
+ * With `now`, the habits too — the steps that ask for hours or times a week — under
  * today, every day until the week's hours are in: they are where the time is
  * put in, and the list is where one looks every day.
  */
@@ -296,7 +313,7 @@ export function goalSteps(tasks: Task[], goalTag: string, now?: WeekNow): Task[]
             if (closed(sub.status)) continue;
             if (sub.dueDate) rows.push(asTask(sub, goal));
             else if (now && sub.target?.weekly) {
-                if (minutesTowards(sub, now.today, now.weekStart) < sub.target.minutes) {
+                if (amountTowards(sub, now.today, now.weekStart) < sub.target.amount) {
                     rows.push({ ...asTask(sub, goal), dueDate: now.today, habit: true });
                 }
             } else walk(sub.subtasks, goal);
@@ -330,7 +347,7 @@ export function listedTasks(tasks: Task[], goalTag: string, now?: WeekNow): Task
     return [...withoutGoals(tasks, goalTag), ...goalSteps(tasks, goalTag, now)];
 }
 
-/** The habits under a node — the open steps that ask for hours a week — in the order of the tree. */
+/** The habits under a node — the open steps that ask for hours or times a week — in the order of the tree. */
 export function habitsUnder(node: GoalNode): GoalNode[] {
     const out: GoalNode[] = [];
     const walk = (nodes: GoalNode[]) => {

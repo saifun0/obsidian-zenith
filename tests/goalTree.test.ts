@@ -280,7 +280,7 @@ describe('hours in the tree', () => {
         const goal = task('Speak Arabic', {
             tags: ['goal'],
             subtasks: [
-                sub('Course', { target: { minutes: 6000, weekly: false }, spentMinutes: 3000 }),
+                sub('Course', { target: { amount: 6000, weekly: false }, spentMinutes: 3000 }),
                 sub('Trip', { status: 'done' }),
             ],
         });
@@ -291,7 +291,7 @@ describe('hours in the tree', () => {
         const done = task('Speak Arabic', {
             tags: ['goal'],
             subtasks: [
-                sub('Course', { target: { minutes: 600, weekly: false }, spentMinutes: 600 }),
+                sub('Course', { target: { amount: 600, weekly: false }, spentMinutes: 600 }),
             ],
         });
         expect(buildGoals([done], 'goal')[0].children[0].ready).toBe(true);
@@ -301,7 +301,7 @@ describe('hours in the tree', () => {
         const goal = task('Learn English', {
             tags: ['goal'],
             subtasks: [
-                sub('Study', { target: { minutes: 1200, weekly: true }, spentMinutes: 99999 }),
+                sub('Study', { target: { amount: 1200, weekly: true }, spentMinutes: 99999 }),
                 sub('Pass B2'),
             ],
         });
@@ -309,7 +309,7 @@ describe('hours in the tree', () => {
         expect([tree.done, tree.total]).toEqual([0, 1]);
         expect(tree.progress).toBe(0);
         expect(tree.next?.title).toBe('Pass B2');
-        expect(tree.children[0].target).toEqual({ minutes: 1200, weekly: true });
+        expect(tree.children[0].target).toEqual({ amount: 1200, weekly: true });
     });
 });
 

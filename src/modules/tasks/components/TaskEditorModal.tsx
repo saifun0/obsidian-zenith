@@ -18,7 +18,7 @@ import {
     normalizeTimeOfDay,
     parseDuration,
 } from '../services/taskFormat';
-import { formatHours, parseHoursInput } from '../services/taskHours';
+import { formatHours, quotaInputText, readQuotaInput } from '../services/taskHours';
 import type { TaskAttachment, TaskDetails } from '../services/taskDetails';
 import { addDays } from '../services/taskBuckets';
 import { shortDate } from '../services/taskMargin';
@@ -134,12 +134,13 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
     const [timerText, setTimerText] = useState(
         editTask?.timerMinutes ? formatDuration(editTask.timerMinutes) : ''
     );
-    // The hours it asks for, as typed — "20", "1h30" — and whether a week or in all.
-    const [hoursText, setHoursText] = useState(
-        editTask?.target ? formatHours(editTask.target.minutes, t.locale) : ''
-    );
+    // What it asks for, as typed — hours, "20" or "1h30", or times, "12" —
+    // and whether a week or in all. Times are all there is while the timer is
+    // off: hours are the timer's.
+    const [hoursText, setHoursText] = useState(quotaInputText(editTask?.target, t.locale));
     const [hoursWeekly, setHoursWeekly] = useState(editTask?.target?.weekly ?? true);
-    const hoursMinutes = parseHoursInput(hoursText);
+    const [quotaCount, setQuotaCount] = useState(editTask?.target?.count ?? !timerOn);
+    const quota = readQuotaInput(hoursText, quotaCount, hoursWeekly);
     const [notes, setNotes] = useState(editTask?.description ?? '');
     const [subtasks, setSubtasks] = useState<string[]>([]);
     const [submitting, setSubmitting] = useState(false);
@@ -209,6 +210,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
             timerText.trim(),
             hoursText.trim(),
             hoursWeekly,
+            quotaCount,
             notes.trim(),
             subtasks.filter((s) => s.trim()),
             attachments,
@@ -253,7 +255,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
             dueTime: dueDate ? normalizeTimeOfDay(dueTime) : undefined,
             dueEndTime: dueDate && dueTime ? normalizeTimeOfDay(dueEndTime) : undefined,
             timerMinutes: parseDuration(timerText),
-            target: hoursMinutes ? { minutes: hoursMinutes, weekly: hoursWeekly } : undefined,
+            target: quota,
             // No `spentMinutes`: time already spent belongs to the timer, and a
             // field this sheet does not own is one its save leaves alone.
             startDate: startDate || undefined,
@@ -401,20 +403,27 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
                           : t('tasks.editor.add.timer'),
                       set: !!timerText.trim(),
                   },
-                  {
-                      id: 'hours' as const,
-                      text: hoursMinutes
-                          ? t(
-                                hoursWeekly
-                                    ? 'tasks.editor.hoursChip.weekly'
-                                    : 'tasks.editor.hoursChip.total',
-                                { hours: formatHours(hoursMinutes, t.locale) }
-                            )
-                          : t('tasks.editor.add.hours'),
-                      set: !!hoursMinutes,
-                  },
               ]
             : []),
+        {
+            id: 'hours' as const,
+            text: quota
+                ? quota.count
+                    ? t.plural(
+                          hoursWeekly
+                              ? 'tasks.editor.countChip.weekly'
+                              : 'tasks.editor.countChip.total',
+                          quota.amount
+                      )
+                    : t(
+                          hoursWeekly
+                              ? 'tasks.editor.hoursChip.weekly'
+                              : 'tasks.editor.hoursChip.total',
+                          { hours: formatHours(quota.amount, t.locale) }
+                      )
+                : t('tasks.editor.add.hours'),
+            set: !!quota,
+        },
     ];
     // What is set reads as a sentence first; what is not waits at the end.
     const shownProps = [...props.filter((p) => p.set), ...props.filter((p) => !p.set)];
@@ -618,12 +627,32 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
                     <div className="zenith-tsheet__fields">
                         <input
                             className="zenith-input zenith-tsheet__field"
-                            placeholder={t('tasks.editor.hoursPlaceholder')}
-                            aria-label={t('tasks.editor.hours')}
-                            inputMode="decimal"
+                            placeholder={t(
+                                quotaCount
+                                    ? 'tasks.editor.countPlaceholder'
+                                    : 'tasks.editor.hoursPlaceholder'
+                            )}
+                            aria-label={t(quotaCount ? 'tasks.editor.count' : 'tasks.editor.hours')}
+                            inputMode={quotaCount ? 'numeric' : 'decimal'}
                             value={hoursText}
                             onChange={(e) => setHoursText(e.target.value)}
                         />
+                        {timerOn && (
+                            <div className="zenith-tsheet__choices">
+                                {choice(
+                                    !quotaCount,
+                                    t('tasks.editor.unitHours'),
+                                    () => setQuotaCount(false),
+                                    'hours'
+                                )}
+                                {choice(
+                                    quotaCount,
+                                    t('tasks.editor.unitCount'),
+                                    () => setQuotaCount(true),
+                                    'count'
+                                )}
+                            </div>
+                        )}
                         <div className="zenith-tsheet__choices">
                             {choice(
                                 hoursWeekly,

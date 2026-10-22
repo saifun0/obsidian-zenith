@@ -112,8 +112,8 @@ export function movePeriod(name, from, to, span = DEMO_SPAN) {
  * file — and moves by days. A week (`YYYY-Www`, wherever it stands) and a link to a month's, a quarter's or a
  * year's note (`[[2026-08]]`) move by periods. Anything outside the demo's span is left.
  *
- * A week of a task's hours (`- 2026-09-21 ⏱ 3h30m`, under a task with `🎯 …/w`) is named by the Monday it
- * starts on, and moves by whole weeks: by days it would land mid-week, and no week would be "this" one.
+ * A week of a task's hours or times (`- 2026-09-21 ⏱ 3h30m`, `- 2026-09-21 🔢 2`, under a task with `🎯 …/w`) is
+ * named by the Monday it starts on, and moves by whole weeks: by days it would land mid-week, and no week would be "this" one.
  */
 export function shiftText(text, days, today = DEMO_TODAY, span = DEMO_SPAN) {
     if (!days) return text;
@@ -125,7 +125,7 @@ export function shiftText(text, days, today = DEMO_TODAY, span = DEMO_SPAN) {
     };
     return text
         .replace(/\b(20\d\d-\d\d-\d\d)\b/g, (whole, iso) => (inSpan(iso, span) ? shiftIso(iso, days) : whole))
-        .replace(/^(\s*[-*+]\s+)(20\d\d-\d\d-\d\d)(\s*⏱)/gmu, week)
+        .replace(/^(\s*[-*+]\s+)(20\d\d-\d\d-\d\d)(\s*(?:⏱|🔢))/gmu, week)
         .replace(/\b(20\d\d-W\d\d)\b/g, period)
         .replace(/\[\[(20\d\d(?:-\d\d|-Q[1-4])?)([\]|#])/g, (whole, name, tail) => `[[${period(whole, name)}${tail}`);
 }

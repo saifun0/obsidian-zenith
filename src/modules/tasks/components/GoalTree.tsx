@@ -25,7 +25,7 @@ import { TaskWriter } from '../services/taskWriter';
 import { marginText, subtaskWhen } from '../services/taskMargin';
 import { quickParse } from '../services/quickParse';
 import { countSubtasks } from '../services/taskStats';
-import { formatHours, minutesTowards } from '../services/taskHours';
+import { amountTowards, formatHours, quotaShown } from '../services/taskHours';
 import { isRunningFor } from '../services/taskTimer';
 import { TimerService } from '../services/timerService';
 import { TaskStatusControl } from './taskStatusUi';
@@ -33,7 +33,7 @@ import { TaskEditorModal } from './TaskEditorModal';
 import { SubtaskEditorModal } from './SubtaskEditorModal';
 import { GoalLinkPicker } from './GoalLinkPicker';
 import { GoalMovePicker } from './GoalMovePicker';
-import { HoursTally } from './HoursTally';
+import { QuotaTally } from './QuotaTally';
 import { TaskTimerButton } from './TaskTimerButton';
 import { TaskTitle } from './TaskTitle';
 
@@ -43,6 +43,8 @@ const NONE: readonly string[] = [];
 const GoalsContext = createContext<GoalNode[]>([]);
 
 const isClosed = (status: TaskStatus) => status === 'done' || status === 'cancelled';
+/** What was put in under a node, in the kind its target asks for. */
+const putIn = (node: GoalNode) => (node.target?.count ? node.countUnder : node.hoursUnder);
 
 interface Folds {
     isFolded: (node: GoalNode) => boolean;
@@ -163,8 +165,8 @@ const GoalSection: FC<{ goal: GoalNode; tasks: Task[]; folds: Folds; goalTag: st
     const folded = folds.isFolded(goal);
     const today = getTodayString();
     const when = goal.task?.dueDate ? marginText(goal.task, today, t, false) : null;
-    const habits = timerOn ? habitsUnder(goal) : [];
-    // Hours in all, its own — or nothing to measure yet, and no line for it.
+    const habits = habitsUnder(goal).filter((habit) => quotaShown(habit.target, timerOn));
+    // Hours or times in all, its own — or nothing to measure yet, and no line for it.
     const inAll = !!goal.target && !goal.target.weekly;
     const measured = goal.children.length > 0 || inAll;
 
@@ -183,10 +185,8 @@ const GoalSection: FC<{ goal: GoalNode; tasks: Task[]; folds: Folds; goalTag: st
             </button>
         );
     }
-    if (timerOn && goal.target) {
-        meta.push(
-            <HoursTally key="hours" item={goal} towards={inAll ? goal.hoursUnder : undefined} />
-        );
+    if (quotaShown(goal.target, timerOn)) {
+        meta.push(<QuotaTally key="hours" item={goal} towards={inAll ? putIn(goal) : undefined} />);
     }
     if (when?.text) {
         meta.push(
@@ -195,16 +195,21 @@ const GoalSection: FC<{ goal: GoalNode; tasks: Task[]; folds: Folds; goalTag: st
             </span>
         );
     }
-    // The week of the habits under it, which its line does not count.
-    if (habits.length > 0) {
-        const done = habits.reduce((sum, h) => sum + minutesTowards(h, today, weekStart), 0);
-        const target = habits.reduce((sum, h) => sum + (h.target?.minutes ?? 0), 0);
+    // The week of the habits under it, which its line does not count: the
+    // hours and the times, each summed with its own kind.
+    for (const count of [false, true]) {
+        const kind = habits.filter((h) => !!h.target?.count === count);
+        if (kind.length === 0) continue;
+        const done = kind.reduce((sum, h) => sum + amountTowards(h, today, weekStart), 0);
+        const target = kind.reduce((sum, h) => sum + (h.target?.amount ?? 0), 0);
         meta.push(
-            <span key="week" className="zenith-goal__week">
-                {t('tasks.goals.week', {
-                    done: formatHours(done, t.locale),
-                    target: formatHours(target, t.locale),
-                })}
+            <span key={count ? 'week-count' : 'week'} className="zenith-goal__week">
+                {count
+                    ? t('tasks.goals.weekCount', { done, target })
+                    : t('tasks.goals.week', {
+                          done: formatHours(done, t.locale),
+                          target: formatHours(target, t.locale),
+                      })}
             </span>
         );
     }
@@ -572,10 +577,10 @@ const NodeRow: FC<{
                             {node.done}/{node.total}
                         </button>
                     )}
-                    {timerOn && node.target && !head && (
-                        <HoursTally
+                    {node.target && quotaShown(node.target, timerOn) && !head && (
+                        <QuotaTally
                             item={node}
-                            towards={stage && !node.target.weekly ? node.hoursUnder : undefined}
+                            towards={stage && !node.target.weekly ? putIn(node) : undefined}
                         />
                     )}
                 </span>

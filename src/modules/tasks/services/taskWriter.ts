@@ -13,6 +13,7 @@ import {
 } from './taskFormat';
 import {
     addToWeek,
+    addToWeekCount,
     buildDetailLines,
     detailLines,
     detailRange,
@@ -538,11 +539,53 @@ export class TaskWriter {
             lines[idx] = `${prefix}[${char}] ${applyTaskPatch(body, { spentMinutes: now })}`;
             ok = true;
             // Taken off as well as put in: the week loses what the total loses.
-            if (!week || !parsed.target?.weekly || now === was) return lines.join('\n');
+            // Only of hours a week: a count's weeks are of times, not of time.
+            const hoursWeekly = parsed.target?.weekly && !parsed.target.count;
+            if (!week || !hoursWeekly || now === was) return lines.join('\n');
 
             const details = parseDetails(detailLines(lines, idx));
             const weeks = addToWeek(details.weeks ?? [], week, now - was);
             return writeDetails(lines, idx, { ...details, weeks }).join('\n');
+        });
+        return ok;
+    }
+
+    /**
+     * Times done, of a task that asks for a number of them (`🎯 12`, `🎯 3/w`):
+     * `times` more on its `🔢` — or fewer, below zero, never under none — and
+     * on a weekly one, on its line for the week starting `week` as well. One
+     * write for both, as with the hours.
+     */
+    async addCountInFile(
+        filePath: string,
+        lineNumber: number,
+        times: number,
+        expectedTitle: string,
+        week?: string
+    ): Promise<boolean> {
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return false;
+
+        let ok = false;
+        await this.process(file, (data) => {
+            const lines = data.split('\n');
+            const idx = lineNumber - 1;
+            if (idx < 0 || idx >= lines.length) return data;
+            const m = lines[idx].match(CHECKBOX_PARTS_RE);
+            if (!m) return data;
+            if (!titlesMatch(m[3], expectedTitle)) return data;
+
+            const [, prefix, char, body] = m;
+            const parsed = parseTaskText(body, { priority: 'none', tags: [] });
+            const was = parsed.tally ?? 0;
+            const now = Math.max(0, Math.round(was + times));
+            lines[idx] = `${prefix}[${char}] ${applyTaskPatch(body, { tally: now || null })}`;
+            ok = true;
+            if (!week || !parsed.target?.weekly || now === was) return lines.join('\n');
+
+            const details = parseDetails(detailLines(lines, idx));
+            const counts = addToWeekCount(details.counts ?? [], week, now - was);
+            return writeDetails(lines, idx, { ...details, counts }).join('\n');
         });
         return ok;
     }

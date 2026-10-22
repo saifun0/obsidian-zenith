@@ -534,6 +534,11 @@ button.zenith-subtask__action {
     flex-wrap: wrap;
     gap: 4px 16px;
 }
+/* Two choices side by side — hours or times, a week or in all — kept apart by a hairline. */
+.zenith-tsheet__choices + .zenith-tsheet__choices {
+    padding-left: 16px;
+    border-left: 1px solid var(--zenith-border);
+}
 .zenith-dialog button.zenith-tsheet__choice {
     display: inline-flex;
     align-items: center;

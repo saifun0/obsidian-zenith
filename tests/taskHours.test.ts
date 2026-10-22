@@ -9,8 +9,8 @@ import {
 import { addToWeek, parseDetails, writeDetails } from '../src/modules/tasks/services/taskDetails';
 import {
     formatHours,
-    hoursReached,
-    hoursShare,
+    quotaReached,
+    quotaShare,
     minutesTowards,
     parseHoursInput,
 } from '../src/modules/tasks/services/taskHours';
@@ -28,27 +28,27 @@ describe('the 🎯 on a line', () => {
     it('reads hours in all and hours a week, and leaves the title alone', () => {
         expect(parseTaskText('Learn English 🎯 20h/w ⏱ 7h30m', DEFAULTS)).toMatchObject({
             title: 'Learn English',
-            target: { minutes: 1200, weekly: true },
+            target: { amount: 1200, weekly: true },
             spentMinutes: 450,
         });
         expect(parseTaskText('Arabic 🎯 100h', DEFAULTS).target).toEqual({
-            minutes: 6000,
+            amount: 6000,
             weekly: false,
         });
-        expect(readTarget('1h30m/week')).toEqual({ minutes: 90, weekly: true });
+        expect(readTarget('1h30m/week')).toEqual({ amount: 90, weekly: true });
         expect(readTarget('soon')).toBeUndefined();
     });
 
     it('is written, changed and taken off like any marker', () => {
-        expect(applyTaskPatch('Learn English', { target: { minutes: 1200, weekly: true } })).toBe(
+        expect(applyTaskPatch('Learn English', { target: { amount: 1200, weekly: true } })).toBe(
             'Learn English 🎯 20h/w'
         );
         expect(
-            applyTaskPatch('Arabic 🎯 20h/w ⏱ 2h', { target: { minutes: 6000, weekly: false } })
+            applyTaskPatch('Arabic 🎯 20h/w ⏱ 2h', { target: { amount: 6000, weekly: false } })
         ).toBe('Arabic 🎯 100h ⏱ 2h');
         expect(applyTaskPatch('Arabic 🎯 100h', { target: null })).toBe('Arabic');
         // The same hours, written the same way: left as they are.
-        expect(applyTaskPatch('Arabic 🎯 100h', { target: { minutes: 6000, weekly: false } })).toBe(
+        expect(applyTaskPatch('Arabic 🎯 100h', { target: { amount: 6000, weekly: false } })).toBe(
             'Arabic 🎯 100h'
         );
     });
@@ -99,7 +99,7 @@ describe('the weeks under a task', () => {
 
 describe('how far a task has got', () => {
     const weekly = {
-        target: { minutes: 1200, weekly: true },
+        target: { amount: 1200, weekly: true },
         spentMinutes: 1530,
         weeks: [
             { start: '2026-10-12', minutes: 1080 },
@@ -109,22 +109,22 @@ describe('how far a task has got', () => {
 
     it('counts this week for a weekly one, and everything for one in all', () => {
         expect(minutesTowards(weekly, '2026-10-21', 'mon')).toBe(450);
-        expect(hoursShare(weekly, '2026-10-21', 'mon')).toBe(0.375);
+        expect(quotaShare(weekly, '2026-10-21', 'mon')).toBe(0.375);
         // A new week, nothing put in yet.
         expect(minutesTowards(weekly, '2026-10-26', 'mon')).toBe(0);
-        const all = { target: { minutes: 6000, weekly: false }, spentMinutes: 3000 };
+        const all = { target: { amount: 6000, weekly: false }, spentMinutes: 3000 };
         expect(minutesTowards(all, '2026-10-21', 'mon')).toBe(3000);
-        expect(hoursShare(all, '2026-10-21', 'mon')).toBe(0.5);
+        expect(quotaShare(all, '2026-10-21', 'mon')).toBe(0.5);
     });
 
     it('can be closed once the hours in all are in — a week’s never ends it', () => {
-        expect(hoursReached({ target: { minutes: 600, weekly: false }, spentMinutes: 600 })).toBe(
+        expect(quotaReached({ target: { amount: 600, weekly: false }, spentMinutes: 600 })).toBe(
             true
         );
-        expect(hoursReached({ target: { minutes: 600, weekly: false }, spentMinutes: 599 })).toBe(
+        expect(quotaReached({ target: { amount: 600, weekly: false }, spentMinutes: 599 })).toBe(
             false
         );
-        expect(hoursReached({ ...weekly, spentMinutes: 99999 })).toBe(false);
+        expect(quotaReached({ ...weekly, spentMinutes: 99999 })).toBe(false);
     });
 });
 

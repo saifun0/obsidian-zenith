@@ -24,8 +24,8 @@ import { formatDuration } from '../services/taskFormat';
 import { countSubtasks } from '../services/taskStats';
 import { isRunningFor } from '../services/taskTimer';
 import { marginText } from '../services/taskMargin';
-import { hoursReached } from '../services/taskHours';
-import { HoursTally } from './HoursTally';
+import { quotaReached, quotaShown } from '../services/taskHours';
+import { QuotaTally } from './QuotaTally';
 import { detailKey, setDetailsOpen } from '../services/taskViewState';
 import type { Closing } from '../services/closingTasks';
 import { useBranchAnchors } from './useBranchAnchors';
@@ -373,7 +373,7 @@ export const TaskItem: FC<TaskItemProps> = ({
 
                         <TaskStatusControl
                             status={task.status}
-                            ready={timerOn && !dimmed && hoursReached(task)}
+                            ready={quotaShown(task.target, timerOn) && !dimmed && quotaReached(task)}
                             onChange={(status) => {
                                 if (!closing) void changeStatus(status);
                             }}
@@ -452,8 +452,8 @@ export const TaskItem: FC<TaskItemProps> = ({
                                                 {moreTags > 0 && ` +${moreTags}`}
                                             </span>
                                         )}
-                                        {timerOn && task.target ? (
-                                            <HoursTally item={task} />
+                                        {quotaShown(task.target, timerOn) ? (
+                                            <QuotaTally item={task} />
                                         ) : (
                                             timerOn &&
                                             task.spentMinutes !== undefined && (

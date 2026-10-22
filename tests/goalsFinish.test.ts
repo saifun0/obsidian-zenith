@@ -87,10 +87,10 @@ describe('a goal that asks for hours', () => {
     const goal = () =>
         task('Learn C++', {
             tags: ['goal'],
-            target: { minutes: 18000, weekly: false },
+            target: { amount: 18000, weekly: false },
             subtasks: [
                 sub('Study', {
-                    target: { minutes: 1200, weekly: true },
+                    target: { amount: 1200, weekly: true },
                     spentMinutes: 5400,
                     weeks: [{ start: '2026-10-12', minutes: 600 }],
                 }),
@@ -107,7 +107,7 @@ describe('a goal that asks for hours', () => {
 
     it('can be closed once those hours are in', () => {
         const big = goal();
-        big.target = { minutes: 6000, weekly: false };
+        big.target = { amount: 6000, weekly: false };
         expect(buildGoals([big], 'goal')[0].ready).toBe(true);
     });
 
@@ -123,7 +123,7 @@ describe('a goal’s habits in the day’s list', () => {
             tags: ['goal'],
             subtasks: [
                 sub('Study', {
-                    target: { minutes: 1200, weekly: true },
+                    target: { amount: 1200, weekly: true },
                     weeks: [{ start: '2026-10-12', minutes }],
                 }),
             ],

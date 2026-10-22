@@ -72,6 +72,10 @@ describe('moving the demo vault forward', () => {
             '- [ ] Practise 🎯 5h/w\n    - 2026-09-21 ⏱ 5h\n    - 2026-09-28 ⏱ 3h'
         );
         expect(shiftText(hours, 1)).toBe(hours);
+        const times = '- [ ] Gym 🎯 2/w 🔢 3\n    - 2026-09-14 🔢 2\n    - 2026-09-21 🔢 1';
+        expect(shiftText(times, 10)).toBe(
+            '- [ ] Gym 🎯 2/w 🔢 3\n    - 2026-09-21 🔢 2\n    - 2026-09-28 🔢 1'
+        );
     });
 
     it('moves every date in a note, and none that is not the demo’s', () => {
