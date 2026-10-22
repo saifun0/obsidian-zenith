@@ -137,9 +137,28 @@ export interface GoalNode {
      * says the week and not the day. None, when nothing says.
      */
     lastMoved?: string;
+    /** A goal's area, from its tag: `#goal/здоровье` → "Здоровье". */
+    area?: string;
 }
 
 const closed = (status: TaskStatus) => status === 'done' || status === 'cancelled';
+
+/**
+ * The area a goal is filed under: the first part of its tag after the goal
+ * tag — `#goal/здоровье`, `#goal/здоровье/сон` → "Здоровье" — or none, for a
+ * goal tagged `#goal` alone.
+ */
+export function goalArea(tags: readonly string[], goalTag: string): string | undefined {
+    const want = goalTag.replace(/^#/, '').trim().toLowerCase();
+    if (!want) return undefined;
+    for (const tag of tags) {
+        const have = tag.replace(/^#/, '');
+        if (!have.toLowerCase().startsWith(`${want}/`)) continue;
+        const name = have.slice(want.length + 1).split('/')[0].replace(/[-_]+/g, ' ').trim();
+        if (name) return name.charAt(0).toLocaleUpperCase() + name.slice(1);
+    }
+    return undefined;
+}
 /** A step that asks for hours or times every week: a habit, counted by none of the nodes above it. */
 const isHabit = (node: { target?: TaskQuota }) => !!node.target?.weekly;
 /** The last day a line itself says something happened on it. */
@@ -336,7 +355,10 @@ export function buildGoals(
 
     return tasks
         .filter((task) => isGoal(task, goalTag))
-        .map((task) => grow(fromTask(task), 'goal', [], []))
+        .map((task) => ({
+            ...grow(fromTask(task), 'goal', [], []),
+            area: goalArea(task.tags, goalTag),
+        }))
         .sort((a, b) => {
             if (closed(a.status) !== closed(b.status)) return closed(a.status) ? 1 : -1;
             const due = (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999');

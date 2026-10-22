@@ -1694,6 +1694,17 @@ button.zenith-lightbox__btn {
 .zenith-goal__meta > button.zenith-hours {
     font-size: 0.8rem;
 }
+/* An area the goals under it are filed in (`#goal/здоровье`): a quiet name over them. */
+.zenith-goals__area {
+    margin: 22px 0 2px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid color-mix(in srgb, var(--zenith-border) 70%, transparent);
+    font-family: var(--zenith-font-ink);
+    font-size: 0.98rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
 /* A goal nothing has been done towards for a fortnight: in the planner's hand. */
 .zenith-goal__quiet {
     font-family: var(--zenith-font-ink);

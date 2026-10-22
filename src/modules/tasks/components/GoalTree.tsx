@@ -125,6 +125,10 @@ export const GoalTree: FC<{ tasks: Task[]; goalTag: string }> = ({ tasks, goalTa
     const section = (goal: GoalNode) => (
         <GoalSection key={goal.key} goal={goal} tasks={tasks} folds={folds} goalTag={goalTag} />
     );
+    // The goals with no area first, under no heading; then each area's, by name.
+    const areas = [...new Set(open.map((goal) => goal.area).filter((a): a is string => !!a))].sort(
+        (a, b) => a.localeCompare(b, t.locale)
+    );
 
     return (
         <GoalsContext.Provider value={goals}>
@@ -138,7 +142,15 @@ export const GoalTree: FC<{ tasks: Task[]; goalTag: string }> = ({ tasks, goalTa
                         </p>
                     </div>
                 ) : (
-                    open.map(section)
+                    <>
+                        {open.filter((goal) => !goal.area).map(section)}
+                        {areas.map((area) => (
+                            <React.Fragment key={`area:${area}`}>
+                                <h3 className="zenith-goals__area">{area}</h3>
+                                {open.filter((goal) => goal.area === area).map(section)}
+                            </React.Fragment>
+                        ))}
+                    </>
                 )}
                 {finished.length > 0 && (
                     <>

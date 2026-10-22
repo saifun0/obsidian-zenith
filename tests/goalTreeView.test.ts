@@ -102,22 +102,24 @@ describe('the goals tree', () => {
 
     it('heads each goal, with its subtasks and the tasks it needs under it', () => {
         draw([MARATHON, RUN15, READ]);
-        expect(heads()).toEqual(['Read twelve books', 'Run a half marathon']);
+        // The goal with no area first; the one tagged #Goal/Year under "Year".
+        expect(heads()).toEqual(['Run a half marathon', 'Read twelve books']);
+        expect(document.querySelector('.zenith-goals__area')?.textContent).toBe('Year');
         expect(names()).toEqual([
-            'Read twelve books',
-            'The first',
             'Run a half marathon',
             'Join the club',
             'Run 15 km',
             'Run 10 km',
             'Run 12 km',
+            'Read twelve books',
+            'The first',
         ]);
     });
 
     it('counts a goal’s steps under its name, and a stage’s after its own', () => {
         draw([MARATHON, RUN15, READ]);
         const goalCounts = [...document.querySelectorAll('.zenith-goal__meta .zenith-goal__count')];
-        expect(goalCounts.map((b) => b.textContent)).toEqual(['1/1', '1/2']);
+        expect(goalCounts.map((b) => b.textContent)).toEqual(['1/2', '1/1']);
         expect(rowOf('Run 15 km')?.classList.contains('is-stage')).toBe(true);
         expect(rowOf('Run 15 km')?.querySelector('.zenith-goal__count')?.textContent).toBe('1/2');
         expect(rowOf('Run 12 km')?.querySelector('.zenith-goal__count')).toBeNull();
@@ -127,7 +129,7 @@ describe('the goals tree', () => {
         draw([MARATHON, RUN15, READ]);
         const bars = [...document.querySelectorAll('.zenith-goal__progress')];
         // The club is done and the 15 km half: three quarters.
-        expect(bars.map((b) => b.getAttribute('aria-valuenow'))).toEqual(['100', '75']);
+        expect(bars.map((b) => b.getAttribute('aria-valuenow'))).toEqual(['75', '100']);
     });
 
     it('marks a goal whose steps are all done as ready, and leaves it open', () => {
