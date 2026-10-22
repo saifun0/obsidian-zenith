@@ -171,8 +171,12 @@ body:not(.zenith-no-motion) .zenith-pop .zenith-status__orbit {
 }
 .zenith-subtask:hover { background: color-mix(in srgb, var(--background-modifier-hover) 60%, transparent); }
 /* The hours a subtask asks for, and a week or in all, on one line. */
+/* The hours a subtask asks for: the amount, then hours or times and a week
+   or in all, on a row of the form's own. */
+.zenith-dialog .zenith-field--row { grid-column: 1 / -1; }
 .zenith-subhours { display: flex; gap: 8px; }
-.zenith-subhours > input { flex: 1; min-width: 0; }
+.zenith-subhours > input { flex: 1; min-width: 72px; }
+.zenith-subhours > .zenith-subhours__pick { flex: none; width: auto; min-width: 104px; }
 /* Compact status control inside subtasks. */
 .zenith-subtask .zenith-status__btn { width: 22px; height: 22px; }
 .zenith-subtask.is-done .zenith-subtask__title { text-decoration: line-through; color: var(--text-muted); }

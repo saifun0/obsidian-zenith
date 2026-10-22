@@ -14,7 +14,7 @@ import {
 import type { TaskAttachment, TaskDetails } from '../services/taskDetails';
 import { AttachmentField } from './AttachmentField';
 import { Modal } from '../../../components/shared/Modal';
-import { DateField, TimeField } from '../../../components/ui/fields';
+import { DateField, Dropdown, TimeField } from '../../../components/ui/fields';
 import { quotaInputText, readQuotaInput } from '../services/taskHours';
 
 /**
@@ -187,7 +187,8 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
                             />
                         </div>
                     )}
-                    <div className="zenith-field">
+                    {/* A row of its own: the amount and its two choices do not fit a third of one. */}
+                    <div className="zenith-field zenith-field--row">
                         <label className="zenith-field__label">
                             {t(quotaCount ? 'tasks.editor.count' : 'tasks.editor.hours')}
                         </label>
@@ -207,25 +208,27 @@ export const SubtaskEditorModal: FC<SubtaskEditorModalProps> = ({
                                 onChange={(e) => setHoursText(e.target.value)}
                             />
                             {timerOn && (
-                                <select
-                                    className="dropdown"
+                                <Dropdown
+                                    className="zenith-subhours__pick"
                                     aria-label={t('tasks.editor.add.hours')}
                                     value={quotaCount ? 'count' : 'hours'}
-                                    onChange={(e) => setQuotaCount(e.target.value === 'count')}
-                                >
-                                    <option value="hours">{t('tasks.editor.unitHours')}</option>
-                                    <option value="count">{t('tasks.editor.unitCount')}</option>
-                                </select>
+                                    options={[
+                                        { value: 'hours', label: t('tasks.editor.unitHours') },
+                                        { value: 'count', label: t('tasks.editor.unitCount') },
+                                    ]}
+                                    onChange={(value) => setQuotaCount(value === 'count')}
+                                />
                             )}
-                            <select
-                                className="dropdown"
+                            <Dropdown
+                                className="zenith-subhours__pick"
                                 aria-label={t('tasks.editor.hours')}
                                 value={hoursWeekly ? 'weekly' : 'total'}
-                                onChange={(e) => setHoursWeekly(e.target.value === 'weekly')}
-                            >
-                                <option value="weekly">{t('tasks.editor.hoursWeekly')}</option>
-                                <option value="total">{t('tasks.editor.hoursTotal')}</option>
-                            </select>
+                                options={[
+                                    { value: 'weekly', label: t('tasks.editor.hoursWeekly') },
+                                    { value: 'total', label: t('tasks.editor.hoursTotal') },
+                                ]}
+                                onChange={(value) => setHoursWeekly(value === 'weekly')}
+                            />
                         </div>
                     </div>
                 </div>
