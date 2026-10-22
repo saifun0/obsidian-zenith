@@ -1657,6 +1657,14 @@ button.zenith-lightbox__btn {
     margin-left: 8px;
     vertical-align: baseline;
 }
+/* A step that stands for a project: how far the project's tasks have got. */
+.zenith-goal__title > .zenith-goal__project {
+    margin-left: 8px;
+    color: var(--text-faint);
+    font-size: 0.8rem;
+    font-weight: normal;
+    vertical-align: baseline;
+}
 .zenith-root button.zenith-goal__count:hover {
     background: var(--background-modifier-hover);
     color: var(--text-normal);

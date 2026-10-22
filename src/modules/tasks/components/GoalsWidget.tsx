@@ -11,6 +11,7 @@ import { marginText } from '../services/taskMargin';
 import { askForGoals } from '../services/taskViewState';
 import { quotaShown } from '../services/taskHours';
 import { QuotaTally } from './QuotaTally';
+import { projectSteps } from '../../projects/services/projectGoals';
 
 /** How many goals each preset shows; the rest are a tap away, in the tree. */
 const SHOWN = { sm: 2, md: 3, lg: 5 } as const;
@@ -27,12 +28,13 @@ export const GoalsWidget: FC<DashboardWidgetProps> = ({ size = 'md' }) => {
     const tasks = useZenithStore((s) => s.tasks);
     const goalTag = useZenithStore((s) => s.settings.tasksGoalTag);
     const timerOn = useFeature('tasks.timer');
+    const projects = useZenithStore((s) => s.projects);
     const goals = useMemo(
         () =>
-            buildGoals(tasks, goalTag).filter(
+            buildGoals(tasks, goalTag, projectSteps(projects, tasks)).filter(
                 (goal) => goal.status !== 'done' && goal.status !== 'cancelled'
             ),
-        [tasks, goalTag]
+        [tasks, goalTag, projects]
     );
 
     const open = () => {

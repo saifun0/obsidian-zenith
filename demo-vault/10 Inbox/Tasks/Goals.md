@@ -3,7 +3,8 @@
 What the goals' tree on the Tasks page is read from. A goal is a task with
 #goal; the steps written under it are its stages and tasks, and the ids after
 ⛔ tie in tasks from other notes — the shoes from the inbox, a unit from the
-Arabic project. A step with a day shows up in the task list on that day. A
+Arabic project. A step that is a link to a project is as far along as the
+project's tasks. A step with a day shows up in the task list on that day. A
 step with 🎯 is done by hours or by times, not a tick: so many in all, or so
 many a week; 🔢 is how many times so far.
 
@@ -24,4 +25,5 @@ many a week; 🔢 is how many times so far.
     - [ ] Practise speaking 🎯 5h/w ⏱ 9h
         - 2026-09-14 ⏱ 5h30m
         - 2026-09-21 ⏱ 3h30m
+    - [ ] [[Learn Arabic]]
 - [ ] Read 12 books this year #goal 📅 2026-12-31 🎯 12 🔢 7

@@ -19,6 +19,7 @@ import { openFileAtLine } from '../../../core/openInVault';
 import { confirmDelete } from '../../../core/ConfirmModal';
 import type { TaskStatus } from '../../../core/constants';
 import type { Task } from '../../../store/taskSlice';
+import type { Project } from '../../projects/projectsTypes';
 import { buildGoals, habitsUnder, type GoalNode } from '../services/goalTree';
 import { addGoal, linkStep, moveStep, setGoal, unlinkStep } from '../services/goalActions';
 import { TaskWriter } from '../services/taskWriter';
@@ -32,6 +33,8 @@ import { TaskStatusControl } from './taskStatusUi';
 import { TaskEditorModal } from './TaskEditorModal';
 import { SubtaskEditorModal } from './SubtaskEditorModal';
 import { GoalLinkPicker } from './GoalLinkPicker';
+import { GoalProjectPicker } from './GoalProjectPicker';
+import { projectSteps } from '../../projects/services/projectGoals';
 import { GoalMovePicker } from './GoalMovePicker';
 import { QuotaTally } from './QuotaTally';
 import { TaskTimerButton } from './TaskTimerButton';
@@ -109,7 +112,11 @@ function dotted(items: ReactNode[]): ReactNode[] {
  */
 export const GoalTree: FC<{ tasks: Task[]; goalTag: string }> = ({ tasks, goalTag }) => {
     const t = useTranslation();
-    const goals = useMemo(() => buildGoals(tasks, goalTag), [tasks, goalTag]);
+    const projects = useZenithStore((s) => s.projects);
+    const goals = useMemo(
+        () => buildGoals(tasks, goalTag, projectSteps(projects, tasks)),
+        [tasks, goalTag, projects]
+    );
     const folds = useFolds();
     const [showDone, setShowDone] = useState(false);
     const open = goals.filter((goal) => !isClosed(goal.status));
@@ -370,6 +377,8 @@ const NodeRow: FC<{
     const [editing, setEditing] = useState(false);
     const [picking, setPicking] = useState(false);
     const [moving, setMoving] = useState(false);
+    const [tyingProject, setTyingProject] = useState(false);
+    const projects = useZenithStore((s) => s.projects);
     const reload = () => plugin.dataService.reloadTasks();
     const timerOn = useFeature('tasks.timer');
     const running = useZenithStore((s) =>
@@ -417,6 +426,15 @@ const NodeRow: FC<{
         await reload();
     };
 
+    /** A step that stands for the project: its title, a link to the project's note. */
+    const tieProject = async (project: Project) => {
+        const name = project.filePath.replace(/\.md$/i, '').split('/').pop() ?? project.title;
+        const link = name === project.title ? `[[${name}]]` : `[[${name}|${project.title}]]`;
+        const ok = await new TaskWriter(app).addSubtaskInFile(node.filePath, node.lineNumber, link);
+        if (ok) await reload();
+        else new Notice(t('tasks.error.update'));
+    };
+
     const setStatus = async (status: TaskStatus) => {
         try {
             const ok = await new TaskWriter(app).setStatusInFile(
@@ -443,6 +461,14 @@ const NodeRow: FC<{
                 .setIcon('link')
                 .onClick(() => setPicking(true))
         );
+        if (projects.length > 0) {
+            m.addItem((item) =>
+                item
+                    .setTitle(t('tasks.goals.linkProject'))
+                    .setIcon('folder-kanban')
+                    .onClick(() => setTyingProject(true))
+            );
+        }
         if (parent) {
             m.addItem((item) =>
                 item
@@ -583,6 +609,20 @@ const NodeRow: FC<{
                             towards={stage && !node.target.weekly ? putIn(node) : undefined}
                         />
                     )}
+                    {node.project && (
+                        <span
+                            className="zenith-tally zenith-goal__project"
+                            title={node.project.title}
+                        >
+                            {t('tasks.goals.projectTally', {
+                                done: node.project.done,
+                                total: node.project.total,
+                            })}
+                            <span className="zenith-tally__line" aria-hidden="true">
+                                <i style={{ width: `${node.progress * 100}%` }} />
+                            </span>
+                        </span>
+                    )}
                 </span>
                 {when?.text ? (
                     <span className={`zenith-goal__when is-${when.tone}${next ? ' is-next' : ''}`}>
@@ -650,6 +690,17 @@ const NodeRow: FC<{
                         void moveStep(app, tasks, node, parent, target).then((ok) => {
                             if (ok) void reload();
                         });
+                    }}
+                />
+            )}
+            {tyingProject && (
+                <GoalProjectPicker
+                    node={node}
+                    projects={projects}
+                    onClose={() => setTyingProject(false)}
+                    onPick={(project) => {
+                        setTyingProject(false);
+                        void tieProject(project);
                     }}
                 />
             )}

@@ -64,6 +64,17 @@ interface Item {
     sub?: SubTask;
 }
 
+/**
+ * A project a step stands for: its title links to the project's note, and it
+ * is as far along as the project's tasks (`projectGoals`).
+ */
+export interface LinkedProject {
+    title: string;
+    filePath: string;
+    done: number;
+    total: number;
+}
+
 export interface GoalNode {
     /** Unique in the tree: the lines from the goal down to this one. */
     key: string;
@@ -114,6 +125,8 @@ export interface GoalNode {
     ready: boolean;
     /** The first task still to do under it, in the order the tree reads. */
     next?: GoalNode;
+    /** The project it stands for, when its title links to one and nothing is written under it. */
+    project?: LinkedProject;
 }
 
 const closed = (status: TaskStatus) => status === 'done' || status === 'cancelled';
@@ -189,8 +202,17 @@ function byRef(tasks: Task[]): Map<string, Item> {
     return refs;
 }
 
-/** The goals and everything under them. Open goals first, by when they are due. */
-export function buildGoals(tasks: Task[], goalTag: string): GoalNode[] {
+/**
+ * The goals and everything under them. Open goals first, by when they are due.
+ *
+ * `linked` says which project a step's title names, if any: such a step,
+ * with nothing written under it, is as far along as that project's tasks.
+ */
+export function buildGoals(
+    tasks: Task[],
+    goalTag: string,
+    linked?: (title: string) => LinkedProject | undefined
+): GoalNode[] {
     const refs = byRef(tasks);
 
     const grow = (item: Item, via: GoalNode['via'], path: string[], names: string[]): GoalNode => {
@@ -207,6 +229,7 @@ export function buildGoals(tasks: Task[], goalTag: string): GoalNode[] {
             children.push(grow(target, 'link', trail, titles));
         }
 
+        const project = via !== 'goal' && children.length === 0 ? linked?.(item.title) : undefined;
         const counted = children.filter((child) => child.status !== 'cancelled' && !isHabit(child));
         const done = counted.filter((child) => child.status === 'done').length;
         const total = counted.length;
@@ -223,9 +246,15 @@ export function buildGoals(tasks: Task[], goalTag: string): GoalNode[] {
                 ? 1
                 : inAll
                   ? Math.min(1, putIn / inAll)
-                  : total > 0
-                    ? counted.reduce((sum, child) => sum + child.progress, 0) / total
-                    : 0;
+                  : project
+                    ? project.total > 0
+                        ? project.done / project.total
+                        : 0
+                    : total > 0
+                      ? counted.reduce((sum, child) => sum + child.progress, 0) / total
+                      : 0;
+        // Standing for a project, it is ready when the project's tasks are all done.
+        const projectDone = !!project && project.total > 0 && project.done === project.total;
 
         let next: GoalNode | undefined;
         if (!closed(item.status)) {
@@ -264,8 +293,11 @@ export function buildGoals(tasks: Task[], goalTag: string): GoalNode[] {
             total,
             progress,
             // Asking for hours or times, it is ready when they are in; otherwise when its steps are.
-            ready: !closed(item.status) && (inAll ? allIn : total > 0 && done === total),
+            ready:
+                !closed(item.status) &&
+                (inAll ? allIn : project ? projectDone : total > 0 && done === total),
             next,
+            project,
         };
     };
 
