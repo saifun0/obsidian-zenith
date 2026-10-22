@@ -12,6 +12,11 @@ interface PageHeadProps {
      * days · streak 5". Each is one fact; the dots between them are put here.
      */
     tally?: ReactNode[];
+    /**
+     * Marks that belong to the title, right beside it: the arrows that step a
+     * month's page to the month before or after.
+     */
+    beside?: ReactNode;
     /** The marks at the far end — {@link PageHeadButton}s. */
     children?: ReactNode;
 }
@@ -23,12 +28,19 @@ interface PageHeadProps {
  * It is the head the Tasks view has, for the views that had a glyph, the
  * module's name in bold and a row of bordered buttons.
  */
-export const PageHead: FC<PageHeadProps> = ({ title, tally, children }) => {
+export const PageHead: FC<PageHeadProps> = ({ title, tally, beside, children }) => {
     const figures = (tally ?? []).filter((item) => item !== null && item !== undefined && item !== false);
     return (
         <header className="zenith-phead">
             <div className="zenith-phead__top">
-                <h1 className="zenith-phead__title">{title}</h1>
+                {beside ? (
+                    <div className="zenith-phead__titled">
+                        <h1 className="zenith-phead__title">{title}</h1>
+                        <div className="zenith-phead__beside">{beside}</div>
+                    </div>
+                ) : (
+                    <h1 className="zenith-phead__title">{title}</h1>
+                )}
                 {children && <div className="zenith-phead__actions">{children}</div>}
             </div>
             {figures.length > 0 && (

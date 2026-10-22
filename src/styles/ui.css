@@ -392,6 +392,20 @@
     text-wrap: balance;
 }
 
+/* The title with the marks that step it, the arrows on its baseline. */
+.zenith-phead__titled {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+.zenith-phead__beside {
+    display: flex;
+    flex: none;
+    gap: 0;
+    margin-top: 4px;
+}
+
 /* On the title's first line, not half-way down a title that took two: a
    phone gives "Content Library" two lines beside five marks. */
 .zenith-phead__actions {

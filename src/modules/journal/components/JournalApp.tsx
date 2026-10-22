@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState, type FC } from 'react';
 import { Notice } from 'obsidian';
-import { RotateCw, CalendarCheck, Info } from 'lucide-react';
+import { RotateCw, CalendarCheck, ChevronLeft, ChevronRight, Grid3x3, Info } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { intlLocale, useTranslation } from '../../../core/i18n';
@@ -12,7 +12,7 @@ import { PageHead, PageHeadButton } from '../../../components/shared';
 import { entriesByDate, journalStats } from '../services/journalStats';
 import { journalTally } from '../services/journalTally';
 import { setTrackerValue, openDailyNote, createDailyNote } from '../services/journalActions';
-import { addDays, monthTitle } from '../services/journalDates';
+import { addDays, addMonths, monthTitle } from '../services/journalDates';
 import { useFeature } from '../../../core/useFeature';
 import { openReviewNote } from '../services/reviewNotes';
 import { JournalCalendar } from './JournalCalendar';
@@ -139,18 +139,53 @@ export const JournalApp: FC = () => {
     const setHabit = (tracker: JournalTracker, date: string, next: TrackerValue | null) =>
         void setTrackerValue(app, settings, date, tracker.id, next);
 
+    const showYear = yearPixelsOn && scale === 'year';
+
     return (
         <div className="zenith-journal">
             <div className="zenith-journal__top">
                 <PageHead
                     title={monthTitle(monthAnchor, locale)}
                     tally={statsOn ? journalTally(stats, today, t, { words: wordsOn }) : undefined}
+                    // The month is the whole page's — the habits and the
+                    // calendar both — so it is stepped from the title, and
+                    // written once. The year in pixels steps by years, below.
+                    beside={
+                        !showYear && (
+                            <>
+                                <PageHeadButton
+                                    icon={ChevronLeft}
+                                    label={t('clock.prevMonth')}
+                                    onClick={() =>
+                                        setMonthAnchor((a) => addMonths(`${a.slice(0, 7)}-01`, -1))
+                                    }
+                                />
+                                <PageHeadButton
+                                    icon={ChevronRight}
+                                    label={t('clock.nextMonth')}
+                                    onClick={() =>
+                                        setMonthAnchor((a) => addMonths(`${a.slice(0, 7)}-01`, 1))
+                                    }
+                                />
+                            </>
+                        )
+                    }
                 >
                     <PageHeadButton
                         icon={CalendarCheck}
                         label={t('journal.goToday')}
                         onClick={goToday}
                     />
+                    {yearPixelsOn && !showYear && (
+                        <PageHeadButton
+                            icon={Grid3x3}
+                            label={t('journal.year.open')}
+                            onClick={() => {
+                                setPixelYear(Number(monthAnchor.slice(0, 4)));
+                                setScale('year');
+                            }}
+                        />
+                    )}
                     {/* A notice, not a panel: reading it moves nothing on the
                         page, and it goes away by itself once read. A toggle
                         pushed the whole calendar down and had to be turned off
@@ -193,7 +228,7 @@ export const JournalApp: FC = () => {
             )}
 
             <div className="zenith-journal__body">
-                {yearPixelsOn && scale === 'year' ? (
+                {showYear ? (
                     <YearPixels
                         year={pixelYear}
                         byDate={byDate}
@@ -224,15 +259,6 @@ export const JournalApp: FC = () => {
                         onWeek={
                             reviewsOn
                                 ? (date) => void openReviewNote(app, settings, 'week', date)
-                                : undefined
-                        }
-                        onMonthChange={setMonthAnchor}
-                        onYear={
-                            yearPixelsOn
-                                ? () => {
-                                      setPixelYear(Number(monthAnchor.slice(0, 4)));
-                                      setScale('year');
-                                  }
                                 : undefined
                         }
                     />

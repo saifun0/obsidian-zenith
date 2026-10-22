@@ -1,13 +1,12 @@
 import { useFeature } from '../../../core/useFeature';
 import React, { useMemo, type FC } from 'react';
-import { ChevronLeft, ChevronRight, Grid3x3 } from 'lucide-react';
 import { coerceTrackerValue, trackerColor, type JournalTracker } from '../../../core/journalConfig';
 import { intlLocale, useTranslation } from '../../../core/i18n';
 import type { JournalEntry } from '../../../store/journalSlice';
 import type { JournalWeekStart } from '../../../store/settingsSlice';
 import { isJournalled } from '../services/journalStats';
 import { keptOn } from '../services/habitMonth';
-import { monthGrid, weekdayLabels, monthTitle, isoToDate, sameMonth } from '../services/journalDates';
+import { monthGrid, weekdayLabels, sameMonth } from '../services/journalDates';
 import { weekOfRange } from '../services/reviewPeriods';
 import { Platform } from 'obsidian';
 
@@ -30,9 +29,6 @@ interface JournalCalendarProps {
     taskDays: Set<string>;
     onSelect: (date: string) => void;
     onOpen: (date: string) => void;
-    onMonthChange: (anchor: string) => void;
-    /** Switch to the year in pixels; absent while that feature is off. */
-    onYear?: () => void;
     /** Open the note of the week a row is; absent while reviews are off. */
     onWeek?: (date: string) => void;
 }
@@ -62,8 +58,6 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
     taskDays,
     onSelect,
     onOpen,
-    onMonthChange,
-    onYear,
     onWeek,
 }) => {
     const t = useTranslation();
@@ -95,51 +89,8 @@ export const JournalCalendar: FC<JournalCalendarProps> = ({
         return best;
     }, [inMonth, byDate]);
 
-    const shiftMonth = (delta: number) => {
-        const anchor = isoToDate(monthAnchor);
-        anchor.setDate(1);
-        anchor.setMonth(anchor.getMonth() + delta);
-        onMonthChange(
-            `${anchor.getFullYear()}-${String(anchor.getMonth() + 1).padStart(2, '0')}-01`
-        );
-    };
-
     return (
         <div className={`zenith-jcal${onWeek ? ' has-weeks' : ''}`}>
-            <div className="zenith-jcal__head">
-                <button
-                    className="zenith-jcal__nav"
-                    onClick={() => shiftMonth(-1)}
-                    aria-label={t('clock.prevMonth')}
-                >
-                    <ChevronLeft size={16} />
-                </button>
-                <button
-                    className="zenith-jcal__month"
-                    onClick={() => onMonthChange(today)}
-                    title={t('clock.thisMonth')}
-                >
-                    {monthTitle(monthAnchor, locale)}
-                </button>
-                <button
-                    className="zenith-jcal__nav"
-                    onClick={() => shiftMonth(1)}
-                    aria-label={t('clock.nextMonth')}
-                >
-                    <ChevronRight size={16} />
-                </button>
-                {onYear && (
-                    <button
-                        className="zenith-jcal__nav zenith-jcal__scale"
-                        onClick={onYear}
-                        title={t('journal.year.open')}
-                        aria-label={t('journal.year.open')}
-                    >
-                        <Grid3x3 size={15} />
-                    </button>
-                )}
-            </div>
-
             <div className="zenith-jcal__weekdays">
                 {onWeek && <span className="zenith-jcal__weekday is-week" aria-hidden="true" />}
                 {weekdays.map((label, i) => (
