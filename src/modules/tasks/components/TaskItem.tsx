@@ -31,6 +31,7 @@ import type { Closing } from '../services/closingTasks';
 import { useBranchAnchors } from './useBranchAnchors';
 import { useSortableRows, type SortableRow } from './useSortableRows';
 import type { DropPosition } from '../services/taskMove';
+import { TaskTitle } from './TaskTitle';
 
 // ── Helpers ──────────────────────────────────────────
 
@@ -403,7 +404,7 @@ export const TaskItem: FC<TaskItemProps> = ({
                             <span className={`zenith-trow__title is-p-${task.priority}`}>
                                 {/* Inline, so the ink of a closing task follows the words line by line. */}
                                 <span className="zenith-trow__ink" style={INK_PER_LINE}>
-                                    {task.title}
+                                    <TaskTitle title={task.title} sourcePath={task.filePath} />
                                 </span>
                             </span>
                         </div>

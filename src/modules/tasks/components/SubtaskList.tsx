@@ -19,6 +19,7 @@ import { TaskTimerButton } from './TaskTimerButton';
 import { SubtaskEditorModal } from './SubtaskEditorModal';
 import { showLineMenu } from './taskMenu';
 import type { SortableApi, SortableRow } from './useSortableRows';
+import { TaskTitle } from './TaskTitle';
 
 interface SubtaskTreeProps {
     filePath: string;
@@ -334,7 +335,9 @@ const SubtaskRow: FC<SubtaskRowProps> = ({
                 onPointerUp={press.onPointerUp}
                 onPointerCancel={press.onPointerCancel}
             >
-                <span className="zenith-subtask__text">{sub.title}</span>
+                <span className="zenith-subtask__text">
+                    <TaskTitle title={sub.title} sourcePath={filePath} />
+                </span>
                 {note && <span className="zenith-subtask__note">{note}</span>}
             </span>
             {/* Its day or hour, time spent, and a paperclip — quiet, and only when set. */}

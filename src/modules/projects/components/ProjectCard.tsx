@@ -8,6 +8,7 @@ import { dueLabel, startLabel } from '../services/projectStats';
 import { TaskStatusControl } from '../../tasks/components/taskStatusUi';
 import type { Task } from '../../../store/taskSlice';
 import type { TaskStatus } from '../../../core/constants';
+import { TaskTitle } from '../../tasks/components/TaskTitle';
 
 /** Priorities worth a word on the card. The other three are the ordinary case. */
 const LOUD_PRIORITIES = new Set(['urgent', 'high']);
@@ -230,7 +231,9 @@ export const ProjectCard: FC<ProjectCardProps> = ({
                                         size={15}
                                         onChange={(next) => onTaskStatus?.(task, next)}
                                     />
-                                    <span className="zenith-project-task-text">{task.title}</span>
+                                    <span className="zenith-project-task-text">
+                                        <TaskTitle title={task.title} sourcePath={task.filePath} />
+                                    </span>
                                 </li>
                             ))}
                         </ul>

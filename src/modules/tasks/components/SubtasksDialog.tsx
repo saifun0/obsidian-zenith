@@ -14,6 +14,8 @@ import { marginText, subtaskWhen } from '../services/taskMargin';
 import { diffTaskFields } from '../services/taskFormat';
 import { askForTask } from '../services/taskViewState';
 import { TaskStatusControl } from './taskStatusUi';
+import { plainTitle } from '../services/titleLinks';
+import { TaskTitle } from './TaskTitle';
 
 interface SubtasksDialogProps {
     /** The task whose subtasks these are — read from the store, so the list is live. */
@@ -165,7 +167,9 @@ export const SubtasksDialog: FC<SubtasksDialogProps> = ({ taskId, onClose }) => 
                             />
                         ) : (
                             <>
-                                <span className="zenith-subdlg__name">{sub.title}</span>
+                                <span className="zenith-subdlg__name">
+                                    <TaskTitle title={sub.title} sourcePath={task.filePath} />
+                                </span>
                                 {at.text && (
                                     <span className={`zenith-subdlg__time is-${at.tone}`}>
                                         {at.text}
@@ -190,7 +194,7 @@ export const SubtasksDialog: FC<SubtasksDialogProps> = ({ taskId, onClose }) => 
 
     const header = (
         <div className="zenith-subdlg__head">
-            <h2 className="zenith-subdlg__title">{task.title}</h2>
+            <h2 className="zenith-subdlg__title">{plainTitle(task.title)}</h2>
             <p className="zenith-subdlg__tally">
                 {when.text && (
                     <>

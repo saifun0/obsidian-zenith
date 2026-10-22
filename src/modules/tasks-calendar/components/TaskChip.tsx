@@ -3,6 +3,7 @@ import type { CalendarEntry } from '../services/calendarTasks';
 import type { Translator } from '../../../core/i18n';
 import { formatMinutes } from '../services/calendarTime';
 import { KindIcon, kindKey } from './kindUi';
+import { plainTitle } from '../../tasks/services/titleLinks';
 
 /** The Tasks-plugin marker each kind comes from, for the tooltip. */
 const KIND_MARKER: Record<string, string> = {
@@ -73,7 +74,7 @@ export const TaskChip: FC<TaskChipProps> = ({
                 if (swallowClick?.()) return;
                 onOpen(entry);
             }}
-            title={`${marker} ${kindLabel} · ${noteName(task.filePath)}\n${task.title}`}
+            title={`${marker} ${kindLabel} · ${noteName(task.filePath)}\n${plainTitle(task.title)}`}
         >
             <span className="zenith-tcal__chip-icon">
                 <KindIcon kind={kind} />
@@ -83,7 +84,7 @@ export const TaskChip: FC<TaskChipProps> = ({
             {entry.startMinutes !== undefined && (
                 <span className="zenith-tcal__chip-time">{formatMinutes(entry.startMinutes)}</span>
             )}
-            <span className="zenith-tcal__chip-title">{task.title}</span>
+            <span className="zenith-tcal__chip-title">{plainTitle(task.title)}</span>
             {overdueBy != null && overdueBy > 0 && (
                 <span className="zenith-tcal__chip-flag">
                     {t('calendar.overdueBy', { days: overdueBy })}

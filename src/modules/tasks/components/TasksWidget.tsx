@@ -29,6 +29,8 @@ import { SubtasksDialog } from './SubtasksDialog';
 import { listedTasks } from '../services/goalTree';
 import { hoursReached } from '../services/taskHours';
 import { HoursTally } from './HoursTally';
+import { plainTitle } from '../services/titleLinks';
+import { TaskTitle } from './TaskTitle';
 
 /**
  * The tasks card, as a page of a diary: what is burning, what is running,
@@ -137,9 +139,11 @@ const WidgetRow: FC<RowProps> = ({
                 className={`zenith-tw__title is-p-${task.priority}`}
                 onClick={onOpenList}
                 role="button"
-                title={task.title}
+                title={plainTitle(task.title)}
             >
-                <span className="zenith-tw__ink">{task.title}</span>
+                <span className="zenith-tw__ink">
+                    <TaskTitle title={task.title} sourcePath={task.filePath} />
+                </span>
             </span>
             {!closing && (tags.length > 0 || total > 0 || hours) && (
                 <span className="zenith-tw__info">

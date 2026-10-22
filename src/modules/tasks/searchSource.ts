@@ -15,6 +15,7 @@ import { TaskEditorModal } from './components/TaskEditorModal';
 import { chipLabel } from './components/QuickAddForm';
 import { formatDueDate } from './components/TaskItem';
 import type ZenithPlugin from '../../main';
+import { plainTitle } from './services/titleLinks';
 
 /**
  * What Search finds of the tasks module: the tasks still to do, and the "+
@@ -64,7 +65,7 @@ function itemOf(plugin: ZenithPlugin, task: Task): SearchItem {
     return {
         // The line moves as the note is edited; the file and the title do not.
         id: `tasks:${task.filePath}#${task.title}`,
-        title: task.title,
+        title: plainTitle(task.title),
         tags: task.tags.map((tag) => tag.replace(/^#/, '')),
         detail: task.dueDate ? formatDueDate(task.dueDate, t) : undefined,
         icon: task.status === 'in-progress' ? 'circle-dot' : 'circle',

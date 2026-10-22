@@ -5,6 +5,7 @@ import { formatMinutes, type TimedBlock } from '../services/calendarTime';
 import { KindIcon, kindKey } from './kindUi';
 import { noteName } from './TaskChip';
 import type { ScheduleDrag } from './useScheduleDrag';
+import { plainTitle } from '../../tasks/services/titleLinks';
 
 /** Below this many minutes a block has no room for a second line. */
 const COMPACT_MINUTES = 45;
@@ -96,7 +97,7 @@ export const TimeBlock: FC<TimeBlockProps> = ({
                 if (drag?.swallowClick()) return;
                 onOpen(entry);
             }}
-            title={`⏰ ${label} · ${kindLabel} · ${noteName(task.filePath)}\n${task.title}${
+            title={`⏰ ${label} · ${kindLabel} · ${noteName(task.filePath)}\n${plainTitle(task.title)}${
                 stated ? '' : `\n${t('calendar.openEnded')}`
             }`}
         >
@@ -106,7 +107,7 @@ export const TimeBlock: FC<TimeBlockProps> = ({
                     <KindIcon kind={kind} size={11} />
                 </span>
             </span>
-            <span className="zenith-tcal__event-title">{task.title}</span>
+            <span className="zenith-tcal__event-title">{plainTitle(task.title)}</span>
             {roomy && minutes >= 60 && (
                 <span className="zenith-tcal__event-note">{noteName(task.filePath)}</span>
             )}

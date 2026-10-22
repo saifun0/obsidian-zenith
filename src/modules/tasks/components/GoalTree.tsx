@@ -35,6 +35,7 @@ import { GoalLinkPicker } from './GoalLinkPicker';
 import { GoalMovePicker } from './GoalMovePicker';
 import { HoursTally } from './HoursTally';
 import { TaskTimerButton } from './TaskTimerButton';
+import { TaskTitle } from './TaskTitle';
 
 const NONE: readonly string[] = [];
 
@@ -558,7 +559,7 @@ const NodeRow: FC<{
                         onPointerUp={press.onPointerUp}
                         onPointerCancel={press.onPointerCancel}
                     >
-                        {node.title}
+                        <TaskTitle title={node.title} sourcePath={node.filePath} />
                     </span>
                     {stage && onFold && node.total > 0 && (
                         <button

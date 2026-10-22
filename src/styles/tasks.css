@@ -1968,3 +1968,17 @@ button.zenith-lightbox__btn {
 .zenith-root button.zenith-gw__all:hover {
     color: var(--zenith-text-normal);
 }
+
+/* A link in a task's title — in a row of the list, the goals, a ritual or a
+   card: its words in the link colour, underlined only under the pointer. The
+   row's own ink, drawn through a closed task, still runs through them. */
+.zenith-root a.zenith-tlink {
+    --zenith-underline: underline 1px transparent;
+    color: var(--link-color, var(--zenith-accent));
+    text-decoration: var(--zenith-underline);
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.zenith-root a.zenith-tlink:hover {
+    --zenith-underline: underline 1px currentColor;
+}

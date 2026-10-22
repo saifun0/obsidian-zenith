@@ -21,6 +21,7 @@ import {
     type RitualStep,
     type TriageAction,
 } from '../services/rituals';
+import { TaskTitle } from '../../tasks/components/TaskTitle';
 
 /**
  * A ritual, as one scrolling page of short sections rather than a wizard:
@@ -124,7 +125,9 @@ export const RitualBody: FC<{ kind: RitualKind }> = ({ kind }) => {
                 size={16}
                 onChange={(status) => void setStatus(task, status)}
             />
-            <span className="zenith-ritual__title">{task.title}</span>
+            <span className="zenith-ritual__title">
+                <TaskTitle title={task.title} sourcePath={task.filePath} />
+            </span>
             {actions}
         </li>
     );
@@ -216,7 +219,9 @@ export const RitualBody: FC<{ kind: RitualKind }> = ({ kind }) => {
                                         <span className="zenith-ritual__mark" aria-hidden="true">
                                             <StatusBox status="done" size={16} />
                                         </span>
-                                        <span className="zenith-ritual__title">{task.title}</span>
+                                        <span className="zenith-ritual__title">
+                                            <TaskTitle title={task.title} sourcePath={task.filePath} />
+                                        </span>
                                     </li>
                                 ))}
                             </ul>

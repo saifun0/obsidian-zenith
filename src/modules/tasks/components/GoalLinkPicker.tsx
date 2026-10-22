@@ -4,6 +4,7 @@ import { Modal } from '../../../components/shared/Modal';
 import { SearchField } from '../../../components/ui/fields';
 import type { Task } from '../../../store/taskSlice';
 import type { GoalNode } from '../services/goalTree';
+import { plainTitle } from '../services/titleLinks';
 
 /** How many tasks the list shows at most; the search is how to reach the rest. */
 const LIMIT = 60;
@@ -65,7 +66,7 @@ export const GoalLinkPicker: FC<{
                                 className="zenith-goalpick__item"
                                 onClick={() => onPick(task)}
                             >
-                                <span className="zenith-goalpick__title">{task.title}</span>
+                                <span className="zenith-goalpick__title">{plainTitle(task.title)}</span>
                                 <span className="zenith-goalpick__where">
                                     {task.filePath.replace(/\.md$/i, '').split('/').pop()}
                                 </span>
