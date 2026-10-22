@@ -132,8 +132,8 @@ describe('a goal’s habits in the day’s list', () => {
 
     it('stand under today until the week’s hours are in', () => {
         const rows = goalSteps([goal(600)], 'goal', now);
-        expect(rows.map((r) => [r.title, r.dueDate, r.goal])).toEqual([
-            ['Study', '2026-10-18', 'Learn C++'],
+        expect(rows.map((r) => [r.title, r.dueDate, r.goal, r.habit])).toEqual([
+            ['Study', '2026-10-18', 'Learn C++', true],
         ]);
         expect(goalSteps([goal(1200)], 'goal', now)).toEqual([]);
     });

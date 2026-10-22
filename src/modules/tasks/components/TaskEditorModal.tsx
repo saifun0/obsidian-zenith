@@ -102,6 +102,8 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
     const tasks = useZenithStore((s) => s.tasks);
     const settings = useZenithStore((s) => s.settings);
     const isEdit = !!editTask;
+    // The task as written: a habit is listed under today, but has no day.
+    const written = editTask?.habit ? { ...editTask, dueDate: undefined } : editTask;
     // A hidden control keeps what it was opened with, so switching a feature
     // off never makes a save clear what that feature wrote.
     const subtasksOn = useFeature('tasks.subtasks');
@@ -123,7 +125,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
     );
     const [tags, setTags] = useState<string[]>(editTask?.tags ?? []);
     const [tagInput, setTagInput] = useState('');
-    const [dueDate, setDueDate] = useState(editTask?.dueDate ?? initial?.dueDate ?? '');
+    const [dueDate, setDueDate] = useState(written?.dueDate ?? initial?.dueDate ?? '');
     const [dueTime, setDueTime] = useState(editTask?.dueTime ?? initial?.dueTime ?? '');
     const [dueEndTime, setDueEndTime] = useState(editTask?.dueEndTime ?? initial?.dueEndTime ?? '');
     const [startDate, setStartDate] = useState(editTask?.startDate ?? '');
@@ -280,7 +282,7 @@ export const TaskEditorModal: FC<TaskEditorModalProps> = ({
                     // Only what the user changed is written, so the rest of the
                     // line stays as it was — including what this sheet has no
                     // control for.
-                    diffTaskFields(editTask, input),
+                    diffTaskFields(written ?? editTask, input),
                     // The title as it was when the sheet opened, not the one
                     // being saved: the check is that the line is still the
                     // task the user opened, and renaming it is the commonest

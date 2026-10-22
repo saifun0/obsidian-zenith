@@ -64,6 +64,12 @@ export interface Task extends TaskExtras {
      * not a task's: it is not reordered from the list.
      */
     goal?: string;
+    /**
+     * A goal's weekly habit, listed under today until its week is done. The
+     * day is where the list puts it, not one it was given: the editor opens it
+     * with none.
+     */
+    habit?: boolean;
     title: string;
     /** 4-state status derived from the checkbox char. */
     status: TaskStatus;

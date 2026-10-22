@@ -297,7 +297,7 @@ export function goalSteps(tasks: Task[], goalTag: string, now?: WeekNow): Task[]
             if (sub.dueDate) rows.push(asTask(sub, goal));
             else if (now && sub.target?.weekly) {
                 if (minutesTowards(sub, now.today, now.weekStart) < sub.target.minutes) {
-                    rows.push({ ...asTask(sub, goal), dueDate: now.today });
+                    rows.push({ ...asTask(sub, goal), dueDate: now.today, habit: true });
                 }
             } else walk(sub.subtasks, goal);
         }
