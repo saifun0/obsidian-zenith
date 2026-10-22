@@ -6,7 +6,7 @@ import { useFeature } from '../../../core/useFeature';
 import { getTodayString } from '../../../core/dateUtils';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
 import { WidgetEmpty } from '../../dashboard/components/WidgetEmpty';
-import { buildGoals, habitsUnder, type GoalNode } from '../services/goalTree';
+import { buildGoals, habitsUnder, quietWeeks, type GoalNode } from '../services/goalTree';
 import { marginText } from '../services/taskMargin';
 import { askForGoals } from '../services/taskViewState';
 import { quotaShown } from '../services/taskHours';
@@ -70,7 +70,14 @@ const GoalLine: FC<{ goal: GoalNode; timerOn: boolean; onOpen: () => void }> = (
     onOpen,
 }) => {
     const t = useTranslation();
-    const when = goal.task?.dueDate ? marginText(goal.task, getTodayString(), t, false) : null;
+    const today = getTodayString();
+    const when = goal.task?.dueDate ? marginText(goal.task, today, t, false) : null;
+    const quiet = quietWeeks(goal, today);
+    // What is next, and how long it has waited: one faint line.
+    const after = [
+        goal.next && t('tasks.goals.nextIs', { name: goal.next.title }),
+        quiet && t.plural('tasks.goals.quiet', quiet),
+    ].filter(Boolean);
     const habits = habitsUnder(goal).filter((habit) => quotaShown(habit.target, timerOn));
     const measured = goal.children.length > 0 || (!!goal.target && !goal.target.weekly);
 
@@ -94,9 +101,9 @@ const GoalLine: FC<{ goal: GoalNode; timerOn: boolean; onOpen: () => void }> = (
                     <span className="zenith-wbar__fill" />
                 </span>
             )}
-            {goal.next && (
+            {after.length > 0 && (
                 <span className="zenith-wcap zenith-wcap--faint zenith-gw__next">
-                    {t('tasks.goals.nextIs', { name: goal.next.title })}
+                    {after.join(' · ')}
                 </span>
             )}
             {habits.map((habit) => (

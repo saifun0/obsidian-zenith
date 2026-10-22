@@ -1,5 +1,6 @@
 import { Notice, TFile, normalizePath, type App } from 'obsidian';
 import { translatorNow } from '../../../core/i18n';
+import { getTodayString } from '../../../core/dateUtils';
 import type { ZenithSettings } from '../../../store/settingsSlice';
 import type { Task } from '../../../store/taskSlice';
 import { TaskWriter } from './taskWriter';
@@ -161,7 +162,13 @@ export async function addGoal(
         }
         await new TaskWriter(app).addTask(
             settings.tasksFolderPath,
-            { title, priority: 'none', tags: [goalTag.replace(/^#/, '').trim()] },
+            {
+                title,
+                priority: 'none',
+                tags: [goalTag.replace(/^#/, '').trim()],
+                // When it was set, for the goal that has been quiet since.
+                createdDate: getTodayString(),
+            },
             { filePath: path }
         );
         return true;

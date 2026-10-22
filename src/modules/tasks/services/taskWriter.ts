@@ -509,9 +509,9 @@ export class TaskWriter {
     }
 
     /**
-     * The `⏱` total, and — on a line that asks for hours a week (`🎯 …/w`) —
-     * whatever it gained added to the line under it for the week starting
-     * `week`. One write for both, so the two never disagree.
+     * The `⏱` total, and — on a line that asks for hours (`🎯 20h/w`,
+     * `🎯 100h`) — whatever it gained added to the line under it for the week
+     * starting `week`. One write for both, so the two never disagree.
      */
     private async writeSpent(
         filePath: string,
@@ -539,9 +539,11 @@ export class TaskWriter {
             lines[idx] = `${prefix}[${char}] ${applyTaskPatch(body, { spentMinutes: now })}`;
             ok = true;
             // Taken off as well as put in: the week loses what the total loses.
-            // Only of hours a week: a count's weeks are of times, not of time.
-            const hoursWeekly = parsed.target?.weekly && !parsed.target.count;
-            if (!week || !hoursWeekly || now === was) return lines.join('\n');
+            // Of any task that asks for hours — a week's or in all, the weeks
+            // are when it was worked on — and not of a count, whose weeks are
+            // of times, not of time.
+            const hours = parsed.target && !parsed.target.count;
+            if (!week || !hours || now === was) return lines.join('\n');
 
             const details = parseDetails(detailLines(lines, idx));
             const weeks = addToWeek(details.weeks ?? [], week, now - was);
@@ -553,8 +555,8 @@ export class TaskWriter {
     /**
      * Times done, of a task that asks for a number of them (`🎯 12`, `🎯 3/w`):
      * `times` more on its `🔢` — or fewer, below zero, never under none — and
-     * on a weekly one, on its line for the week starting `week` as well. One
-     * write for both, as with the hours.
+     * on its line for the week starting `week` as well. One write for both, as
+     * with the hours.
      */
     async addCountInFile(
         filePath: string,
@@ -581,7 +583,7 @@ export class TaskWriter {
             const now = Math.max(0, Math.round(was + times));
             lines[idx] = `${prefix}[${char}] ${applyTaskPatch(body, { tally: now || null })}`;
             ok = true;
-            if (!week || !parsed.target?.weekly || now === was) return lines.join('\n');
+            if (!week || !parsed.target?.count || now === was) return lines.join('\n');
 
             const details = parseDetails(detailLines(lines, idx));
             const counts = addToWeekCount(details.counts ?? [], week, now - was);

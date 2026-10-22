@@ -1694,6 +1694,12 @@ button.zenith-lightbox__btn {
 .zenith-goal__meta > button.zenith-hours {
     font-size: 0.8rem;
 }
+/* A goal nothing has been done towards for a fortnight: in the planner's hand. */
+.zenith-goal__quiet {
+    font-family: var(--zenith-font-ink);
+    font-style: italic;
+    color: var(--text-faint);
+}
 .zenith-goal__nextis {
     min-width: 0;
     color: var(--text-muted);

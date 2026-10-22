@@ -160,10 +160,10 @@ describe('counting', () => {
         expect(store.text).toBe('- [ ] Gym 🎯 3/w');
     });
 
-    it('keeps no weeks for a count in all, and checks the title', async () => {
+    it('keeps the weeks of a count in all too, and checks the title', async () => {
         const { app, store } = fakeApp('B.md', '- [ ] Read 🎯 12');
         await new TaskWriter(app).addCountInFile('B.md', 1, 1, 'Read', '2026-10-19');
-        expect(store.text).toBe('- [ ] Read 🎯 12 🔢 1');
+        expect(store.text).toBe('- [ ] Read 🎯 12 🔢 1\n    - 2026-10-19 🔢 1');
         expect(await new TaskWriter(app).addCountInFile('B.md', 1, 1, 'Something else')).toBe(
             false
         );

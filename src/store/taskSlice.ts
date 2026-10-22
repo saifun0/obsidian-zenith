@@ -47,11 +47,17 @@ export interface TaskExtras {
     weeks?: WeekLog[];
     /** The times of each week, for a task that asks for so many times a week. */
     counts?: WeekCount[];
+    /** `➕` — the day it was written, when that was stamped. */
+    createdDate?: string;
 }
 
 export interface SubTask extends TaskExtras {
     title: string;
     status: TaskStatus;
+    /** `✅` — the day it was done. */
+    doneDate?: string;
+    /** `❌` — the day it was given up on. */
+    cancelledDate?: string;
     completed: boolean;
     lineNumber: number;
     /** Its own day, `📅` — a step of a goal has one of its own more often than not. */

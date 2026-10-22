@@ -458,6 +458,8 @@ export interface TaskInput {
     target?: TaskQuota;
     /** Times done, of a target that is a count (`🔢`). */
     tally?: number;
+    /** `➕` — the day it is written, for whoever wants to know when that was. */
+    createdDate?: string;
     recurrence?: string;
     /** Subtask titles (only consumed by `addTask` when creating). */
     subtasks?: string[];
@@ -813,6 +815,7 @@ export function buildTaskBody(input: TaskInput): string {
         timerMinutes: input.timerMinutes,
         target: input.target,
         tally: input.tally,
+        createdDate: input.createdDate,
         doneDate: input.doneDate,
         cancelledDate: input.cancelledDate,
         addTags: input.tags,

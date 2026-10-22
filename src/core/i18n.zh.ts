@@ -2390,6 +2390,7 @@ export const ZH: Record<string, string> = {
     'tasks.goals.projectSearch': '查找项目',
     'tasks.goals.projectNone': '没有这个名称的进行中项目。',
     'tasks.goals.projectTally': '{done}/{total} 个任务',
+    'tasks.goals.quiet.other': '已沉寂 {count} 周',
     'settings.tasksGoalTag': '目标标签',
     'settings.tasksGoalTag.desc': '带有此标签的任务是目标；带有其下级标签（如 goal/health）的也是。',
     'settings.tasksGoalsNote': '目标笔记',

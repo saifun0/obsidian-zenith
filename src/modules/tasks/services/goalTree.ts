@@ -2,7 +2,7 @@ import type { TaskStatus } from '../../../core/constants';
 import type { SubTask, Task } from '../../../store/taskSlice';
 import type { WeekStart } from '../../../core/calendarDates';
 import type { WeekCount, WeekLog } from './taskDetails';
-import type { TaskQuota } from './taskFormat';
+import { shiftIsoDate, type TaskQuota } from './taskFormat';
 import { amountTowards } from './taskHours';
 
 /**
@@ -57,6 +57,9 @@ interface Item {
     weeks?: WeekLog[];
     tally?: number;
     counts?: WeekCount[];
+    doneDate?: string;
+    cancelledDate?: string;
+    createdDate?: string;
     subtasks: SubTask[];
     /** The task's own record, when the item is a task rather than a subtask. */
     task?: Task;
@@ -127,11 +130,28 @@ export interface GoalNode {
     next?: GoalNode;
     /** The project it stands for, when its title links to one and nothing is written under it. */
     project?: LinkedProject;
+    /**
+     * The last day anything is known to have happened on it or under it: a
+     * step closed or given up (`✅`, `❌`), one written (`➕`), the week of
+     * hours or times put in — read as that week's last day, for the line
+     * says the week and not the day. None, when nothing says.
+     */
+    lastMoved?: string;
 }
 
 const closed = (status: TaskStatus) => status === 'done' || status === 'cancelled';
 /** A step that asks for hours or times every week: a habit, counted by none of the nodes above it. */
 const isHabit = (node: { target?: TaskQuota }) => !!node.target?.weekly;
+/** The last day a line itself says something happened on it. */
+function movedOn(item: Item): string | undefined {
+    const days = [item.doneDate, item.cancelledDate, item.createdDate];
+    for (const w of item.weeks ?? []) days.push(shiftIsoDate(w.start, 6));
+    for (const w of item.counts ?? []) days.push(shiftIsoDate(w.start, 6));
+    let last: string | undefined;
+    for (const day of days) if (day && (!last || day > last)) last = day;
+    return last;
+}
+
 const lineKey = (item: { filePath: string; lineNumber: number }) =>
     `${item.filePath}:${item.lineNumber}`;
 
@@ -160,6 +180,9 @@ const fromTask = (task: Task): Item => ({
     weeks: task.weeks,
     tally: task.tally,
     counts: task.counts,
+    doneDate: task.doneDate,
+    cancelledDate: task.cancelledDate,
+    createdDate: task.createdDate,
     subtasks: task.subtasks,
     task,
 });
@@ -179,6 +202,9 @@ const fromSub = (sub: SubTask, filePath: string): Item => ({
     weeks: sub.weeks,
     tally: sub.tally,
     counts: sub.counts,
+    doneDate: sub.doneDate,
+    cancelledDate: sub.cancelledDate,
+    createdDate: sub.createdDate,
     subtasks: sub.subtasks,
     sub,
 });
@@ -253,6 +279,12 @@ export function buildGoals(
                     : total > 0
                       ? counted.reduce((sum, child) => sum + child.progress, 0) / total
                       : 0;
+        let lastMoved = movedOn(item);
+        for (const child of children) {
+            if (child.lastMoved && (!lastMoved || child.lastMoved > lastMoved)) {
+                lastMoved = child.lastMoved;
+            }
+        }
         // Standing for a project, it is ready when the project's tasks are all done.
         const projectDone = !!project && project.total > 0 && project.done === project.total;
 
@@ -298,6 +330,7 @@ export function buildGoals(
                 (inAll ? allIn : project ? projectDone : total > 0 && done === total),
             next,
             project,
+            lastMoved,
         };
     };
 
@@ -377,6 +410,23 @@ function asTask(sub: SubTask, goal: Task): Task {
  */
 export function listedTasks(tasks: Task[], goalTag: string, now?: WeekNow): Task[] {
     return [...withoutGoals(tasks, goalTag), ...goalSteps(tasks, goalTag, now)];
+}
+
+/** Days of quiet before a goal says so. */
+export const QUIET_DAYS = 14;
+
+/**
+ * The whole weeks a goal has been quiet, from its `lastMoved` to `today` —
+ * or nothing, when it moved in the last two weeks, is closed, or says nothing
+ * of when it moved at all.
+ */
+export function quietWeeks(goal: GoalNode, today: string): number | null {
+    if (closed(goal.status) || !goal.lastMoved) return null;
+    const last = goal.lastMoved < today ? goal.lastMoved : today;
+    const days = Math.round(
+        (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${last}T00:00:00Z`)) / 86_400_000
+    );
+    return days >= QUIET_DAYS ? Math.floor(days / 7) : null;
 }
 
 /** The habits under a node — the open steps that ask for hours or times a week — in the order of the tree. */

@@ -26,4 +26,4 @@ many a week; 🔢 is how many times so far.
         - 2026-09-14 ⏱ 5h30m
         - 2026-09-21 ⏱ 3h30m
     - [ ] [[Learn Arabic]]
-- [ ] Read 12 books this year #goal 📅 2026-12-31 🎯 12 🔢 7
+- [ ] Read 12 books this year #goal 📅 2026-12-31 🎯 12 🔢 7 ➕ 2026-08-30

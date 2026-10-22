@@ -192,10 +192,16 @@ describe('putting time in', () => {
         ]);
     });
 
-    it('keeps no weeks for a task that asks for hours in all', async () => {
+    it('keeps the weeks of hours in all too: they are when it was worked on', async () => {
         const { app, store } = fakeApp('A.md', '- [ ] Arabic 🎯 100h');
         await new TaskWriter(app).addSpentInFile('A.md', 1, 60, 'Arabic', '2026-10-19');
-        expect(store.text).toBe('- [ ] Arabic 🎯 100h ⏱ 1h');
+        expect(store.text).toBe('- [ ] Arabic 🎯 100h ⏱ 1h\n    - 2026-10-19 ⏱ 1h');
+    });
+
+    it('keeps no weeks for a task that asks for nothing', async () => {
+        const { app, store } = fakeApp('A.md', '- [ ] Arabic');
+        await new TaskWriter(app).addSpentInFile('A.md', 1, 60, 'Arabic', '2026-10-19');
+        expect(store.text).toBe('- [ ] Arabic ⏱ 1h');
     });
 
     it('refuses a line that is not the task any more', async () => {

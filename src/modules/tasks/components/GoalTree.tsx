@@ -20,7 +20,7 @@ import { confirmDelete } from '../../../core/ConfirmModal';
 import type { TaskStatus } from '../../../core/constants';
 import type { Task } from '../../../store/taskSlice';
 import type { Project } from '../../projects/projectsTypes';
-import { buildGoals, habitsUnder, type GoalNode } from '../services/goalTree';
+import { buildGoals, habitsUnder, quietWeeks, type GoalNode } from '../services/goalTree';
 import { addGoal, linkStep, moveStep, setGoal, unlinkStep } from '../services/goalActions';
 import { TaskWriter } from '../services/taskWriter';
 import { marginText, subtaskWhen } from '../services/taskMargin';
@@ -217,6 +217,15 @@ const GoalSection: FC<{ goal: GoalNode; tasks: Task[]; folds: Folds; goalTag: st
                           done: formatHours(done, t.locale),
                           target: formatHours(target, t.locale),
                       })}
+            </span>
+        );
+    }
+    // Nothing done towards it for a fortnight or more: said once, quietly.
+    const quiet = quietWeeks(goal, today);
+    if (quiet) {
+        meta.push(
+            <span key="quiet" className="zenith-goal__quiet">
+                {t.plural('tasks.goals.quiet', quiet)}
             </span>
         );
     }
@@ -430,7 +439,9 @@ const NodeRow: FC<{
     const tieProject = async (project: Project) => {
         const name = project.filePath.replace(/\.md$/i, '').split('/').pop() ?? project.title;
         const link = name === project.title ? `[[${name}]]` : `[[${name}|${project.title}]]`;
-        const ok = await new TaskWriter(app).addSubtaskInFile(node.filePath, node.lineNumber, link);
+        const ok = await new TaskWriter(app).addSubtaskInFile(node.filePath, node.lineNumber, link, {
+            createdDate: getTodayString(),
+        });
         if (ok) await reload();
         else new Notice(t('tasks.error.update'));
     };
@@ -742,9 +753,13 @@ const StepField: FC<{ node: GoalNode; onDone: () => void }> = ({ node, onDone })
             ? quickParse(typed, getTodayString(), undefined, journalWeekStart)
             : null;
         const title = read?.title.trim() || typed;
-        const fields = read?.dueDate
-            ? { dueDate: read.dueDate, dueTime: read.dueTime, dueEndTime: read.dueEndTime }
-            : undefined;
+        // Stamped with the day: a step added is a goal moving (`lastMoved`).
+        const fields = {
+            createdDate: getTodayString(),
+            ...(read?.dueDate
+                ? { dueDate: read.dueDate, dueTime: read.dueTime, dueEndTime: read.dueEndTime }
+                : {}),
+        };
         busy.current = true;
         try {
             if (
