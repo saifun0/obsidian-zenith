@@ -1,6 +1,6 @@
 import { startOfWeek, type WeekStart } from '../../../core/calendarDates';
 import type { WeekCount, WeekLog } from './taskDetails';
-import { parseDuration, type TaskQuota } from './taskFormat';
+import { parseDuration, shiftIsoDate, type TaskQuota } from './taskFormat';
 
 /**
  * Tasks closed by what was put in rather than by a tick: hours — `🎯 100h` in
@@ -67,8 +67,33 @@ export function quotaReached(task: Quota): boolean {
 
 /** Each week's minutes or times, oldest first: the weeks of a weekly target. */
 export function weekAmounts(task: Quota): Array<{ start: string; amount: number }> {
-    if (task.target?.count) return (task.counts ?? []).map((w) => ({ start: w.start, amount: w.count }));
+    if (task.target?.count)
+        return (task.counts ?? []).map((w) => ({ start: w.start, amount: w.count }));
     return (task.weeks ?? []).map((w) => ({ start: w.start, amount: w.minutes }));
+}
+
+/** A week of what was put in, as a chart draws it. */
+export interface WeekAmount {
+    start: string;
+    amount: number;
+}
+
+/**
+ * The last `n` weeks up to the one starting `thisWeek`, oldest first, each
+ * with what was put in — nothing, for a week with no line.
+ */
+export function weekSeries(
+    weeks: readonly WeekAmount[],
+    thisWeek: string,
+    n: number
+): WeekAmount[] {
+    const by = new Map(weeks.map((w) => [w.start, w.amount]));
+    const out: WeekAmount[] = [];
+    for (let i = n - 1; i >= 0; i--) {
+        const start = shiftIsoDate(thisWeek, -7 * i);
+        out.push({ start, amount: by.get(start) ?? 0 });
+    }
+    return out;
 }
 
 /** An amount as a tally says it: hours as `7.5`, times as they are. */
@@ -81,7 +106,11 @@ export function formatAmount(target: TaskQuota, amount: number, locale = 'en'): 
  * count as a whole number of times. Nothing, for a field left empty or not
  * understood.
  */
-export function readQuotaInput(text: string, count: boolean, weekly: boolean): TaskQuota | undefined {
+export function readQuotaInput(
+    text: string,
+    count: boolean,
+    weekly: boolean
+): TaskQuota | undefined {
     if (count) {
         const times = /^\s*\d{1,4}\s*$/.test(text) ? Number(text) : 0;
         return times > 0 ? { amount: times, weekly, count: true } : undefined;

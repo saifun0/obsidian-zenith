@@ -154,7 +154,11 @@ export function goalArea(tags: readonly string[], goalTag: string): string | und
     for (const tag of tags) {
         const have = tag.replace(/^#/, '');
         if (!have.toLowerCase().startsWith(`${want}/`)) continue;
-        const name = have.slice(want.length + 1).split('/')[0].replace(/[-_]+/g, ' ').trim();
+        const name = have
+            .slice(want.length + 1)
+            .split('/')[0]
+            .replace(/[-_]+/g, ' ')
+            .trim();
         if (name) return name.charAt(0).toLocaleUpperCase() + name.slice(1);
     }
     return undefined;
@@ -432,6 +436,28 @@ function asTask(sub: SubTask, goal: Task): Task {
  */
 export function listedTasks(tasks: Task[], goalTag: string, now?: WeekNow): Task[] {
     return [...withoutGoals(tasks, goalTag), ...goalSteps(tasks, goalTag, now)];
+}
+
+/**
+ * Each week's hours — or, with `count`, times — put in on a node and on
+ * everything under it, oldest first: what a goal or a stage that asks for
+ * them in all has done week by week.
+ */
+export function weeksUnder(
+    node: GoalNode,
+    count: boolean
+): Array<{ start: string; amount: number }> {
+    const by = new Map<string, number>();
+    const walk = (n: GoalNode) => {
+        if (count)
+            for (const w of n.counts ?? []) by.set(w.start, (by.get(w.start) ?? 0) + w.count);
+        else for (const w of n.weeks ?? []) by.set(w.start, (by.get(w.start) ?? 0) + w.minutes);
+        n.children.forEach(walk);
+    };
+    walk(node);
+    return [...by.entries()]
+        .map(([start, amount]) => ({ start, amount }))
+        .sort((a, b) => a.start.localeCompare(b.start));
 }
 
 /** Days of quiet before a goal says so. */

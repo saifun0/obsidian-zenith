@@ -16,10 +16,50 @@ import {
     parseCountChange,
     parseHoursChange,
     weekAmounts,
+    weekSeries,
+    type WeekAmount,
 } from '../services/taskHours';
 
 /** How many weeks before this one the field names. */
 const WEEKS_BACK = 4;
+/** How many weeks the chart over the field draws, this one the last. */
+const CHART_WEEKS = 8;
+
+/**
+ * The weeks as bars, this one at the right: how much went in each, against
+ * the week's target where there is one, drawn as a line across. A week that
+ * met it is in the accent.
+ */
+const WeekBars: FC<{
+    series: WeekAmount[];
+    thisWeek: string;
+    target?: number;
+    label: string;
+    say: (amount: number) => string;
+}> = ({ series, thisWeek, target, label, say }) => {
+    const top = Math.max(target ?? 0, ...series.map((w) => w.amount), 1);
+    return (
+        <div className="zenith-weekbars" role="img" aria-label={label}>
+            {target !== undefined && (
+                <span
+                    className="zenith-weekbars__target"
+                    style={{ bottom: `${(target / top) * 100}%` }}
+                    aria-hidden="true"
+                />
+            )}
+            {series.map((w) => (
+                <span
+                    key={w.start}
+                    className={`zenith-weekbars__bar${w.start === thisWeek ? ' is-now' : ''}${
+                        target !== undefined && w.amount >= target ? ' is-met' : ''
+                    }`}
+                    style={{ height: `${(w.amount / top) * 100}%` }}
+                    title={`${w.start} · ${say(w.amount)}`}
+                />
+            ))}
+        </div>
+    );
+};
 
 /**
  * "7.5/20 h", "3/12", "2/3 ×/wk" with a line under it: how far a task that
@@ -53,7 +93,9 @@ export const QuotaTally: FC<{
      * goes on the line itself.
      */
     towards?: number;
-}> = ({ item, towards }) => {
+    /** Its weeks, when they are more than the line's own: the same goal's, week by week. */
+    history?: WeekAmount[];
+}> = ({ item, towards, history }) => {
     const { app, plugin } = useApp();
     const t = useTranslation();
     const weekStart = useZenithStore((s) => s.settings.journalWeekStart);
@@ -76,7 +118,11 @@ export const QuotaTally: FC<{
     const done = towards ?? amountTowards(item, today, weekStart);
     const share = Math.min(1, done / target.amount);
     const amount = (n: number) => formatAmount(target, n, t.locale);
-    const before = weekAmounts(item)
+    const weeks = history ?? weekAmounts(item);
+    const series = weekSeries(weeks, week, CHART_WEEKS);
+    // Drawn once there is a week to draw.
+    const charted = series.some((w) => w.amount > 0);
+    const before = weeks
         .filter((w) => w.start < week)
         .slice(-WEEKS_BACK)
         .map((w) => amount(w.amount));
@@ -99,8 +145,20 @@ export const QuotaTally: FC<{
         try {
             const writer = new TaskWriter(app);
             const ok = count
-                ? await writer.addCountInFile(item.filePath, item.lineNumber, change, item.title, week)
-                : await writer.addSpentInFile(item.filePath, item.lineNumber, change, item.title, week);
+                ? await writer.addCountInFile(
+                      item.filePath,
+                      item.lineNumber,
+                      change,
+                      item.title,
+                      week
+                  )
+                : await writer.addSpentInFile(
+                      item.filePath,
+                      item.lineNumber,
+                      change,
+                      item.title,
+                      week
+                  );
             if (!ok) {
                 new Notice(t('tasks.error.update'));
                 return false;
@@ -165,7 +223,7 @@ export const QuotaTally: FC<{
                 open={pop.open}
                 onClose={pop.close}
                 width={240}
-                height={76}
+                height={charted ? 136 : 76}
                 align="end"
                 role="dialog"
                 label={t(count ? 'tasks.count.add' : 'tasks.hours.add')}
@@ -178,10 +236,21 @@ export const QuotaTally: FC<{
                     onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => e.stopPropagation()}
                 >
+                    {charted && (
+                        <WeekBars
+                            series={series}
+                            thisWeek={week}
+                            target={target.weekly ? target.amount : undefined}
+                            label={t('tasks.hours.chart')}
+                            say={amount}
+                        />
+                    )}
                     <input
                         className="zenith-hours__input"
                         value={text}
-                        placeholder={t(count ? 'tasks.count.placeholder' : 'tasks.hours.placeholder')}
+                        placeholder={t(
+                            count ? 'tasks.count.placeholder' : 'tasks.hours.placeholder'
+                        )}
                         aria-label={t(count ? 'tasks.count.add' : 'tasks.hours.add')}
                         enterKeyHint="done"
                         autoFocus

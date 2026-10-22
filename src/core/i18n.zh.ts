@@ -2470,6 +2470,7 @@ export const ZH: Record<string, string> = {
     'tasks.hours.thisWeek': '本周',
     'tasks.hours.before': '前几周：{list}',
     'tasks.hours.inAll': '总计',
+    'tasks.hours.chart': '最近八周',
     'tasks.count.tally': '{done}/{target} 次',
     'tasks.count.tallyWeek': '{done}/{target} 次/周',
     'tasks.count.addOne': '再来一次',

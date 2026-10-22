@@ -20,7 +20,13 @@ import { confirmDelete } from '../../../core/ConfirmModal';
 import type { TaskStatus } from '../../../core/constants';
 import type { Task } from '../../../store/taskSlice';
 import type { Project } from '../../projects/projectsTypes';
-import { buildGoals, habitsUnder, quietWeeks, type GoalNode } from '../services/goalTree';
+import {
+    buildGoals,
+    habitsUnder,
+    quietWeeks,
+    weeksUnder,
+    type GoalNode,
+} from '../services/goalTree';
 import { addGoal, linkStep, moveStep, setGoal, unlinkStep } from '../services/goalActions';
 import { TaskWriter } from '../services/taskWriter';
 import { marginText, subtaskWhen } from '../services/taskMargin';
@@ -205,7 +211,14 @@ const GoalSection: FC<{ goal: GoalNode; tasks: Task[]; folds: Folds; goalTag: st
         );
     }
     if (quotaShown(goal.target, timerOn)) {
-        meta.push(<QuotaTally key="hours" item={goal} towards={inAll ? putIn(goal) : undefined} />);
+        meta.push(
+            <QuotaTally
+                key="hours"
+                item={goal}
+                towards={inAll ? putIn(goal) : undefined}
+                history={inAll ? weeksUnder(goal, !!goal.target?.count) : undefined}
+            />
+        );
     }
     if (when?.text) {
         meta.push(
@@ -630,6 +643,11 @@ const NodeRow: FC<{
                         <QuotaTally
                             item={node}
                             towards={stage && !node.target.weekly ? putIn(node) : undefined}
+                            history={
+                                stage && !node.target.weekly
+                                    ? weeksUnder(node, !!node.target.count)
+                                    : undefined
+                            }
                         />
                     )}
                     {node.project && (

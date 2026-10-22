@@ -679,6 +679,36 @@
 .zenith-hours__field {
     padding: 6px;
 }
+/* The weeks over the field: a bar a week, this one at the right, the week's
+   target a hairline across. Faint, and the accent for a week that met it. */
+.zenith-weekbars {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 44px;
+    margin: 2px 2px 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+.zenith-weekbars__bar {
+    flex: 1;
+    min-height: 1px;
+    border-radius: 2px 2px 0 0;
+    background: color-mix(in srgb, var(--text-faint) 55%, transparent);
+}
+.zenith-weekbars__bar.is-now {
+    background: var(--text-muted);
+}
+.zenith-weekbars__bar.is-met {
+    background: var(--interactive-accent);
+}
+.zenith-weekbars__target {
+    position: absolute;
+    right: 0;
+    left: 0;
+    border-top: 1px dashed var(--text-faint);
+    pointer-events: none;
+}
 .zenith-hours__story {
     margin: 6px 2px 0;
     color: var(--text-faint);
