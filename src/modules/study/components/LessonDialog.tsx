@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Notice } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { useFeature } from '../../../core/useFeature';
 import { ConfirmModal } from '../../../core/ConfirmModal';
 import { PromptModal } from '../../../core/PromptModal';
@@ -50,7 +50,7 @@ export const LessonDialog: FC<{
     const times = lessonTimes(lesson, schedule.bells);
     const next = nextOccurrence(schedule, lesson.subject, date, opts);
     const fmt = (iso: string) =>
-        isoToDate(iso).toLocaleDateString(t.locale, {
+        isoToDate(iso).toLocaleDateString(intlLocale(t.locale), {
             weekday: 'short',
             day: 'numeric',
             month: 'long',

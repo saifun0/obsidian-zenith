@@ -3,7 +3,7 @@ import { FuzzySuggestModal, Menu, Notice, type App, type TFile } from 'obsidian'
 import { MoreHorizontal } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useZenithStore } from '../../store';
-import { useTranslation, type Translator } from '../../core/i18n';
+import { intlLocale, useTranslation, type Translator } from '../../core/i18n';
 import { getTodayString } from '../../core/dateUtils';
 import { PromptModal } from '../../core/PromptModal';
 import { Modal } from '../../components/shared/Modal';
@@ -141,7 +141,7 @@ export const ProfilesSettings: FC = () => {
                 <div className="zenith-settings__card">
                     <SettingRow
                         label={t('profiles.undo', { name: undo.name })}
-                        desc={new Date(undo.at).toLocaleString(t.locale)}
+                        desc={new Date(undo.at).toLocaleString(intlLocale(t.locale))}
                         group
                         compact
                     >

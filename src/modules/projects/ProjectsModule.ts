@@ -32,7 +32,7 @@ export class ProjectsModule extends BaseModule {
         super(plugin);
     }
 
-    async onload(): Promise<void> {
+    onload(): Promise<void> {
         this.registerView(VIEW_TYPE_PROJECTS, (leaf) => new ProjectsView(leaf, this.plugin));
 
         this.addViewCommand({
@@ -97,11 +97,13 @@ export class ProjectsModule extends BaseModule {
                 viewType: VIEW_TYPE_PROJECTS,
             })
         );
+        return Promise.resolve();
     }
 
-    async onunload(): Promise<void> {
+    onunload(): Promise<void> {
         this.disposers.forEach((d) => d());
         this.disposers = [];
+        return Promise.resolve();
     }
 
     async activateView(): Promise<void> {

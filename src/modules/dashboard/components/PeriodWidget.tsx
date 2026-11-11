@@ -1,5 +1,5 @@
 import React, { type CSSProperties, type FC } from 'react';
-import { useTranslation, type Translator } from '../../../core/i18n';
+import { intlLocale, useTranslation, type Translator } from '../../../core/i18n';
 import { useNow } from '../../../core/useNow';
 import { toLocalIsoDate } from '../../../core/dateUtils';
 import { useZenithStore } from '../../../store';
@@ -26,7 +26,7 @@ function rowLabel(row: PeriodRow, now: Date, t: Translator): string {
         case 'week':
             return t('period.week');
         case 'month': {
-            const name = now.toLocaleDateString(t.locale, { month: 'long' });
+            const name = now.toLocaleDateString(intlLocale(t.locale), { month: 'long' });
             return name.charAt(0).toUpperCase() + name.slice(1);
         }
         case 'year':

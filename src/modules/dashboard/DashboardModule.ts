@@ -40,7 +40,7 @@ export class DashboardModule extends BaseModule {
         super(plugin);
     }
 
-    async onload(): Promise<void> {
+    onload(): Promise<void> {
         // Only an Obsidian that is starting opens the board: the module being
         // switched on mid-session, or the plugin re-enabled, is not a startup.
         const starting = !this.plugin.app.workspace.layoutReady;
@@ -140,12 +140,14 @@ export class DashboardModule extends BaseModule {
                 viewType: VIEW_TYPE_DASHBOARD,
             })
         );
+        return Promise.resolve();
     }
 
-    async onunload(): Promise<void> {
+    onunload(): Promise<void> {
         this.disposers.forEach((d) => d());
         this.disposers = [];
         // NOTE: leaves are intentionally left attached (see TasksModule).
+        return Promise.resolve();
     }
 
     async activateView(): Promise<void> {

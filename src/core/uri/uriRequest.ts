@@ -33,6 +33,7 @@ export const URI_VIEWS = {
     content: 'content',
     journal: 'journal',
     prayer: 'prayer',
+    study: 'study',
 } as const;
 export type UriView = keyof typeof URI_VIEWS;
 

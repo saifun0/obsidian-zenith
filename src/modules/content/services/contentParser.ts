@@ -29,9 +29,14 @@ export class ContentParser {
     async parseContent(folderPath: string): Promise<ContentItem[]> {
         const files = this.vaultService.getMarkdownFiles(folderPath);
         const items: ContentItem[] = [];
-        for (const file of files) {
-            const item = await this.parseFile(file);
-            if (item) items.push(item);
+        const BATCH = 32;
+        for (let i = 0; i < files.length; i += BATCH) {
+            const chunk = await Promise.all(
+                files.slice(i, i + BATCH).map((file) => this.parseFile(file))
+            );
+            for (const item of chunk) {
+                if (item) items.push(item);
+            }
         }
         return items;
     }

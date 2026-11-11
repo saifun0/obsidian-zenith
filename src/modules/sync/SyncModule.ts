@@ -139,7 +139,7 @@ export class SyncModule extends BaseModule {
         // Dropbox sends the user back here after they approve. Registered on the
         // plugin because the callback arrives whether or not anything of ours is
         // open — that is the point of it.
-        this.plugin.registerObsidianProtocolHandler(DROPBOX_PROTOCOL_ACTION, (params) => {
+        this.registerProtocolHandler(DROPBOX_PROTOCOL_ACTION, (params) => {
             void this.finishDropboxAuth(params);
         });
 
@@ -189,7 +189,7 @@ export class SyncModule extends BaseModule {
         });
     }
 
-    async onunload(): Promise<void> {
+    onunload(): Promise<void> {
         this.disposers.forEach((d) => d());
         this.disposers = [];
         this.progress?.dispose();
@@ -202,6 +202,7 @@ export class SyncModule extends BaseModule {
         this.plugin.settingsSync = null;
         this.plugin.fileSync = null;
         this.plugin.fileSyncAuto = null;
+        return Promise.resolve();
     }
 
     /** Rebuild the scheduler from the settings as they stand now. */
@@ -218,8 +219,9 @@ export class SyncModule extends BaseModule {
      * command, the held-plan notice. What changed is that showing it no longer
      * costs a tab.
      */
-    async activateView(): Promise<void> {
+    activateView(): Promise<void> {
         new SyncQuickModal(this.plugin.app, this.plugin).open();
+        return Promise.resolve();
     }
 
     getSettingsSchema(): SettingsSchema {

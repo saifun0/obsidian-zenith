@@ -68,6 +68,10 @@ describe('readUriRequest', () => {
             ok: true,
             request: { kind: 'open', view: 'calendar' },
         });
+        expect(readUriRequest({ do: 'open', view: 'Study' })).toEqual({
+            ok: true,
+            request: { kind: 'open', view: 'study' },
+        });
         expect(readUriRequest({ do: 'open' })).toEqual({
             ok: true,
             request: { kind: 'open', view: 'dashboard' },

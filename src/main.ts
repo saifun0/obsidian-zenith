@@ -137,7 +137,11 @@ export default class ZenithPlugin extends Plugin {
      * it, and the theme's accent shows again.
      */
     private applyAccent(color: string): void {
-        document.body.setCssProps({ '--zenith-accent-user': color.trim() });
+        const c = color.trim();
+        document.body.setCssProps({
+            '--zenith-accent-user': c,
+            '--zenith-accent-user-hover': c ? `color-mix(in srgb, ${c} 86%, white)` : '',
+        });
     }
 
     /**
@@ -235,7 +239,7 @@ export default class ZenithPlugin extends Plugin {
             // A config that started empty is offered a template, once. An
             // upgraded one never is — see the v10 migration.
             if (!useZenithStore.getState().settings.profilesOnboarded) {
-                new FirstRunModal(this.app).open();
+                new FirstRunModal(this.app, this).open();
             }
             // A newer Zenith, when there is one — see `core/updateCheck.ts`.
             this.disposers.push(scheduleUpdateCheck(this.manifest.id, this.manifest.version));
@@ -330,8 +334,8 @@ export default class ZenithPlugin extends Plugin {
         this.disposers.push(
             useZenithStore.subscribe(
                 (state) => state.settings.activeModuleIds,
-                (activeIds) => {
-                    void this.syncActiveModules(activeIds);
+                (activeIds, prevActiveIds) => {
+                    void this.syncActiveModules(activeIds, prevActiveIds);
                 }
             )
         );
@@ -341,7 +345,15 @@ export default class ZenithPlugin extends Plugin {
             useZenithStore.subscribe(
                 (state) => state.settings.tasksFolderPath,
                 () => {
-                    void this.dataService.reloadTasks();
+                    void this.reloadTasksAndProjects();
+                }
+            )
+        );
+        this.disposers.push(
+            useZenithStore.subscribe(
+                (state) => state.settings.projectsFolderPath,
+                () => {
+                    void this.reloadTasksAndProjects();
                 }
             )
         );
@@ -362,7 +374,7 @@ export default class ZenithPlugin extends Plugin {
                     `${state.settings.journalFolderPath}\0${state.settings.journalDateFormat}`,
                 () => {
                     void this.dataService.reloadJournal();
-                    void this.dataService.reloadTasks();
+                    void this.reloadTasksAndProjects();
                 }
             )
         );
@@ -498,19 +510,45 @@ export default class ZenithPlugin extends Plugin {
         }
     }
 
+    /** Reload tasks first and then projects, which aggregate from `store.tasks`. */
+    private async reloadTasksAndProjects(): Promise<void> {
+        if (!this.dataService) return;
+        await this.dataService.reloadTasks();
+        await this.dataService.reloadProjects();
+    }
+
     /**
      * Load/unload modules to match `activeIds` (called when settings change).
-     * Keeps the store's `loadedModuleIds` in sync with reality.
+     * Keeps the store's `loadedModuleIds` in sync with reality and refreshes
+     * only the collections whose module state changed.
      */
-    private async syncActiveModules(activeIds: string[]): Promise<void> {
+    private async syncActiveModules(
+        activeIds: string[],
+        prevActiveIds?: string[]
+    ): Promise<void> {
         await this.moduleManager.syncActive(activeIds);
         useZenithStore.getState().setLoadedModules(this.moduleManager.getLoadedModuleIds());
-        // Which folders are scanned for tasks depends on the journal module
-        // being active (daily notes hold captured tasks), so toggling modules
-        // has to re-derive the task list — otherwise tasks from daily notes
-        // linger after the journal is switched off, or stay missing after it's
-        // switched on, until something else happens to trigger a reload.
-        void this.dataService?.reloadTasks();
+        if (!this.dataService) return;
+
+        const changed = (id: string) =>
+            !prevActiveIds || prevActiveIds.includes(id) !== activeIds.includes(id);
+        const dailyBefore = prevActiveIds
+            ? prevActiveIds.includes('journal') || prevActiveIds.includes('prayer')
+            : undefined;
+        const dailyNow = activeIds.includes('journal') || activeIds.includes('prayer');
+
+        const tasksSourcesChanged = changed('journal') || changed('projects');
+        const work: Array<Promise<void>> = [];
+        if (tasksSourcesChanged) work.push(this.dataService.reloadTasks());
+        if (changed('content')) work.push(this.dataService.reloadContent());
+        if (dailyBefore === undefined || dailyBefore !== dailyNow) {
+            work.push(this.dataService.reloadJournal());
+        }
+        await Promise.all(work);
+
+        if (tasksSourcesChanged || changed('projects')) {
+            await this.dataService.reloadProjects();
+        }
     }
 
     /**

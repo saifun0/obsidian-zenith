@@ -1,3 +1,5 @@
+import type { ObsidianProtocolHandler } from 'obsidian';
+
 /**
  * What each module has registered with Obsidian, keyed by module ID.
  *
@@ -17,6 +19,7 @@ export class ModuleRegistrationLedger {
     /** Commands that only open the module's view — see `markViewCommand`. */
     private viewCommands = new Map<string, Set<string>>();
     private codeBlocks = new Map<string, Set<string>>();
+    private protocols = new Map<string, ObsidianProtocolHandler | null>();
     private disposers = new Map<string, Array<() => void>>();
 
     private bucket(map: Map<string, Set<string>>, moduleId: string): Set<string> {
@@ -64,6 +67,16 @@ export class ModuleRegistrationLedger {
     }
     markCodeBlock(moduleId: string, language: string): void {
         this.bucket(this.codeBlocks, moduleId).add(language);
+    }
+
+    hasProtocol(action: string): boolean {
+        return this.protocols.has(action);
+    }
+    setProtocol(action: string, handler: ObsidianProtocolHandler | null): void {
+        this.protocols.set(action, handler);
+    }
+    getProtocol(action: string): ObsidianProtocolHandler | null {
+        return this.protocols.get(action) ?? null;
     }
 
     /** Cleanup to run when the module unloads. */

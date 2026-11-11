@@ -356,6 +356,11 @@ export function setTableStore(next: TableStore | null): Promise<void> {
     return next ? pruneOld() : Promise.resolve();
 }
 
+export function clearTableStore(owner: TableStore | null): Promise<void> {
+    if (!owner || store !== owner) return Promise.resolve();
+    return setTableStore(null);
+}
+
 /** Tables in a folder of the vault, through the adapter — which works the same on a phone. */
 export function vaultTableStore(adapter: DataAdapter, folder: string): TableStore {
     const path = (name: string) => `${folder}/${name}`;

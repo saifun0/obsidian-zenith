@@ -20,7 +20,8 @@ import { translateNow } from '../../core/i18n';
 export class ContentModule extends BaseModule {
     readonly id = 'content';
     readonly name = 'Content';
-    readonly description = 'Manage your articles, notes, and long-form content.';
+    readonly description =
+        'A library of books, films, shows, anime and games: status, progress, ratings and stats.';
     readonly icon = 'file-text';
 
     getTranslations(): TranslationTable {
@@ -33,7 +34,7 @@ export class ContentModule extends BaseModule {
         super(plugin);
     }
 
-    async onload(): Promise<void> {
+    onload(): Promise<void> {
         this.registerView(VIEW_TYPE_CONTENT, (leaf) => new ContentView(leaf, this.plugin));
 
         this.addViewCommand({
@@ -100,12 +101,14 @@ export class ContentModule extends BaseModule {
                 viewType: VIEW_TYPE_CONTENT,
             })
         );
+        return Promise.resolve();
     }
 
-    async onunload(): Promise<void> {
+    onunload(): Promise<void> {
         this.disposers.forEach((d) => d());
         this.disposers = [];
         // NOTE: leaves are intentionally left attached (see TasksModule).
+        return Promise.resolve();
     }
 
     async activateView(): Promise<void> {

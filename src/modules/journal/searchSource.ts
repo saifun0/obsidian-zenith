@@ -1,7 +1,7 @@
 import { Notice } from 'obsidian';
 import { useZenithStore } from '../../store';
 import { getTodayString } from '../../core/dateUtils';
-import { translate, translateNow, translatorNow } from '../../core/i18n';
+import { intlLocale, translate, translateNow, translatorNow } from '../../core/i18n';
 import type { SearchSource } from '../search/searchSources';
 import { JournalWriter, journalConfig } from './services/journalWriter';
 import { openDailyNote } from './services/journalActions';
@@ -26,16 +26,17 @@ import type ZenithPlugin from '../../main';
 /** "Note for 23 September", and the weekday on its own — "за среда" is not Russian. */
 function dayRow(date: string): { title: string; detail: string } {
     const t = translatorNow();
+    const locale = intlLocale(t.locale);
     const d = new Date(`${date}T00:00:00`);
     const sameYear = d.getFullYear() === new Date().getFullYear();
-    const text = d.toLocaleDateString(t.locale, {
+    const text = d.toLocaleDateString(locale, {
         day: 'numeric',
         month: 'long',
         ...(sameYear ? {} : { year: 'numeric' }),
     });
     return {
         title: t('search.journal.note', { date: text }),
-        detail: d.toLocaleDateString(t.locale, { weekday: 'long' }),
+        detail: d.toLocaleDateString(locale, { weekday: 'long' }),
     };
 }
 

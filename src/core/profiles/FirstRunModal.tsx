@@ -1,7 +1,9 @@
 import React, { type FC } from 'react';
-import { Modal, Notice } from 'obsidian';
+import { Modal, Notice, type App } from 'obsidian';
 import { createRoot, type Root } from 'react-dom/client';
+import { AppContext } from '../../context/AppContext';
 import { useZenithStore } from '../../store';
+import type ZenithPlugin from '../../main';
 import { translateNow, useTranslation } from '../i18n';
 import { getTodayString } from '../dateUtils';
 import { DynamicIcon } from '../../components/shared/DynamicIcon';
@@ -23,12 +25,29 @@ import { TEMPLATES, templateProfile } from './templates';
 export class FirstRunModal extends Modal {
     private root: Root | null = null;
 
+    constructor(
+        app: App,
+        private readonly plugin?: ZenithPlugin
+    ) {
+        super(app);
+    }
+
     onOpen(): void {
         const { contentEl, titleEl } = this;
         titleEl.setText(translateNow('profiles.firstRun.title'));
+        contentEl.empty();
         contentEl.addClass('zenith-root', 'zenith-first-run');
         this.root = createRoot(contentEl.createDiv());
-        this.root.render(<FirstRun onDone={() => this.close()} />);
+        const body = <FirstRun onDone={() => this.close()} />;
+        this.root.render(
+            this.plugin ? (
+                <AppContext.Provider value={{ app: this.app, plugin: this.plugin }}>
+                    {body}
+                </AppContext.Provider>
+            ) : (
+                body
+            )
+        );
     }
 
     onClose(): void {

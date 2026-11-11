@@ -59,7 +59,7 @@ export class JournalModule extends BaseModule {
         run();
     }
 
-    async onload(): Promise<void> {
+    onload(): Promise<void> {
         this.registerView(VIEW_TYPE_JOURNAL, (leaf) => new JournalView(leaf, this.plugin));
 
         // A period's numbers, counted live wherever the block is put.
@@ -203,12 +203,14 @@ export class JournalModule extends BaseModule {
                 },
             })
         );
+        return Promise.resolve();
     }
 
-    async onunload(): Promise<void> {
+    onunload(): Promise<void> {
         this.disposers.forEach((d) => d());
         this.disposers = [];
         // NOTE: leaves are intentionally left attached (see TasksModule).
+        return Promise.resolve();
     }
 
     async activateView(): Promise<void> {

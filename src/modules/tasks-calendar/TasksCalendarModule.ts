@@ -28,7 +28,7 @@ export class TasksCalendarModule extends BaseModule {
 
     private disposers: Array<() => void> = [];
 
-    async onload(): Promise<void> {
+    onload(): Promise<void> {
         this.registerView(
             VIEW_TYPE_TASKS_CALENDAR,
             (leaf) => new TasksCalendarView(leaf, this.plugin)
@@ -66,12 +66,14 @@ export class TasksCalendarModule extends BaseModule {
                 viewType: VIEW_TYPE_TASKS_CALENDAR,
             })
         );
+        return Promise.resolve();
     }
 
-    async onunload(): Promise<void> {
+    onunload(): Promise<void> {
         this.disposers.forEach((d) => d());
         this.disposers = [];
         // Leaves are intentionally left open — see TasksModule for why.
+        return Promise.resolve();
     }
 
     async activateView(): Promise<void> {

@@ -1,5 +1,10 @@
-import { App, TFile, TFolder, parseYaml, type CachedMetadata } from 'obsidian';
+import { App, TFile, TFolder, normalizePath, parseYaml, type CachedMetadata } from 'obsidian';
 import { scalarText } from '../core/scalarText';
+
+function cleanFolderPath(folderPath: string): string {
+    const trimmed = (folderPath ?? '').trim().replace(/^\/+|\/+$/g, '');
+    return trimmed ? normalizePath(trimmed) : '';
+}
 
 /**
  * Matches a Markdown task checkbox line: `- [ ] ...` or `* [x] ...`.
@@ -99,7 +104,7 @@ export class VaultService {
      * nothing will be read until they do.
      */
     getMarkdownFiles(folderPath: string): TFile[] {
-        const path = (folderPath ?? '').trim();
+        const path = cleanFolderPath(folderPath);
         // Warning about `""` claimed a folder named nothing was missing, which
         // is neither true nor anything anyone can act on.
         if (!path) return [];
@@ -133,7 +138,9 @@ export class VaultService {
      * `getMarkdownFiles`, asked first, has said so already.
      */
     getFilePaths(folderPath: string): string[] {
-        const folder = this.app.vault.getAbstractFileByPath((folderPath ?? '').trim());
+        const path = cleanFolderPath(folderPath);
+        if (!path) return [];
+        const folder = this.app.vault.getAbstractFileByPath(path);
         if (!(folder instanceof TFolder)) return [];
         const paths: string[] = [];
         const walk = (dir: TFolder) => {
@@ -262,11 +269,14 @@ export class VaultService {
     }
 
     /**
-     * Parse inline tags (#tag) from a string.
+     * Parse inline tags (#tag) from a string, including non-Latin scripts and nested tags.
      */
     parseTags(text: string): string[] {
-        const matches = text.match(/#[\w-]+/g);
-        return matches ? matches.map((t) => t.slice(1)) : [];
+        const matches = text.match(/(?:^|\s)#([\p{L}\p{N}\p{M}_/-]+)/gu);
+        if (!matches) return [];
+        return matches
+            .map((t) => t.trim().slice(1))
+            .filter((t) => !/^\d+$/.test(t));
     }
 }
 

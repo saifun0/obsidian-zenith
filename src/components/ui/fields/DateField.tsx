@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState, type FC } from 'react';
+import React, { useEffect, useMemo, useRef, useState, type FC } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Popover, usePopover } from '../../shared/Popover';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
 import { getTodayString } from '../../../core/dateUtils';
 import {
@@ -71,7 +71,7 @@ export const DateField: FC<DateFieldProps> = ({
     const valid = ISO.test(value) ? value : '';
 
     const label = valid
-        ? new Intl.DateTimeFormat(t.locale, {
+        ? new Intl.DateTimeFormat(intlLocale(t.locale), {
               day: 'numeric',
               month: 'short',
               year: 'numeric',
@@ -171,8 +171,13 @@ const Calendar: FC<{ value: string; clearable: boolean; onPick: (iso: string) =>
     // not every render — the first one included, which is the open.
     const moved = useRef(true);
 
+    const locale = intlLocale(t.locale);
     const days = monthGrid(focus, weekStart);
-    const names = weekdayLabels(t.locale, weekStart);
+    const names = weekdayLabels(locale, weekStart);
+    const fullDate = useMemo(
+        () => new Intl.DateTimeFormat(locale, { dateStyle: 'full' }),
+        [locale]
+    );
 
     useEffect(() => {
         if (!moved.current) return;
@@ -214,7 +219,7 @@ const Calendar: FC<{ value: string; clearable: boolean; onPick: (iso: string) =>
                     <ChevronLeft size={16} />
                 </button>
                 <span className="zenith-datepick__title" aria-live="polite">
-                    {capitalize(monthLabel(focus, t.locale))}
+                    {capitalize(monthLabel(focus, locale))}
                 </span>
                 <button
                     type="button"
@@ -251,9 +256,7 @@ const Calendar: FC<{ value: string; clearable: boolean; onPick: (iso: string) =>
                             className={classes}
                             aria-pressed={iso === value}
                             aria-current={iso === today ? 'date' : undefined}
-                            aria-label={new Intl.DateTimeFormat(t.locale, {
-                                dateStyle: 'full',
-                            }).format(isoToDate(iso))}
+                            aria-label={fullDate.format(isoToDate(iso))}
                             // One stop for the whole month; the arrows do the rest.
                             tabIndex={iso === focus ? 0 : -1}
                             onClick={() => onPick(iso)}

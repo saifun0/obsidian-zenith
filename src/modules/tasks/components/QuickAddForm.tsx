@@ -1,7 +1,7 @@
 import React, { useId, useMemo, useRef, useState, type FC } from 'react';
 import { X } from 'lucide-react';
 import { PRIORITIES, type Priority } from '../../../core/constants';
-import { useTranslation, type Translator } from '../../../core/i18n';
+import { intlLocale, useTranslation, type Translator } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import { useFeature } from '../../../core/useFeature';
 import { useZenithStore } from '../../../store';
@@ -48,7 +48,7 @@ export function chipLabel(
 ): string {
     switch (piece.kind) {
         case 'date':
-            return `📅 ${new Date(`${date}T00:00:00`).toLocaleDateString(t.locale, {
+            return `📅 ${new Date(`${date}T00:00:00`).toLocaleDateString(intlLocale(t.locale), {
                 weekday: 'short',
                 day: 'numeric',
                 month: 'short',

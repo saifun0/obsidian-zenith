@@ -2,7 +2,7 @@ import React, { useMemo, useState, type FC } from 'react';
 import { ChevronLeft, ChevronRight, ImageDown } from 'lucide-react';
 import { Notice } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
 import { trackerColor } from '../../../core/journalConfig';
 import { useZenithStore } from '../../../store';
@@ -44,16 +44,32 @@ async function svgToPng(svg: string): Promise<ArrayBuffer> {
     }
 }
 
-/** The theme's colours, so the card looks like the vault it came from. */
+/**
+ * The theme's colours, resolved through a real element so expressions using
+ * nested CSS variables (`hsl(var(--base-h), …)`, `color-mix(…)`) turn into
+ * concrete `rgb(…)` values an isolated SVG blob can paint.
+ */
 function themeColors() {
     const css = getComputedStyle(document.body);
-    const read = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
-    return {
-        bg: read('--background-primary', '#ffffff'),
-        fg: read('--text-normal', '#222222'),
-        muted: read('--text-muted', '#6b6b6b'),
-        accent: read('--interactive-accent', '#7b6cd9'),
-    };
+    const probe = document.body.createSpan();
+    try {
+        const read = (name: string, fallback: string) => {
+            const raw = css.getPropertyValue(name).trim();
+            if (!raw) return fallback;
+            probe.setCssStyles({ color: fallback });
+            probe.setCssStyles({ color: `var(${name}, ${fallback})` });
+            const computed = getComputedStyle(probe).color.trim();
+            return computed && !computed.includes('var(') ? computed : raw || fallback;
+        };
+        return {
+            bg: read('--background-primary', '#ffffff'),
+            fg: read('--text-normal', '#222222'),
+            muted: read('--text-muted', '#6b6b6b'),
+            accent: read('--interactive-accent', '#7b6cd9'),
+        };
+    } finally {
+        probe.remove();
+    }
 }
 
 /**
@@ -115,7 +131,7 @@ export const YearReview: FC<{ initialYear: number }> = ({ initialYear }) => {
     if (summary.words && summary.words.total > 0) {
         figures.push({
             section: 'words',
-            value: summary.words.total.toLocaleString(t.locale),
+            value: summary.words.total.toLocaleString(intlLocale(t.locale)),
             label: t('review.year.words', { days: t.plural('review.days', summary.words.days) }),
         });
     }
@@ -151,7 +167,7 @@ export const YearReview: FC<{ initialYear: number }> = ({ initialYear }) => {
 
     const moodMonths = review.mood ? review.moodByMonth : [];
     const monthName = (i: number) =>
-        new Date(year, i, 1).toLocaleDateString(t.locale, { month: 'narrow' });
+        new Date(year, i, 1).toLocaleDateString(intlLocale(t.locale), { month: 'narrow' });
 
     const savePicture = async () => {
         setSaving(true);

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { ChallengeBars, useChallenge } from './ChallengeBars';
 import { useFeature } from '../../../core/useFeature';
 import type { ContentItem } from '../../../store/contentSlice';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { computeContentStats } from '../services/contentStats';
 import { STATUS_COLOR, STATUS_ORDER, statusLabel } from '../contentLabels';
 import type { LibraryTypes } from '../useContentTypes';
@@ -53,7 +53,7 @@ export const ContentStats: React.FC<ContentStatsProps> = ({ items, types, onSele
     const maxType = Math.max(1, ...byType.map((x) => x.count));
 
     const monthName = useMemo(
-        () => new Intl.DateTimeFormat(t.locale, { month: 'short' }),
+        () => new Intl.DateTimeFormat(intlLocale(t.locale), { month: 'short' }),
         [t.locale]
     );
     const maxMonth = Math.max(1, ...stats.finishedByMonth.map((m) => m.count));

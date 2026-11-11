@@ -1,4 +1,3 @@
-import { useZenithStore } from '../../store';
 import { QuickAddTaskModal } from './QuickAddTaskModal';
 import type ZenithPlugin from '../../main';
 import { translateNow } from '../../core/i18n';
@@ -16,7 +15,7 @@ export function registerQuickAddTaskCommand(plugin: ZenithPlugin): void {
         id: 'quick-add-task',
         name: translateNow('command.quick-add-task'),
         callback: () => {
-            new QuickAddTaskModal(plugin.app, useZenithStore.getState().settings).open();
+            new QuickAddTaskModal(plugin.app, plugin).open();
         },
     });
     // Registered by the plugin rather than the module, so that it outlives the

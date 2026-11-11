@@ -1,6 +1,6 @@
 import React, { type FC } from 'react';
 import { Coffee, Moon, Palmtree } from 'lucide-react';
-import { useTranslation, type Translator } from '../../../core/i18n';
+import { intlLocale, useTranslation, type Translator } from '../../../core/i18n';
 import { addDays, isoToDate } from '../../../core/calendarDates';
 import { timeOf, type StudySchedule } from '../studyModel';
 import {
@@ -28,7 +28,9 @@ export function nextDayLine(
             ? t('study.tomorrow', { time })
             : t('study.nextDay', {
                   day: capital(
-                      isoToDate(next.date).toLocaleDateString(t.locale, { weekday: 'long' })
+                      isoToDate(next.date).toLocaleDateString(intlLocale(t.locale), {
+                          weekday: 'long',
+                      })
                   ),
                   time,
               });
@@ -119,10 +121,13 @@ export const NowCard: FC<{
                     <Palmtree size={18} />
                     {term === 'before'
                         ? t('study.termBefore', {
-                              date: isoToDate(opts.termStart).toLocaleDateString(t.locale, {
-                                  day: 'numeric',
-                                  month: 'long',
-                              }),
+                              date: isoToDate(opts.termStart).toLocaleDateString(
+                                  intlLocale(t.locale),
+                                  {
+                                      day: 'numeric',
+                                      month: 'long',
+                                  }
+                              ),
                           })
                         : t('study.termAfter')}
                 </span>

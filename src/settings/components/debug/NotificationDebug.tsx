@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Notice, Platform } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { useNow } from '../../../core/useNow';
 import { useFeature } from '../../../core/useFeature';
 import { VIEW_TYPE_TASKS } from '../../../core/constants';
@@ -149,7 +149,7 @@ export const NotificationDebug: React.FC = () => {
     const next = source.pending.reduce((min, e) => Math.min(min, e.at), Infinity);
     const permission =
         typeof window.Notification === 'undefined' ? '—' : window.Notification.permission;
-    const time = (at: number) => new Date(at).toLocaleString(t.locale);
+    const time = (at: number) => new Date(at).toLocaleString(intlLocale(t.locale));
 
     return (
         <div className="zenith-debug__pane">

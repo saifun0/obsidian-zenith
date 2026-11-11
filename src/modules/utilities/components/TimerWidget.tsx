@@ -1,6 +1,6 @@
 import React, { useState, type CSSProperties, type FC } from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { useNow } from '../../../core/useNow';
 import { useWidgetConfig } from '../../dashboard/widgetConfig';
 import type { DashboardWidgetProps, WidgetSettingsProps } from '../../dashboard/widgets';
@@ -54,7 +54,7 @@ export const TimerWidget: FC<DashboardWidgetProps> = ({ instanceId = 'picture.ti
 
     const until =
         state.kind === 'running'
-            ? new Date(config.timerEndsAt).toLocaleTimeString(t.locale, {
+            ? new Date(config.timerEndsAt).toLocaleTimeString(intlLocale(t.locale), {
                   hour: '2-digit',
                   minute: '2-digit',
               })

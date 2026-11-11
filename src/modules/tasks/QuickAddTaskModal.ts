@@ -1,7 +1,9 @@
 import { App, Modal, Notice } from 'obsidian';
 import { createRoot, type Root } from 'react-dom/client';
 import { createElement } from 'react';
-import type { ZenithSettings } from '../../store/settingsSlice';
+import { AppContext } from '../../context/AppContext';
+import { useZenithStore } from '../../store';
+import type ZenithPlugin from '../../main';
 import { TaskWriter } from './services/taskWriter';
 import { resolveTaskTarget } from './services/taskTarget';
 import { translateNow } from '../../core/i18n';
@@ -24,7 +26,7 @@ export class QuickAddTaskModal extends Modal {
 
     constructor(
         app: App,
-        private readonly settings: ZenithSettings,
+        private readonly plugin: ZenithPlugin,
         private readonly onSubmitted?: () => void
     ) {
         super(app);
@@ -33,10 +35,17 @@ export class QuickAddTaskModal extends Modal {
     onOpen(): void {
         const { contentEl, titleEl } = this;
         titleEl.setText(translateNow('tasks.quickAdd.title'));
-        contentEl.addClass('zenith-quick-add');
+        contentEl.empty();
+        contentEl.addClass('zenith-root', 'zenith-quick-add');
 
         this.root = createRoot(contentEl.createDiv());
-        this.root.render(createElement(QuickAddForm, { onSubmit: (draft) => this.submit(draft) }));
+        this.root.render(
+            createElement(
+                AppContext.Provider,
+                { value: { app: this.app, plugin: this.plugin } },
+                createElement(QuickAddForm, { onSubmit: (draft) => this.submit(draft) })
+            )
+        );
     }
 
     private async submit(draft: QuickAddDraft): Promise<void> {
@@ -45,10 +54,11 @@ export class QuickAddTaskModal extends Modal {
             return;
         }
 
+        const { settings } = useZenithStore.getState();
         try {
-            const target = await resolveTaskTarget(this.app, this.settings);
+            const target = await resolveTaskTarget(this.app, settings);
             await new TaskWriter(this.app).addTask(
-                this.settings.tasksFolderPath,
+                settings.tasksFolderPath,
                 {
                     title: draft.title,
                     priority: draft.priority,

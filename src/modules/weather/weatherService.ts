@@ -73,6 +73,10 @@ export function setWeatherPersistence(app: App | null): void {
     persisted = app;
 }
 
+export function clearWeatherPersistence(owner: App): void {
+    if (persisted === owner) persisted = null;
+}
+
 function readPersisted(key: string): WeatherData | null {
     try {
         const raw: unknown = persisted?.loadLocalStorage(cacheKey(key));

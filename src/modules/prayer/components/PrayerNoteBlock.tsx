@@ -1,9 +1,9 @@
 import React, { useMemo, type FC } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { getTodayString } from '../../../core/dateUtils';
-import { buildDateMatcher, relativeNotePath } from '../../journal/services/journalDates';
+import { buildDateMatcher, dayLabel, relativeNotePath } from '../../journal/services/journalDates';
 import { EXTRA_PRAYERS, PRAYERS, isPerformed, type PrayerId } from '../prayerConfig';
 import { setExtraPrayer, setPrayerStatus, statusForTap } from '../prayerActions';
 import { dayOf } from '../prayerStats';
@@ -60,7 +60,7 @@ export const PrayerNoteBlock: FC<PrayerNoteBlockProps> = ({ sourcePath }) => {
     const nowMinutes = useNowMinutes();
     const extras = usePrayerExtras();
     const openMenu = usePrayerMenu(date);
-    const countdownText = useCountdownText(today);
+    const countdownText = useCountdownText(date);
 
     if (!place || !day) {
         return <div className="zenith-prayer__note">{t('prayer.noPlace')}</div>;
@@ -94,7 +94,7 @@ export const PrayerNoteBlock: FC<PrayerNoteBlockProps> = ({ sourcePath }) => {
                         <b>{formatClock(next.at, t.locale)}</b>
                     </span>
                 ) : (
-                    <span>{isToday ? t('prayer.noTimes') : date}</span>
+                    <span>{isToday ? t('prayer.noTimes') : dayLabel(date, intlLocale(t.locale))}</span>
                 )}
                 <span className="zenith-prayer__counter">
                     {t('prayer.done', { done, total: PRAYERS.length })}

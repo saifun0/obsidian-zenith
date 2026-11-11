@@ -136,11 +136,21 @@ export class ProjectParser {
         const notes = new Map(
             this.vaultService.getMarkdownFiles(folderPath).map((file) => [file.path, file])
         );
+        const places = placeProjects(this.vaultService.getFilePaths(folderPath), folderPath).flatMap(
+            (place) => {
+                const file = notes.get(place.notePath);
+                return file ? [{ file, place }] : [];
+            }
+        );
         const projects: Project[] = [];
-        for (const place of placeProjects(this.vaultService.getFilePaths(folderPath), folderPath)) {
-            const file = notes.get(place.notePath);
-            if (!file) continue;
-            projects.push(await this.parseFile(file, allTasks, place));
+        const BATCH = 32;
+        for (let i = 0; i < places.length; i += BATCH) {
+            const chunk = await Promise.all(
+                places
+                    .slice(i, i + BATCH)
+                    .map(({ file, place }) => this.parseFile(file, allTasks, place))
+            );
+            projects.push(...chunk);
         }
         return projects;
     }

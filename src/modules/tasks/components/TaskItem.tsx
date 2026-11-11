@@ -4,7 +4,7 @@ import { GripVertical, MoreHorizontal, Paperclip, Target } from 'lucide-react';
 import type { Task } from '../../../store/taskSlice';
 import { useZenithStore } from '../../../store';
 import { useApp } from '../../../context/AppContext';
-import { useTranslation, type Translator } from '../../../core/i18n';
+import { intlLocale, useTranslation, type Translator } from '../../../core/i18n';
 import { TaskWriter } from '../services/taskWriter';
 import { useFeature } from '../../../core/useFeature';
 import { isGoal } from '../services/goalTree';
@@ -47,7 +47,7 @@ export function formatDueDate(dueDate: string, t: Translator): string {
     if (diffDays === -1) return t('date.yesterday');
     if (diffDays > 0 && diffDays <= 7) return t('date.inDays', { count: diffDays });
     if (diffDays < 0 && diffDays >= -7) return t('date.daysAgo', { count: Math.abs(diffDays) });
-    return date.toLocaleDateString(t.locale, { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(intlLocale(t.locale), { month: 'short', day: 'numeric' });
 }
 
 /** Tags shown in the row; the rest are a count. */

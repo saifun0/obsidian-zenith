@@ -52,7 +52,7 @@ export class TimerService {
     }
 
     /** Announce a countdown that has run out, once. */
-    private async check(): Promise<void> {
+    private check(): void {
         const session = this.session;
         if (!session || !isDue(session, Date.now())) return;
 

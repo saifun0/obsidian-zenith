@@ -1,5 +1,5 @@
 import React, { useState, type FC } from 'react';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { isoToDate } from '../../../core/calendarDates';
 import { toLocalIsoDate } from '../../../core/dateUtils';
 import { useZenithStore } from '../../../store';
@@ -57,10 +57,13 @@ export const StudyClockDebug: FC = () => {
     const presets = previewPresets(schedule, day, opts);
     const state = dayState(lessonsOn(schedule, today, opts), now).kind;
     const shortDay = (iso: string) =>
-        `${dayName(isoDay(iso), t.locale, 'short')}, ${isoToDate(iso).toLocaleDateString(t.locale, {
-            day: 'numeric',
-            month: 'short',
-        })}`;
+        `${dayName(isoDay(iso), t.locale, 'short')}, ${isoToDate(iso).toLocaleDateString(
+            intlLocale(t.locale),
+            {
+                day: 'numeric',
+                month: 'short',
+            }
+        )}`;
     const presetLabel = (p: PreviewPreset) =>
         `${t(`debug.study.preset.${p.id}`)} · ${p.id === 'free' ? shortDay(p.date) : timeOf(p.minute)}`;
 

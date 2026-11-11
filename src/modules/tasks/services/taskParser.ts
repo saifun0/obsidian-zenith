@@ -72,15 +72,24 @@ export class TaskParser {
      */
     async parseFolders(folderPaths: string[]): Promise<Task[]> {
         const seen = new Set<string>();
-        const allTasks: Task[] = [];
+        const files: TFile[] = [];
 
         for (const folderPath of folderPaths) {
             if (!folderPath?.trim()) continue;
             for (const file of this.vaultService.getMarkdownFiles(folderPath)) {
                 if (seen.has(file.path)) continue;
                 seen.add(file.path);
-                allTasks.push(...(await this.parseFile(file)));
+                files.push(file);
             }
+        }
+
+        const allTasks: Task[] = [];
+        const BATCH = 32;
+        for (let i = 0; i < files.length; i += BATCH) {
+            const chunk = await Promise.all(
+                files.slice(i, i + BATCH).map((file) => this.parseFile(file))
+            );
+            for (const tasks of chunk) allTasks.push(...tasks);
         }
         return allTasks;
     }

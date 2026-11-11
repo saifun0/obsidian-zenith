@@ -14,7 +14,7 @@
  * records `{ [version]: minAppVersion }` in versions.json (used by Obsidian to
  * offer the right plugin build per app version).
  */
-import { readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -57,5 +57,11 @@ versions[newVersion] = minAppVersion;
 write('manifest.json', manifest);
 write('package.json', pkg);
 write('versions.json', versions);
+if (existsSync(resolve(root, 'package-lock.json'))) {
+    const lock = read('package-lock.json');
+    lock.version = newVersion;
+    if (lock.packages?.['']) lock.packages[''].version = newVersion;
+    write('package-lock.json', lock);
+}
 
 console.log(`Zenith: bumped to ${newVersion} (minAppVersion ${minAppVersion}).`);

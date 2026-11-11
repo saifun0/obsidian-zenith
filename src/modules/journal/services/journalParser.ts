@@ -1,5 +1,6 @@
 import { App, TFile } from 'obsidian';
 import { VaultService, toStringArray, toIsoDate } from '../../../services/vaultService';
+import { stepFence, type FenceMarker } from '../../../services/markdownSections';
 import { NOTES_HEADINGS, RESERVED_TRACKER_IDS } from '../../../core/journalConfig';
 import type { JournalEntry, TrackerValue } from '../../../store/journalSlice';
 import { buildDateMatcher, relativeNotePath } from './journalDates';
@@ -22,11 +23,16 @@ const PREVIEW_CHARS = 600;
  * written under one interface language still counts under another.
  */
 export function notesSection(body: string): string | null {
-    const lines = body.split('\n');
+    const lines = body.split(/\r?\n/);
     let level = 0;
     let start = -1;
+    let fence: FenceMarker | null = null;
 
     for (let i = 0; i < lines.length; i++) {
+        const stepped = stepFence(fence, lines[i]);
+        fence = stepped.active;
+        if (stepped.inFence) continue;
+
         const heading = lines[i].match(/^(#{1,6})\s+(.+?)\s*$/);
         if (!heading) continue;
 
@@ -61,8 +67,20 @@ export function notesSection(body: string): string | null {
  * is stripped for the same reason.
  */
 export function countWords(body: string): number {
-    const prose = (notesSection(body) ?? body)
-        .replace(/^---\r?\n[\s\S]*?\r?\n---/, '')
+    const withoutFrontmatter = (notesSection(body) ?? body).replace(
+        /^---\r?\n[\s\S]*?\r?\n---/,
+        ''
+    );
+    let fence: FenceMarker | null = null;
+    const unfenced = withoutFrontmatter
+        .split(/\r?\n/)
+        .filter((line) => {
+            const stepped = stepFence(fence, line);
+            fence = stepped.active;
+            return !stepped.inFence;
+        })
+        .join('\n');
+    const prose = unfenced
         .replace(/^\s*#{1,6}\s+/gm, '')
         .replace(/^\s*[-*+]\s+(\[[^\]]\]\s*)?/gm, '')
         .replace(/^\s*>\s?/gm, '')
@@ -145,9 +163,16 @@ export class JournalParser {
         const files = this.vaultService.getMarkdownFiles(folderPath);
         const matcher = buildDateMatcher(format);
         const entries: JournalEntry[] = [];
-        for (const file of files) {
-            const entry = await this.parseFile(file, folderPath, matcher);
-            if (entry) entries.push(entry);
+        const BATCH = 32;
+        for (let i = 0; i < files.length; i += BATCH) {
+            const chunk = await Promise.all(
+                files
+                    .slice(i, i + BATCH)
+                    .map((file) => this.parseFile(file, folderPath, matcher))
+            );
+            for (const entry of chunk) {
+                if (entry) entries.push(entry);
+            }
         }
         return entries;
     }

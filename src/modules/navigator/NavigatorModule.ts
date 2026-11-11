@@ -39,7 +39,7 @@ export class NavigatorModule extends BaseModule {
         super(plugin);
     }
 
-    async onload(): Promise<void> {
+    onload(): Promise<void> {
         this.disposers.push(
             this.plugin.registerDashboardWidget({
                 id: 'navigator.launcher',
@@ -63,6 +63,7 @@ export class NavigatorModule extends BaseModule {
             callback: () => void openNavPanel(this.plugin),
         });
         this.plugin.app.workspace.onLayoutReady(() => void this.placePanelOnce());
+        return Promise.resolve();
     }
 
     /**
@@ -78,9 +79,10 @@ export class NavigatorModule extends BaseModule {
         await openNavPanel(this.plugin, false);
     }
 
-    async onunload(): Promise<void> {
+    onunload(): Promise<void> {
         this.disposers.forEach((d) => d());
         this.disposers = [];
+        return Promise.resolve();
     }
 
     async activateView(): Promise<void> {

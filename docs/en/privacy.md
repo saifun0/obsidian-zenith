@@ -15,6 +15,12 @@ year per place and method. In calculated mode prayer times make no requests.
 The content library makes no requests of its own. A cover given as a link is loaded from
 that address whenever it is shown, like any image in a note.
 
+File sync talks only to the remote storage you connect yourself — Dropbox, OneDrive, an S3
+bucket or a WebDAV server — and can encrypt both file contents and filenames end-to-end before
+anything leaves the device (see [Encrypted sync](encryption.md)). Settings sync makes no
+network requests of its own: it writes per-device files inside the plugin folder so your
+existing vault sync (or Zenith's file sync) carries them.
+
 When Obsidian starts, Zenith reads its own `manifest.json` from `raw.githubusercontent.com`,
 the file Obsidian's plugin directory reads, to see whether a newer version is out. The request
 carries nothing about you or your vault. *Check for updates* switches it off.

@@ -32,7 +32,7 @@ export class JournalView extends ItemView {
         return 'calendar-days';
     }
 
-    async onOpen(): Promise<void> {
+    onOpen(): Promise<void> {
         const container = this.containerEl.children[1] as HTMLElement;
         container.empty();
         container.addClass('zenith-root');
@@ -47,10 +47,12 @@ export class JournalView extends ItemView {
                 createElement(JournalApp)
             )
         );
+        return Promise.resolve();
     }
 
-    async onClose(): Promise<void> {
+    onClose(): Promise<void> {
         this.root?.unmount();
         this.root = null;
+        return Promise.resolve();
     }
 }

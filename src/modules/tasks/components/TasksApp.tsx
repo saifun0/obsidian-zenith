@@ -4,7 +4,7 @@ import { MoreHorizontal, RotateCw, Search } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
 import { reorderScope } from '../services/reorderScope';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation, type Locale } from '../../../core/i18n';
 import { useFeature } from '../../../core/useFeature';
 import { TASK_TABS } from '../../../core/constants';
 import { getTodayString } from '../../../core/dateUtils';
@@ -56,13 +56,14 @@ function restoreFilters(saved: { sort: string; group: string }): TaskFilterState
 type Tab = (typeof TASK_TABS)[number]['id'] | 'goals';
 
 /** "Thursday, 2 October" in the interface's language, capitalised as a heading is. */
-function dayHeading(locale: string): string {
-    const text = new Date().toLocaleDateString(locale, {
+function dayHeading(locale: Locale): string {
+    const tag = intlLocale(locale);
+    const text = new Date().toLocaleDateString(tag, {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
     });
-    return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1);
+    return text.charAt(0).toLocaleUpperCase(tag) + text.slice(1);
 }
 
 /** What the keyboard is typing into, which the list's own keys must leave alone. */

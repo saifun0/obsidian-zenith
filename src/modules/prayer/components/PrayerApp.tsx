@@ -1,7 +1,7 @@
 import React, { useMemo, useState, type FC } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { getTodayString, toLocalIsoDate } from '../../../core/dateUtils';
 import { placeLabel } from '../../../services/geocode';
 import { openDailyNote } from '../../journal/services/journalActions';
@@ -72,7 +72,7 @@ export const PrayerApp: FC = () => {
 
     const dateLabel = useMemo(
         () =>
-            isoToDate(selected).toLocaleDateString(t.locale, {
+            isoToDate(selected).toLocaleDateString(intlLocale(t.locale), {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'long',

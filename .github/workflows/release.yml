@@ -71,9 +71,11 @@ jobs:
 
             - run: npm ci
 
-            - name: Types and tests
+            - name: Types, lint and tests
               run: |
                   npx tsc --noEmit
+                  npm run lint
+                  npm run lint:obsidian
                   npm test
 
             - name: Build

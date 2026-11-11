@@ -4,7 +4,7 @@ import { TASK_STATUSES } from '../../../core/constants';
 import { getTodayString } from '../../../core/dateUtils';
 import { computeTaskStats, type HeatCell, type StatsRange } from '../services/taskStats';
 import { STATUS_I18N, StatusBox } from './taskStatusUi';
-import { useTranslation, type Translator } from '../../../core/i18n';
+import { intlLocale, useTranslation, type Translator } from '../../../core/i18n';
 import { useFeature } from '../../../core/useFeature';
 import { withFigures } from './inkFigures';
 
@@ -217,7 +217,7 @@ const Heatmap: FC<{ cells: HeatCell[]; t: Translator }> = ({ cells, t }) => {
         // The first column is usually mid-month; naming it would crowd the next.
         if (i === 0) return '';
         return new Date(`${month}-01T00:00:00`)
-            .toLocaleDateString(t.locale, { month: 'short' })
+            .toLocaleDateString(intlLocale(t.locale), { month: 'short' })
             .replace(/\.$/, '');
     });
 

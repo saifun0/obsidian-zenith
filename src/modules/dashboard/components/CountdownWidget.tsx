@@ -1,7 +1,7 @@
 import React, { useMemo, type FC } from 'react';
 import { Plus, X } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
-import { useTranslation, type Translator } from '../../../core/i18n';
+import { intlLocale, useTranslation, type Translator } from '../../../core/i18n';
 import { useNow } from '../../../core/useNow';
 import { toLocalIsoDate } from '../../../core/dateUtils';
 import { isoToDate } from '../../../core/calendarDates';
@@ -122,7 +122,10 @@ export const CountdownWidget: FC<DashboardWidgetProps> = ({
     const more = rest.length - rows.length;
 
     const dateOf = (c: Countdown) =>
-        isoToDate(c.date).toLocaleDateString(t.locale, { day: 'numeric', month: 'short' });
+        isoToDate(c.date).toLocaleDateString(intlLocale(t.locale), {
+            day: 'numeric',
+            month: 'short',
+        });
     const open = (c: Countdown) => void app.workspace.openLinkText(c.path ?? '', '', false);
 
     const leadDays = daysUntil(lead.date, today);

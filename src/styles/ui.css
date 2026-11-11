@@ -329,7 +329,11 @@
 }
 
 .zenith-pop button.zenith-pop__item.is-active {
-    background: color-mix(in srgb, var(--interactive-accent, #8b5cf6) 16%, transparent);
+    background: color-mix(
+        in srgb,
+        var(--zenith-accent-user, var(--interactive-accent, #8b5cf6)) 16%,
+        transparent
+    );
 }
 
 .zenith-pop button.zenith-pop__item svg {

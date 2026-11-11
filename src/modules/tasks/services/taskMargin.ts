@@ -1,5 +1,5 @@
 import type { Task } from '../../../store/taskSlice';
-import type { Translator } from '../../../core/i18n';
+import { intlLocale, type Translator } from '../../../core/i18n';
 import { addDays } from './taskBuckets';
 
 /**
@@ -20,14 +20,14 @@ const DAY_MS = 86_400_000;
 const daysFrom = (today: string, iso: string) =>
     Math.round((Date.parse(`${iso}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / DAY_MS);
 
-const lower = (s: string, t: Translator) => s.toLocaleLowerCase(t.locale);
+const lower = (s: string, t: Translator) => s.toLocaleLowerCase(intlLocale(t.locale));
 
 /** "12 окт", "Oct 12", "10月12日" — and the year, short, when it is not this one. */
 export function shortDate(iso: string, today: string, t: Translator): string {
     const date = new Date(`${iso}T00:00:00`);
     if (Number.isNaN(date.getTime())) return iso;
     const text = date
-        .toLocaleDateString(t.locale, { day: 'numeric', month: 'short' })
+        .toLocaleDateString(intlLocale(t.locale), { day: 'numeric', month: 'short' })
         // "окт." — the abbreviation's full stop is noise in a column of them.
         .replace(/\.$/, '');
     return iso.slice(0, 4) === today.slice(0, 4) ? text : `${text} ’${iso.slice(2, 4)}`;
@@ -36,7 +36,7 @@ export function shortDate(iso: string, today: string, t: Translator): string {
 /** "пт", "Fri", "周五". */
 function weekday(iso: string, t: Translator): string {
     return new Date(`${iso}T00:00:00`)
-        .toLocaleDateString(t.locale, { weekday: 'short' })
+        .toLocaleDateString(intlLocale(t.locale), { weekday: 'short' })
         .replace(/\.$/, '');
 }
 

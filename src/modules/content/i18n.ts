@@ -12,11 +12,13 @@ import type { TranslationTable } from '../../core/i18n';
 export const contentTranslations: TranslationTable = {
     en: {
         'module.content.name': 'Content',
-        'module.content.desc': 'Manage your articles, notes, and long-form content.',
+        'module.content.desc':
+            'A library of books, films, shows, anime and games: status, progress, ratings and stats.',
     },
     ru: {
         'module.content.name': 'Контент',
-        'module.content.desc': 'Статьи, заметки и длинные тексты в одном месте.',
+        'module.content.desc':
+            'Библиотека книг, фильмов, сериалов, аниме и игр: статусы, прогресс, оценки и статистика.',
     },
     zh: {
         'module.content.name': '内容',

@@ -357,8 +357,8 @@ export const MODAL_CATALOG: readonly ModalEntry[] = [
         owner: 'tasks',
         kind: 'obsidian',
         writes: true,
-        create: ({ app, report }) =>
-            new QuickAddTaskModal(app, useZenithStore.getState().settings, () => report('added')),
+        create: ({ app, plugin, report }) =>
+            new QuickAddTaskModal(app, plugin, () => report('added')),
     },
     {
         id: 'taskEditor',

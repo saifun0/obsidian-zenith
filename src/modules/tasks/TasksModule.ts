@@ -31,7 +31,7 @@ export class TasksModule extends BaseModule {
     private timer: TimerService | null = null;
     private reminders: TaskReminderService | null = null;
 
-    async onload(): Promise<void> {
+    onload(): Promise<void> {
         // Register the Tasks view
         this.registerView(
             VIEW_TYPE_TASKS,
@@ -134,15 +134,17 @@ export class TasksModule extends BaseModule {
                 viewType: VIEW_TYPE_TASKS,
             })
         );
+        return Promise.resolve();
     }
 
-    async onunload(): Promise<void> {
+    onunload(): Promise<void> {
         this.disposers.forEach((d) => d());
         this.disposers = [];
         // NOTE: intentionally NOT detaching leaves here. Obsidian guidelines
         // advise against closing the user's open leaves on unload — the view is
         // torn down by Obsidian, and detaching drops the user's layout on
         // disable/enable or app reload.
+        return Promise.resolve();
     }
 
     async activateView(): Promise<void> {

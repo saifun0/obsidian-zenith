@@ -2,7 +2,7 @@ import React, { useMemo, type FC } from 'react';
 import { Menu } from 'obsidian';
 import { Check, Clock, ExternalLink, X } from 'lucide-react';
 import { useZenithStore } from '../../store';
-import { useTranslation, type Translator } from '../i18n';
+import { intlLocale, useTranslation, type Translator } from '../i18n';
 import { useNow } from '../useNow';
 import type { NotificationCenter } from './NotificationCenter';
 import {
@@ -17,10 +17,11 @@ import {
 const SNOOZES: SnoozeChoice[] = ['10m', '1h', 'tomorrow'];
 
 function when(record: NotificationRecord, today: boolean, t: Translator): string {
+    const locale = intlLocale(t.locale);
     const date = new Date(record.at);
-    const time = date.toLocaleTimeString(t.locale, { hour: '2-digit', minute: '2-digit' });
+    const time = date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     if (today) return time;
-    return `${date.toLocaleDateString(t.locale, { day: 'numeric', month: 'short' })}, ${time}`;
+    return `${date.toLocaleDateString(locale, { day: 'numeric', month: 'short' })}, ${time}`;
 }
 
 /**

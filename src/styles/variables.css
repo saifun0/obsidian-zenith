@@ -34,7 +34,7 @@
     /* `--zenith-accent-user` is the accent picked in Zenith's settings, set on
        <body> by main.ts; without one, the theme's own. */
     --zenith-accent: var(--zenith-accent-user, var(--interactive-accent));
-    --zenith-accent-hover: var(--zenith-accent-user, var(--interactive-accent-hover));
+    --zenith-accent-hover: var(--zenith-accent-user-hover, var(--interactive-accent-hover));
     --zenith-border: color-mix(in srgb, var(--background-modifier-border) 40%, transparent);
 
     /* ── Typography ─────────────────────────────── */

@@ -3,7 +3,7 @@ import { Menu } from 'obsidian';
 import { LayoutGrid, Check, LayoutTemplate, Bell, Plus } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { useZenithStore } from '../../../store';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { useFeature } from '../../../core/useFeature';
 import { NotificationCenterModal } from '../../../core/notifications/NotificationCenterModal';
 import { unreadCount } from '../../../core/notifications/notificationState';
@@ -90,7 +90,10 @@ export const DashboardApp: React.FC = () => {
     const hiddenWidgetIds = useZenithStore((s) => s.settings.hiddenWidgetIds);
 
     const t = useTranslation();
-    const { weekday, dayMonth } = useMemo(() => formatDateParts(new Date(), t.locale), [t.locale]);
+    const { weekday, dayMonth } = useMemo(
+        () => formatDateParts(new Date(), intlLocale(t.locale)),
+        [t.locale]
+    );
 
     /* An empty custom line is the same as no line — rendering the element
        anyway would leave the header carrying the height of a heading nobody

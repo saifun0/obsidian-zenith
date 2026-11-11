@@ -2,7 +2,7 @@ import React, { useMemo, useState, type FC } from 'react';
 import { Check, Lock, Sparkles } from 'lucide-react';
 import { TFile } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
-import { useTranslation, type Translator } from '../../../core/i18n';
+import { intlLocale, useTranslation, type Translator } from '../../../core/i18n';
 import { featureEnabled } from '../../../core/features';
 import { useFeature } from '../../../core/useFeature';
 import { contentTypesNow } from '../../content/useContentTypes';
@@ -54,11 +54,12 @@ export function availableSections(settings: ZenithSettings): SummarySection[] {
 
 /** "Week 39 · 21–27 Sep", "September 2026", "Q3 2026", "2026". */
 export function periodTitle(range: PeriodRange, t: Translator): string {
+    const locale = intlLocale(t.locale);
     const start = isoToDate(range.start);
     switch (range.period) {
         case 'week': {
             const fmt = (iso: string) =>
-                isoToDate(iso).toLocaleDateString(t.locale, { day: 'numeric', month: 'short' });
+                isoToDate(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
             return t('review.title.week', {
                 week: weekOfRange(range.start).week,
                 from: fmt(range.start),
@@ -66,7 +67,7 @@ export function periodTitle(range: PeriodRange, t: Translator): string {
             });
         }
         case 'month': {
-            const name = start.toLocaleDateString(t.locale, { month: 'long', year: 'numeric' });
+            const name = start.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
             return name.charAt(0).toUpperCase() + name.slice(1);
         }
         case 'quarter':
@@ -116,11 +117,11 @@ export function summaryLabels(
         fast: (kind, count) => `${t(`fast.kind.${kind}`)} — ${count}`,
         words: (w) =>
             t('review.words', {
-                words: w.total.toLocaleString(t.locale),
+                words: w.total.toLocaleString(intlLocale(t.locale)),
                 days: t.plural('review.days', w.days),
             }),
         frozen: t('review.frozen', {
-            date: new Date().toLocaleDateString(t.locale, {
+            date: new Date().toLocaleDateString(intlLocale(t.locale), {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',

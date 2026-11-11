@@ -258,10 +258,13 @@ export const StudyApp: FC = () => {
                                         <h3>
                                             {dayName(day, t.locale)}
                                             <span>
-                                                {isoToDate(date).toLocaleDateString(t.locale, {
-                                                    day: 'numeric',
-                                                    month: 'long',
-                                                })}
+                                                {isoToDate(date).toLocaleDateString(
+                                                    intlLocale(t.locale),
+                                                    {
+                                                        day: 'numeric',
+                                                        month: 'long',
+                                                    }
+                                                )}
                                             </span>
                                             {isToday && <em>{t('study.today')}</em>}
                                         </h3>

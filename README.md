@@ -44,16 +44,21 @@ Everything in the pictures is made up: they are of the demo vault that comes wit
 
 | Module | What it does |
 | --- | --- |
-| **Dashboard** | Greeting, clock, weather, quick-add, and per-module summary widgets. |
+| **Dashboard** | Greeting, clock, countdowns, period progress and per-module summary widgets. |
 | **Navigation** | A launcher widget and a side panel with a button for every Zenith view — extendable by any module — and buttons for the commands you run often. |
 | **Search** | One line to find any view, action, task, project, library item or day's note, and to add a task. |
 | **Editor** | Code blocks with the language's icon and name, a stripe in its colour, line numbers and a copy button. |
-| **Tasks** | Parse, filter, search, group, create, edit, complete and delete tasks. |
-| **Journal** | Daily notes on a calendar, with configurable habit / scale / number tracking and the day's tasks. |
+| **Tasks** | Parse, filter, search, group, create, edit, complete and delete tasks, with goals, subtasks, attachments and a timer. |
+| **Tasks Calendar** | Tasks laid out on a month, week, day or agenda calendar, with hour-grid drag-and-drop. |
+| **Projects** | Projects as notes or folders, aggregating related tasks with progress tracking and deadlines. |
+| **Journal** | Daily notes on a calendar, with configurable habit / scale / number tracking, rituals, reviews and the day's tasks. |
 | **Content** | A library of what you read, watch and play: a list by status or a grid, series, favourites, half-star ratings, progress, covers from the vault or a link, stats, and import from MyAnimeList / Goodreads / Letterboxd / Anixart. Works offline. |
-| **Prayer** | Prayer times computed on the device, a countdown to the next one, and a record of what you prayed — kept in the daily note. |
+| **Study** | Class timetable with week cycles, dashboard card, next-class tasks and reminders; importable from an AI-extracted schedule. |
+| **Prayer** | Prayer times from a published calendar or computed on the device, a countdown to the next one, fasting and a record of what you prayed — kept in the daily note. |
+| **Weather** | Dashboard weather card with current conditions, hourly and 10-day forecast, sunrise/sunset and air quality. |
 | **Utilities** | Small dashboard cards you fill in yourself: a text or a note, a picture, links, recent notes, a quick note and a timer. |
 | **Media Banner** | Show a GIF/image (from the vault or a URL) above the file-explorer tree, with a picker. |
+| **Sync** | Per-field HLC settings merge across devices, plus optional encrypted note sync via Dropbox, OneDrive, S3 or WebDAV. |
 
 Enable or disable modules in **Settings → Active Modules**. Modules load and unload
 instantly — no Obsidian restart required.

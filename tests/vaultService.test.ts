@@ -52,8 +52,12 @@ describe('VaultService.parseCheckboxes', () => {
 
 describe('VaultService.parseTags', () => {
     const svc = new VaultService({} as never);
-    it('extracts inline tags', () => {
+    it('extracts inline tags including Cyrillic and nested tags, ignoring bare numbers', () => {
         expect(svc.parseTags('a #x and #y-2')).toEqual(['x', 'y-2']);
+        expect(svc.parseTags('задача #работа #work/zenith #123')).toEqual([
+            'работа',
+            'work/zenith',
+        ]);
     });
 });
 
@@ -81,9 +85,11 @@ describe('reading a folder that may not be there', () => {
         return file;
     };
 
-    it('reads the notes in a folder that exists', () => {
+    it('reads the notes in a folder that exists, stripping leading or trailing slashes', () => {
         const service = serviceOver({ notes: [note('notes/a.md')] });
         expect(service.getMarkdownFiles('notes')).toHaveLength(1);
+        expect(service.getMarkdownFiles('/notes/')).toHaveLength(1);
+        expect(service.getFilePaths('notes/')).toEqual(['notes/a.md']);
     });
 
     it('says nothing at all about a folder nobody configured', () => {

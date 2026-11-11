@@ -9,6 +9,9 @@ node_modules/
 
 # Scratch / reference material
 temp/
+redesign-brief/
+obsidianReviews.md
+.claude/
 
 # TypeScript & tool caches
 *.tsbuildinfo

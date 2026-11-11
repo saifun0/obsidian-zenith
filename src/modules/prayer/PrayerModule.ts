@@ -14,7 +14,7 @@ import { prayerSettingsSchema } from './settings.schema';
 import { setPrayerStatus, statusForTap } from './prayerActions';
 import { prayerPlaceOf } from './prayerOptions';
 import { dayTimesFor, ensurePrayerDay } from './prayerSource';
-import { setTableStore, vaultTableStore } from './prayerTable';
+import { clearTableStore, setTableStore, vaultTableStore, type TableStore } from './prayerTable';
 import { PRAYERS } from './prayerConfig';
 import { currentPrayer, formatClock, minutesOfDay } from './prayerTimes';
 import type ZenithPlugin from '../../main';
@@ -49,12 +49,13 @@ export class PrayerModule extends BaseModule {
 
     private disposers: Array<() => void> = [];
     private reminders: PrayerReminderService | null = null;
+    private tableStore: TableStore | null = null;
 
     constructor(plugin: ZenithPlugin) {
         super(plugin);
     }
 
-    async onload(): Promise<void> {
+    onload(): Promise<void> {
         // The tracker used to be a view of its own. Vaults that had one open
         // still carry that leaf in their saved layout, and with no view type
         // registered for it Obsidian would leave an empty tab behind — so the
@@ -116,30 +117,35 @@ export class PrayerModule extends BaseModule {
         // see, sort or sync. With no folder to hand (a test harness) they are
         // held in memory for the session.
         const dir = this.plugin.manifest.dir;
-        void setTableStore(
-            dir
-                ? vaultTableStore(this.plugin.app.vault.adapter, normalizePath(`${dir}/cache/prayer`))
-                : null
-        );
+        const store = dir
+            ? vaultTableStore(this.plugin.app.vault.adapter, normalizePath(`${dir}/cache/prayer`))
+            : null;
+        this.tableStore = store;
+        void setTableStore(store);
 
         this.reminders = new PrayerReminderService(this.plugin);
         this.reminders.start();
+        return Promise.resolve();
     }
 
-    async onunload(): Promise<void> {
+    onunload(): Promise<void> {
         this.reminders?.stop();
         this.reminders = null;
-        void setTableStore(null);
+        const owned = this.tableStore;
+        this.tableStore = null;
+        void clearTableStore(owned);
         this.disposers.forEach((d) => d());
         this.disposers = [];
+        return Promise.resolve();
     }
 
     /**
      * The module's "open me" entry point. Named for the interface it satisfies;
      * there is no view behind it any more, only the modal.
      */
-    async activateView(): Promise<void> {
+    activateView(): Promise<void> {
         new PrayerModal(this.plugin.app, this.plugin).open();
+        return Promise.resolve();
     }
 
     getSettingsSchema(): SettingsSchema {
@@ -182,16 +188,17 @@ export class PrayerModule extends BaseModule {
         // the night that just passed and a false entry in the day ahead.
         const date = active.fromYesterday ? addDays(getTodayString(), -1) : getTodayString();
 
+        const status = statusForTap(times, active.id, nowMinutes);
         const ok = await setPrayerStatus(
             this.plugin.app,
             settings,
             date,
             active.id,
-            statusForTap(times, active.id, nowMinutes)
+            status
         );
         if (ok) {
             new Notice(
-                `${translate(locale, `prayer.${active.id}`)} — ${translate(locale, 'prayer.status.ontime')}`
+                `${translate(locale, `prayer.${active.id}`)} — ${translate(locale, `prayer.status.${status}`)}`
             );
         }
     }

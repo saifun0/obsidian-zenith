@@ -2,7 +2,7 @@ import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FuzzySuggestModal, Notice, type App } from 'obsidian';
 import { useApp } from '../../../context/AppContext';
-import type { Translator } from '../../../core/i18n';
+import { intlLocale, type Translator } from '../../../core/i18n';
 import { addDays, isoToDate } from '../../../core/calendarDates';
 import { ConfirmModal } from '../../../core/ConfirmModal';
 import type { Task } from '../../../store/taskSlice';
@@ -115,7 +115,7 @@ export function useScheduleDrag(opts: {
         async (task: Task, mode: DragMode, to: GridSlot) => {
             const change = slotChange(task, mode, to);
             if (change.confirm) {
-                const day = isoToDate(to.date).toLocaleDateString(t.locale, {
+                const day = isoToDate(to.date).toLocaleDateString(intlLocale(t.locale), {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',

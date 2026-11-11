@@ -1,5 +1,5 @@
 import React, { useId, type FC } from 'react';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { useNow } from '../../../core/useNow';
 import { toLocalIsoDate } from '../../../core/dateUtils';
 import { useZenithStore } from '../../../store';
@@ -50,12 +50,13 @@ export const LifeWeeksWidget: FC<DashboardWidgetProps> = () => {
         </pattern>
     );
 
+    const locale = intlLocale(t.locale);
     return (
         <div className={`zenith-life${plan.beside ? ' is-beside' : ''}`}>
             <div className="zenith-life__figure">
-                <span className="zenith-wfig">{life.lived.toLocaleString(t.locale)}</span>
+                <span className="zenith-wfig">{life.lived.toLocaleString(locale)}</span>
                 <span className="zenith-wcap">
-                    {t('lifeWeeks.of', { total: life.total.toLocaleString(t.locale), percent })}
+                    {t('lifeWeeks.of', { total: life.total.toLocaleString(locale), percent })}
                 </span>
             </div>
             {/* Not before the card has been measured: the grain is chosen from

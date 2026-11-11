@@ -144,7 +144,11 @@ class NavActionRegistry {
         }
         this.actions.set(def.id, def);
         this.rebuild();
-        return () => this.unregister(def.id);
+        return () => {
+            // Only its own registration: an action replaced under the same id
+            // during a reload belongs to the new instance.
+            if (this.actions.get(def.id) === def) this.unregister(def.id);
+        };
     }
 
     unregister(id: string): void {

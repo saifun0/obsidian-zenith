@@ -32,7 +32,7 @@ export class MediaModule extends BaseModule {
         super(plugin);
     }
 
-    async onload(): Promise<void> {
+    onload(): Promise<void> {
         this.banner = new MediaBannerService(this.plugin);
         this.banner.start();
 
@@ -55,17 +55,20 @@ export class MediaModule extends BaseModule {
                 onClick: () => openMediaPicker(this.plugin),
             })
         );
+        return Promise.resolve();
     }
 
-    async onunload(): Promise<void> {
+    onunload(): Promise<void> {
         this.disposers.forEach((d) => d());
         this.disposers = [];
         this.banner?.stop();
         this.banner = null;
+        return Promise.resolve();
     }
 
-    async activateView(): Promise<void> {
+    activateView(): Promise<void> {
         openMediaPicker(this.plugin);
+        return Promise.resolve();
     }
 
     getSettingsSchema(): SettingsSchema {

@@ -31,7 +31,7 @@ export class ProjectsView extends ItemView {
         return 'folder-kanban';
     }
 
-    async onOpen(): Promise<void> {
+    onOpen(): Promise<void> {
         const container = this.contentEl;
         container.empty();
         container.addClass('zenith-root');
@@ -49,10 +49,12 @@ export class ProjectsView extends ItemView {
                 )
             )
         );
+        return Promise.resolve();
     }
 
-    async onClose(): Promise<void> {
+    onClose(): Promise<void> {
         this.root?.unmount();
         this.root = null;
+        return Promise.resolve();
     }
 }

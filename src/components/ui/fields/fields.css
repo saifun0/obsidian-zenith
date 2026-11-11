@@ -33,8 +33,8 @@ body {
     --zenith-field-bg: var(--background-primary);
     --zenith-field-border: var(--background-modifier-border);
     --zenith-field-border-hover: var(--background-modifier-border-hover, var(--text-faint));
-    --zenith-field-accent: var(--interactive-accent);
-    --zenith-field-ring: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent);
+    --zenith-field-accent: var(--zenith-accent-user, var(--interactive-accent));
+    --zenith-field-ring: 0 0 0 2px color-mix(in srgb, var(--zenith-field-accent) 20%, transparent);
 }
 
 @media (pointer: coarse) {

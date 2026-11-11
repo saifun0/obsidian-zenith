@@ -32,7 +32,7 @@ import {
     nestUnder,
     type DropPosition,
 } from './taskMove';
-import { insertUnderHeading, appendBlock } from '../../../services/markdownSections';
+import { insertTextUnderHeading, appendBlock } from '../../../services/markdownSections';
 import type { TaskTarget } from './taskTarget';
 
 /** A `- [ ]` / `* [x]` / `[/]` / `[-]` checkbox line (safety check before deleting). */
@@ -323,9 +323,9 @@ export class TaskWriter {
             if (file instanceof TFile) {
                 await this.process(file, (data) => {
                     const placed = target.heading
-                        ? insertUnderHeading(data.split('\n'), target.heading, block.split('\n'))
+                        ? insertTextUnderHeading(data, target.heading, block)
                         : null;
-                    return placed ? placed.join('\n') : appendBlock(data, block);
+                    return placed ?? appendBlock(data, block);
                 });
                 return { filePath: file.path, line };
             }

@@ -127,7 +127,7 @@ export class ContentWriter {
         await this.ensureFolder(folder);
 
         const baseName = this.sanitizeFileName(input.title) || 'Untitled';
-        const filePath = await this.uniquePath(folder, baseName);
+        const filePath = this.uniquePath(folder, baseName);
 
         const content = this.buildNote(input);
         return this.app.vault.create(filePath, content);
@@ -217,7 +217,7 @@ export class ContentWriter {
             .trim();
     }
 
-    private async uniquePath(folder: string, baseName: string): Promise<string> {
+    private uniquePath(folder: string, baseName: string): string {
         const make = (n: number) =>
             normalizePath(folder ? `${folder}/${baseName}${n ? ` ${n}` : ''}.md` : `${baseName}${n ? ` ${n}` : ''}.md`);
         let i = 0;

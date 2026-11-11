@@ -2,7 +2,7 @@ import { App, TFile, TFolder, normalizePath } from 'obsidian';
 import { translate, resolveLocale, type Locale } from '../../../core/i18n';
 import { JOURNAL_BLOCK_LANG } from '../../../core/constants';
 import { featureEnabled } from '../../../core/features';
-import { insertUnderHeading, appendBlock } from '../../../services/markdownSections';
+import { insertTextUnderHeading, appendBlock } from '../../../services/markdownSections';
 import type { ZenithSettings } from '../../../store/settingsSlice';
 import { journalNotePath, isoToDate, formatJournalDate } from './journalDates';
 import { BUILTIN_PROMPTS, parsePrompts, pickPrompt } from './dailyPrompt';
@@ -193,8 +193,7 @@ export class JournalWriter {
      */
     async appendUnderHeading(file: TFile, heading: string, block: string): Promise<void> {
         await this.app.vault.process(file, (data) => {
-            const placed = insertUnderHeading(data.split('\n'), heading, block.split('\n'));
-            return placed ? placed.join('\n') : appendBlock(data, block);
+            return insertTextUnderHeading(data, heading, block) ?? appendBlock(data, block);
         });
     }
 

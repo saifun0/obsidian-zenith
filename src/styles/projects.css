@@ -197,20 +197,20 @@
    around it. */
 .zenith-project-state {
     font-weight: 600;
-    color: var(--zenith-text-muted);
+    color: var(--zenith-text-muted, var(--text-muted, #a5a5a5));
 }
 
 .zenith-project-state--active,
 .zenith-project-state--in-progress {
-    color: var(--zenith-accent);
+    color: var(--zenith-accent, var(--zenith-accent-user, var(--interactive-accent, #8b5cf6)));
 }
 
 .zenith-project-state--completed {
-    color: var(--zenith-success);
+    color: var(--zenith-success, var(--color-green, #10b981));
 }
 
 .zenith-project-state--paused {
-    color: var(--zenith-warning);
+    color: var(--zenith-warning, var(--color-yellow, #f59e0b));
 }
 
 .zenith-project-prio {
@@ -632,7 +632,7 @@
    not pressable and must not be announced as though it were. */
 .zenith-pop__label {
     padding: 6px 10px 2px;
-    color: var(--zenith-text-faint);
+    color: var(--zenith-text-faint, var(--text-faint, #7a7a7a));
     font-size: 0.68rem;
     font-weight: 600;
     letter-spacing: 0.04em;

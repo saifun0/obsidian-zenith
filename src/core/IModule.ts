@@ -1,4 +1,9 @@
-import type { Command, MarkdownPostProcessorContext, ViewCreator } from 'obsidian';
+import type {
+    Command,
+    MarkdownPostProcessorContext,
+    ObsidianProtocolHandler,
+    ViewCreator,
+} from 'obsidian';
 import type { SettingsSchema } from '../settings/schema/types';
 import type { TranslationTable } from './i18n';
 import type ZenithPlugin from '../main';
@@ -129,11 +134,58 @@ export abstract class BaseModule implements IModule {
 
     /**
      * Add a command, idempotently. Safe to call on every `onload`.
+     *
+     * Obsidian keeps commands registered until the whole plugin unloads, so
+     * every module command is gated on its module being loaded: switching a
+     * module off hides its commands from the palette and prevents hotkeys from
+     * firing into an unloaded module.
      */
     protected addCommand(command: Command): void {
         if (command.id && this.ledger.hasCommand(this.id, command.id)) return;
-        this.plugin.addCommand(command);
+        this.plugin.addCommand(this.guardCommand(command));
         if (command.id) this.ledger.markCommand(this.id, command.id);
+    }
+
+    private guardCommand(command: Command): Command {
+        const isLoaded = () => this.plugin.moduleManager.getLoadedModuleIds().includes(this.id);
+        if (command.checkCallback) {
+            const orig = command.checkCallback;
+            return {
+                ...command,
+                checkCallback: (checking) => (isLoaded() ? orig(checking) : false),
+            };
+        }
+        if (command.callback) {
+            const orig = command.callback;
+            const guarded: Command = { ...command };
+            delete guarded.callback;
+            guarded.checkCallback = (checking) => {
+                if (!isLoaded()) return false;
+                if (!checking) void orig();
+                return true;
+            };
+            return guarded;
+        }
+        return command;
+    }
+
+    /**
+     * Register an `obsidian://` protocol handler idempotently, delegating to
+     * the currently loaded module instance and going inert when unloaded.
+     */
+    protected registerProtocolHandler(action: string, handler: ObsidianProtocolHandler): void {
+        const first = !this.ledger.hasProtocol(action);
+        this.ledger.setProtocol(action, handler);
+        if (first) {
+            this.plugin.registerObsidianProtocolHandler(action, (params) => {
+                this.ledger.getProtocol(action)?.(params);
+            });
+        }
+        this.ledger.addDisposer(this.id, () => {
+            if (this.ledger.getProtocol(action) === handler) {
+                this.ledger.setProtocol(action, null);
+            }
+        });
     }
 
     /**

@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { applyTemplate, withDate } from '../src/modules/journal/services/journalWriter';
-import { insertUnderHeading, appendBlock } from '../src/services/markdownSections';
+import {
+    insertUnderHeading,
+    insertTextUnderHeading,
+    appendBlock,
+} from '../src/services/markdownSections';
 import { countWords } from '../src/modules/journal/services/journalParser';
 
 describe('applyTemplate', () => {
@@ -93,6 +97,41 @@ describe('insertUnderHeading', () => {
             'x',
         ]);
     });
+
+    it('ignores # lines inside fenced code blocks', () => {
+        const lines = [
+            '```python',
+            '## Tasks',
+            '# comment',
+            '```',
+            '## Tasks',
+            '```markdown',
+            '## Next Section',
+            '```',
+            '- [ ] real',
+            '## Notes',
+        ];
+        const result = insertUnderHeading(lines, 'Tasks', ['- [ ] added']);
+        expect(result).toEqual([
+            '```python',
+            '## Tasks',
+            '# comment',
+            '```',
+            '## Tasks',
+            '```markdown',
+            '## Next Section',
+            '```',
+            '- [ ] real',
+            '- [ ] added',
+            '## Notes',
+        ]);
+    });
+
+    it('preserves CRLF line endings when inserting into a Windows-formatted note', () => {
+        const crlf = '## Tasks\r\n- [ ] one\r\n\r\n## Notes\r\n';
+        const out = insertTextUnderHeading(crlf, 'Tasks', '- [ ] two');
+        expect(out).toBe('## Tasks\r\n- [ ] one\r\n- [ ] two\r\n\r\n## Notes\r\n');
+    });
 });
 
 describe('appendBlock', () => {
@@ -159,5 +198,10 @@ describe('countWords', () => {
 
     it('counts non-Latin scripts', () => {
         expect(countWords('привет как дела')).toBe(3);
+    });
+
+    it('does not treat headings inside fenced code blocks as section boundaries', () => {
+        const md = ['## Notes', 'alpha beta', '```md', '## Other', '```', 'gamma'].join('\n');
+        expect(countWords(md)).toBe(3);
     });
 });

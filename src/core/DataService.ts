@@ -179,7 +179,15 @@ export class DataService {
 
     async reloadJournal(): Promise<void> {
         const store = useZenithStore.getState();
-        const { journalFolderPath, journalDateFormat } = store.settings;
+        const { settings } = store;
+        const { journalFolderPath, journalDateFormat } = settings;
+        if (!watchesDailyNotes(settings) || !journalFolderPath.trim()) {
+            this.generation.journal++;
+            store.setJournalEntries([]);
+            store.setJournalLoading(false);
+            this.dirtyJournal.clear();
+            return;
+        }
         const run = ++this.generation.journal;
         store.setJournalLoading(true);
         try {
@@ -210,11 +218,18 @@ export class DataService {
 
     async reloadContent(): Promise<void> {
         const store = useZenithStore.getState();
-        const folder = store.settings.contentFolderPath;
+        const { contentFolderPath, activeModuleIds } = store.settings;
+        if (!activeModuleIds.includes('content') || !contentFolderPath.trim()) {
+            this.generation.content++;
+            store.setContentItems([]);
+            store.setContentLoading(false);
+            this.dirtyContent.clear();
+            return;
+        }
         const run = ++this.generation.content;
         store.setContentLoading(true);
         try {
-            const items = await this.contentParser.parseContent(folder);
+            const items = await this.contentParser.parseContent(contentFolderPath);
             if (run !== this.generation.content) return;
             useZenithStore.getState().setContentItems(items);
             this.dirtyContent.clear();
@@ -234,12 +249,14 @@ export class DataService {
         // delete/rename the TFile may no longer resolve, so also test oldPath.
         const isMd = file instanceof TFile ? file.extension === 'md' : true;
         const settings = useZenithStore.getState().settings;
-        const { contentFolderPath, journalFolderPath, projectsFolderPath } = settings;
+        const { contentFolderPath, journalFolderPath, projectsFolderPath, activeModuleIds } = settings;
+        const projectsWatched = activeModuleIds.includes('projects') && !!projectsFolderPath?.trim();
+        const contentWatched = activeModuleIds.includes('content') && !!contentFolderPath.trim();
         if (!isMd && !oldPath) {
             // Not a note, so no task and no item — but a picture or an
             // attachment in a project's folder is one of the files its card
             // counts.
-            if (projectsFolderPath && this.isInFolder(file.path, projectsFolderPath)) {
+            if (projectsWatched && this.isInFolder(file.path, projectsFolderPath)) {
                 this.dirtyProjects.add(file.path);
                 this.flushDebounced();
             }
@@ -247,7 +264,7 @@ export class DataService {
         }
 
         const taskFolders = this.taskFolders();
-        const dailyNotesWatched = watchesDailyNotes(settings);
+        const dailyNotesWatched = watchesDailyNotes(settings) && !!journalFolderPath.trim();
         const paths = [file.path, oldPath].filter((p): p is string => !!p);
 
         let scheduled = false;
@@ -256,11 +273,11 @@ export class DataService {
                 this.dirtyTasks.add(path);
                 scheduled = true;
             }
-            if (this.isInFolder(path, contentFolderPath)) {
+            if (contentWatched && this.isInFolder(path, contentFolderPath)) {
                 this.dirtyContent.add(path);
                 scheduled = true;
             }
-            if (projectsFolderPath && this.isInFolder(path, projectsFolderPath)) {
+            if (projectsWatched && this.isInFolder(path, projectsFolderPath)) {
                 this.dirtyProjects.add(path);
                 scheduled = true;
             }

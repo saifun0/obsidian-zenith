@@ -203,7 +203,11 @@ class DashboardWidgetRegistry {
     register(def: DashboardWidgetDefinition): () => void {
         this.widgets.set(def.id, def);
         this.rebuild();
-        return () => this.unregister(def.id);
+        return () => {
+            // Only its own registration: a widget replaced under the same id
+            // during a reload belongs to the new instance.
+            if (this.widgets.get(def.id) === def) this.unregister(def.id);
+        };
     }
 
     unregister(id: string): void {

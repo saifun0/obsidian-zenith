@@ -34,7 +34,7 @@ export class DashboardView extends ItemView {
         return 'layout-dashboard';
     }
 
-    async onOpen(): Promise<void> {
+    onOpen(): Promise<void> {
         const container = this.contentEl;
         container.empty();
         container.addClass('zenith-root', 'zenith-dash-host');
@@ -56,10 +56,12 @@ export class DashboardView extends ItemView {
                 )
             )
         );
+        return Promise.resolve();
     }
 
-    async onClose(): Promise<void> {
+    onClose(): Promise<void> {
         this.root?.unmount();
         this.root = null;
+        return Promise.resolve();
     }
 }

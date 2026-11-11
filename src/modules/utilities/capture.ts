@@ -84,10 +84,11 @@ export function captureLine(text: string, at: Date, stamp: boolean): string {
  * the other languages after it.
  */
 export function fileInDailyNote(data: string, line: string, headings: readonly string[]): string {
-    const lines = data.split('\n');
+    const eol = data.includes('\r\n') ? '\r\n' : '\n';
+    const lines = data.split(/\r?\n/);
     for (const heading of headings) {
         const placed = insertUnderHeading(lines, heading, [line]);
-        if (placed) return placed.join('\n');
+        if (placed) return placed.join(eol);
     }
     return appendBlock(data, line);
 }

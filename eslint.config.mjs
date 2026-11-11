@@ -16,6 +16,7 @@ export default tseslint.config(
         ignores: [
             'node_modules',
             'dist',
+            '.claude/**',
             'tests/mocks/**',
             'esbuild.config.mjs',
             'eslint.config.mjs',

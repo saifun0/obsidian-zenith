@@ -1,5 +1,5 @@
 import React, { type FC } from 'react';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { isoToDate } from '../../journal/services/journalDates';
 import { PRAYERS, isPerformed } from '../prayerConfig';
 import { recentDays, type PrayerDay } from '../prayerStats';
@@ -42,7 +42,9 @@ export const PrayerWeekStrip: FC<{ days: Map<string, PrayerDay>; today: string }
                             })}`}
                         >
                             <span className="zenith-prayer__week-label">
-                                {date.toLocaleDateString(t.locale, { weekday: 'short' })}
+                                {date.toLocaleDateString(intlLocale(t.locale), {
+                                    weekday: 'short',
+                                })}
                             </span>
                             <span className="zenith-prayer__week-segs">
                                 {PRAYERS.map((_, i) => (

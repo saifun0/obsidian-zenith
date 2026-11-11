@@ -53,7 +53,7 @@ export class UtilitiesModule extends BaseModule {
         super(plugin);
     }
 
-    async onload(): Promise<void> {
+    onload(): Promise<void> {
         this.disposers.push(
             this.plugin.registerDashboardWidget({
                 id: 'picture.text',
@@ -150,13 +150,15 @@ export class UtilitiesModule extends BaseModule {
 
         this.timers = new TimerReminderService(this.plugin);
         this.timers.start();
+        return Promise.resolve();
     }
 
-    async onunload(): Promise<void> {
+    onunload(): Promise<void> {
         this.disposers.forEach((d) => d());
         this.disposers = [];
         this.timers?.stop();
         this.timers = null;
+        return Promise.resolve();
     }
 
     async activateView(): Promise<void> {

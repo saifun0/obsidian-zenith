@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useRef, useState, type FC } from 'react';
 import { Maximize2 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
-import { useTranslation } from '../../../core/i18n';
+import { intlLocale, useTranslation } from '../../../core/i18n';
 import { useZenithStore } from '../../../store';
 import { addDays, isoToDate } from '../../../core/calendarDates';
 import type { DashboardWidgetProps } from '../../dashboard/widgets';
@@ -120,7 +120,7 @@ export const StudyWidget: FC<DashboardWidgetProps> = () => {
             ? t('study.list.tomorrow')
             : `${dayName(isoDay(upcoming.date), t.locale, 'long')}, ${isoToDate(
                   upcoming.date
-              ).toLocaleDateString(t.locale, { day: 'numeric', month: 'long' })}`);
+              ).toLocaleDateString(intlLocale(t.locale), { day: 'numeric', month: 'long' })}`);
 
     // How many classes the list has the height for. Beside the "now" side it
     // has the card's; under it, what that side leaves — and there a list of
